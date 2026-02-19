@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Montserrat Font Family - Loaded via Google Fonts in layout.tsx */
+/* Using Next.js font optimization, no need for @font-face declarations */
+
+@layer base {
+  :root {
+    /* Agora Brand Colors */
+    --agora-blue: #2490FD; /* Main accent blue */
+    --agora-success: #36FE96; /* Success/green color */
+    --agora-text: #02173D; /* Primary text color */
+    --agora-accent: #FF532A; /* High-impact orange accent */
+    
+    /* Typography Sizes - Consistent across app */
+    --text-page-title: 1.5rem; /* 24px - Page titles (h1) */
+    --text-page-subtitle: .9rem; /* 16px - Page subtitles */
+    --text-section-title: .9rem; /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
+    --text-card-title: 1rem; /* 18px - Card titles */
+    --text-body: 0.875rem; /* 14px - Body text */
+    --text-small: 0.75rem; /* 12px - Small text */
+    --text-stat-value: 1.5rem; /* 28px - Stat card values */
+    --text-stat-label: 0.875rem; /* 14px - Stat card labels */
+    
+    /* Component Sizes */
+    --stat-card-padding: .1rem; /* 16px - Reduced Stat card padding */
+    --stat-icon-size: 1rem; /* 20px - Stat card icon size */
+    --card-padding: .1rem; /* 20px - Standard card padding */
+    --card-padding-large: 1.5rem; /* 24px - Large card padding */
+    
+    /* Dark Mode Colors - PRAX IQ inspired dark theme */
+    --dark-bg: #0B0E11; /* Darker bg */
+    --dark-surface: #11141d; /* Darker card surface */
+    --dark-border: #161b26; /* Darker border */
+    --dark-input: #1a202e; /* Dark bluish grey for inputs */
+    --dark-text-primary: #ffffff; /* White text for better contrast */
+    --dark-text-secondary: #9ca3af; /* Secondary text - grey */
+    --dark-text-muted: #6b7280; /* Muted text */
+    --dark-hover: #1a202e; /* Hover background - subtle grey */
+  }
+
+  /* Border colors are applied via Tailwind classes, not globally */
+
+  body {
+    /* Background is handled by layout.tsx div, not body */
+    color: var(--dark-text-primary);
+    transition: color 200ms;
+    font-family: var(--font-montserrat), system-ui, sans-serif;
+  }
+
+  .dark body {
+    /* Background is handled by layout.tsx div, not body */
+    color: var(--dark-text-primary);
+  }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
+  /* Continuous horizontal scroll animation (right to left) */
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Continuous horizontal scroll animation (left to right) */
+  @keyframes scroll-reverse {
+    0% {
+      transform: translateX(-50%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-scroll {
+    animation: scroll 30s linear infinite;
+    display: flex;
+    width: max-content;
+  }
+
+  .animate-scroll-reverse {
+    animation: scroll-reverse 30s linear infinite;
+    display: flex;
+    width: max-content;
+  }
+
+  .animate-scroll:hover,
+  .animate-scroll-reverse:hover {
+    animation-play-state: paused;
+  }
+
+  /* ========================================
+     Form Elements Styles (Dark Mode Only)
+     ======================================== */
+  
+  /* Force dark color scheme for native browser elements */
+  .dark {
+    color-scheme: dark;
+  }
+
+  /* All form inputs */
+  input,
+  select,
+  textarea {
+    background-color: var(--dark-input) !important;
+    color: var(--dark-text-primary) !important;
+    border-color: var(--dark-border) !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--dark-text-muted) !important;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--agora-blue) !important;
+    outline: none;
+  }
+
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background-color: #1f2937 !important;
+    color: var(--dark-text-muted) !important;
+    opacity: 0.7;
+  }
+
+  /* Date/Time picker icons */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="month"]::-webkit-calendar-picker-indicator,
+  input[type="week"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+    cursor: pointer;
+  }
+
+  /* Select dropdown arrow */
+  select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Autofill background override */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  textarea:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px var(--dark-input) inset !important;
+    -webkit-text-fill-color: var(--dark-text-primary) !important;
+    caret-color: var(--dark-text-primary) !important;
+  }
+
+  /* Number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    filter: invert(0.8);
+  }
+
+  /* Checkbox and Radio */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--agora-blue);
+  }
+
+  /* File input button */
+  input[type="file"]::file-selector-button {
+    background-color: var(--dark-hover);
+    color: var(--dark-text-primary);
+    border: 1px solid var(--dark-border);
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+  }
+
+  input[type="file"]::file-selector-button:hover {
+    background-color: #334155;
+  }
+}
+
