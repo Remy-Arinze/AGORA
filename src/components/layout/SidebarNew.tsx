@@ -47,7 +47,6 @@ function LogoutButton() {
       onClick={logout}
       className="w-full justify-start gap-2 text-gray-700 dark:text-[#9ca3af] hover:bg-gray-100 dark:hover:bg-[#1f2937]"
     >
-      <LogOut className="h-5 w-5 flex-shrink-0" />
       <span
         className={cn(
           "text-[13px] transition-opacity duration-200",
