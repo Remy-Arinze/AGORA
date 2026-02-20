@@ -18,7 +18,7 @@ stages:
       inputs:
         versionSpec: '20.x'
 
-    - script: npm ci
+    - script: npm ci --legacy-peer-deps
       displayName: 'Install Dependencies'
 
     - script: npm run build
