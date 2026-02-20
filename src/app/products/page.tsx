@@ -1,27 +1,11 @@
 'use client';
 
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { AnimateInView } from '@/components/ui/AnimateInView';
 import { LandingNavbar } from '@/components/layout/LandingNavbar';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 40 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6 }
-  },
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.15,
-    },
-  },
-};
 
 const products = [
   {
@@ -139,12 +123,7 @@ export default function ProductsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center max-w-4xl mx-auto"
-          >
+          <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} duration={0.8} className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
               Our <span className="text-blue-600 dark:text-blue-400">Products</span>
             </h1>
@@ -152,20 +131,14 @@ export default function ProductsPage() {
               A suite of powerful tools designed to transform every aspect of school management. 
               From AI-powered teaching assistants to bulletproof financial tracking.
             </p>
-          </motion.div>
+          </FadeInUp>
         </div>
       </section>
 
       {/* Plugin Products */}
       <section className="py-20 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
+          <AnimateInView className="text-center mb-16">
             <span className="inline-block px-4 py-2 bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/50 dark:to-purple-900/50 text-violet-600 dark:text-violet-400 rounded-full text-sm font-semibold mb-4">
               Powerful Add-ons
             </span>
@@ -175,19 +148,12 @@ export default function ProductsPage() {
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Optional plugins that extend the power of Agora to solve specific challenges
             </p>
-          </motion.div>
+          </AnimateInView>
 
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="space-y-8"
-          >
-            {products.map((product, index) => (
-              <motion.div key={product.id} variants={fadeInUp}>
-                <Card className={`overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-br ${product.bgColor}`}>
-                  <div className={`h-2 bg-gradient-to-r ${product.color}`} />
+          <AnimateInView from={{ opacity: 0, y: 40 }} to={{ opacity: 1, y: 0 }} stagger={0.15} className="space-y-8">
+            {products.map((product) => (
+              <Card key={product.id} className={`overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-br ${product.bgColor}`}>
+                <div className={`h-2 bg-gradient-to-r ${product.color}`} />
                   <div className="p-8 md:p-10">
                     <div className="flex flex-col lg:flex-row gap-8">
                       {/* Left: Product Info */}
@@ -240,10 +206,9 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   </div>
-                </Card>
-              </motion.div>
+              </Card>
             ))}
-          </motion.div>
+          </AnimateInView>
         </div>
       </section>
 
@@ -251,12 +216,7 @@ export default function ProductsPage() {
       <section className="py-20 bg-white dark:bg-dark-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
+            <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }}>
               <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
                 Everything Works Together
               </h2>
@@ -269,15 +229,9 @@ export default function ProductsPage() {
               <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
                 One platform. Infinite possibilities.
               </p>
-            </motion.div>
+            </AnimateInView>
 
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="relative"
-            >
+            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} className="relative">
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-3">
                   <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/50 dark:to-purple-950/50 rounded-2xl">
@@ -316,7 +270,7 @@ export default function ProductsPage() {
                   <span className="text-white font-bold">Agora</span>
                 </div>
               </div>
-            </motion.div>
+            </AnimateInView>
           </div>
         </div>
       </section>
@@ -324,12 +278,7 @@ export default function ProductsPage() {
       {/* CTA */}
       <section className="py-20 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
+          <AnimateInView>
             <h2 className="text-4xl font-bold text-white mb-6">
               Ready to Transform Your School?
             </h2>
@@ -350,7 +299,7 @@ export default function ProductsPage() {
                 Learn More
               </Link>
             </div>
-          </motion.div>
+          </AnimateInView>
         </div>
       </section>
 

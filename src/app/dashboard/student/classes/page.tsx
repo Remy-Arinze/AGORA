@@ -48,11 +48,7 @@ function ClassmateCard({ classmate }: { classmate: any }) {
 
   return (
     <Link href={`/dashboard/school/students/${classmate.id}`}>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-light-card dark:bg-dark-surface"
-      >
+      <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-light-card dark:bg-dark-surface">
         <div className="flex items-center gap-4">
           {shouldShowImage ? (
             <img
@@ -82,7 +78,7 @@ function ClassmateCard({ classmate }: { classmate: any }) {
             )}
           </div>
         </div>
-      </motion.div>
+      </FadeInUp>
     </Link>
   );
 }
@@ -306,11 +302,7 @@ export default function StudentClassesPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -324,7 +316,7 @@ export default function StudentClassesPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -347,12 +339,7 @@ export default function StudentClassesPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
@@ -685,7 +672,7 @@ export default function StudentClassesPage() {
               </Card>
             </div>
           )}
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

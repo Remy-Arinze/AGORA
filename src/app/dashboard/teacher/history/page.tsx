@@ -127,11 +127,7 @@ export default function TeacherHistoryPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -146,7 +142,7 @@ export default function TeacherHistoryPage() {
               Download Full History
             </Button>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Timeline View */}
         <div className="space-y-6">
@@ -155,12 +151,7 @@ export default function TeacherHistoryPage() {
             const isExpanded = expandedSchool === school.schoolId;
 
             return (
-              <motion.div
-                key={school.schoolId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: schoolIndex * 0.1 }}
-              >
+              <FadeInUp delay={schoolIndex * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card className="overflow-hidden">
                   <CardHeader
                     className="cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-surface/50 transition-colors"
@@ -221,12 +212,7 @@ export default function TeacherHistoryPage() {
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {school.certificates.map((certificate) => (
-                              <motion.div
-                                key={certificate.id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg"
-                              >
+                              <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5} className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg">
                                 <div className="flex items-start justify-between">
                                   <div>
                                     <h4 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
@@ -243,7 +229,7 @@ export default function TeacherHistoryPage() {
                                     <Download className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              </motion.div>
+                              </FadeInUp>
                             ))}
                           </div>
                         </div>
@@ -260,12 +246,7 @@ export default function TeacherHistoryPage() {
                           const isYearExpanded = expandedYear === yearKey;
 
                           return (
-                            <motion.div
-                              key={yearKey}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: yearIndex * 0.05 }}
-                            >
+                            <FadeInUp delay={yearIndex * 0.05 } from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                               <Card className="border-l-4 border-l-blue-600 dark:border-l-blue-400">
                                 <CardHeader
                                   className="cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-surface/50 transition-colors"
@@ -323,25 +304,20 @@ export default function TeacherHistoryPage() {
                                   </CardContent>
                                 )}
                               </Card>
-                            </motion.div>
+                            </FadeInUp>
                           );
                         })}
                       </div>
                     </CardContent>
                   )}
                 </Card>
-              </motion.div>
+              </FadeInUp>
             );
           })}
         </div>
 
         {/* Summary Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mt-8">
           <Card>
             <CardHeader>
               <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
@@ -380,7 +356,7 @@ export default function TeacherHistoryPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

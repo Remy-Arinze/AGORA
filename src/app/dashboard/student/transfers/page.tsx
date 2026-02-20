@@ -93,11 +93,7 @@ export default function StudentTransfersPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div>
             <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
               Transfer History
@@ -106,7 +102,7 @@ export default function StudentTransfersPage() {
               View your transfer requests and history across all schools
             </p>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Status Filter */}
         <Card className="mb-6">
@@ -175,12 +171,7 @@ export default function StudentTransfersPage() {
               const isTacUsed = !!transfer.tacUsedAt;
 
               return (
-                <motion.div
-                  key={transfer.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
+                <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                   <Card>
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -334,7 +325,7 @@ export default function StudentTransfersPage() {
                       </div>
                     </CardHeader>
                   </Card>
-                </motion.div>
+                </FadeInUp>
               );
             })}
           </div>

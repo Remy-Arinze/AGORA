@@ -129,18 +129,14 @@ export default function StudentTimetablesPage() {
   return (
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-6">
           <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             My Timetable
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             View your weekly class schedule
           </p>
-        </motion.div>
+        </FadeInUp>
 
         <Card>
           <CardHeader>

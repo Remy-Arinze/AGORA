@@ -100,11 +100,7 @@ export default function SchoolsPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full space-y-6">
         {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start justify-between"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-start justify-between">
           <div>
             <h1 className="font-bold text-light-text-primary dark:text-white mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             Schools
@@ -118,7 +114,7 @@ export default function SchoolsPage() {
               Create School
             </Button>
           </Link>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -252,13 +248,7 @@ export default function SchoolsPage() {
                 if (school.hasTertiary) levels.push('Tertiary');
 
                 return (
-                  <motion.div
-                    key={school.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ y: -4 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                  >
+                  <FadeInUp key={school.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                     <Card 
                       className="cursor-pointer hover:shadow-lg transition-all duration-200 h-full flex flex-col"
                       onClick={() => router.push(`/dashboard/super-admin/schools/${school.id}`)}
@@ -336,7 +326,7 @@ export default function SchoolsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                  </motion.div>
+                  </FadeInUp>
                 );
               })}
             </div>
@@ -350,13 +340,7 @@ export default function SchoolsPage() {
                 if (school.hasTertiary) levels.push('Tertiary');
 
                 return (
-                  <motion.div
-                    key={school.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    whileHover={{ x: 4 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                  >
+                  <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                     <Card
                       className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-all duration-200"
                       onClick={() => router.push(`/dashboard/super-admin/schools/${school.id}`)}
@@ -432,7 +416,7 @@ export default function SchoolsPage() {
                         </div>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </FadeInUp>
                 );
               })}
             </div>

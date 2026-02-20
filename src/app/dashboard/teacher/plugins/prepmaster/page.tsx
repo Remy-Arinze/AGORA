@@ -38,11 +38,7 @@ export default function PrepMasterPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -62,7 +58,7 @@ export default function PrepMasterPage() {
               Create Test
             </Button>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -123,13 +119,7 @@ export default function PrepMasterPage() {
           <CardContent>
             <div className="space-y-4">
               {tests.map((test, index) => (
-                <motion.div
-                  key={test.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface/80 transition-colors"
-                >
+                <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface/80 transition-colors">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
@@ -157,7 +147,7 @@ export default function PrepMasterPage() {
                       </Button>
                     </div>
                   </div>
-                </motion.div>
+                </FadeInUp>
               ))}
             </div>
           </CardContent>

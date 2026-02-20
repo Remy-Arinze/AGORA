@@ -756,11 +756,7 @@ export function TimetableBuilder({
       {/* Auto-Generate Confirmation Modal */}
       {showAutoGenerateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4"
-          >
+          <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
                 <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -822,7 +818,7 @@ export function TimetableBuilder({
                 Cancel
               </Button>
             </div>
-          </motion.div>
+          </FadeInUp>
         </div>
       )}
     </DndContext>

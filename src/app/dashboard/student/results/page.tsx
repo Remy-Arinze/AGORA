@@ -325,11 +325,7 @@ export default function StudentResultsPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -346,7 +342,7 @@ export default function StudentResultsPage() {
               </Button>
             )}
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {grades.length === 0 ? (
           <Card>
@@ -513,13 +509,7 @@ export default function StudentResultsPage() {
                     ) : (
                       <div className="space-y-4">
                         {currentResults.subjects.map((subject, index) => (
-                          <motion.div
-                            key={subject.name}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="border border-light-border dark:border-dark-border rounded-lg overflow-hidden"
-                          >
+                          <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="border border-light-border dark:border-dark-border rounded-lg overflow-hidden">
                             {/* Subject Header - Clickable */}
                             <button
                               onClick={() => toggleSubjectExpanded(subject.name)}
@@ -581,15 +571,9 @@ export default function StudentResultsPage() {
                             </button>
 
                             {/* Expanded Assessment Details */}
-                            <AnimatePresence>
+                            <>
                               {expandedSubjects.has(subject.name) && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                  className="overflow-hidden"
-                                >
+                                <div className="overflow-hidden">
                                   <div className="border-t border-light-border dark:border-dark-border bg-[var(--light-surface)] dark:bg-[var(--dark-bg)]">
                                     {/* Mobile type breakdown */}
                                     {gradeTypeFilter === 'ALL' && (
@@ -671,10 +655,10 @@ export default function StudentResultsPage() {
                                       ))}
                                     </div>
                                   </div>
-                                </motion.div>
+                                </div>
                               )}
-                            </AnimatePresence>
-                          </motion.div>
+                            </>
+                          </FadeInUp>
                         ))}
                       </div>
                     )}

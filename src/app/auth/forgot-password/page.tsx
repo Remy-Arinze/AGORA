@@ -73,11 +73,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
+      <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="w-full max-w-md">
         {/* Agora Logo */}
         <div className="flex items-center justify-center mb-8">
           <Link href="/" className="flex items-center">
@@ -188,7 +184,7 @@ export default function ForgotPasswordPage() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }

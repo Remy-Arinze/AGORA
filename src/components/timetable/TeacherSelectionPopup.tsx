@@ -143,12 +143,7 @@ export function TeacherSelectionPopup({
   if (teachers.length === 0) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
-        >
+        <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
           <div className="flex items-center gap-3 mb-4 text-amber-600 dark:text-amber-400">
             <AlertTriangle className="h-6 w-6" />
             <h3 className="text-lg font-semibold">No Teachers Available</h3>
@@ -164,7 +159,7 @@ export function TeacherSelectionPopup({
               OK
             </Button>
           </div>
-        </motion.div>
+        </FadeInUp>
       </div>
     );
   }
@@ -176,12 +171,7 @@ export function TeacherSelectionPopup({
     
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
-        >
+        <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
               Assign Teacher
@@ -262,7 +252,7 @@ export function TeacherSelectionPopup({
               )}
             </Button>
           </div>
-        </motion.div>
+        </FadeInUp>
       </div>
     );
   }
@@ -270,12 +260,7 @@ export function TeacherSelectionPopup({
   // Multiple teachers - show selection list
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-hidden flex flex-col"
-      >
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
@@ -399,7 +384,7 @@ export function TeacherSelectionPopup({
             )}
           </Button>
         </div>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }

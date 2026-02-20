@@ -1064,11 +1064,7 @@ function TeacherCard({
   onRemove: () => void;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex items-center justify-between p-3 border border-light-border dark:border-dark-border rounded-lg hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
-    >
+    <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-center justify-between p-3 border border-light-border dark:border-dark-border rounded-lg hover:bg-light-surface dark:hover:bg-dark-bg transition-colors">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
           <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -1103,6 +1099,6 @@ function TeacherCard({
       >
         <Trash2 className="h-3 w-3" />
       </Button>
-    </motion.div>
+    </FadeInUp>
   );
 }

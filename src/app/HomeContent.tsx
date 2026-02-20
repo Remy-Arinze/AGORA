@@ -3,6 +3,7 @@
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { AnimateInView } from '@/components/ui/AnimateInView';
 import { RootState } from '@/lib/store/store';
 import { LandingNavbar } from '@/components/layout/LandingNavbar';
 import { Button } from '@/components/ui/Button';
@@ -10,23 +11,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useGetPublicSchoolsQuery, useGetPlatformStatsQuery } from '@/lib/store/api/publicApi';
 import { useState, useEffect, useRef } from 'react';
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 60 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6 }
-  },
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
 
 // Helper to format large numbers
 const formatNumber = (num: number): string => {
@@ -181,47 +165,31 @@ export default function HomeContent() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20">
           <div className="max-w-3xl">
             {/* Minimalist Live Badge */}
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="mb-8 flex items-center gap-3"
-            >
+            <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} delay={0.5} duration={0.8} className="mb-8 flex items-center gap-3">
               <span className="flex h-2 w-2 rounded-full bg-agora-success shadow-[0_0_10px_#36FE96]"></span>
               <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/50">
                 Agora
               </span>
-            </motion.div>
+            </FadeInUp>
             
             {/* Clean, Impactful Typography */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl md:text-7xl font-bold text-white leading-[1.1] mb-8 tracking-tight"
-            >
-              The digital <br />
-              Chain-of-Trust <br />
-              for education.
-            </motion.h1>
+            <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} delay={0.2} duration={0.8}>
+              <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.1] mb-8 tracking-tight">
+                The digital <br />
+                Chain-of-Trust <br />
+                for education.
+              </h1>
+            </FadeInUp>
             
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg md:text-xl text-white/60 mb-10 leading-relaxed max-w-xl"
-            >
-              One student identity, verified across every institution. 
-              Agora connects the African education ecosystem through a secure, lifelong registry.
-            </motion.p>
+            <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} delay={0.4} duration={0.8}>
+              <p className="text-lg md:text-xl text-white/60 mb-10 leading-relaxed max-w-xl">
+                One student identity, verified across every institution. 
+                Agora connects the African education ecosystem through a secure, lifelong registry.
+              </p>
+            </FadeInUp>
             
             {/* Refined CTA */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-wrap gap-4"
-            >
+            <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} delay={0.6} duration={0.8} className="flex flex-wrap gap-4">
               <Button 
                 size="md" 
                 variant="primary"
@@ -239,7 +207,7 @@ export default function HomeContent() {
                   How it works
                 </Button>
               </Link>
-            </motion.div>
+            </FadeInUp>
           </div>
         </div>
       </section>
@@ -261,13 +229,7 @@ export default function HomeContent() {
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-20"
-          >
+          <AnimateInView className="text-center mb-20">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
               A Borderless Academic Identity for Every Student
             </h2>
@@ -275,36 +237,24 @@ export default function HomeContent() {
               Agora transforms traditional, fragmented transcripts into a lifelong asset that follows the learner from their first day of primary school to university graduation.
               We turn static paper trails into a living, portable digital profile, ensuring achievements and certifications are never lost to bureaucracy or geography.
             </p>
-          </motion.div>
+          </AnimateInView>
         </div>
       </section>
 
       {/* Key Features Section */}
       <section data-navbar-light="true" className="py-24 bg-[var(--dark-bg)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-20"
-          >
+          <AnimateInView className="text-center mb-20">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Powerful Unified Management System
             </h2>
             <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
               Everything schools need to digitize legacy records and verify student identities.
             </p>
-          </motion.div>
+          </AnimateInView>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6 }}
-              className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-blue/20 transition-all duration-300 group shadow-sm hover:shadow-xl"
-            >
+            <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-blue/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 bg-agora-blue/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-blue transition-colors duration-300">
                   <svg className="w-8 h-8 text-agora-blue group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,15 +270,9 @@ export default function HomeContent() {
                   Each school gets a white-label portal with total isolation. Perfect for districts, networks, and government systems.
                 </p>
               </div>
-            </motion.div>
+            </AnimateInView>
 
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6 }}
-              className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-success/20 transition-all duration-300 group shadow-sm hover:shadow-xl"
-            >
+            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-success/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 bg-agora-success/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-success transition-colors duration-300">
                   <svg className="w-8 h-8 text-agora-success group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,15 +288,9 @@ export default function HomeContent() {
                   Once a parent claims a profile, it becomes locked. We prevent identity fraud and ensure academic trust.
                 </p>
               </div>
-            </motion.div>
+            </AnimateInView>
 
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6 }}
-              className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-accent/20 transition-all duration-300 group shadow-sm hover:shadow-xl"
-            >
+            <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-accent/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 bg-agora-accent/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-accent transition-colors duration-300">
                   <svg className="w-8 h-8 text-agora-accent group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,15 +306,9 @@ export default function HomeContent() {
                   Move between schools with complete academic history. Debt checking ensures clean transfers for institutions.
                 </p>
               </div>
-            </motion.div>
+            </AnimateInView>
 
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6 }}
-              className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-blue/20 transition-all duration-300 group shadow-sm hover:shadow-xl"
-            >
+            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-blue/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 bg-agora-blue/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-blue transition-colors duration-300">
                   <svg className="w-8 h-8 text-agora-blue group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -392,7 +324,7 @@ export default function HomeContent() {
                   Works offline with local persistence. Perfect for areas with unreliable internet connectivity.
                 </p>
               </div>
-            </motion.div>
+            </AnimateInView>
           </div>
         </div>
       </section>
@@ -400,13 +332,7 @@ export default function HomeContent() {
       {/* Schools Using Agora Section */}
       <section data-navbar-light="true" className="py-24 bg-[var(--dark-bg)] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
+          <AnimateInView className="text-center mb-16">
             <span className="inline-block px-4 py-2 bg-blue-900/50 text-blue-400 rounded-full text-xs font-semibold mb-4">
               Trusted Partners
             </span>
@@ -416,15 +342,9 @@ export default function HomeContent() {
             <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
               Join the growing network of forward-thinking institutions
             </p>
-          </motion.div>
+          </AnimateInView>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative overflow-hidden"
-          >
+          <AnimateInView delay={0.2} className="relative overflow-hidden">
             {/* First carousel - scrolling right to left */}
             <div className="relative py-8">
               {/* Gradient fade edges */}
@@ -588,7 +508,7 @@ export default function HomeContent() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </AnimateInView>
         </div>
       </section>
 
@@ -603,12 +523,7 @@ export default function HomeContent() {
         </div>
         
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8 }}
-          >
+          <AnimateInView duration={0.8}>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-agora-blue mb-6 leading-tight">
               Ready to Transform Education in Africa?
             </h2>
@@ -616,7 +531,7 @@ export default function HomeContent() {
               Join schools, parents, and students building the future of
               digital education identity.
             </p>
-          </motion.div>
+          </AnimateInView>
         </div>
       </section>
 

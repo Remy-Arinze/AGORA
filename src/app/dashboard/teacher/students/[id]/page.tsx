@@ -121,11 +121,7 @@ export default function TeacherStudentDetailPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -145,7 +141,7 @@ export default function TeacherStudentDetailPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -168,12 +164,7 @@ export default function TeacherStudentDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -478,7 +469,7 @@ export default function TeacherStudentDetailPage() {
               </Card>
             </div>
           )}
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

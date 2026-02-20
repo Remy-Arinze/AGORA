@@ -263,11 +263,7 @@ export default function StudentClassDetailPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Link href="/dashboard/student/classes">
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -287,7 +283,7 @@ export default function StudentClassDetailPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -310,12 +306,7 @@ export default function StudentClassDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
@@ -550,7 +541,7 @@ export default function StudentClassDetailPage() {
               </Card>
             </div>
           )}
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

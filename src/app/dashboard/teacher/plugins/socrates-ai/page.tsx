@@ -25,11 +25,7 @@ export default function SocratesAIPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <Sparkles className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -43,7 +39,7 @@ export default function SocratesAIPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Lesson Plan Generator */}

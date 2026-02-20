@@ -310,11 +310,7 @@ export default function AddStaffPage() {
   return (
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <BackButton fallbackUrl="/dashboard/school/teachers" className="mb-4" />
           <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             Add New {terminology.staffSingular}
@@ -322,7 +318,7 @@ export default function AddStaffPage() {
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Register a new {terminology.staffSingular.toLowerCase()} in your school
           </p>
-        </motion.div>
+        </FadeInUp>
 
         <Card>
           <CardHeader>

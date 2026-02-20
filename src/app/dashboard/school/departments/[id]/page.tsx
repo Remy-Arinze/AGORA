@@ -129,11 +129,7 @@ export default function DepartmentDetailPage() {
           <BackButton fallbackUrl="/dashboard/school/courses" />
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
@@ -172,7 +168,7 @@ export default function DepartmentDetailPage() {
               </Button>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="border-b border-light-border dark:border-dark-border mb-6">
@@ -195,12 +191,7 @@ export default function DepartmentDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {activeTab === 'levels' && (
             <Card className='bg-[transparent] border-none'>
               <CardHeader >
@@ -312,7 +303,7 @@ export default function DepartmentDetailPage() {
             </Card>
           )}
 
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

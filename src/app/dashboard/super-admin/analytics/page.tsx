@@ -40,18 +40,14 @@ export default function AnalyticsPage() {
     return (
       <ProtectedRoute roles={['SUPER_ADMIN']}>
         <div className="w-full">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
+          <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
             <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
               Analytics
             </h1>
             <p className="text-light-text-secondary dark:text-dark-text-secondary">
               Platform analytics and insights
             </p>
-          </motion.div>
+          </FadeInUp>
           <div className="text-center py-12">
             <p className="text-red-600 dark:text-red-400">
               {errorMessage}
@@ -64,11 +60,7 @@ export default function AnalyticsPage() {
   return (
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -90,7 +82,7 @@ export default function AnalyticsPage() {
               />
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
