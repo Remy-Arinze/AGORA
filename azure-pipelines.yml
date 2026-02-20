@@ -1,0 +1,57 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'agora-current-sc'
+  webAppName: 'agora-web-dev'
+
+stages:
+- stage: Frontend
+  displayName: 'Deploy Frontend'
+  jobs:
+  - job: BuildAndDeployWeb
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+
+    - script: npm ci
+      displayName: 'Install Dependencies'
+
+    - script: npm run build
+      displayName: 'Build Next.js App'
+      env:
+        NEXT_PUBLIC_API_URL: $(NEXT_PUBLIC_API_URL)
+
+    - bash: |
+        echo "Copying static assets..."
+        # In a standalone repo, Next.js creates files directly inside .next/standalone
+        mkdir -p .next/standalone/.next
+        
+        # Copy public folder (if it exists)
+        if [ -d "public" ]; then
+          cp -r public .next/standalone/
+        fi
+        
+        # Copy static content
+        cp -r .next/static .next/standalone/.next/
+      displayName: 'Copy Static Assets'
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/.next/standalone' 
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/web.zip'
+        replaceExistingArchive: true
+
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: $(azureSubscription)
+        appType: 'webAppLinux'
+        appName: $(webAppName)
+        package: '$(Build.ArtifactStagingDirectory)/web.zip'
+        startUpCommand: 'node server.js'
