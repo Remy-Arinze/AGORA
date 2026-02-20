@@ -129,11 +129,7 @@ export default function FacultyDetailPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <BackButton className="mb-4" />
 
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -179,15 +175,10 @@ export default function FacultyDetailPage() {
               </Button>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats Overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
@@ -229,16 +220,11 @@ export default function FacultyDetailPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
 
         {/* Dean Information */}
         {faculty.deanId && faculty.deanName && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="mb-8"
-          >
+          <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -262,15 +248,11 @@ export default function FacultyDetailPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </FadeInUp>
         )}
 
         {/* Departments Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -345,15 +327,10 @@ export default function FacultyDetailPage() {
               )}
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
 
         {/* Faculty Info Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="mt-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mt-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -414,7 +391,7 @@ export default function FacultyDetailPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
 
         {/* Modals */}
         {showEditModal && schoolId && (
@@ -446,12 +423,7 @@ function DepartmentCard({
   onClick: () => void;
 }) {
   return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="cursor-pointer"
-      onClick={onClick}
-    >
+    <div className="cursor-pointer">
       <Card className="h-full hover:shadow-lg transition-all hover:border-purple-300 dark:hover:border-purple-700">
         <CardContent className="py-4">
           <div className="flex items-start gap-3">
@@ -489,7 +461,7 @@ function DepartmentCard({
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }
 

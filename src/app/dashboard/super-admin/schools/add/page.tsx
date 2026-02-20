@@ -237,11 +237,7 @@ export default function AddSchoolPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -260,7 +256,7 @@ export default function AddSchoolPage() {
               : 'Create a new school and optionally assign a principal and administrators'
             }
           </p>
-        </motion.div>
+        </FadeInUp>
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">

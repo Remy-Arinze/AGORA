@@ -298,11 +298,7 @@ export default function ClassDetailPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Link href="/dashboard/teacher/classes">
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -322,7 +318,7 @@ export default function ClassDetailPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -345,12 +341,7 @@ export default function ClassDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {/* Curriculum Tab */}
           {(activeTab as TabType) === 'curriculum' && (
             <div className="space-y-6">
@@ -516,11 +507,8 @@ export default function ClassDetailPage() {
                         </thead>
                         <tbody>
                           {filteredStudents.map((student: StudentWithEnrollment, index: number) => (
-                            <motion.tr
+                            <tr
                               key={student.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
                               className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
                             >
                               <td className="py-4 px-4">
@@ -556,7 +544,7 @@ export default function ClassDetailPage() {
                                   View
                                 </Button>
                               </td>
-                            </motion.tr>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
@@ -829,12 +817,7 @@ export default function ClassDetailPage() {
                   ) : resources.length > 0 ? (
                     <div className="space-y-4">
                       {resources.map((resource: any) => (
-                        <motion.div
-                          key={resource.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 transition-colors bg-light-card dark:bg-dark-surface"
-                        >
+                        <FadeInUp key={resource.id} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.4} className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 transition-colors bg-light-card dark:bg-dark-surface">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                               <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -916,7 +899,7 @@ export default function ClassDetailPage() {
                               </Button>
                             </div>
                           </div>
-                        </motion.div>
+                        </FadeInUp>
                       ))}
                     </div>
                   ) : (
@@ -1060,7 +1043,7 @@ export default function ClassDetailPage() {
               </Card>
             </div>
           )}
-        </motion.div>
+        </FadeInUp>
       </div>
 
       {/* Modals */}
@@ -1133,11 +1116,7 @@ export default function ClassDetailPage() {
       {/* Upload Resource Modal */}
       {showUploadResourceModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-light-card dark:bg-dark-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-          >
+          <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-light-card dark:bg-dark-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -1239,7 +1218,7 @@ export default function ClassDetailPage() {
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </FadeInUp>
         </div>
       )}
     </ProtectedRoute>

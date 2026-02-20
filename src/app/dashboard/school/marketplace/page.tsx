@@ -155,11 +155,7 @@ export default function MarketplacePage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -170,7 +166,7 @@ export default function MarketplacePage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search and Filters */}
         <Card className="mb-6">
@@ -217,12 +213,7 @@ export default function MarketplacePage() {
                 .map((plugin, index) => {
                   const Icon = plugin.icon;
                   return (
-                    <motion.div
-                      key={plugin.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
+                    <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                       <Card className="h-full border-2 border-green-500 dark:border-green-400">
                         <CardHeader>
                           <div className="flex items-start justify-between mb-2">
@@ -265,7 +256,7 @@ export default function MarketplacePage() {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </FadeInUp>
                   );
                 })}
             </div>
@@ -295,12 +286,7 @@ export default function MarketplacePage() {
                 .map((plugin, index) => {
                   const Icon = plugin.icon;
                   return (
-                    <motion.div
-                      key={plugin.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
+                    <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                       <Card className="h-full hover:shadow-lg transition-shadow">
                         <CardHeader>
                           <div className="flex items-start justify-between mb-2">
@@ -371,7 +357,7 @@ export default function MarketplacePage() {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </FadeInUp>
                   );
                 })}
             </div>

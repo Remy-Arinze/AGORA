@@ -87,11 +87,7 @@ export default function TemplateSelectionPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full max-w-7xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -107,7 +103,7 @@ export default function TemplateSelectionPage() {
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Select a template to start building your school&apos;s website. You can customize everything later.
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -116,12 +112,7 @@ export default function TemplateSelectionPage() {
             const isSelected = selectedTemplate === template.id;
 
             return (
-              <motion.div
-                key={template.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
+              <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card
                   className={`cursor-pointer transition-all duration-200 ${
                     isSelected
@@ -182,7 +173,7 @@ export default function TemplateSelectionPage() {
                     </ul>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </FadeInUp>
             );
           })}
         </div>

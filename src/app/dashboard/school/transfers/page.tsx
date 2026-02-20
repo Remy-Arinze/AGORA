@@ -665,11 +665,7 @@ export default function TransfersPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
@@ -680,7 +676,7 @@ export default function TransfersPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -711,12 +707,7 @@ export default function TransfersPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {activeTab === 'incoming' && (
             <div className="space-y-6">
               {/* Incoming Transfer Form */}
@@ -841,11 +832,8 @@ export default function TransfersPage() {
                         </thead>
                         <tbody>
                           {filteredIncoming.map((transfer: any, index: number) => (
-                            <motion.tr
+                            <tr
                               key={transfer.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
                               className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
                             >
                               <td className="py-4 px-4">
@@ -897,7 +885,7 @@ export default function TransfersPage() {
                                   )}
                                 </div>
                               </td>
-                            </motion.tr>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
@@ -976,11 +964,8 @@ export default function TransfersPage() {
                         </thead>
                         <tbody>
                           {filteredOutgoing.map((transfer: any, index: number) => (
-                            <motion.tr
+                            <tr
                               key={transfer.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
                               className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
                             >
                               <td className="py-4 px-4">
@@ -1071,7 +1056,7 @@ export default function TransfersPage() {
                                   )}
                                 </div>
                               </td>
-                            </motion.tr>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
@@ -1081,7 +1066,7 @@ export default function TransfersPage() {
               </Card>
             </div>
           )}
-        </motion.div>
+        </FadeInUp>
 
         {/* Generate TAC Modal */}
         {showGenerateTacModal && (

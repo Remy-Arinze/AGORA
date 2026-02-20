@@ -213,47 +213,35 @@ export default function SchoolProfilePage() {
   return (
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full max-w-4xl mx-auto p-6">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-6">
           <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             School Profile Settings
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Update your school information. Changes to school type require email verification.
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {hasTokenVerification && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
+          <FadeInUp from={{ opacity: 0, y: -10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-6">
             <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               <AlertDescription className="text-green-800 dark:text-green-400">
                 Verification token verified. You can now apply your changes.
               </AlertDescription>
             </Alert>
-          </motion.div>
+          </FadeInUp>
         )}
 
         {hasSensitiveChanges && !hasTokenVerification && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
+          <FadeInUp from={{ opacity: 0, y: -10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-6">
             <Alert className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
               <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               <AlertDescription className="text-orange-800 dark:text-orange-400">
                 You are changing the school type. This requires email verification. Click &quot;Request Verification&quot; to receive a verification token via email.
               </AlertDescription>
             </Alert>
-          </motion.div>
+          </FadeInUp>
         )}
 
         <Card>

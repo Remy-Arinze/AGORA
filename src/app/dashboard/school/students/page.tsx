@@ -251,11 +251,7 @@ function StudentsPageContent() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full space-y-6">
         {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start justify-between"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-start justify-between">
           <div>
             <h1 className="font-bold text-light-text-primary dark:text-white mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
               Students
@@ -276,7 +272,7 @@ function StudentsPageContent() {
               </Button>
             </div>
           </PermissionGate>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -410,11 +406,7 @@ function StudentsPageContent() {
                 const StatusIcon = statusConfig.icon;
 
                 return (
-                  <motion.div
-                    key={student.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
+                  <FadeInUp key={student.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                     <Card 
                       className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col"
                       onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
@@ -459,7 +451,7 @@ function StudentsPageContent() {
                         </div>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </FadeInUp>
                 );
               })}
             </div>
@@ -470,11 +462,7 @@ function StudentsPageContent() {
                 const StatusIcon = statusConfig.icon;
 
                 return (
-                  <motion.div
-                    key={student.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                  >
+                  <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                     <Card
                       className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
                       onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
@@ -515,7 +503,7 @@ function StudentsPageContent() {
                         </div>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </FadeInUp>
                 );
               })}
             </div>

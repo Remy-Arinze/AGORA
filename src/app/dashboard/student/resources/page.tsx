@@ -162,11 +162,7 @@ export default function StudentResourcesPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
                 Resources
@@ -175,7 +171,7 @@ export default function StudentResourcesPage() {
                 Access class resources and manage your personal study materials
               </p>
             </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Resources List */}
         <Card>
@@ -221,12 +217,7 @@ export default function StudentResourcesPage() {
               classResources.length > 0 ? (
                 <div className="space-y-3">
                   {classResources.map((resource: any) => (
-                    <motion.div
-                      key={resource.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                    >
+                    <FadeInUp key={resource.id} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.4} className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1 min-w-0">
                           <div className="text-2xl flex-shrink-0">
@@ -272,7 +263,7 @@ export default function StudentResourcesPage() {
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>
-                    </motion.div>
+                    </FadeInUp>
                   ))}
                 </div>
               ) : (
@@ -286,12 +277,7 @@ export default function StudentResourcesPage() {
             ) : personalResources.length > 0 ? (
               <div className="space-y-3">
                 {personalResources.map((resource: any) => (
-                  <motion.div
-                    key={resource.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                  >
+                  <FadeInUp key={resource.id} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.4} className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className="text-2xl flex-shrink-0">
@@ -332,7 +318,7 @@ export default function StudentResourcesPage() {
                         </Button>
                       </div>
                     </div>
-                  </motion.div>
+                  </FadeInUp>
                 ))}
               </div>
             ) : (

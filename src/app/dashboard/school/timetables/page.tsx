@@ -771,11 +771,7 @@ export default function TimetablesPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
@@ -796,7 +792,7 @@ export default function TimetablesPage() {
               </Button>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Timetables List */}
         {selectedTermId ? (
@@ -1054,11 +1050,7 @@ export default function TimetablesPage() {
         {/* Create Timetable Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4"
-            >
+            <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4">
               <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                 Create New Timetable
               </p>
@@ -1173,7 +1165,7 @@ export default function TimetablesPage() {
                   </Button>
                 </div>
               </div>
-            </motion.div>
+            </FadeInUp>
           </div>
         )}
 

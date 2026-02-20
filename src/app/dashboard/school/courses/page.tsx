@@ -199,11 +199,7 @@ export default function ClassesPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
@@ -237,7 +233,7 @@ export default function ClassesPage() {
               </div>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search and View Controls */}
         <div className="mb-6">
@@ -319,12 +315,7 @@ export default function ClassesPage() {
                 : 'No teacher assigned';
 
               return (
-                <motion.div
-                  key={classItem.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
+                <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                   <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
                     <CardContent
                       className="pt-6 flex-1 cursor-pointer"
@@ -416,7 +407,7 @@ export default function ClassesPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </FadeInUp>
               );
             })}
           </div>
@@ -431,11 +422,7 @@ export default function ClassesPage() {
                 : 'No teacher assigned';
 
               return (
-                <motion.div
-                  key={classItem.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
+                <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                   <Card
                     className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
                     onClick={() => handleClassClick(classItem.id)}
@@ -481,7 +468,7 @@ export default function ClassesPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </FadeInUp>
               );
             })}
           </div>

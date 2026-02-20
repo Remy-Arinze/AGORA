@@ -179,11 +179,7 @@ export default function FacultiesPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
@@ -214,7 +210,7 @@ export default function FacultiesPage() {
               </div>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search */}
         <div className="mb-6 flex justify-end">
@@ -268,12 +264,7 @@ export default function FacultiesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFaculties.map((faculty, index) => (
-              <motion.div
-                key={faculty.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
+              <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
                   <CardContent
                     className="pt-6 flex-1 cursor-pointer"
@@ -354,7 +345,7 @@ export default function FacultiesPage() {
                     </Button>
                   </div>
                 </Card>
-              </motion.div>
+              </FadeInUp>
             ))}
           </div>
         )}

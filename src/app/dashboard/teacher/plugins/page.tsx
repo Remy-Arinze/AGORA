@@ -95,18 +95,14 @@ export default function TeacherPluginsPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             Available Plugins
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Plugins paid for by your school. Access and use these tools to enhance your teaching.
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search */}
         <Card className="mb-6">
@@ -140,12 +136,7 @@ export default function TeacherPluginsPage() {
             {filteredPlugins.map((plugin, index) => {
               const Icon = plugin.icon;
               return (
-                <motion.div
-                  key={plugin.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
+                <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                   <Card className="h-full hover:shadow-lg transition-shadow border-l-4 border-l-green-500 dark:border-l-green-400">
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-4 mb-4">
@@ -203,19 +194,14 @@ export default function TeacherPluginsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </FadeInUp>
               );
             })}
           </div>
         )}
 
         {/* Info Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mt-8">
           <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
@@ -233,7 +219,7 @@ export default function TeacherPluginsPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

@@ -122,11 +122,7 @@ export default function TeacherOverviewPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full space-y-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mb-1">
@@ -155,14 +151,10 @@ export default function TeacherOverviewPage() {
               </div>
             )}
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Today's Schedule */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -303,14 +295,10 @@ export default function TeacherOverviewPage() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </FadeInUp>
 
         {/* Weekly Schedule */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
@@ -385,14 +373,10 @@ export default function TeacherOverviewPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
 
         {/* My Classes */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -448,7 +432,7 @@ export default function TeacherOverviewPage() {
               )}
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

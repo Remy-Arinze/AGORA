@@ -101,30 +101,21 @@ export default function PluginManagementPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
             Plugin Management
           </h1>
           <p className="text-gray-600 dark:text-dark-text-secondary">
             View all plugins and see which schools are using them
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Plugins List */}
         <div className="space-y-6">
           {allPlugins.map((plugin, index) => {
             const Icon = plugin.icon;
             return (
-              <motion.div
-                key={plugin.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
+              <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card>
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -216,7 +207,7 @@ export default function PluginManagementPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </FadeInUp>
             );
           })}
         </div>

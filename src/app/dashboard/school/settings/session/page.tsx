@@ -49,25 +49,16 @@ function ConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
+    <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         />
         
         {/* Modal */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.2 }}
-          className="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-dark-surface rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700"
-        >
+        <FadeInUp from={{ opacity: 0, scale: 0.95, y: 20 }} to={{ opacity: 1, scale: 1, y: 0 }} duration={0.2} className="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-dark-surface rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700">
           <div className="p-6">
             {/* Icon */}
             <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
@@ -122,9 +113,9 @@ function ConfirmationModal({
               </Button>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
       </div>
-    </AnimatePresence>
+    </>
   );
 }
 
@@ -390,18 +381,14 @@ export default function SessionWizardPage() {
 
       <div className="w-full max-w-4xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             Start New {termLabel}
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Transition your school from &quot;Holiday&quot; to &quot;Active {termLabel}&quot;
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-between mb-8">

@@ -135,18 +135,14 @@ export default function TeacherClassesPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             My {terminology.courses}
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Manage your {terminology.courses.toLowerCase()} and view student information
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search */}
         <Card className="mb-6">
@@ -174,12 +170,7 @@ export default function TeacherClassesPage() {
             </div>
           ) : (
             filteredClasses.map((classItem, index) => (
-              <motion.div
-                key={classItem.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
+              <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(`/dashboard/teacher/classes/${classItem.id}`)}>
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
@@ -258,7 +249,7 @@ export default function TeacherClassesPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </FadeInUp>
             ))
           )}
         </div>

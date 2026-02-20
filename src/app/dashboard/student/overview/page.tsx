@@ -109,11 +109,7 @@ export default function StudentOverviewPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             Welcome back, {studentName}!
           </h1>
@@ -124,7 +120,7 @@ export default function StudentOverviewPage() {
               'View your academic progress, classes, and results'
             )}
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -246,10 +242,11 @@ export default function StudentOverviewPage() {
                       : (period.subjectName || period.subject?.name || period.courseName || period.course?.name || 'Class');
                     
                     return (
-                      <motion.div
+                      <FadeInUp
                         key={period.id || index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        from={{ opacity: 0, y: 10 }}
+                        to={{ opacity: 1, y: 0 }}
+                        duration={0.4}
                         className={`p-4 rounded-lg border-2 transition-all ${
                           isOngoing 
                             ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-500' 
@@ -292,7 +289,7 @@ export default function StudentOverviewPage() {
                             )}
                           </div>
                         </div>
-                      </motion.div>
+                      </FadeInUp>
                     );
                   })}
                 </div>
@@ -326,12 +323,7 @@ export default function StudentOverviewPage() {
             <CardContent>
               <div className="space-y-3">
                 {upcomingEvents.slice(0, 5).map((event: any) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="p-3 bg-gray-50 dark:bg-dark-surface rounded-lg flex items-center gap-4"
-                  >
+                  <FadeInUp from={{ opacity: 0, x: -10 }} to={{ opacity: 1, x: 0 }} duration={0.5} className="p-3 bg-gray-50 dark:bg-dark-surface rounded-lg flex items-center gap-4">
                     <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                       <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
@@ -344,7 +336,7 @@ export default function StudentOverviewPage() {
                         {event.location && ` • ${event.location}`}
                       </p>
                     </div>
-                  </motion.div>
+                  </FadeInUp>
                 ))}
               </div>
             </CardContent>

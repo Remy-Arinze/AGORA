@@ -279,11 +279,7 @@ export default function SubjectsPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
@@ -309,7 +305,7 @@ export default function SubjectsPage() {
               </div>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search and View Toggle */}
         <div className="flex items-center justify-between mb-6 gap-4">
@@ -715,9 +711,7 @@ function SubjectModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-4">
@@ -816,7 +810,7 @@ function SubjectModal({
             </Button>
           </div>
         </form>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }
@@ -891,9 +885,7 @@ function AssignTeacherModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-4">
@@ -1070,7 +1062,7 @@ function AssignTeacherModal({
             Close
           </Button>
         </div>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }
@@ -1089,9 +1081,7 @@ function AutoGenerateModal({
 }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4"
       >
         <div className="flex items-center justify-between mb-4">
@@ -1155,7 +1145,7 @@ function AutoGenerateModal({
             </Button>
           </div>
         </div>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }
@@ -1247,9 +1237,7 @@ function ClassAssignmentModal({
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+        <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
           className="bg-white dark:bg-dark-surface rounded-lg p-6 w-full max-w-2xl mx-4"
         >
           <div className="flex items-center justify-center py-12">
@@ -1258,7 +1246,7 @@ function ClassAssignmentModal({
               Loading class assignments...
             </span>
           </div>
-        </motion.div>
+        </FadeInUp>
       </div>
     );
   }
@@ -1267,9 +1255,7 @@ function ClassAssignmentModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-6">
@@ -1383,7 +1369,7 @@ function ClassAssignmentModal({
             </Button>
           )}
         </div>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }

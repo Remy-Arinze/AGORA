@@ -37,18 +37,14 @@ export default function OverviewPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <h1 className="font-bold text-light-text-primary dark:text-white mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             Welcome back, {userName}
           </h1>
           <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-page-subtitle)' }}>
             Here&apos;s your platform&apos;s performance
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -156,10 +152,8 @@ export default function OverviewPage() {
                       href={`/dashboard/super-admin/schools/${school.id}`}
                       className="block"
                     >
-                      <motion.div
+                      <div
                         className="flex items-center gap-4 p-4 border border-light-border dark:border-[#1a1f2e] rounded-lg hover:bg-light-hover dark:hover:bg-[#1f2937] transition-all duration-200 cursor-pointer"
-                        whileHover={{ x: 4 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
                       >
                         {/* School Avatar */}
                         <EntityAvatar
@@ -202,7 +196,7 @@ export default function OverviewPage() {
                             {school.subdomain}.agora.com
                           </p>
                         </div>
-                      </motion.div>
+                      </div>
                     </Link>
                   );
                 })}
