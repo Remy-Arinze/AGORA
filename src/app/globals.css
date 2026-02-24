@@ -1,12 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Montserrat Font Family - Loaded via Google Fonts in layout.tsx */
-/* Using Next.js font optimization, no need for @font-face declarations */
+/* Bricolage Grotesque = headings | Poppins = body & UI */
 
 @layer base {
   :root {
+    --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+    --font-sans: 'Poppins', system-ui, sans-serif;
     /* Agora Brand Colors */
     --agora-blue: #2490FD; /* Main accent blue */
     --agora-success: #36FE96; /* Success/green color */
@@ -20,6 +23,7 @@
     --text-card-title: 1rem; /* 18px - Card titles */
     --text-body: 0.875rem; /* 14px - Body text */
     --text-small: 0.75rem; /* 12px - Small text */
+    --text-placeholder: var(--text-small); /* Placeholder text - consistent with small */
     --text-stat-value: 1.5rem; /* 28px - Stat card values */
     --text-stat-label: 0.875rem; /* 14px - Stat card labels */
     
@@ -30,14 +34,25 @@
     --card-padding-large: 1.5rem; /* 24px - Large card padding */
     
     /* Dark Mode Colors - PRAX IQ inspired dark theme */
-    --dark-bg: #0B0E11; /* Darker bg */
-    --dark-surface: #11141d; /* Darker card surface */
-    --dark-border: #161b26; /* Darker border */
-    --dark-input: #1a202e; /* Dark bluish grey for inputs */
+    --dark-bg: #1b1b1c; /* Darker bg */
+    --dark-surface: #1f1f22; /* Darker card surface */
+    --dark-border: #232327; /* Darker border */
+    --dark-input: #2f2f34; /* Dark bluish grey for inputs */
     --dark-text-primary: #ffffff; /* White text for better contrast */
     --dark-text-secondary: #9ca3af; /* Secondary text - grey */
     --dark-text-muted: #6b7280; /* Muted text */
     --dark-hover: #1a202e; /* Hover background - subtle grey */
+    /* Input field background - use for inputs and image selector to match. Change here to update both. */
+    --light-input: #f3f4f6;
+    --input-field-bg: var(--light-input);
+    /* Empty avatar/profile image placeholder - dark grayish; adjust here to change all school admin empty image fields */
+    --avatar-placeholder-bg: #4b5563;
+    --avatar-placeholder-text: #e5e7eb;
+  }
+  .dark {
+    --input-field-bg: var(--dark-input);
+    --avatar-placeholder-bg: #374151;
+    --avatar-placeholder-text: #d1d5db;
   }
 
   /* Border colors are applied via Tailwind classes, not globally */
@@ -46,7 +61,11 @@
     /* Background is handled by layout.tsx div, not body */
     color: var(--dark-text-primary);
     transition: color 200ms;
-    font-family: var(--font-montserrat), system-ui, sans-serif;
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading), system-ui, sans-serif;
   }
 
   .dark body {
@@ -62,6 +81,97 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
+  }
+
+  /* All select dropdowns: use text variable and hide scrollbar (light + dark) */
+  select {
+    font-size: var(--text-body);
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  select::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Placeholder font size - consistent across app */
+  input::placeholder,
+  textarea::placeholder {
+    font-size: var(--text-placeholder);
+  }
+
+  /* react-international-phone: theme to match app (light) */
+  .phone-input-wrapper {
+    --react-international-phone-height: 40px;
+    --react-international-phone-font-size: var(--text-body);
+    --react-international-phone-background-color: var(--light-input);
+    --react-international-phone-text-color: var(--agora-text);
+    --react-international-phone-border-color: #d1d5db;
+    --react-international-phone-border-radius: 0.5rem;
+    --react-international-phone-disabled-background-color: #e5e7eb;
+    --react-international-phone-disabled-text-color: #6b7280;
+    --react-international-phone-country-selector-background-color: var(--light-input);
+    --react-international-phone-country-selector-border-color: #d1d5db;
+    --react-international-phone-dropdown-item-background-color: #fff;
+    --react-international-phone-dropdown-item-text-color: var(--agora-text);
+    --react-international-phone-dropdown-item-font-size: var(--text-body);
+  }
+  .dark .phone-input-wrapper {
+    --react-international-phone-background-color: var(--dark-input);
+    --react-international-phone-text-color: var(--dark-text-primary);
+    --react-international-phone-border-color: var(--dark-border);
+    --react-international-phone-disabled-background-color: #1f2937;
+    --react-international-phone-disabled-text-color: var(--dark-text-muted);
+    --react-international-phone-country-selector-background-color: var(--dark-input);
+    --react-international-phone-country-selector-border-color: var(--dark-border);
+    --react-international-phone-dropdown-item-background-color: var(--dark-surface);
+    --react-international-phone-dropdown-item-text-color: var(--dark-text-primary);
+  }
+  .phone-input-wrapper .react-international-phone-country-selector-dropdown {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .phone-input-wrapper .react-international-phone-country-selector-dropdown::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Phone input: full width in grid (same as other inputs, half row when in 2-col layout) */
+  .phone-input-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+  .phone-input-wrapper .react-international-phone-theme {
+    width: 100%;
+    display: flex;
+    min-width: 0;
+  }
+  .phone-input-wrapper .react-international-phone-theme input,
+  .phone-input-wrapper input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* react-day-picker: theme to match app (light + dark) */
+  .date-picker-dropdown .rdp {
+    --rdp-cell-size: 36px;
+    --rdp-caption-font-size: var(--text-body);
+    --rdp-accent-color: var(--agora-blue);
+    --rdp-background-color: #e0e7ff;
+    --rdp-selected-color: #fff;
+    margin: 0;
+  }
+  .dark .date-picker-dropdown .rdp {
+    --rdp-accent-color: var(--agora-blue);
+    --rdp-accent-color-dark: var(--agora-blue);
+    --rdp-background-color: var(--dark-hover);
+    --rdp-background-color-dark: var(--dark-hover);
+    color: var(--dark-text-primary);
+  }
+  .date-picker-dropdown .rdp-caption_label,
+  .date-picker-dropdown .rdp-head_cell,
+  .date-picker-dropdown .rdp-day {
+    font-size: var(--text-body);
   }
 
   /* Continuous horizontal scroll animation (right to left) */
@@ -114,6 +224,7 @@
   input,
   select,
   textarea {
+    font-size: var(--text-body);
     background-color: var(--dark-input) !important;
     color: var(--dark-text-primary) !important;
     border-color: var(--dark-border) !important;
@@ -122,13 +233,15 @@
   input::placeholder,
   textarea::placeholder {
     color: var(--dark-text-muted) !important;
+    font-size: var(--text-placeholder) !important;
   }
 
   input:focus,
   select:focus,
   textarea:focus {
-    border-color: var(--agora-blue) !important;
+    border-color: var(--dark-border) !important;
     outline: none;
+    box-shadow: none !important;
   }
 
   input:disabled,
@@ -139,13 +252,14 @@
     opacity: 0.7;
   }
 
-  /* Date/Time picker icons */
+  /* Date/Time picker icons – lighter so they show on input field background */
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator,
   input[type="datetime-local"]::-webkit-calendar-picker-indicator,
   input[type="month"]::-webkit-calendar-picker-indicator,
   input[type="week"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.8);
+    filter: invert(1);
+    opacity: 0.85;
     cursor: pointer;
   }
 
@@ -159,6 +273,10 @@
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+  }
+
+  select::-webkit-scrollbar {
+    display: none;
   }
 
   /* Autofill background override */

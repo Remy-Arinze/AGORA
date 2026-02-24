@@ -12,6 +12,7 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   CheckCircle2,
   XCircle,
@@ -37,7 +38,7 @@ import {
   useGetTransferHistoricalGradesQuery,
   useRevokeTacMutation,
   useInitiateTransferMutation,
-  useGetIncomingTransfersQuery,
+  useGetRecentlyAcceptedTransfersQuery,
   useCompleteTransferMutation,
   useRejectTransferMutation,
   useGetClassesQuery,
@@ -192,7 +193,7 @@ function HistoricalGradesModal({
           </div>
         ) : (
           <div className="text-center py-8">
-            <AlertCircle className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+            <EmptyStateIcon type="document_not_found" />
             <p className="text-light-text-secondary dark:text-dark-text-secondary">
               No historical records found for this transfer
             </p>
@@ -425,9 +426,9 @@ function TransferEnrollmentsDisplay({ enrollments, grades }: { enrollments?: any
 
 export default function TransfersPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
+  const [activeTab, setActiveTab] = useState<'recently-accepted' | 'outgoing'>('recently-accepted');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showIncomingForm, setShowIncomingForm] = useState(false);
+  const [showAcceptTransferModal, setShowAcceptTransferModal] = useState(false);
   const [showGenerateTacModal, setShowGenerateTacModal] = useState(false);
   const [showTacDisplayModal, setShowTacDisplayModal] = useState<{
     tac: string;
@@ -447,6 +448,7 @@ export default function TransfersPage() {
     classId: '',
     classArmId: '',
   });
+  const [expandedAcceptedIds, setExpandedAcceptedIds] = useState<Set<string>>(new Set());
 
   // Get school ID
   const { data: schoolResponse } = useGetMySchoolQuery();
@@ -476,12 +478,14 @@ export default function TransfersPage() {
   );
   const outgoingTransfers = outgoingResponse?.data?.transfers || [];
 
-  // Incoming transfers
-  const { data: incomingResponse, refetch: refetchIncoming } = useGetIncomingTransfersQuery(
-    { schoolId: schoolId!, page: 1, limit: 50, schoolType: currentType || undefined },
-    { skip: !schoolId }
+  // Recently accepted (completed) transfers to this school
+  const { data: recentlyAcceptedResponse, refetch: refetchRecentlyAccepted, isLoading: isLoadingRecentlyAccepted } = useGetRecentlyAcceptedTransfersQuery(
+    { schoolId: schoolId!, page: 1, limit: 50 },
+    { skip: !schoolId || activeTab !== 'recently-accepted' }
   );
-  const incomingTransfers = incomingResponse?.data?.transfers || [];
+  const recentlyAcceptedData = recentlyAcceptedResponse?.data;
+  const recentlyAcceptedItems = recentlyAcceptedData?.items ?? [];
+  const recentlyAcceptedMeta = recentlyAcceptedData?.meta;
 
   // Mutations
   const [generateTac, { isLoading: isGeneratingTac }] = useGenerateTacMutation();
@@ -516,17 +520,17 @@ export default function TransfersPage() {
     );
   }, [outgoingTransfers, searchQuery]);
 
-  const filteredIncoming = useMemo(() => {
-    if (!searchQuery) return incomingTransfers;
+  const filteredRecentlyAccepted = useMemo(() => {
+    if (!searchQuery) return recentlyAcceptedItems;
     const query = searchQuery.toLowerCase();
-    return incomingTransfers.filter(
-      (t: any) =>
-        t.student?.firstName?.toLowerCase().includes(query) ||
-        t.student?.lastName?.toLowerCase().includes(query) ||
-        t.student?.uid?.toLowerCase().includes(query) ||
-        t.tac?.toLowerCase().includes(query)
+    return recentlyAcceptedItems.filter(
+      (item: any) =>
+        item.student?.firstName?.toLowerCase().includes(query) ||
+        item.student?.lastName?.toLowerCase().includes(query) ||
+        item.student?.uid?.toLowerCase().includes(query) ||
+        item.fromSchool?.name?.toLowerCase().includes(query)
     );
-  }, [incomingTransfers, searchQuery]);
+  }, [recentlyAcceptedItems, searchQuery]);
 
   const handleGenerateTac = async () => {
     if (!selectedStudentId) {
@@ -573,9 +577,9 @@ export default function TransfersPage() {
 
       if (result.data) {
         setShowTransferPreview(result.data);
-        setShowIncomingForm(false);
+        setShowAcceptTransferModal(false);
         setTacFormData({ tac: '', studentId: '' });
-        refetchIncoming();
+        refetchRecentlyAccepted();
         toast.success('Transfer initiated successfully');
       }
     } catch (error: any) {
@@ -599,7 +603,7 @@ export default function TransfersPage() {
       setShowCompleteModal(null);
       setShowTransferPreview(null);
       setCompleteFormData({ targetClassLevel: '', academicYear: '', classId: '', classArmId: '' });
-      refetchIncoming();
+      refetchRecentlyAccepted();
       toast.success('Transfer completed successfully');
     } catch (error: any) {
       toast.error(error?.data?.message || 'Failed to complete transfer');
@@ -616,7 +620,7 @@ export default function TransfersPage() {
         reason: 'Rejected by admin',
       }).unwrap();
 
-      refetchIncoming();
+      refetchRecentlyAccepted();
       toast.success('Transfer rejected');
     } catch (error: any) {
       toast.error(error?.data?.message || 'Failed to reject transfer');
@@ -672,7 +676,7 @@ export default function TransfersPage() {
                 Student Transfers
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
-                Manage incoming and outgoing student transfers
+                Manage outgoing transfers and view recently accepted students
               </p>
             </div>
           </div>
@@ -682,15 +686,15 @@ export default function TransfersPage() {
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
           <div className="flex space-x-1">
             <button
-              onClick={() => setActiveTab('incoming')}
+              onClick={() => setActiveTab('recently-accepted')}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'incoming'
+                activeTab === 'recently-accepted'
                   ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                   : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
               }`}
             >
-              <ArrowDown className="h-4 w-4" />
-              Incoming Transfers
+              <CheckCircle2 className="h-4 w-4" />
+              Recently accepted
             </button>
             <button
               onClick={() => setActiveTab('outgoing')}
@@ -708,187 +712,201 @@ export default function TransfersPage() {
 
         {/* Tab Content */}
         <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
-          {activeTab === 'incoming' && (
+          {activeTab === 'recently-accepted' && (
             <div className="space-y-6">
-              {/* Incoming Transfer Form */}
+              {/* Accept new transfer + Recently accepted list */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap">
                     <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
-                      <ArrowDown className="h-5 w-5" />
-                      Process Incoming Transfer
+                      <CheckCircle2 className="h-5 w-5" />
+                      Recently accepted
                     </CardTitle>
-                    {!showIncomingForm && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setShowIncomingForm(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Transfer
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                {showIncomingForm && (
-                  <CardContent>
-                    <form onSubmit={handleInitiateTransfer} className="space-y-4">
-                      <div>
-                        <Input
-                          label="Transfer Access Code (TAC)"
-                          placeholder="Enter TAC from source school (e.g., TAC-ABC123-XYZ)"
-                          value={tacFormData.tac}
-                          onChange={(e) =>
-                            setTacFormData({ ...tacFormData, tac: e.target.value.toUpperCase() })
-                          }
-                          required
-                          helperText="Get this TAC from the school the student is transferring from"
-                        />
-                      </div>
-
-                      <div>
-                        <Input
-                          label="Student ID"
-                          placeholder="Enter student ID"
-                          value={tacFormData.studentId}
-                          onChange={(e) =>
-                            setTacFormData({ ...tacFormData, studentId: e.target.value })
-                          }
-                          required
-                          helperText="The student's ID (must match the TAC)"
-                        />
-                      </div>
-
-                      <div className="flex gap-3">
+                    <div className="flex items-center gap-3 flex-wrap ml-auto">
+                      <SearchInput
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search by name, UID or school..."
+                        containerClassName="min-w-[200px] max-w-md"
+                        size="lg"
+                      />
+                      <PermissionGate resource={PermissionResource.TRANSFERS} type={PermissionType.WRITE}>
                         <Button
-                          type="submit"
                           variant="primary"
-                          isLoading={isInitiating}
-                          disabled={!tacFormData.tac || !tacFormData.studentId}
+                          size="sm"
+                          onClick={() => setShowAcceptTransferModal(true)}
                         >
-                          Initiate Transfer
+                          <Plus className="h-4 w-4 mr-2" />
+                          Accept transfer
                         </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setShowIncomingForm(false);
-                            setTacFormData({ tac: '', studentId: '' });
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                )}
-              </Card>
-
-              {/* Incoming Transfers List */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                      Incoming Transfer Requests ({filteredIncoming.length})
-                    </CardTitle>
-                    <SearchInput
-                      value={searchQuery}
-                      onChange={setSearchQuery}
-                      placeholder="Search by student name or ID..."
-                      containerClassName="flex-1 max-w-md ml-4"
-                      size="lg"
-                    />
+                      </PermissionGate>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {filteredIncoming.length === 0 ? (
+                  {isLoadingRecentlyAccepted ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                      <span className="ml-3 text-light-text-secondary dark:text-dark-text-secondary">Loading...</span>
+                    </div>
+                  ) : filteredRecentlyAccepted.length === 0 ? (
                     <div className="text-center py-12">
-                      <ArrowDown className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                      <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                        No incoming transfer requests.
+                      <EmptyStateIcon type="person_outline" />
+                      <p className="text-light-text-secondary dark:text-dark-text-secondary mt-2">
+                        No recently accepted transfers yet.
                       </p>
+                      <p className="text-sm text-light-text-muted dark:text-dark-text-muted mt-1 max-w-md mx-auto">
+                        Use &quot;Accept new transfer&quot; to complete an incoming transfer with a TAC from the student&apos;s previous school.
+                      </p>
+                      <PermissionGate resource={PermissionResource.TRANSFERS} type={PermissionType.WRITE}>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="mt-4"
+                          onClick={() => setShowAcceptTransferModal(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Accept new transfer
+                        </Button>
+                      </PermissionGate>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-light-border dark:border-dark-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Student
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              From School
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Status
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Created
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredIncoming.map((transfer: any, index: number) => (
-                            <tr
-                              key={transfer.id}
-                              className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
+                    <div className="space-y-3">
+                      {filteredRecentlyAccepted.map((item: any) => {
+                        const isExpanded = expandedAcceptedIds.has(item.id);
+                        const toggle = () => {
+                          setExpandedAcceptedIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(item.id)) next.delete(item.id);
+                            else next.add(item.id);
+                            return next;
+                          });
+                        };
+                        const fullName = [item.student?.firstName, item.student?.middleName, item.student?.lastName].filter(Boolean).join(' ');
+                        const initials = (item.student?.firstName?.[0] || '') + (item.student?.lastName?.[0] || '') || '?';
+                        const targetLabel = item.targetEnrollment
+                          ? [item.targetEnrollment.classLevel, item.targetEnrollment.classArmName].filter(Boolean).join(' • ')
+                          : '—';
+                        const sourceLabel = item.sourceEnrollment
+                          ? `${item.sourceEnrollment.classLevel} (${item.sourceEnrollment.academicYear})`
+                          : '—';
+                        const perf = item.performanceSummary;
+                        const completedDate = item.completedAt ? new Date(item.completedAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="border border-light-border dark:border-dark-border rounded-lg overflow-hidden bg-light-card dark:bg-dark-surface"
+                          >
+                            <button
+                              type="button"
+                              onClick={toggle}
+                              className="w-full flex items-center gap-4 p-4 text-left hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
                             >
-                              <td className="py-4 px-4">
-                                <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                  {transfer.student?.firstName} {transfer.student?.lastName}
+                              {/* Avatar */}
+                              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center overflow-hidden">
+                                {item.student?.profileImage ? (
+                                  <img
+                                    src={item.student.profileImage}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-blue-700 dark:text-blue-300 font-semibold text-sm">
+                                    {initials}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-light-text-primary dark:text-dark-text-primary truncate">
+                                  {fullName}
                                 </p>
                                 <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-                                  {transfer.student?.uid}
+                                  {item.student?.uid}
                                 </p>
-                              </td>
-                              <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                {transfer.fromSchool?.name || 'N/A'}
-                              </td>
-                              <td className="py-4 px-4">
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                    transfer.status
-                                  )}`}
-                                >
-                                  {formatStatus(transfer.status)}
-                                </span>
-                              </td>
-                              <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                {new Date(transfer.createdAt).toLocaleDateString()}
-                              </td>
-                              <td className="py-4 px-4">
-                                <div className="flex items-center gap-2">
-                                  {transfer.status === 'APPROVED' && (
-                                    <Button
-                                      variant="primary"
-                                      size="sm"
-                                      onClick={() => setShowCompleteModal(transfer.id)}
-                                    >
-                                      Complete
-                                    </Button>
+                              </div>
+                              <div className="flex items-center gap-4 flex-shrink-0">
+                                {perf?.averagePercentage != null && (
+                                  <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                                    {perf.averagePercentage}% avg
+                                  </p>
+                                )}
+                                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                                  {completedDate}
+                                </p>
+                              </div>
+                              <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                                <ArrowDown className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
+                              </div>
+                            </button>
+                            <div
+                              className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                                isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                              }`}
+                            >
+                              <div className={`min-h-0 overflow-hidden transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                <div className="border-t border-light-border dark:border-dark-border px-4 py-4 bg-light-surface dark:bg-dark-bg space-y-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                                  <div>
+                                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">From school</p>
+                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.fromSchool?.name || '—'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Previous class</p>
+                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{sourceLabel}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Admitted to</p>
+                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{targetLabel}</p>
+                                  </div>
+                                  {item.student?.email && (
+                                    <div>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Email</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.email}</p>
+                                    </div>
                                   )}
-                                  {transfer.status === 'PENDING' && (
-                                    <>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleRejectTransfer(transfer.id)}
-                                        disabled={isRejecting}
-                                      >
-                                        <XCircle className="h-4 w-4 mr-1" />
-                                        Reject
-                                      </Button>
-                                    </>
+                                  {item.student?.phone && (
+                                    <div>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Phone</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.phone}</p>
+                                    </div>
+                                  )}
+                                  {item.student?.dateOfBirth && (
+                                    <div>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Date of birth</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                        {new Date(item.student.dateOfBirth).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {perf && (
+                                    <div>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Performance (previous school)</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                        {perf.averagePercentage != null ? `${perf.averagePercentage}% average` : '—'} ({perf.gradeCount} grades)
+                                      </p>
+                                    </div>
                                   )}
                                 </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                                <div className="pt-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      router.push(`/dashboard/school/students/${item.student?.id}`);
+                                    }}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View student profile
+                                  </Button>
+                                </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -929,7 +947,7 @@ export default function TransfersPage() {
                 <CardContent>
                   {filteredOutgoing.length === 0 ? (
                     <div className="text-center py-12">
-                      <ArrowUp className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <EmptyStateIcon type="statistics" />
                       <p className="text-light-text-secondary dark:text-dark-text-secondary">
                         No outgoing transfers. Generate a TAC for a student to initiate a transfer.
                       </p>
@@ -1067,6 +1085,77 @@ export default function TransfersPage() {
             </div>
           )}
         </FadeInUp>
+
+        {/* Accept new transfer modal (TAC + Student ID) */}
+        {showAcceptTransferModal && (
+          <Modal
+            isOpen={showAcceptTransferModal}
+            onClose={() => {
+              setShowAcceptTransferModal(false);
+              setTacFormData({ tac: '', studentId: '' });
+            }}
+            title="Accept new transfer"
+            size="md"
+          >
+            <form onSubmit={handleInitiateTransfer} className="space-y-4">
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                Enter the Transfer Access Code (TAC) and Student ID provided by the student&apos;s previous school.
+              </p>
+              <div>
+                <Input
+                  label="Transfer Access Code (TAC)"
+                  placeholder="e.g. TAC-ABC12345-XY12"
+                  value={tacFormData.tac}
+                  onChange={(e) =>
+                    setTacFormData({ ...tacFormData, tac: e.target.value.toUpperCase().trim() })
+                  }
+                  required
+                  helperText="Get this from the school the student is transferring from"
+                />
+              </div>
+              <div>
+                <Input
+                  label="Student ID"
+                  placeholder="Enter student ID"
+                  value={tacFormData.studentId}
+                  onChange={(e) =>
+                    setTacFormData({ ...tacFormData, studentId: e.target.value.trim() })
+                  }
+                  required
+                  helperText="Must match the student on the TAC"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="flex-1"
+                  isLoading={isInitiating}
+                  disabled={!tacFormData.tac || !tacFormData.studentId}
+                >
+                  {isInitiating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify & continue'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowAcceptTransferModal(false);
+                    setTacFormData({ tac: '', studentId: '' });
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </Modal>
+        )}
 
         {/* Generate TAC Modal */}
         {showGenerateTacModal && (

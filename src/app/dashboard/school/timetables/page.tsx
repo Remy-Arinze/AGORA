@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   useGetMySchoolQuery,
   useGetActiveSessionQuery,
@@ -904,7 +905,7 @@ export default function TimetablesPage() {
               </Select>
             </div>
             <CardContent className="py-12 text-center pt-4">
-              <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+              <EmptyStateIcon type="statistics" />
               <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4" style={{ fontSize: 'var(--text-body)' }}>
                 Please select a term from the top right to view timetables
               </p>
@@ -964,7 +965,7 @@ export default function TimetablesPage() {
                 </div>
               ) : timetable.length === 0 ? (
                 <div className="py-12 text-center">
-                  <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="statistics" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4" style={{ fontSize: 'var(--text-body)' }}>
                     No timetable periods found for {selectedClass?.name}.
                   </p>

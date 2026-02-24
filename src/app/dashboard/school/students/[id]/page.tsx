@@ -37,6 +37,7 @@ import {
 } from '@/lib/store/api/schoolAdminApi';
 import { EditStudentProfileModal } from '@/components/modals/EditStudentProfileModal';
 import { BackButton } from '@/components/ui/BackButton';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import toast from 'react-hot-toast';
@@ -85,7 +86,7 @@ const StudentAvatar = ({
   }
 
   return (
-    <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-light-border dark:border-dark-border shadow-sm flex-shrink-0`}>
+    <div className={`${sizeClasses[size]} rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold border-2 border-light-border dark:border-dark-border shadow-sm flex-shrink-0`}>
       {getInitials(firstName, lastName)}
     </div>
   );
@@ -123,8 +124,8 @@ const PassportPhoto = ({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
-            <span className="text-white font-bold text-4xl">
+          <div className="w-full h-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center">
+            <span className="text-[var(--avatar-placeholder-text)] font-bold text-4xl">
               {getInitials(firstName, lastName)}
             </span>
           </div>
@@ -487,7 +488,7 @@ export default function StudentDetailPage() {
         <div className="w-full">
           <BackButton fallbackUrl="/dashboard/school/students" className="mb-4" />
           <div className="text-center py-12">
-            <GraduationCap className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+            <EmptyStateIcon type="document_not_found" />
             <p className="text-light-text-secondary dark:text-dark-text-secondary">
               Student not found or error loading student details.
             </p>
@@ -866,7 +867,7 @@ export default function StudentDetailPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Heart className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="person_outline" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No health information available for this student.
                     </p>
@@ -890,7 +891,7 @@ export default function StudentDetailPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                      <EmptyStateIcon type="document_not_found" />
                       <p className="text-light-text-secondary dark:text-dark-text-secondary">
                         Unable to load grades
                       </p>
@@ -901,7 +902,7 @@ export default function StudentDetailPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <EmptyStateIcon type="document" />
                       <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
                         No Grades Available
                       </h3>
@@ -1124,7 +1125,7 @@ export default function StudentDetailPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center py-12">
-                      <FileText className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <EmptyStateIcon type="document_not_found" />
                       <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
                         No Transcript Available
                       </h3>

@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Alert } from '@/components/ui/Alert';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { 
   Puzzle,
   Sparkles,
@@ -272,7 +273,7 @@ export default function MarketplacePage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center py-12">
-                  <Puzzle className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="statistics" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary">
                     No plugins found matching your search.
                   </p>

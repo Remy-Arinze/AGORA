@@ -80,7 +80,7 @@ export function useSidebarConfig(): {
       const baseItems: NavItem[] = [
         { label: 'Overview', href: '/dashboard/school/overview', icon: LayoutDashboard, permission: PermissionResource.OVERVIEW },
         { label: 'Students', href: '/dashboard/school/students', icon: GraduationCap, permission: PermissionResource.STUDENTS },
-        { label: 'Staff', href: '/dashboard/school/teachers', icon: Users, permission: PermissionResource.STAFF },
+        { label: 'Staff', href: '/dashboard/school/staff', icon: Users, permission: PermissionResource.STAFF },
       ];
 
       // Add Faculties for tertiary (before Departments/Classes)

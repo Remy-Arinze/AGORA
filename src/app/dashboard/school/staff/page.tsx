@@ -19,6 +19,7 @@ import { PermissionAssignmentModal } from '@/components/permissions/PermissionAs
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { StaffImportModal } from '@/components/modals/StaffImportModal';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -135,7 +136,7 @@ export default function StaffPage() {
     }
     
     return (
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
+      <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
         {getInitials(firstName, lastName)}
       </div>
     );
@@ -234,7 +235,7 @@ export default function StaffPage() {
           </div>
           <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
             <div className="flex items-center gap-3">
-              <Link href="/dashboard/school/teachers/add">
+              <Link href="/dashboard/school/staff/add">
                 <Button variant="primary" size="sm" className="bg-[#f97316] hover:bg-[#ea580c] text-white">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Staff
@@ -387,6 +388,7 @@ export default function StaffPage() {
           {filteredStaff.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
+                <EmptyStateIcon type="person_outline" />
                 <p className="text-light-text-secondary dark:text-[#9ca3af]">
                   No staff found. Click &quot;Add Staff&quot; to add one.
                 </p>
@@ -403,7 +405,7 @@ export default function StaffPage() {
                   <FadeInUp key={staffMember.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                     <Card 
                       className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col"
-                      onClick={() => router.push(`/dashboard/school/teachers/${staffMember.id}`)}
+                      onClick={() => router.push(`/dashboard/school/staff/${staffMember.id}`)}
                     >
                       <CardContent className="p-4 flex-1 flex flex-col" style={{ padding: 'var(--card-padding)' }}>
                         <div className="flex items-start justify-between mb-4">
@@ -474,7 +476,7 @@ export default function StaffPage() {
                   <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                     <Card
                       className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
-                      onClick={() => router.push(`/dashboard/school/teachers/${staffMember.id}`)}
+                      onClick={() => router.push(`/dashboard/school/staff/${staffMember.id}`)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">

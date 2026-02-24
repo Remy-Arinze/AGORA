@@ -27,6 +27,7 @@ import {
   Edit,
   UserX,
 } from 'lucide-react';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   useGetMySchoolQuery,
   useGetClassByIdQuery,
@@ -312,8 +313,8 @@ export default function ClassDetailPage() {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               {/* Class Icon */}
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center shadow-lg flex-shrink-0">
-                <BookOpen className="h-6 w-6 text-white" />
+              <div className="w-12 h-12 rounded-lg bg-[var(--avatar-placeholder-bg)] flex items-center justify-center shadow-lg flex-shrink-0 text-[var(--avatar-placeholder-text)]">
+                <BookOpen className="h-6 w-6" />
               </div>
               
               {/* Class Info */}
@@ -346,7 +347,7 @@ export default function ClassDetailPage() {
                       teachersByRole.formTeachers.length > 0 ? (
                         <>
                           <Link 
-                            href={`/dashboard/school/teachers/${teachersByRole.formTeachers[0].teacherId}`}
+                            href={`/dashboard/school/staff/${teachersByRole.formTeachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {teachersByRole.formTeachers[0].firstName} {teachersByRole.formTeachers[0].lastName}
@@ -355,7 +356,7 @@ export default function ClassDetailPage() {
                       ) : classData.teachers.length > 0 ? (
                         <>
                           <Link 
-                            href={`/dashboard/school/teachers/${classData.teachers[0].teacherId}`}
+                            href={`/dashboard/school/staff/${classData.teachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {classData.teachers[0].firstName} {classData.teachers[0].lastName}
@@ -380,7 +381,7 @@ export default function ClassDetailPage() {
                       teachersByRole.formTeachers.length > 0 ? (
                         <>
                           <Link 
-                            href={`/dashboard/school/teachers/${teachersByRole.formTeachers[0].teacherId}`}
+                            href={`/dashboard/school/staff/${teachersByRole.formTeachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {teachersByRole.formTeachers[0].firstName} {teachersByRole.formTeachers[0].lastName}
@@ -494,9 +495,7 @@ export default function ClassDetailPage() {
               ) : students.length === 0 ? (
                 <Card>
                   <CardContent className="py-16 text-center">
-                    <div className="w-20 h-20 rounded-full bg-light-surface dark:bg-dark-surface flex items-center justify-center mx-auto mb-4">
-                      <Users className="h-10 w-10 text-light-text-muted dark:text-dark-text-muted" />
-                    </div>
+                    <EmptyStateIcon type="person_outline" />
                     <p className="font-medium text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-card-title)' }}>
                       No students enrolled yet
                     </p>
@@ -537,7 +536,7 @@ export default function ClassDetailPage() {
                             >
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                                  <div className="w-9 h-9 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center flex-shrink-0 text-[var(--avatar-placeholder-text)] font-medium" style={{ fontSize: 'var(--text-small)' }}>
                                     {student.profileImage ? (
                                       <img
                                         src={student.profileImage}
@@ -545,7 +544,7 @@ export default function ClassDetailPage() {
                                         className="w-9 h-9 rounded-full object-cover"
                                       />
                                     ) : (
-                                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                      <span>
                                         {student.firstName?.[0]}{student.lastName?.[0]}
                               </span>
                                     )}
@@ -632,7 +631,7 @@ export default function ClassDetailPage() {
                   </div>
                 ) : teachersByRole.formTeachers.length === 0 && timetableTeachers.length === 0 ? (
                   <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="person_outline" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No teachers assigned to this class yet.
                     </p>
@@ -684,7 +683,7 @@ export default function ClassDetailPage() {
                                   </div>
                                   <div>
                                     <Link 
-                                      href={`/dashboard/school/teachers/${teacher.teacherId}`}
+                                      href={`/dashboard/school/staff/${teacher.teacherId}`}
                                       className="font-medium text-light-text-primary dark:text-dark-text-primary hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                                     >
                                       {teacher.teacherName}
@@ -780,14 +779,14 @@ export default function ClassDetailPage() {
                   </div>
                 ) : !activeTerm ? (
                       <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No active term. Please set up an academic session first.
                     </p>
                   </div>
                 ) : timetable.length === 0 ? (
                   <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" />
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No timetable set up for this class yet.
                     </p>
@@ -902,7 +901,7 @@ export default function ClassDetailPage() {
                       </div>
                 ) : resources.length === 0 ? (
                   <div className="text-center py-12">
-                        <FileText className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                        <EmptyStateIcon type="document_not_found" />
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                           No resources uploaded yet.
                         </p>
@@ -979,7 +978,7 @@ export default function ClassDetailPage() {
                   />
                 ) : (
                   <div className="text-center py-12">
-                    <ListOrdered className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="document" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       {!activeTerm?.id 
                         ? 'No active term. Please set up an academic session first.'
@@ -1066,15 +1065,15 @@ function TeacherCard({
   return (
     <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-center justify-between p-3 border border-light-border dark:border-dark-border rounded-lg hover:bg-light-surface dark:hover:bg-dark-bg transition-colors">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+        <div className="w-9 h-9 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-medium" style={{ fontSize: 'var(--text-small)' }}>
+          <span>
             {teacher.firstName[0]}{teacher.lastName[0]}
           </span>
                         </div>
         <div>
           <div className="flex items-center gap-2">
             <Link
-              href={`/dashboard/school/teachers/${teacher.teacherId}`}
+              href={`/dashboard/school/staff/${teacher.teacherId}`}
               className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary hover:text-blue-600 dark:hover:text-blue-400"
             >
               {teacher.firstName} {teacher.lastName}

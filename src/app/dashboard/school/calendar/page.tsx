@@ -27,6 +27,7 @@ import {
 } from '@/lib/store/api/schoolAdminApi';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import toast from 'react-hot-toast';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -466,7 +467,7 @@ export default function CalendarPage() {
             <CardContent>
               {upcomingEvents.length === 0 ? (
                 <div className="text-center py-12">
-                  <CalendarIcon className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="statistics" />
                   <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                     No upcoming events
                   </p>

@@ -20,7 +20,8 @@ import toast from 'react-hot-toast';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
 import { useAuth } from '@/hooks/useAuth';
-import { isPrincipalRole } from '@/lib/constants/roles';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
+import { isPrincipalRole, isSchoolOwnerRole } from '@/lib/constants/roles';
 
 // Helper function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -43,6 +44,59 @@ const getChangeType = (change: number): 'positive' | 'negative' | 'neutral' => {
   return 'neutral';
 };
 
+function RecentStudentRow({ student }: { student: { id: string; name: string; profileImage?: string | null; classLevel: string; admissionNumber: string; status: string } }) {
+  const [imageError, setImageError] = useState(false);
+  const initials = (student.name || '')
+    .trim()
+    .split(/\s+/)
+    .map((part: string) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || '?';
+  const showImage = student.profileImage && student.profileImage.trim() !== '' && !imageError;
+
+  return (
+    <Link href={`/dashboard/school/students/${student.id}`}>
+      <FadeInUp
+        from={{ opacity: 0, y: 10 }}
+        to={{ opacity: 1, y: 0 }}
+        className="p-4 bg-transparent rounded-lg hover:bg-gray-100 dark:hover:bg-[var(--dark-hover)] transition-colors cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-dark-border flex items-center gap-4"
+      >
+        <div className="w-10 h-10 rounded-full flex-shrink-0 border-2 border-[#1a1f2e] dark:border-[#1a1f2e] overflow-hidden bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold" style={{ fontSize: 'var(--text-body)' }}>
+          {showImage ? (
+            <img
+              src={student.profileImage!}
+              alt={student.name}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            initials
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
+            {student.name}
+          </h4>
+          <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-body)' }}>
+            {student.classLevel} • {student.admissionNumber}
+          </p>
+        </div>
+        <span
+          className={`px-3 py-1 rounded-full font-medium flex-shrink-0 ${
+            student.status === 'active'
+              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+          }`}
+          style={{ fontSize: 'var(--text-small)' }}
+        >
+          {student.status}
+        </span>
+      </FadeInUp>
+    </Link>
+  );
+}
+
 export default function AdminOverviewPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -60,26 +114,23 @@ export default function AdminOverviewPage() {
   const school = schoolResponse?.data;
   
   // Get user's name for welcome message
-  // If principal, use the principal's name from school admins
-  // Otherwise, use the logged-in user's first name
+  // If school_owner, show school name; if other principal, use principal's name; otherwise user's first name
   const userName = useMemo(() => {
-    // Check if current admin is a principal
-    const isPrincipal = isPrincipalRole(school?.currentAdmin?.role);
-    
-    if (isPrincipal && school?.admins && school?.currentAdmin?.id) {
-      // Find the principal from the admins array (match by ID to ensure we get the correct one)
+    const role = school?.currentAdmin?.role;
+    if (isSchoolOwnerRole(role) && school?.name) {
+      return school.name;
+    }
+    if (isPrincipalRole(role) && school?.admins && school?.currentAdmin?.id) {
       const principal = school.admins.find(
         (admin) => admin.id === school.currentAdmin?.id
       );
       if (principal) {
-        // Construct name from firstName and lastName
         const principalName = `${principal.firstName} ${principal.lastName}`.trim();
         return principalName || principal.firstName || 'there';
       }
     }
-    // Fallback to user's first name
     return user?.firstName || 'there';
-  }, [school?.currentAdmin?.role, school?.currentAdmin?.id, school?.admins, user?.firstName]);
+  }, [school?.currentAdmin?.role, school?.currentAdmin?.id, school?.admins, school?.name, user?.firstName]);
   const schoolId = school?.id;
   const [uploadSchoolLogo, { isLoading: isUploadingLogo }] = useUploadSchoolLogoMutation();
   const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
@@ -541,43 +592,13 @@ export default function AdminOverviewPage() {
               <CardContent>
                 {recentStudents.length === 0 ? (
                   <div className="text-center py-8 text-light-text-secondary dark:text-dark-text-secondary">
-                    <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <EmptyStateIcon type="person_outline" />
                     <p>No recent students found</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {recentStudents.map((student: any) => (
-                      <Link
-                        key={student.id}
-                        href={`/dashboard/school/students/${student.id}`}
-                      >
-                        <FadeInUp
-                          from={{ opacity: 0, y: 10 }}
-                          to={{ opacity: 1, y: 0 }}
-                          className="p-4 bg-transparent rounded-lg hover:bg-gray-100 dark:hover:bg-[var(--dark-hover)] transition-colors cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-dark-border"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
-                                {student.name}
-                              </h4>
-                              <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-body)' }}>
-                                {student.classLevel} • {student.admissionNumber}
-                              </p>
-                            </div>
-                            <span
-                              className={`px-3 py-1 rounded-full font-medium ${
-                                student.status === 'active'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                              }`}
-                              style={{ fontSize: 'var(--text-small)' }}
-                            >
-                              {student.status}
-                            </span>
-                          </div>
-                        </FadeInUp>
-                      </Link>
+                      <RecentStudentRow key={student.id} student={student} />
                     ))}
                   </div>
                 )}

@@ -10,6 +10,7 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { Alert } from '@/components/ui/Alert';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { BookOpen, Plus, Users, GraduationCap, Calendar, Loader2, Grid3x3, List, Edit, Trash2 } from 'lucide-react';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { AutoGenerateButton } from '@/components/ui/AutoGenerateButton';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
@@ -291,7 +292,7 @@ export default function ClassesPage() {
         {filteredClasses.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+              <EmptyStateIcon type="document" />
               <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                 {searchQuery
                   ? `No ${terminology.courses.toLowerCase()} found matching your search.`
@@ -324,7 +325,7 @@ export default function ClassesPage() {
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-bold text-sm border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm">
+                            <div className="w-10 h-10 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-bold text-sm border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm">
                               {classItem.name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase()}
                             </div>
                           </div>
@@ -430,7 +431,7 @@ export default function ClassesPage() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-bold text-sm border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
+                          <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-bold text-sm border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
                             {classItem.name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase()}
                           </div>
                           <div className="flex-1">

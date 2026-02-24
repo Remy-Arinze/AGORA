@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { useCreateGradeMutation, useGetTeacherSubjectsForClassQuery } from '@/lib/store/api/schoolAdminApi';
@@ -252,14 +253,12 @@ export function GradeEntryModal({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-light-text-primary dark:text-dark-text-primary mb-1">
-              Assessment Date (Optional)
-            </label>
-            <Input
-              type="date"
+            <DatePicker
+              label="Assessment Date (Optional)"
               value={formData.assessmentDate || ''}
-              onChange={(e) => setFormData({ ...formData, assessmentDate: e.target.value || undefined })}
+              onChange={(value) => setFormData({ ...formData, assessmentDate: value || undefined })}
               max={new Date().toISOString().split('T')[0]}
+              placeholder="Select date"
             />
           </div>
 

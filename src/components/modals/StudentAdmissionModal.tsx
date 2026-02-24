@@ -12,6 +12,8 @@ import { useSchoolType } from '@/hooks/useSchoolType';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import { PhoneInput } from '@/components/ui/PhoneInput';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 interface StudentAdmissionModalProps {
   isOpen: boolean;
@@ -119,6 +121,8 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
     email: '',
     phone: '',
     address: '',
+    nationality: '',
+    state: '',
     classLevel: '',
     classArmId: '', 
     // Parent/Guardian Information
@@ -152,6 +156,8 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
         email: '',
         phone: '',
         address: '',
+        nationality: '',
+        state: '',
         classLevel: '',
         classArmId: '',
         parentName: '',
@@ -205,6 +211,8 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
       parentEmail: formData.parentEmail || undefined,
       middleName: formData.middleName || undefined,
       address: formData.address || undefined,
+      nationality: formData.nationality || undefined,
+      state: formData.state || undefined,
       bloodGroup: formData.bloodGroup || undefined,
       allergies: formData.allergies || undefined,
       medications: formData.medications || undefined,
@@ -248,11 +256,14 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
       formData.lastName?.trim() &&
       formData.dateOfBirth &&
       formData.gender &&
+      formData.email?.trim() &&
       formData.phone?.trim() &&
       formData.classLevel &&
       formData.parentName?.trim() &&
       formData.parentPhone?.trim() &&
-      formData.parentRelationship?.trim()
+      formData.parentRelationship?.trim() &&
+      formData.nationality?.trim() &&
+      formData.state?.trim()
     );
   };
 
@@ -277,24 +288,26 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
     try {
       const sanitized = validation.sanitizedData;
       const studentData: AddStudentDto = {
-        firstName: sanitized.firstName,
-        middleName: sanitized.middleName,
-        lastName: sanitized.lastName,
+        firstName: capitalizeWords(sanitized.firstName),
+        middleName: sanitized.middleName ? capitalizeWords(sanitized.middleName) : undefined,
+        lastName: capitalizeWords(sanitized.lastName),
         dateOfBirth: sanitized.dateOfBirth,
         email: sanitized.email,
         phone: sanitized.phone,
         address: sanitized.address,
+        nationality: sanitized.nationality,
+        state: sanitized.state,
         classLevel: sanitized.classArmId ? undefined : sanitized.classLevel,
         classArmId: sanitized.classArmId,
         academicYear: sanitized.academicYear,
-        parentName: sanitized.parentName,
+        parentName: capitalizeWords(sanitized.parentName),
         parentPhone: sanitized.parentPhone,
         parentEmail: sanitized.parentEmail,
         parentRelationship: sanitized.parentRelationship,
         bloodGroup: sanitized.bloodGroup,
         allergies: sanitized.allergies,
         medications: sanitized.medications,
-        emergencyContact: sanitized.emergencyContact,
+        emergencyContact: sanitized.emergencyContact ? capitalizeWords(sanitized.emergencyContact) : undefined,
         emergencyContactPhone: sanitized.emergencyContactPhone,
         medicalNotes: sanitized.medicalNotes,
       };
@@ -343,6 +356,8 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
           parentRelationship: 'Relationship',
           emergencyContact: 'Emergency Contact',
           emergencyContactPhone: 'Emergency Contact Phone',
+          nationality: 'Nationality',
+          state: 'State',
         };
         
         error.data.forEach((err: any) => {
@@ -438,26 +453,26 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
       <form onSubmit={handleSubmitApplication} className="space-y-6">
         {/* Personal Information */}
         <div>
-          <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-4 flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
-            <User className="h-5 w-5" />
-            Personal Information
-          </p>
-          {/* Profile Image Upload */}
-          <div className="mb-6">
-            <ImageUpload
-              label="Profile Image (Optional)"
-              value={profileImage}
-              onChange={setProfileImage}
-              onUpload={async (file) => {
-                setSelectedImageFile(file);
-                return URL.createObjectURL(file);
-              }}
-              helperText="Upload a passport-sized image (JPG, PNG, GIF, WEBP up to 5MB). Cropping will be applied."
-              disabled={isLoading || isAdmitting}
-              enableCrop={true}
-              aspectRatio={1}
-              cropShape="rect"
-            />
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
+              <User className="h-5 w-5" />
+              Personal Information
+            </p>
+            <div className="flex-shrink-0">
+              <ImageUpload
+                value={profileImage}
+                onChange={setProfileImage}
+                onUpload={async (file) => {
+                  setSelectedImageFile(file);
+                  return URL.createObjectURL(file);
+                }}
+                disabled={isLoading || isAdmitting}
+                enableCrop={true}
+                aspectRatio={1}
+                cropShape="rect"
+                compact
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
@@ -480,24 +495,26 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
               required
               error={errors.lastName}
             />
-            <Input
+            <DatePicker
               label="Date of Birth *"
-              type="date"
               value={formData.dateOfBirth}
-              onChange={(e) => handleDateOfBirthChange(e.target.value)}
+              onChange={(value) => handleDateOfBirthChange(value)}
               required
               error={errors.dateOfBirth}
+              disabled={isLoading || isAdmitting}
+              placeholder="Select date of birth"
             />
             <Input
               label="Age"
-              value={formData.age}
+              value={formData.dateOfBirth ? calculateAge(formData.dateOfBirth) : formData.age}
               readOnly
+              tabIndex={-1}
               helperText="Calculated from date of birth"
             />
             <div>
-              <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                Gender *
-              </label>
+                <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
+                  Gender <span className="text-red-500 ml-1">*</span>
+                </label>
               <select
                 value={formData.gender}
                 onChange={(e) => {
@@ -518,11 +535,11 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
                 <option value="female">Female</option>
               </select>
               {errors.gender && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.gender}</p>
+                <p className="text-red-600 dark:text-red-400 mt-1" style={{ fontSize: 'var(--text-small)' }}>{errors.gender}</p>
               )}
             </div>
             <Input
-              label="Email"
+              label="Email *"
               type="email"
               value={formData.email}
               onChange={(e) => {
@@ -531,26 +548,48 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
                   setErrors({ ...errors, email: undefined });
                 }
               }}
+              required
               error={errors.email}
             />
-            <Input
+            <PhoneInput
               label="Phone *"
-              type="tel"
               value={formData.phone}
-              onChange={(e) => {
-                setFormData({ ...formData, phone: e.target.value });
-                if (errors.phone) {
-                  setErrors({ ...errors, phone: undefined });
-                }
+              onChange={(e164) => {
+                setFormData({ ...formData, phone: e164 });
+                if (errors.phone) setErrors({ ...errors, phone: undefined });
               }}
               required
               error={errors.phone}
+              disabled={isLoading || isAdmitting}
+              defaultCountryCode="NG"
             />
             <Input
               label="Address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               className="md:col-span-2"
+            />
+            <Input
+              label="Nationality *"
+              value={formData.nationality}
+              onChange={(e) => {
+                setFormData({ ...formData, nationality: e.target.value });
+                if (errors.nationality) setErrors({ ...errors, nationality: undefined });
+              }}
+              required
+              error={errors.nationality}
+              placeholder="e.g. Nigerian, Ghanaian"
+            />
+            <Input
+              label="State *"
+              value={formData.state}
+              onChange={(e) => {
+                setFormData({ ...formData, state: e.target.value });
+                if (errors.state) setErrors({ ...errors, state: undefined });
+              }}
+              required
+              error={errors.state}
+              placeholder="e.g. Lagos, Abuja"
             />
           </div>
         </div>
@@ -565,14 +604,14 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
             {schoolUsesClassArms && isPrimaryOrSecondary ? (
               // ClassArm selector for PRIMARY/SECONDARY schools using ClassArms
               <div>
-                <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                   ClassArm *
                 </label>
                 {isLoadingClassArms || isFetchingClassArms || isLoadingClassLevels || isFetchingClassLevels ? (
                   <div className="w-full px-3 py-2 border border-light-border dark:border-dark-border rounded-md bg-light-card dark:bg-dark-surface">
-                    <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary">
+                    <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Loading class arms...</span>
+                      <span>Loading class arms...</span>
                     </div>
                   </div>
                 ) : !hasClassArms && classArmsLoaded && !hasClassLevels && classLevelsLoaded ? (
@@ -646,7 +685,7 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
             ) : (
               // Class selector for TERTIARY or schools without ClassArms (backward compatibility)
               <div>
-                <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                   Class Level *
                 </label>
                 {isLoadingClasses || isFetchingClasses ? (
@@ -739,18 +778,17 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
               required
               error={errors.parentRelationship}
             />
-            <Input
+            <PhoneInput
               label="Parent Phone *"
-              type="tel"
               value={formData.parentPhone}
-              onChange={(e) => {
-                setFormData({ ...formData, parentPhone: e.target.value });
-                if (errors.parentPhone) {
-                  setErrors({ ...errors, parentPhone: undefined });
-                }
+              onChange={(e164) => {
+                setFormData({ ...formData, parentPhone: e164 });
+                if (errors.parentPhone) setErrors({ ...errors, parentPhone: undefined });
               }}
               required
               error={errors.parentPhone}
+              disabled={isLoading || isAdmitting}
+              defaultCountryCode="NG"
             />
             <Input
               label="Parent Email"
@@ -775,7 +813,7 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+              <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                 Blood Group
               </label>
               <select
@@ -820,20 +858,19 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
               }}
               error={errors.emergencyContact}
             />
-            <Input
+            <PhoneInput
               label="Emergency Contact Phone"
-              type="tel"
               value={formData.emergencyContactPhone}
-              onChange={(e) => {
-                setFormData({ ...formData, emergencyContactPhone: e.target.value });
-                if (errors.emergencyContactPhone) {
-                  setErrors({ ...errors, emergencyContactPhone: undefined });
-                }
+              onChange={(e164) => {
+                setFormData({ ...formData, emergencyContactPhone: e164 });
+                if (errors.emergencyContactPhone) setErrors({ ...errors, emergencyContactPhone: undefined });
               }}
               error={errors.emergencyContactPhone}
+              disabled={isLoading || isAdmitting}
+              defaultCountryCode="NG"
             />
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+              <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                 Medical Notes
               </label>
               <textarea

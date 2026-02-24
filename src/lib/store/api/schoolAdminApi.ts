@@ -29,6 +29,7 @@ export interface WeeklyActivityData {
 export interface RecentStudent {
   id: string;
   name: string;
+  profileImage?: string | null;
   classLevel: string;
   admissionNumber: string;
   status: 'active' | 'inactive';
@@ -541,9 +542,11 @@ export interface AddStudentDto {
   middleName?: string;
   lastName: string;
   dateOfBirth: string;
-  email?: string;
+  email: string;
   phone: string;
   address?: string;
+  nationality: string;
+  state: string;
   classLevel?: string; // Optional if classArmId is provided
   classArmId?: string; // Optional for PRIMARY/SECONDARY schools using ClassArms
   academicYear?: string;
@@ -564,6 +567,8 @@ export interface UpdateStudentDto {
   middleName?: string;
   lastName?: string;
   phone?: string;
+  nationality?: string;
+  state?: string;
   bloodGroup?: string;
   allergies?: string;
   medications?: string;
@@ -581,6 +586,8 @@ export interface Student {
   dateOfBirth: string;
   profileLocked: boolean;
   profileImage: string | null;
+  nationality?: string | null;
+  state?: string | null;
   createdAt: string;
   updatedAt: string;
   healthInfo?: {
@@ -2294,6 +2301,27 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const queryString = queryParams.toString();
         return `/schools/${schoolId}/students${queryString ? `?${queryString}` : ''}`;
       },
+      transformResponse: (
+        response: ResponseDto<{
+          data?: StudentWithEnrollment[];
+          items?: StudentWithEnrollment[];
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          hasNext?: boolean;
+          hasPrev?: boolean;
+        }>
+      ): ResponseDto<PaginatedResponse<StudentWithEnrollment>> => ({
+        ...response,
+        data: {
+          items: response.data?.data ?? response.data?.items ?? [],
+          total: response.data?.total ?? 0,
+          page: response.data?.page ?? 1,
+          limit: response.data?.limit ?? 10,
+          totalPages: response.data?.totalPages ?? 0,
+        },
+      }),
       providesTags: ['Student'],
     }),
     // ============================================
@@ -2635,6 +2663,23 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
+      async onQueryStarted({ schoolId, id }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const updated = data?.data;
+          if (updated && typeof updated === 'object') {
+            dispatch(
+              apiSlice.util.updateQueryData('getStudentById', { schoolId, id }, (draft) => {
+                if (draft?.data) {
+                  Object.assign(draft.data, updated);
+                }
+              })
+            );
+          }
+        } catch {
+          // Invalidation will refetch on error
+        }
+      },
       invalidatesTags: (result, error, { id }) => [
         { type: 'Student' as const, id },
         { type: 'Student' as const, id: 'LIST' },
@@ -2685,7 +2730,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         url: `/schools/${schoolId}/students/${studentId}/resend-password-reset`,
         method: 'POST',
       }),
-      invalidatesTags: (result, error, { studentId }) => [{ type: 'School' as const, id: studentId }],
+      invalidatesTags: (result, error, { studentId }) => [
+        { type: 'Student' as const, id: studentId },
+        { type: 'Student' as const, id: 'LIST' },
+        'Student',
+      ],
     }),
     // Upload student profile image
     uploadStudentImage: builder.mutation<ResponseDto<any>, { schoolId: string; studentId: string; file: File }>({
@@ -2726,6 +2775,23 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
           return { data };
         } catch (error: any) {
           return { error: { status: 'FETCH_ERROR', error: error.message } };
+        }
+      },
+      async onQueryStarted({ schoolId, studentId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const updatedStudent = data?.data;
+          if (updatedStudent && typeof updatedStudent === 'object') {
+            dispatch(
+              apiSlice.util.updateQueryData('getStudentById', { schoolId, id: studentId }, (draft) => {
+                if (draft?.data) {
+                  Object.assign(draft.data, updatedStudent);
+                }
+              })
+            );
+          }
+        } catch {
+          // Invalidation will still trigger refetch on error
         }
       },
       invalidatesTags: (result, error, { studentId }) => [
@@ -2936,6 +3002,58 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const queryString = queryParams.toString();
         return {
           url: `/schools/${schoolId}/transfers/incoming${queryString ? `?${queryString}` : ''}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['School'],
+    }),
+
+    getRecentlyAcceptedTransfers: builder.query<
+      ResponseDto<{
+        items: Array<{
+          id: string;
+          completedAt: string | null;
+          student: {
+            id: string;
+            uid: string;
+            firstName: string;
+            middleName?: string | null;
+            lastName: string;
+            dateOfBirth: string;
+            profileImage?: string | null;
+            email?: string | null;
+            phone?: string | null;
+          };
+          fromSchool: { id: string; name: string };
+          targetEnrollment: {
+            id: string;
+            classLevel: string;
+            academicYear: string;
+            classArmName: string | null;
+          } | null;
+          sourceEnrollment: {
+            classLevel: string;
+            academicYear: string;
+          } | null;
+          performanceSummary: { gradeCount: number; averagePercentage: number | null };
+        }>;
+        meta: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          hasNextPage: boolean;
+          hasPrevPage: boolean;
+        };
+      }>,
+      { schoolId: string; page?: number; limit?: number }
+    >({
+      query: ({ schoolId, page = 1, limit = 20 }) => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('page', page.toString());
+        queryParams.append('limit', limit.toString());
+        return {
+          url: `/schools/${schoolId}/transfers/recently-accepted?${queryParams.toString()}`,
           method: 'GET',
         };
       },
@@ -3159,6 +3277,7 @@ export const {
   useRevokeTacMutation,
   useInitiateTransferMutation,
   useGetIncomingTransfersQuery,
+  useGetRecentlyAcceptedTransfersQuery,
   useCompleteTransferMutation,
   useRejectTransferMutation,
 } = schoolAdminApi;

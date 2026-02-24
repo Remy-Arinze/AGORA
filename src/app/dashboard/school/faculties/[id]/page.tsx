@@ -11,6 +11,7 @@ import { EntityAvatar } from '@/components/ui/EntityAvatar';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   Library,
   Users,
@@ -112,7 +113,7 @@ export default function FacultyDetailPage() {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
         <div className="text-center py-12">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <EmptyStateIcon type="document_not_found" />
           <h2 className="text-xl font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
             Faculty Not Found
           </h2>
@@ -234,7 +235,7 @@ export default function FacultyDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-xl font-bold">
+                  <div className="h-16 w-16 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] text-xl font-bold">
                     {faculty.deanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                   </div>
                   <div>
@@ -285,7 +286,7 @@ export default function FacultyDetailPage() {
                 </div>
               ) : departments.length === 0 ? (
                 <div className="text-center py-12">
-                  <Building2 className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="location" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                     No departments in this faculty yet.
                   </p>

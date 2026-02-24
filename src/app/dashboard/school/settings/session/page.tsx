@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Alert } from '@/components/ui/Alert';
 import { SessionWizardInfoModal } from '@/components/modals';
 import { FadeInUp } from '@/components/ui/FadeInUp';
@@ -665,24 +666,20 @@ export default function SessionWizardPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    Start Date
-                  </label>
-                  <Input
-                    type="date"
+                  <DatePicker
+                    label="Start Date"
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={setStartDate}
+                    placeholder="Select start date"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    End Date
-                  </label>
-                  <Input
-                    type="date"
+                  <DatePicker
+                    label="End Date"
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    onChange={setEndDate}
                     min={startDate || undefined}
+                    placeholder="Select end date"
                   />
                   {sessionDateError && (
                     <Alert variant="error" className="mt-2">
@@ -700,23 +697,19 @@ export default function SessionWizardPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    Half-Term Start (Optional)
-                  </label>
-                  <Input
-                    type="date"
+                  <DatePicker
+                    label="Half-Term Start (Optional)"
                     value={halfTermStart}
-                    onChange={(e) => setHalfTermStart(e.target.value)}
+                    onChange={setHalfTermStart}
+                    placeholder="Select date"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    Half-Term End (Optional)
-                  </label>
-                  <Input
-                    type="date"
+                  <DatePicker
+                    label="Half-Term End (Optional)"
                     value={halfTermEnd}
-                    onChange={(e) => setHalfTermEnd(e.target.value)}
+                    onChange={setHalfTermEnd}
+                    placeholder="Select date"
                   />
                 </div>
               </div>

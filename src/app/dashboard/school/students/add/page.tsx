@@ -22,6 +22,7 @@ import { studentAdmissionFormSchema } from '@/lib/validations/school-forms';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 export default function AddStudentPage() {
   const router = useRouter();
@@ -300,10 +301,10 @@ export default function AddStudentPage() {
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <BackButton fallbackUrl="/dashboard/school/students" className="mb-4" />
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+          <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             Add New Student
           </h1>
-          <p className="text-light-text-secondary dark:text-dark-text-secondary">
+          <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
             Register a new student in your school
           </p>
         </FadeInUp>
@@ -311,20 +312,20 @@ export default function AddStudentPage() {
         {/* Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+            <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
               Student Information
             </CardTitle>
           </CardHeader>
           <CardContent>
             {submitError && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400" style={{ fontSize: 'var(--text-small)' }}>
                 {submitError}
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information */}
               <div>
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
+                <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -379,13 +380,11 @@ export default function AddStudentPage() {
                     error={errors.phone}
                     required
                   />
-                  <Input
+                  <DatePicker
                     label="Date of Birth *"
-                    name="dateOfBirth"
-                    type="date"
                     value={formData.dateOfBirth}
-                    onChange={(e) => {
-                      setFormData({ ...formData, dateOfBirth: e.target.value });
+                    onChange={(value) => {
+                      setFormData({ ...formData, dateOfBirth: value });
                       if (errors.dateOfBirth) setErrors({ ...errors, dateOfBirth: '' });
                     }}
                     error={errors.dateOfBirth}
@@ -402,19 +401,19 @@ export default function AddStudentPage() {
 
               {/* Academic Information */}
               <div>
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
+                <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                   Academic Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {schoolUsesClassArms && isPrimaryOrSecondary ? (
                     // ClassArm selector for PRIMARY/SECONDARY schools using ClassArms
                     <div>
-                      <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                      <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                         ClassArm *
                       </label>
                       {isLoadingClassArms || isFetchingClassArms || isLoadingClassLevels || isFetchingClassLevels ? (
                         <div className="w-full px-4 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-card dark:bg-dark-surface">
-                          <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary">
+                          <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>Loading class arms...</span>
                           </div>
@@ -422,7 +421,7 @@ export default function AddStudentPage() {
                       ) : !hasClassArms && classArmsLoaded && !hasClassLevels && classLevelsLoaded ? (
                         <div className="space-y-2">
                           <div className="w-full px-4 py-3 border border-yellow-500/50 dark:border-yellow-500/30 rounded-lg bg-yellow-50/10 dark:bg-yellow-900/10">
-                            <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-2">
+                            <p className="text-yellow-700 dark:text-yellow-400 mb-2" style={{ fontSize: 'var(--text-body)' }}>
                               No class arms found. You need to create classes first.
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -478,10 +477,10 @@ export default function AddStudentPage() {
                         </select>
                       )}
                       {errors.classArmId && (
-                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.classArmId}</p>
+                        <p className="mt-1 text-red-600 dark:text-red-400" style={{ fontSize: 'var(--text-small)' }}>{errors.classArmId}</p>
                       )}
                       {!isLoadingClassArms && !isFetchingClassArms && hasClassArms && (
-                        <p className="mt-1 text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                        <p className="mt-1 text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
                           Select the specific ClassArm (e.g., JSS 1 Gold, JSS 1 Blue)
                         </p>
                       )}
@@ -489,12 +488,12 @@ export default function AddStudentPage() {
                   ) : (
                     // Class selector for TERTIARY or schools without ClassArms (backward compatibility)
                     <div>
-                      <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                      <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                         Class Level *
                       </label>
                       {isLoadingClasses || isFetchingClasses ? (
                         <div className="w-full px-4 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-card dark:bg-dark-surface">
-                          <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary">
+                          <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>Loading classes...</span>
                           </div>
@@ -502,7 +501,7 @@ export default function AddStudentPage() {
                       ) : !hasClasses && classesLoaded ? (
                         <div className="space-y-2">
                           <div className="w-full px-4 py-3 border border-yellow-500/50 dark:border-yellow-500/30 rounded-lg bg-yellow-50/10 dark:bg-yellow-900/10">
-                            <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-2">
+                            <p className="text-yellow-700 dark:text-yellow-400 mb-2" style={{ fontSize: 'var(--text-body)' }}>
                               No classes found. You need to create classes before adding students.
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -543,7 +542,7 @@ export default function AddStudentPage() {
                         </select>
                       )}
                       {errors.classLevel && (
-                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.classLevel}</p>
+                        <p className="mt-1 text-red-600 dark:text-red-400" style={{ fontSize: 'var(--text-small)' }}>{errors.classLevel}</p>
                       )}
                     </div>
                   )}
@@ -552,7 +551,7 @@ export default function AddStudentPage() {
 
               {/* Parent/Guardian Information */}
               <div>
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
+                <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                   Parent/Guardian Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -591,7 +590,7 @@ export default function AddStudentPage() {
                     error={errors.parentEmail}
                   />
                   <div>
-                    <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                       Relationship *
                     </label>
                     <select
@@ -615,7 +614,7 @@ export default function AddStudentPage() {
                       <option value="Other">Other</option>
                     </select>
                     {errors.parentRelationship && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.parentRelationship}</p>
+                      <p className="mt-1 text-red-600 dark:text-red-400" style={{ fontSize: 'var(--text-small)' }}>{errors.parentRelationship}</p>
                     )}
                   </div>
                 </div>
@@ -623,7 +622,7 @@ export default function AddStudentPage() {
 
               {/* Health Information */}
               <div>
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
+                <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                   Health Information (Optional)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -664,7 +663,7 @@ export default function AddStudentPage() {
                     placeholder="Must be at least 10 characters if provided"
                   />
                   <div>
-                    <label className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
                       Medical Notes
                     </label>
                     <textarea
@@ -673,6 +672,7 @@ export default function AddStudentPage() {
                       onChange={(e) => setFormData({ ...formData, medicalNotes: e.target.value })}
                       rows={3}
                       className="w-full px-4 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                      style={{ fontSize: 'var(--text-body)' }}
                     />
                   </div>
                 </div>

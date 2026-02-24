@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import { PhoneInput } from '@/components/ui/PhoneInput';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { UserPlus, Users } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
@@ -64,6 +66,9 @@ export default function AddStaffPage() {
     lastName: '',
     email: '',
     phone: '',
+    dateOfBirth: '',
+    nationality: '',
+    state: '',
     subject: '',
     subjectIds: [] as string[], // For SECONDARY schools - multiple subjects
     employeeId: '',
@@ -244,7 +249,7 @@ export default function AddStaffPage() {
           }
         }
 
-        router.push('/dashboard/school/teachers');
+        router.push('/dashboard/school/staff');
       } else {
         // Check if the role is a Principal role - they don't need custom permissions
         const isPrincipalRoleCheck = isPrincipalRole(adminRole);
@@ -290,7 +295,7 @@ export default function AddStaffPage() {
           }
         }
 
-        router.push('/dashboard/school/teachers');
+        router.push('/dashboard/school/staff');
       }
     } catch (error: any) {
       // Error handling is done in the hooks (toast notifications)
@@ -311,18 +316,18 @@ export default function AddStaffPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full max-w-4xl mx-auto">
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <BackButton fallbackUrl="/dashboard/school/teachers" className="mb-4" />
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+          <BackButton fallbackUrl="/dashboard/school/staff" className="mb-4" />
+          <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             Add New {terminology.staffSingular}
           </h1>
-          <p className="text-light-text-secondary dark:text-dark-text-secondary">
+          <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
             Register a new {terminology.staffSingular.toLowerCase()} in your school
           </p>
         </FadeInUp>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+            <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
               Staff Information
             </CardTitle>
           </CardHeader>
@@ -336,7 +341,7 @@ export default function AddStaffPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Staff Type Selection */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                <label className="block font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
                   Staff Type *
                 </label>
                 <div className="grid grid-cols-2 gap-4">
@@ -370,7 +375,7 @@ export default function AddStaffPage() {
                         >
                           {terminology.staffSingular}
                         </p>
-                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                        <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
                           Teaching staff
                         </p>
                       </div>
@@ -408,7 +413,7 @@ export default function AddStaffPage() {
                         >
                           Administrator
                         </p>
-                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                        <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
                           Admin staff (VP, Bursar, etc.)
                         </p>
                       </div>
@@ -417,58 +422,31 @@ export default function AddStaffPage() {
                 </div>
               </div>
 
-              {/* Profile Image - moved above role input */}
-              <div className="pt-4 border-t border-light-border dark:border-dark-border">
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                  Profile Image
-                </h3>
-                <ImageUpload
-                  value={formData.profileImage}
-                  onChange={(url) => {
-                    setFormData({ ...formData, profileImage: url });
-                  }}
-                  onUpload={async (file) => {
-                    setSelectedImageFile(file);
-                    // Return a temporary URL for preview
-                    return URL.createObjectURL(file);
-                  }}
-                  helperText="Upload a passport-sized profile image (optional). Image will be cropped to square format."
-                  maxSizeMB={5}
-                />
-              </div>
-
-              {/* Role Input for Admin */}
-              {staffType === 'admin' && (
-                <div className="space-y-3 pt-4 border-t border-light-border dark:border-dark-border">
-                  <Input
-                    label="Role *"
-                    name="adminRole"
-                    value={adminRole}
-                    onChange={(e) => {
-                      setAdminRole(e.target.value);
-                      if (errors.adminRole) {
-                        setErrors({ ...errors, adminRole: undefined });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const capitalized = capitalizeWords(e.target.value);
-                      if (capitalized !== e.target.value) {
-                        setAdminRole(capitalized);
-                      }
-                    }}
-                    placeholder="e.g., Administrator, Vice Principal, Bursar, Guidance Counselor"
-                    required
-                    helperText="Enter the administrative role (e.g., Vice Principal, Bursar, Administrator, etc.)"
-                    error={errors.adminRole}
-                  />
-                </div>
-              )}
-
               {/* Personal Information */}
               <div className="pt-4 border-t border-light-border dark:border-dark-border">
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                  Personal Information
-                </h3>
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-section-title)' }}>
+                    Personal Information
+                  </h3>
+                  <div className="flex-shrink-0">
+                    <ImageUpload
+                      value={formData.profileImage}
+                      onChange={(url) => {
+                        setFormData({ ...formData, profileImage: url });
+                      }}
+                      onUpload={async (file) => {
+                        setSelectedImageFile(file);
+                        return URL.createObjectURL(file);
+                      }}
+                      disabled={isLoadingState}
+                      enableCrop={true}
+                      aspectRatio={1}
+                      cropShape="rect"
+                      compact
+                      maxSizeMB={5}
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     label="First Name *"
@@ -522,20 +500,35 @@ export default function AddStaffPage() {
                     required
                     error={errors.email}
                   />
-                  <Input
+                  <PhoneInput
                     label="Phone *"
-                    name="phone"
-                    type="tel"
                     value={formData.phone}
-                    onChange={(e) => {
-                      setFormData({ ...formData, phone: e.target.value });
-                      if (errors.phone) {
-                        setErrors({ ...errors, phone: undefined });
-                      }
+                    onChange={(e164) => {
+                      setFormData({ ...formData, phone: e164 });
+                      if (errors.phone) setErrors({ ...errors, phone: undefined });
                     }}
                     required
-                    placeholder="+234 801 234 5678"
                     error={errors.phone}
+                    disabled={isLoadingState}
+                    defaultCountryCode="NG"
+                  />
+                  <Input
+                    label="Nationality"
+                    name="nationality"
+                    value={formData.nationality}
+                    onChange={(e) => {
+                      setFormData({ ...formData, nationality: e.target.value });
+                    }}
+                    placeholder="e.g. Nigerian, Ghanaian"
+                  />
+                  <Input
+                    label="State"
+                    name="state"
+                    value={formData.state}
+                    onChange={(e) => {
+                      setFormData({ ...formData, state: e.target.value });
+                    }}
+                    placeholder="e.g. Lagos, Abuja"
                   />
                   <Input
                     label="Employee ID"
@@ -551,13 +544,47 @@ export default function AddStaffPage() {
                     helperText="Optional internal identifier for this staff member"
                     error={errors.employeeId}
                   />
+                  <DatePicker
+                    label="Date of Birth"
+                    value={formData.dateOfBirth}
+                    onChange={(value) => setFormData({ ...formData, dateOfBirth: value })}
+                    disabled={isLoadingState}
+                    placeholder="Select date of birth"
+                  />
                 </div>
               </div>
+
+              {/* Role Input for Admin */}
+              {staffType === 'admin' && (
+                <div className="space-y-3 pt-4 border-t border-light-border dark:border-dark-border">
+                  <Input
+                    label="Role *"
+                    name="adminRole"
+                    value={adminRole}
+                    onChange={(e) => {
+                      setAdminRole(e.target.value);
+                      if (errors.adminRole) {
+                        setErrors({ ...errors, adminRole: undefined });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const capitalized = capitalizeWords(e.target.value);
+                      if (capitalized !== e.target.value) {
+                        setAdminRole(capitalized);
+                      }
+                    }}
+                    placeholder="e.g., Administrator, Vice Principal, Bursar, Guidance Counselor"
+                    required
+                    helperText="Enter the administrative role (e.g., Vice Principal, Bursar, Administrator, etc.)"
+                    error={errors.adminRole}
+                  />
+                </div>
+              )}
 
               {/* Teacher-Specific Fields */}
               {isTeacher && (
                 <div className="pt-4 border-t border-light-border dark:border-dark-border">
-                  <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
+                  <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                     Teaching Information
                   </h3>
                   
@@ -615,7 +642,8 @@ export default function AddStaffPage() {
                     />
                     <label
                       htmlFor="isTemporary"
-                      className="text-sm text-light-text-primary dark:text-dark-text-primary cursor-pointer"
+                      className="text-light-text-primary dark:text-dark-text-primary cursor-pointer"
+                      style={{ fontSize: 'var(--text-body)' }}
                     >
                       Temporary Staff
                     </label>
@@ -631,7 +659,7 @@ export default function AddStaffPage() {
                     onChange={setAdminPermissions}
                     disabled={isLoadingState}
                   />
-                  <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-2">
+                  <p className="text-light-text-muted dark:text-dark-text-muted mt-2" style={{ fontSize: 'var(--text-small)' }}>
                     💡 Tip: Principals automatically have full access and their permissions cannot be modified.
                   </p>
                 </div>
@@ -639,7 +667,7 @@ export default function AddStaffPage() {
 
               {/* Form Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-light-border dark:border-dark-border">
-                <Link href="/dashboard/school/teachers">
+                <Link href="/dashboard/school/staff">
                   <Button type="button" variant="ghost" disabled={isLoadingState}>
                     Cancel
                   </Button>
