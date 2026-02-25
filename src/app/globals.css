@@ -19,9 +19,9 @@
     /* Typography Sizes - Consistent across app */
     --text-page-title: 1.5rem; /* 24px - Page titles (h1) */
     --text-page-subtitle: .9rem; /* 16px - Page subtitles */
-    --text-section-title: .9rem; /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
+    --text-section-title: .8rem; /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
     --text-card-title: 1rem; /* 18px - Card titles */
-    --text-body: 0.875rem; /* 14px - Body text */
+    --text-body: 0.85rem; /* 14px - Body text */
     --text-small: 0.75rem; /* 12px - Small text */
     --text-placeholder: var(--text-small); /* Placeholder text - consistent with small */
     --text-stat-value: 1.5rem; /* 28px - Stat card values */
@@ -173,6 +173,62 @@
   .date-picker-dropdown .rdp-day {
     font-size: var(--text-body);
   }
+  .date-picker-dropdown .rdp-caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+  }
+  .date-picker-dropdown .rdp-caption select {
+    background-color: var(--light-input);
+    color: var(--agora-text);
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .dark .date-picker-dropdown .rdp-caption select {
+    background-color: var(--dark-input);
+    color: var(--dark-text-primary);
+    border: 1px solid var(--dark-border);
+  }
+  .date-picker-dropdown .rdp-head_cell {
+    color: var(--dark-text-muted);
+    font-weight: 600;
+  }
+  .dark .date-picker-dropdown .rdp-head_cell {
+    color: var(--dark-text-secondary);
+  }
+  .date-picker-dropdown .rdp-day {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 150ms, color 150ms;
+  }
+  .date-picker-dropdown .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+    background-color: rgba(36, 144, 253, 0.12);
+    color: var(--agora-text);
+  }
+  .dark .date-picker-dropdown .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+    background-color: rgba(36, 144, 253, 0.18);
+    color: var(--dark-text-primary);
+  }
+  .date-picker-dropdown .rdp-day_selected {
+    background-color: var(--agora-blue);
+    color: #ffffff;
+  }
+  .date-picker-dropdown .rdp-day_today {
+    box-shadow: inset 0 0 0 2px var(--agora-blue);
+  }
+  .date-picker-dropdown .rdp-day_outside {
+    opacity: 0.5;
+  }
+  .date-picker-dropdown .rdp-day_disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 
   /* Continuous horizontal scroll animation (right to left) */
   @keyframes scroll {
@@ -316,4 +372,3 @@
     background-color: #334155;
   }
 }
-

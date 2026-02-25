@@ -16,12 +16,12 @@ const typeConfig = {
   SECONDARY: {
     label: 'Secondary',
     icon: BookOpen,
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-blue-500 to-blue-600',
   },
   TERTIARY: {
     label: 'Tertiary',
     icon: University,
-    color: 'from-emerald-600 to-emerald-700',
+    color: 'from-blue-500 to-blue-600',
   },
 } as const;
 
@@ -81,6 +81,9 @@ export function SchoolTypeSwitcher() {
   const Icon = config.icon;
 
   return (
+     <>
+      <p className='text-[12px] text-gray-500 mb-1'>School type</p>
+
     <div
       ref={containerRef}
       className="rounded-lg border border-light-border dark:border-dark-border overflow-hidden bg-light-card dark:bg-dark-surface/50"
@@ -97,12 +100,12 @@ export function SchoolTypeSwitcher() {
       >
         <div
           className={cn(
-            'absolute inset-0 rounded-t-lg bg-gradient-to-r',
+            'absolute inset-0 rounded-t-lg',
             config.color,
-            'shadow-sm z-0'
+            
           )}
         />
-        <Icon className="relative z-10 h-4 w-4 flex-shrink-0" />
+        <Icon color='#2490FD' className="relative z-10 h-4 w-4 flex-shrink-0 "  />
         {sidebarOpen && (
           <span
             className={cn(
@@ -166,5 +169,6 @@ export function SchoolTypeSwitcher() {
         </div>
       )}
     </div>
+     </>
   );
 }

@@ -206,9 +206,7 @@ export default function ClassesPage() {
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
                 {terminology.courses}
               </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
-                Manage all {terminology.courses.toLowerCase()} in your school
-              </p>
+         
               {activeSession?.session && (
                 <div className="flex items-center gap-2 mt-2">
                   <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -316,7 +314,7 @@ export default function ClassesPage() {
                 : 'No teacher assigned';
 
               return (
-                <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
+                <FadeInUp key={classItem.id} delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                   <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
                     <CardContent
                       className="pt-6 flex-1 cursor-pointer"
@@ -368,7 +366,7 @@ export default function ClassesPage() {
                                 handleDeleteClass(
                                   classItem.id,
                                   classItem.name,
-                                  classItem.classLevel,
+                                  classItem.classLevel ?? undefined,
                                   classItem.studentsCount,
                                   !!classItem.classArmId
                                 );
@@ -423,7 +421,7 @@ export default function ClassesPage() {
                 : 'No teacher assigned';
 
               return (
-                <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
+                <FadeInUp key={classItem.id} from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                   <Card
                     className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
                     onClick={() => handleClassClick(classItem.id)}

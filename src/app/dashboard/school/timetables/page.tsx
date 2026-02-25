@@ -20,6 +20,7 @@ import {
   ChevronDown,
   GraduationCap,
   Info,
+  CheckCircle,
 } from 'lucide-react';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
@@ -70,6 +71,7 @@ export default function TimetablesPage() {
   const router = useRouter();
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedTermId, setSelectedTermId] = useState<string>('');
+  const [showHistory, setShowHistory] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTimetableClassId, setNewTimetableClassId] = useState<string>('');
   const [newTimetableTermId, setNewTimetableTermId] = useState<string>('');
@@ -82,6 +84,20 @@ export default function TimetablesPage() {
     { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId }
   );
+
+  const activeTermId = activeSessionResponse?.data?.term?.id;
+
+  // Set selected term to active term by default when not in history mode
+  useEffect(() => {
+    if (activeTermId) {
+      if (!showHistory) {
+        setSelectedTermId(activeTermId);
+      }
+      if (!newTimetableTermId) {
+        setNewTimetableTermId(activeTermId);
+      }
+    }
+  }, [activeTermId, showHistory, newTimetableTermId]);
 
   const { data: sessionsResponse } = useGetSessionsQuery(
     { schoolId: schoolId!, schoolType: currentType || undefined },
@@ -170,10 +186,7 @@ export default function TimetablesPage() {
     // IMPORTANT: Only show sessions that match the current school type
     // Each school type (PRIMARY, SECONDARY, TERTIARY) has its own independent sessions
     const filteredSessions = sessionsResponse.data.filter((session) => {
-      // If no current type selected, show sessions without a school type (legacy)
-      if (!currentType) return !session.schoolType;
-      // Otherwise, only show sessions for the current school type
-      return session.schoolType === currentType;
+      return session.schoolType === (currentType || null);
     });
     
     // Deduplicate sessions by name (keep first/latest)
@@ -201,16 +214,10 @@ export default function TimetablesPage() {
     });
   }, [sessionsResponse, currentType]);
 
-  // Auto-select active term if available, reset when school type changes
+  // Reset selected class when school type changes
   useEffect(() => {
-    if (activeSessionResponse?.data?.term?.id) {
-      setSelectedTermId(activeSessionResponse.data.term.id);
-    } else {
-      setSelectedTermId('');
-    }
-    // Also reset selected class when school type changes
     setSelectedClassId('');
-  }, [activeSessionResponse, currentType]);
+  }, [currentType]);
 
   const handleCreateTimetable = async () => {
     if (!schoolId || !newTimetableClassId || !newTimetableTermId) {
@@ -242,23 +249,24 @@ export default function TimetablesPage() {
     const hasClassArmId = selectedClass?.classArmId;
 
     try {
-      // Create master schedule for the selected class
-      // Note: We'll need to update createMasterSchedule to support classId
-      // For now, we'll create periods directly
-      for (const periodDef of periods) {
-        await createPeriod({
-          schoolId,
-          data: {
-            ...periodDef,
-            // Use classArmId if the class has one (ClassArm-based), otherwise use classId
-            ...(hasClassArmId 
-              ? { classArmId: newTimetableClassId }
-              : { classId: newTimetableClassId }
-            ),
-            termId: newTimetableTermId,
-          },
-        }).unwrap();
-      }
+      // Create master schedule for the selected class in a single request
+      await createMasterSchedule({
+        schoolId,
+        data: {
+          termId: newTimetableTermId,
+          // Use classArmId if the class has one (ClassArm-based), otherwise use classId
+          ...(hasClassArmId 
+            ? { classArmId: newTimetableClassId }
+            : { classId: newTimetableClassId }
+          ),
+          periods: periods.map(p => ({
+            dayOfWeek: p.dayOfWeek,
+            startTime: p.startTime,
+            endTime: p.endTime,
+            type: p.type as any,
+          })),
+        },
+      }).unwrap();
 
       toast.success('Timetable created successfully');
       setShowCreateModal(false);
@@ -782,45 +790,62 @@ export default function TimetablesPage() {
                 Manage class schedules and timetables for {currentType || 'all school types'}
               </p>
             </div>
-            <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+            <div className="flex gap-2">
               <Button
-                variant="primary"
-                onClick={() => setShowCreateModal(true)}
+                variant="ghost"
+                onClick={() => setShowHistory(!showHistory)}
                 size="sm"
+                className={showHistory ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : ''}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Timetable
+                <Clock className="h-4 w-4 mr-2" />
+                {showHistory ? 'Current Term' : 'History'}
               </Button>
-            </PermissionGate>
+              <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                <Button
+                  variant="primary"
+                  onClick={() => setShowCreateModal(true)}
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Timetable
+                </Button>
+              </PermissionGate>
+            </div>
           </div>
         </FadeInUp>
 
         {/* Timetables List */}
         {selectedTermId ? (
           <>
-            <div className="flex justify-end mb-4">
-              <Select
-                value={selectedTermId}
-                onChange={(e) => setSelectedTermId(e.target.value)}
-                inline
-                wrapperClassName="w-auto min-w-[300px]"
-                leftIcon={<Calendar className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />}
-              >
-                <option value="">Select Term...</option>
-                {allTerms.map((term) => (
-                  <option key={term.id} value={term.id}>
-                    {term.sessionName} - {term.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            {showHistory && (
+              <div className="flex justify-end mb-4">
+                <Select
+                  value={selectedTermId}
+                  onChange={(e) => setSelectedTermId(e.target.value)}
+                  inline
+                  wrapperClassName="w-auto min-w-[300px]"
+                  leftIcon={<Calendar className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />}
+                >
+                  <option value="">Select Term...</option>
+                  {allTerms.map((term) => (
+                    <option key={term.id} value={term.id}>
+                      {term.sessionName} - {term.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {classesWithTimetables.map((cls) => {
               const classTimetable = timetablesByClass[cls.id] || [];
               return (
                 <Card
                   key={cls.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  className={`cursor-pointer transition-all duration-200 ${
+                    selectedClassId === cls.id 
+                      ? 'ring-2 ring-blue-600 shadow-md bg-blue-50/30 dark:bg-blue-900/10' 
+                      : 'hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800'
+                  }`}
                   onClick={() => {
                     // Toggle: if already selected, deselect it
                     if (selectedClassId === cls.id) {
@@ -836,7 +861,11 @@ export default function TimetablesPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle>{cls.name}</CardTitle>
-                      <BookOpen className="h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                      {selectedClassId === cls.id ? (
+                        <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      ) : (
+                        <BookOpen className="h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -1099,14 +1128,14 @@ export default function TimetablesPage() {
                   </div>
                 )}
 
-                {/* Terms Selection */}
-                {allTerms.length === 0 ? (
+                {/* Terms Selection - Now auto-selected and hidden */}
+                {allTerms.length === 0 || !activeTermId ? (
                   <div className="p-4 border border-blue-500/30 dark:border-blue-500/30 rounded-lg bg-blue-50/50 dark:bg-blue-900/10">
                     <div className="flex items-start gap-3">
                       <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="font-medium text-blue-800 dark:text-blue-300 mb-1" style={{ fontSize: 'var(--text-body)' }}>
-                          No Terms Available
+                          No Active Term Available
                         </p>
                         <p className="text-blue-700 dark:text-blue-400 mb-3" style={{ fontSize: 'var(--text-small)' }}>
                           You need to start a session and term before creating a timetable. Please go to your school overview to manage sessions.
@@ -1125,20 +1154,20 @@ export default function TimetablesPage() {
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <Select
-                      label="Select Term"
-                      value={newTimetableTermId}
-                      onChange={(e) => setNewTimetableTermId(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a term...</option>
-                      {allTerms.map((term) => (
-                        <option key={term.id} value={term.id}>
-                          {term.sessionName} - {term.name}
-                        </option>
-                      ))}
-                    </Select>
+                  <div className="p-4 border border-blue-100 dark:border-blue-900/30 rounded-lg bg-blue-50/30 dark:bg-blue-900/5">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                        <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary font-medium uppercase tracking-wider">
+                          Current Term
+                        </p>
+                        <p className="font-semibold text-blue-700 dark:text-blue-300">
+                          {allTerms.find(t => t.id === activeTermId)?.sessionName} - {allTerms.find(t => t.id === activeTermId)?.name}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 

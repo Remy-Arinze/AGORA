@@ -241,7 +241,7 @@ export default function StaffDetailPage() {
             <div className="flex items-center gap-2">
               {hasNotSetPassword && (
                 <Button 
-                  variant="ghost" 
+                  variant="secondary" 
                   size="sm" 
                   onClick={handleResendPasswordReset}
                   disabled={isResendingPasswordReset}

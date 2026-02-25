@@ -147,6 +147,9 @@ export function DatePicker({
             defaultMonth={selectedDate ?? minDate ?? maxDate ?? new Date()}
             required={required}
             showOutsideDays
+            captionLayout="dropdown"
+            fromYear={(minDate ?? new Date(new Date().getFullYear() - 100, 0, 1)).getFullYear()}
+            toYear={(maxDate ?? new Date(new Date().getFullYear() + 20, 0, 1)).getFullYear()}
           />
         </div>
       )}

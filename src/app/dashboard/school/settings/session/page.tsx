@@ -141,7 +141,8 @@ export default function SessionWizardPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [sessionType, setSessionType] = useState<SessionType>('NEW_TERM');
-  const [sessionName, setSessionName] = useState('');
+  const currentYear = new Date().getFullYear();
+  const [sessionName, setSessionName] = useState(`${currentYear}/`);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [halfTermStart, setHalfTermStart] = useState('');
@@ -149,6 +150,9 @@ export default function SessionWizardPage() {
   const [carryOver, setCarryOver] = useState<boolean>(false); // Default to promote for new sessions
   const [selectedTermId, setSelectedTermId] = useState<string>('');
   const [showInfoModal, setShowInfoModal] = useState(false);
+  
+  // Validation errors
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   // Confirmation modal states
   const [showEndSessionModal, setShowEndSessionModal] = useState(false);
@@ -237,7 +241,7 @@ export default function SessionWizardPage() {
     }
   }, [activeSessionResponse, activeSession]);
 
-  // Validate session dates (must be at least 10 months)
+  // Validate session dates (must be 10-12 months)
   const validateSessionDates = (start: string, end: string): string | null => {
     if (!start || !end) return null;
     
@@ -250,19 +254,66 @@ export default function SessionWizardPage() {
     if (monthsDiff < 10 || daysDiff < 300) {
       return 'An academic session must span at least 10 months (approximately one year).';
     }
+    
+    if (monthsDiff > 12 || daysDiff > 370) {
+      return 'An academic session cannot exceed 12 months.';
+    }
     return null;
   };
 
-  const sessionDateError = sessionType === 'NEW_SESSION' 
-    ? validateSessionDates(startDate, endDate) 
-    : null;
+  // Validate session name format (e.g., 2025/2026)
+  const validateSessionName = (name: string): string | null => {
+    if (!name) return 'Session name is required';
+    const pattern = /^\d{4}\/\d{4}$/;
+    if (!pattern.test(name)) {
+      return 'Session name must follow the format YYYY/YYYY (e.g., 2025/2026)';
+    }
+    
+    const parts = name.split('/');
+    const year1 = parseInt(parts[0]);
+    const year2 = parseInt(parts[1]);
+    
+    if (year2 !== year1 + 1) {
+      return 'The academic session years must be consecutive (e.g., 2025/2026)';
+    }
+    
+    return null;
+  };
 
   const handleNext = () => {
-    // If continuing a term (reactivation), skip dates step - go directly to submit from step 1
-    if (currentStep === 1 && isReactivation) {
-      handleSubmit();
-      return;
+    setValidationError(null);
+
+    // Step 1 validations
+    if (currentStep === 1) {
+      if (sessionType === 'NEW_SESSION') {
+        const nameError = validateSessionName(sessionName);
+        if (nameError) {
+          setValidationError(nameError);
+          return;
+        }
+      } else if (sessionType === 'NEW_TERM') {
+        if (!selectedTermId) {
+          setValidationError('Please select a term to start.');
+          return;
+        }
+      }
+      
+      // If continuing a term (reactivation), skip dates step - go directly to submit from step 1
+      if (isReactivation) {
+        handleSubmit();
+        return;
+      }
     }
+
+    // Step 2 validations
+    if (currentStep === 2) {
+      const dateError = validateSessionDates(startDate, endDate);
+      if (dateError) {
+        setValidationError(dateError);
+        return;
+      }
+    }
+
     if (currentStep === 2 && !shouldShowMigrationStep) {
       // Skip step 3 for NEW_TERM on PRIMARY/SECONDARY - go directly to submit
       handleSubmit();
@@ -357,10 +408,14 @@ export default function SessionWizardPage() {
     }
   };
 
+  // Derived validation states for real-time button disabling
+  const sessionNameError = validateSessionName(sessionName);
+  const sessionDateError = validateSessionDates(startDate, endDate);
+
   // For Step 1: NEW_SESSION only needs sessionName (and no active session), NEW_TERM needs selectedTermId (and no active term)
   const canProceedStep1 = sessionType && 
     (sessionType === 'NEW_SESSION' 
-      ? sessionName.trim().length > 0 && !activeSession?.session 
+      ? sessionName.trim().length > 0 && !sessionNameError && !activeSession?.session 
       : selectedTermId.trim().length > 0 && availableTerms.length > 0 && !hasActiveTerm);
   const canProceedStep2 = startDate && endDate && !sessionDateError;
   const canProceedStep3 = true; // Logic gate is just a question
@@ -439,7 +494,7 @@ export default function SessionWizardPage() {
 
         {/* Step 1: Select Session & Term */}
         {currentStep === 1 && (
-          <Card>
+          <Card className="overflow-visible">
             <CardHeader>
               <CardTitle>Step 1: Select Session & {termLabel}</CardTitle>
             </CardHeader>
@@ -504,7 +559,14 @@ export default function SessionWizardPage() {
                       onChange={(e) => setSessionName(e.target.value)}
                       placeholder="2025/2026"
                       disabled={!!activeSession?.session}
+                      className={(validationError || (sessionNameError && sessionName.length > 5)) ? 'border-red-500' : ''}
                     />
+                    {(validationError || (sessionNameError && sessionName.length > 5)) && (
+                      <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {validationError || sessionNameError}
+                      </p>
+                    )}
                   </div>
                   {activeSession?.session && (
                     <div className="p-4 border-2 border-orange-300 dark:border-orange-700 rounded-lg bg-orange-50 dark:bg-orange-900/20">
@@ -659,11 +721,11 @@ export default function SessionWizardPage() {
 
         {/* Step 2: Date Pickers */}
         {currentStep === 2 && (
-          <Card>
+          <Card className="overflow-visible">
             <CardHeader>
               <CardTitle>Step 2: Set Dates</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 min-h-[500px]">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <DatePicker
@@ -681,20 +743,21 @@ export default function SessionWizardPage() {
                     min={startDate || undefined}
                     placeholder="Select end date"
                   />
-                  {sessionDateError && (
+                  {(validationError || sessionDateError) && currentStep === 2 && (
                     <Alert variant="error" className="mt-2">
                       <AlertCircle className="h-4 w-4" />
-                      <p className="text-sm">{sessionDateError}</p>
+                      <p className="text-sm">{validationError || sessionDateError}</p>
                     </Alert>
                   )}
-                  {startDate && endDate && !sessionDateError && (
+                  {startDate && endDate && !validationError && !sessionDateError && currentStep === 2 && (
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      ✓ Session duration is valid (at least 10 months)
+                      ✓ Session duration is valid (10-12 months)
                     </p>
                   )}
                 </div>
               </div>
 
+              {/* Commented out for now
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <DatePicker
@@ -713,6 +776,7 @@ export default function SessionWizardPage() {
                   />
                 </div>
               </div>
+              */}
 
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={handleBack}>
