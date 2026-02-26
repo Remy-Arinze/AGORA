@@ -7,6 +7,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
+  /** Input type: 'text' | 'email' | 'tel' | 'number' | 'date' | 'password' etc. Defaults to 'text'. */
+  type?: InputHTMLAttributes<HTMLInputElement>['type'];
   /** Additional class name for the wrapper div */
   wrapperClassName?: string;
   /** If true, the wrapper div will not have w-full */
@@ -28,6 +30,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     error, 
     helperText, 
     id, 
+    type = 'text',
     wrapperClassName,
     inline = false,
     labelClassName,
@@ -61,6 +64,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            type={type}
             className={cn(
               'w-full px-4 py-2 border rounded-lg',
               'bg-[var(--light-input)] dark:bg-[var(--dark-input)]',
@@ -69,6 +73,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               'focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent',
               'transition-colors',
               'disabled:opacity-50 disabled:cursor-not-allowed',
+              'read-only:cursor-default read-only:opacity-90',
               error
                 ? 'border-red-500 dark:border-red-500 focus:ring-red-500'
                 : 'border-[var(--light-border)] dark:border-[var(--dark-border)]',

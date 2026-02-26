@@ -231,7 +231,7 @@ export const SidebarLink = ({
         {iconWithColor}
         <span
           className={cn(
-            "text-[.85rem] group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre inline-block !p-0 !m-0",
+            "text-[.8rem] group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre inline-block !p-0 !m-0",
             isActive ? "text-white" : "text-[#9ca3af] group-hover/sidebar:text-white",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}

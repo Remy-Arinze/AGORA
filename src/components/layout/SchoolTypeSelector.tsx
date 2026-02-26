@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Lock } from 'lucide-react';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getSchoolTypeDisplayName } from '@/lib/utils/terminology';
 import type { SchoolType } from '@/lib/store/api/schoolAdminApi';
 
 export function SchoolTypeSelector() {
-  const { availableTypes, isMixed, currentType, setCurrentType } = useSchoolType();
+  const { availableTypes, isMixed, currentType, setCurrentType, isLocked } = useSchoolType();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +40,16 @@ export function SchoolTypeSelector() {
     return null;
   }
 
+  // Locked admin: show static label (no dropdown interaction)
+  if (isLocked && currentType) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-blue-600 dark:text-dark-text-primary rounded-lg border border-light-border dark:border-dark-border bg-light-card dark:bg-dark-surface">
+        <span>{getSchoolTypeDisplayName(currentType)}</span>
+        <Lock className="h-3.5 w-3.5 opacity-50" />
+      </div>
+    );
+  }
+
   const handleTypeSelect = (type: SchoolType) => {
     setCurrentType(type);
     setIsOpen(false);
@@ -64,11 +74,10 @@ export function SchoolTypeSelector() {
                 key={type}
                 type="button"
                 onClick={() => handleTypeSelect(type)}
-                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                  currentType === type
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${currentType === type
                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
                     : 'text-light-text-primary dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-[var(--dark-hover)]'
-                }`}
+                  }`}
               >
                 {getSchoolTypeDisplayName(type)}
               </button>

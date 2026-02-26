@@ -18,6 +18,9 @@ interface AuthState {
     profileId?: string | null;  // For SCHOOL_ADMIN: adminId, for TEACHER: teacherId
     publicId?: string | null;   // Public ID used for login
     schoolId?: string | null;   // Current school context
+    // Admin-specific context (only for SCHOOL_ADMIN role)
+    adminRole?: string | null;       // e.g., 'principal', 'school_owner', 'headmistress'
+    adminSchoolType?: string | null; // e.g., 'PRIMARY', 'SECONDARY' — locks dashboard to this type
   } | null;
   tenantId: string | null;
 }

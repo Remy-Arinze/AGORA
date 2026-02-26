@@ -195,8 +195,8 @@ export function TeacherSelectionPopup({
             getWorkloadBgColor(status)
           )}>
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)]">
+                <User className="h-5 w-5" />
               </div>
               <div className="flex-1">
                 <p className="font-medium text-light-text-primary dark:text-dark-text-primary">

@@ -23,6 +23,7 @@ import { AutoGenerateButton } from '@/components/ui/AutoGenerateButton';
 import { EntityAvatar } from '@/components/ui/EntityAvatar';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { useGetMySchoolQuery } from '@/lib/store/api/schoolAdminApi';
 import { useFaculties } from '@/hooks/useFaculties';
 import { useSchoolType } from '@/hooks/useSchoolType';
@@ -227,7 +228,7 @@ export default function FacultiesPage() {
         {filteredFaculties.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Library className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+              <EmptyStateIcon type="location" />
               <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                 {searchQuery
                   ? 'No faculties found matching your search.'

@@ -41,6 +41,7 @@ import { EditTeacherProfileModal } from '@/components/modals/EditTeacherProfileM
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { BackButton } from '@/components/ui/BackButton';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import toast from 'react-hot-toast';
 import { isPrincipalRole } from '@/lib/constants/roles';
 
@@ -96,8 +97,8 @@ const PassportPhoto = ({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
-            <span className="text-white font-bold text-4xl">
+          <div className="w-full h-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center">
+            <span className="text-[var(--avatar-placeholder-text)] font-bold text-4xl">
               {getInitials(firstName, lastName)}
             </span>
           </div>
@@ -210,9 +211,9 @@ export default function StaffDetailPage() {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
         <div className="w-full">
-          <BackButton fallbackUrl="/dashboard/school/teachers" className="mb-4" />
+          <BackButton fallbackUrl="/dashboard/school/staff" className="mb-4" />
           <div className="text-center py-12">
-            <AlertCircle className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+            <EmptyStateIcon type="document_not_found" className="text-light-text-muted dark:text-dark-text-muted" />
             <p className="text-light-text-secondary dark:text-dark-text-secondary">
               Staff member not found or error loading details.
             </p>
@@ -227,7 +228,7 @@ export default function StaffDetailPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <BackButton fallbackUrl="/dashboard/school/teachers" className="mb-4" />
+          <BackButton fallbackUrl="/dashboard/school/staff" className="mb-4" />
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -240,7 +241,7 @@ export default function StaffDetailPage() {
             <div className="flex items-center gap-2">
               {hasNotSetPassword && (
                 <Button 
-                  variant="ghost" 
+                  variant="secondary" 
                   size="sm" 
                   onClick={handleResendPasswordReset}
                   disabled={isResendingPasswordReset}
@@ -427,7 +428,7 @@ export default function StaffDetailPage() {
                        teacherClasses.length === 0 && 
                        (!timetableClasses || timetableClasses.classes.length === 0) && (
                         <div className="text-center py-8">
-                          <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                          <EmptyStateIcon type="document" />
                           <p className="text-light-text-secondary dark:text-dark-text-secondary">
                             This teacher is not assigned to any classes yet.
                           </p>
@@ -570,7 +571,7 @@ export default function StaffDetailPage() {
                         </div>
                       ) : !teacherSubjects || teacherSubjects.length === 0 ? (
                         <div className="text-center py-8">
-                          <GraduationCap className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                          <EmptyStateIcon type="document_not_found" />
                           <p className="text-light-text-secondary dark:text-dark-text-secondary">
                             No subject competencies assigned yet.
                           </p>
@@ -680,27 +681,17 @@ export default function StaffDetailPage() {
           {activeTab === 'permissions' && isAdmin && (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                      Assigned Permissions
-                    </CardTitle>
-                  </div>
-                  {!isPrincipal && (
-                    <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.ADMIN}>
-                      <Button variant="primary" size="sm" onClick={() => setShowPermissionModal(true)}>
-                        <Shield className="h-4 w-4 mr-2" />
-                        Manage Permissions
-                      </Button>
-                    </PermissionGate>
-                  )}
+                <div className="flex items-center gap-3">
+                  <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                    Assigned Permissions
+                  </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 {isPrincipal ? (
                   <div className="text-center py-12">
-                    <Shield className="h-12 w-12 text-purple-600 dark:text-purple-400 mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" className="text-purple-600 dark:text-purple-400" />
                     <p className="text-light-text-primary dark:text-dark-text-primary font-semibold mb-2">
                       Principal - Full Access
                     </p>
@@ -710,16 +701,10 @@ export default function StaffDetailPage() {
                   </div>
                 ) : permissions.length === 0 ? (
                   <div className="text-center py-12">
-                    <Shield className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                    <EmptyStateIcon type="document_not_found" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No permissions assigned yet.
                     </p>
-                    <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.ADMIN}>
-                      <Button variant="primary" size="sm" onClick={() => setShowPermissionModal(true)}>
-                        <Shield className="h-4 w-4 mr-2" />
-                        Assign Permissions
-                      </Button>
-                    </PermissionGate>
                   </div>
                 ) : (
                   <div className="space-y-4">

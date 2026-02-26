@@ -27,6 +27,7 @@ import {
 import { AutoGenerateButton } from '@/components/ui/AutoGenerateButton';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   useGetMySchoolQuery,
   useGetSubjectsQuery,
@@ -457,7 +458,7 @@ export default function SubjectsPage() {
         {filteredSubjects.length === 0 && (
           <Card>
             <CardContent className="py-12 text-center">
-              <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+              <EmptyStateIcon type="document" />
               <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                 {searchQuery 
                   ? `No ${currentType === 'TERTIARY' ? 'courses' : 'subjects'} found matching your search.`

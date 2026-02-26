@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
 import { useBulkCreateGradesMutation, useGetClassGradesQuery, useGetTeacherSubjectsForClassQuery } from '@/lib/store/api/schoolAdminApi';
 import type { GradeType, BulkGradeEntryDto, StudentWithEnrollment } from '@/lib/store/api/schoolAdminApi';
@@ -370,14 +371,12 @@ export function BulkGradeEntryModal({
           </div>
 
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-light-text-primary dark:text-dark-text-primary mb-1">
-              Assessment Date (Optional)
-            </label>
-            <Input
-              type="date"
+            <DatePicker
+              label="Assessment Date (Optional)"
               value={assessmentDate}
-              onChange={(e) => setAssessmentDate(e.target.value)}
+              onChange={setAssessmentDate}
               max={new Date().toISOString().split('T')[0]}
+              placeholder="Select date"
             />
           </div>
         </div>

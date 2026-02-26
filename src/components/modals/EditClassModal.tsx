@@ -83,8 +83,8 @@ export function EditClassModal({
           {/* Header */}
           <div className="flex items-start gap-4 mb-6">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <Edit className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)]">
+                <Edit className="h-6 w-6" />
               </div>
             </div>
             <div className="flex-1">

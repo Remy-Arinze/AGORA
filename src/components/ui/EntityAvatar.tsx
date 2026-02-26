@@ -87,7 +87,7 @@ export function EntityAvatar({
         flex items-center justify-center
         overflow-hidden
         flex-shrink-0
-        ${showImage ? '' : `bg-gradient-to-br ${colorClass}`}
+        ${showImage ? '' : 'bg-[var(--avatar-placeholder-bg)] text-[var(--avatar-placeholder-text)]'}
         ${className}
       `}
     >
@@ -101,7 +101,7 @@ export function EntityAvatar({
           onError={() => setImageError(true)}
         />
       ) : (
-        <span className="font-bold text-white">{initials}</span>
+        <span className="font-bold">{initials}</span>
       )}
     </div>
   );

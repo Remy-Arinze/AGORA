@@ -29,6 +29,7 @@ export interface WeeklyActivityData {
 export interface RecentStudent {
   id: string;
   name: string;
+  profileImage?: string | null;
   classLevel: string;
   admissionNumber: string;
   status: 'active' | 'inactive';
@@ -59,6 +60,7 @@ export interface StaffListItem {
   status: 'active' | 'inactive';
   accountStatus: AccountStatus; // SHADOW=pending activation, ACTIVE=activated
   profileImage: string | null;
+  schoolType: string | null;
   createdAt: string;
   user?: {
     id: string;
@@ -173,6 +175,7 @@ export interface ResponseDto<T> {
   message: string;
   data: T;
   timestamp?: string;
+  warnings?: string[];
 }
 
 // School type types
@@ -541,9 +544,11 @@ export interface AddStudentDto {
   middleName?: string;
   lastName: string;
   dateOfBirth: string;
-  email?: string;
+  email: string;
   phone: string;
   address?: string;
+  nationality: string;
+  state: string;
   classLevel?: string; // Optional if classArmId is provided
   classArmId?: string; // Optional for PRIMARY/SECONDARY schools using ClassArms
   academicYear?: string;
@@ -564,6 +569,8 @@ export interface UpdateStudentDto {
   middleName?: string;
   lastName?: string;
   phone?: string;
+  nationality?: string;
+  state?: string;
   bloodGroup?: string;
   allergies?: string;
   medications?: string;
@@ -581,6 +588,8 @@ export interface Student {
   dateOfBirth: string;
   profileLocked: boolean;
   profileImage: string | null;
+  nationality?: string | null;
+  state?: string | null;
   createdAt: string;
   updatedAt: string;
   healthInfo?: {
@@ -638,6 +647,8 @@ export interface Term {
   halfTermEnd?: string;
   status: TermStatus;
   academicSessionId: string;
+  currentWeek?: number;
+  totalWeeks?: number;
   createdAt: string;
 }
 
@@ -675,8 +686,16 @@ export interface CreateTermDto {
   halfTermEnd?: string;
 }
 
+export interface TermDateInput {
+  number: number;
+  startDate: string;
+  endDate: string;
+}
+
 export interface StartTermDto extends InitializeSessionDto {
   termId?: string;
+  startingTermNumber?: number;
+  termDates?: TermDateInput[];
 }
 
 export interface StartTermResponse {
@@ -688,6 +707,13 @@ export interface StartTermResponse {
 export interface MigrateStudentsDto {
   termId: string;
   carryOver: boolean;
+}
+
+export interface UpdateTermDatesDto {
+  startDate?: string;
+  endDate?: string;
+  halfTermStart?: string;
+  halfTermEnd?: string;
 }
 
 export interface TimetablePeriod {
@@ -1264,6 +1290,24 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       providesTags: (result, error, { staffId }) => [{ type: 'School' as const, id: staffId }],
     }),
 
+    // Delete an administrator
+    deleteAdmin: builder.mutation<ResponseDto<void>, { schoolId: string; adminId: string }>({
+      query: ({ schoolId, adminId }) => ({
+        url: `/schools/${schoolId}/admins/${adminId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['School'],
+    }),
+
+    // Delete a teacher
+    deleteTeacher: builder.mutation<ResponseDto<void>, { schoolId: string; teacherId: string }>({
+      query: ({ schoolId, teacherId }) => ({
+        url: `/schools/${schoolId}/teachers/${teacherId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['School'],
+    }),
+
     // =====================
     // Teacher Subject Competencies
     // =====================
@@ -1329,7 +1373,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
 
     // Get subjects a teacher can be assigned to for a specific class
     getAssignableSubjects: builder.query<ResponseDto<AssignableSubject[]>, { schoolId: string; teacherId: string; classId: string }>({
-      query: ({ schoolId, teacherId, classId }) => 
+      query: ({ schoolId, teacherId, classId }) =>
         `/schools/${schoolId}/teachers/${teacherId}/assignable-subjects?classId=${classId}`,
       providesTags: (result, error, { teacherId, classId }) => [
         { type: 'TeacherSubject' as const, id: teacherId },
@@ -1353,10 +1397,10 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.map(({ id }) => ({ type: 'Class' as const, id })),
-              { type: 'Class', id: 'LIST' },
-              'School',
-            ]
+            ...result.data.map(({ id }) => ({ type: 'Class' as const, id })),
+            { type: 'Class', id: 'LIST' },
+            'School',
+          ]
           : [{ type: 'Class', id: 'LIST' }, 'School'],
     }),
     // Get a single class by ID
@@ -1502,6 +1546,17 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         };
       },
       invalidatesTags: ['Session', 'School'],
+    }),
+    updateTermDates: builder.mutation<
+      ResponseDto<Term>,
+      { schoolId: string; sessionId: string; termId: string; data: UpdateTermDatesDto }
+    >({
+      query: ({ schoolId, sessionId, termId, data }) => ({
+        url: `/schools/${schoolId}/sessions/${sessionId}/terms/${termId}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: ['Session'],
     }),
     // Timetable Management
     getTimetableForClassArm: builder.query<ResponseDto<TimetablePeriod[]>, { schoolId: string; classArmId: string; termId: string }>({
@@ -1791,9 +1846,9 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       providesTags: (result, error, { levelId }) => [{ type: 'Class', id: levelId }, 'ClassResource'],
     }),
 
-    getSubjects: builder.query<ResponseDto<Subject[]>, { 
-      schoolId: string; 
-      schoolType?: 'PRIMARY' | 'SECONDARY' | 'TERTIARY'; 
+    getSubjects: builder.query<ResponseDto<Subject[]>, {
+      schoolId: string;
+      schoolType?: 'PRIMARY' | 'SECONDARY' | 'TERTIARY';
       classLevelId?: string;
       termId?: string;  // Include teacher workload data for SECONDARY
     }>({
@@ -1807,11 +1862,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       },
       providesTags: ['Timetable', 'Subject'],
     }),
-    
+
     // ============================================
     // TEACHER WORKLOAD ENDPOINTS
     // ============================================
-    
+
     getTeacherWorkloads: builder.query<ResponseDto<TeacherWorkloadSummary>, {
       schoolId: string;
       termId: string;
@@ -1825,7 +1880,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       },
       providesTags: ['Timetable', 'TeacherWorkload'],
     }),
-    
+
     getLeastLoadedTeacher: builder.query<ResponseDto<TeacherWithWorkload | null>, {
       schoolId: string;
       subjectId: string;
@@ -1841,7 +1896,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         return `/schools/${schoolId}/timetable/subjects/${subjectId}/least-loaded-teacher?${queryParams.toString()}`;
       },
     }),
-    
+
     // Get teacher's class assignments from timetable (for SECONDARY schools)
     getTeacherTimetableClasses: builder.query<ResponseDto<TeacherTimetableClasses>, {
       schoolId: string;
@@ -1859,7 +1914,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'TeacherWorkload',
       ],
     }),
-    
+
     createSubject: builder.mutation<ResponseDto<Subject>, { schoolId: string; data: CreateSubjectDto }>({
       query: ({ schoolId, data }) => ({
         url: `/schools/${schoolId}/timetable/subjects`,
@@ -2225,18 +2280,18 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         if (description) {
           formData.append('description', description);
         }
-        
+
         // Get token from state
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         // Get tenant ID
         const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/schools/${schoolId}/classes/${classId}/resources/upload`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
@@ -2245,18 +2300,18 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
           headers['x-tenant-id'] = tenantId;
         }
         // Don't set Content-Type - browser will set it with boundary
-        
+
         const response = await fetch(url, {
           method: 'POST',
           headers,
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ message: 'Upload failed' }));
           return { error: { status: response.status, data: error } };
         }
-        
+
         const data = await response.json();
         return { data };
       },
@@ -2294,12 +2349,33 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const queryString = queryParams.toString();
         return `/schools/${schoolId}/students${queryString ? `?${queryString}` : ''}`;
       },
+      transformResponse: (
+        response: ResponseDto<{
+          data?: StudentWithEnrollment[];
+          items?: StudentWithEnrollment[];
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          hasNext?: boolean;
+          hasPrev?: boolean;
+        }>
+      ): ResponseDto<PaginatedResponse<StudentWithEnrollment>> => ({
+        ...response,
+        data: {
+          items: response.data?.data ?? response.data?.items ?? [],
+          total: response.data?.total ?? 0,
+          page: response.data?.page ?? 1,
+          limit: response.data?.limit ?? 10,
+          totalPages: response.data?.totalPages ?? 0,
+        },
+      }),
       providesTags: ['Student'],
     }),
     // ============================================
     // NERDC Curriculum Endpoints
     // ============================================
-    
+
     getNerdcSubjects: builder.query<
       ResponseDto<NerdcSubject[]>,
       { schoolId: string; schoolType?: string; category?: string }
@@ -2312,7 +2388,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         return `/schools/${schoolId}/curriculum/nerdc/subjects${queryString ? `?${queryString}` : ''}`;
       },
     }),
-    
+
     getNerdcTemplate: builder.query<
       ResponseDto<NerdcCurriculum | null>,
       { schoolId: string; subjectCode: string; classLevel: string; schoolType: string; term: number }
@@ -2326,11 +2402,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         return `/schools/${schoolId}/curriculum/nerdc/template?${queryParams.toString()}`;
       },
     }),
-    
+
     // ============================================
     // Timetable-Driven Curriculum Endpoints
     // ============================================
-    
+
     getSubjectsFromTimetable: builder.query<
       ResponseDto<TimetableSubject[]>,
       { schoolId: string; classLevelId: string; termId: string }
@@ -2342,7 +2418,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Timetable',
       ],
     }),
-    
+
     getCurriculaSummary: builder.query<
       ResponseDto<CurriculumSummary[]>,
       { schoolId: string; classLevelId: string; termId: string }
@@ -2354,11 +2430,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     // ============================================
     // Curriculum CRUD Endpoints
     // ============================================
-    
+
     getCurriculumForClass: builder.query<
       ResponseDto<Curriculum | null>,
       { schoolId: string; classId: string; subject?: string; academicYear?: string; termId?: string }
@@ -2373,7 +2449,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       },
       providesTags: (result, error, { classId }) => [{ type: 'Curriculum' as const, id: classId }],
     }),
-    
+
     getCurriculumById: builder.query<
       ResponseDto<Curriculum>,
       { schoolId: string; curriculumId: string }
@@ -2381,7 +2457,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       query: ({ schoolId, curriculumId }) => `/schools/${schoolId}/curriculum/${curriculumId}`,
       providesTags: (result, error, { curriculumId }) => [{ type: 'Curriculum' as const, id: curriculumId }],
     }),
-    
+
     createCurriculum: builder.mutation<ResponseDto<Curriculum>, { schoolId: string; curriculumData: CreateCurriculumDto }>({
       query: ({ schoolId, curriculumData }) => ({
         url: `/schools/${schoolId}/curriculum`,
@@ -2394,7 +2470,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Class',
       ],
     }),
-    
+
     generateCurriculum: builder.mutation<
       ResponseDto<Curriculum>,
       { schoolId: string; data: GenerateCurriculumDto }
@@ -2409,7 +2485,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     bulkGenerateCurriculum: builder.mutation<
       ResponseDto<{ created: string[]; failed: { subjectId: string; error: string }[] }>,
       { schoolId: string; data: BulkGenerateCurriculumDto }
@@ -2424,7 +2500,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     updateCurriculum: builder.mutation<
       ResponseDto<Curriculum>,
       { schoolId: string; curriculumId: string; data: UpdateCurriculumDto }
@@ -2439,7 +2515,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     deleteCurriculum: builder.mutation<ResponseDto<void>, { schoolId: string; curriculumId: string }>({
       query: ({ schoolId, curriculumId }) => ({
         url: `/schools/${schoolId}/curriculum/${curriculumId}`,
@@ -2450,11 +2526,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     // ============================================
     // Curriculum Status Endpoints
     // ============================================
-    
+
     submitCurriculumForApproval: builder.mutation<
       ResponseDto<Curriculum>,
       { schoolId: string; curriculumId: string }
@@ -2468,7 +2544,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     approveCurriculum: builder.mutation<
       ResponseDto<Curriculum>,
       { schoolId: string; curriculumId: string }
@@ -2482,7 +2558,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     rejectCurriculum: builder.mutation<
       ResponseDto<Curriculum>,
       { schoolId: string; curriculumId: string; reason: string }
@@ -2497,7 +2573,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     activateCurriculum: builder.mutation<
       ResponseDto<Curriculum>,
       { schoolId: string; curriculumId: string }
@@ -2511,11 +2587,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     // ============================================
     // Curriculum Progress Endpoints
     // ============================================
-    
+
     markWeekComplete: builder.mutation<
       ResponseDto<CurriculumItem>,
       { schoolId: string; curriculumId: string; weekNumber: number; notes?: string }
@@ -2530,7 +2606,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     markWeekInProgress: builder.mutation<
       ResponseDto<CurriculumItem>,
       { schoolId: string; curriculumId: string; weekNumber: number }
@@ -2544,7 +2620,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         'Curriculum',
       ],
     }),
-    
+
     skipWeek: builder.mutation<
       ResponseDto<CurriculumItem>,
       { schoolId: string; curriculumId: string; weekNumber: number; reason: string }
@@ -2635,6 +2711,23 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
+      async onQueryStarted({ schoolId, id }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const updated = data?.data;
+          if (updated && typeof updated === 'object') {
+            dispatch(
+              apiSlice.util.updateQueryData('getStudentById', { schoolId, id }, (draft) => {
+                if (draft?.data) {
+                  Object.assign(draft.data, updated);
+                }
+              })
+            );
+          }
+        } catch {
+          // Invalidation will refetch on error
+        }
+      },
       invalidatesTags: (result, error, { id }) => [
         { type: 'Student' as const, id },
         { type: 'Student' as const, id: 'LIST' },
@@ -2685,7 +2778,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         url: `/schools/${schoolId}/students/${studentId}/resend-password-reset`,
         method: 'POST',
       }),
-      invalidatesTags: (result, error, { studentId }) => [{ type: 'School' as const, id: studentId }],
+      invalidatesTags: (result, error, { studentId }) => [
+        { type: 'Student' as const, id: studentId },
+        { type: 'Student' as const, id: 'LIST' },
+        'Student',
+      ],
     }),
     // Upload student profile image
     uploadStudentImage: builder.mutation<ResponseDto<any>, { schoolId: string; studentId: string; file: File }>({
@@ -2728,6 +2825,23 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
           return { error: { status: 'FETCH_ERROR', error: error.message } };
         }
       },
+      async onQueryStarted({ schoolId, studentId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const updatedStudent = data?.data;
+          if (updatedStudent && typeof updatedStudent === 'object') {
+            dispatch(
+              apiSlice.util.updateQueryData('getStudentById', { schoolId, id: studentId }, (draft) => {
+                if (draft?.data) {
+                  Object.assign(draft.data, updatedStudent);
+                }
+              })
+            );
+          }
+        } catch {
+          // Invalidation will still trigger refetch on error
+        }
+      },
       invalidatesTags: (result, error, { studentId }) => [
         { type: 'Student' as const, id: studentId },
         { type: 'Student' as const, id: 'LIST' },
@@ -2739,16 +2853,16 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       queryFn: async ({ schoolId, file }, _api, _extraOptions, baseQuery) => {
         const formData = new FormData();
         formData.append('file', file);
-        
+
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/schools/${schoolId}/staff/bulk-import`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
@@ -2756,18 +2870,18 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
           headers['x-tenant-id'] = tenantId;
         }
-        
+
         const response = await fetch(url, {
           method: 'POST',
           headers,
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ message: 'Import failed' }));
           return { error: { status: response.status, data: error } };
         }
-        
+
         const data = await response.json();
         return { data };
       },
@@ -2778,16 +2892,16 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       queryFn: async ({ schoolId, file }, _api, _extraOptions, baseQuery) => {
         const formData = new FormData();
         formData.append('file', file);
-        
+
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/schools/${schoolId}/students/bulk-import`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
@@ -2795,18 +2909,18 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
           headers['x-tenant-id'] = tenantId;
         }
-        
+
         const response = await fetch(url, {
           method: 'POST',
           headers,
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ message: 'Import failed' }));
           return { error: { status: response.status, data: error } };
         }
-        
+
         const data = await response.json();
         return { data };
       },
@@ -2942,6 +3056,58 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       providesTags: ['School'],
     }),
 
+    getRecentlyAcceptedTransfers: builder.query<
+      ResponseDto<{
+        items: Array<{
+          id: string;
+          completedAt: string | null;
+          student: {
+            id: string;
+            uid: string;
+            firstName: string;
+            middleName?: string | null;
+            lastName: string;
+            dateOfBirth: string;
+            profileImage?: string | null;
+            email?: string | null;
+            phone?: string | null;
+          };
+          fromSchool: { id: string; name: string };
+          targetEnrollment: {
+            id: string;
+            classLevel: string;
+            academicYear: string;
+            classArmName: string | null;
+          } | null;
+          sourceEnrollment: {
+            classLevel: string;
+            academicYear: string;
+          } | null;
+          performanceSummary: { gradeCount: number; averagePercentage: number | null };
+        }>;
+        meta: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          hasNextPage: boolean;
+          hasPrevPage: boolean;
+        };
+      }>,
+      { schoolId: string; page?: number; limit?: number }
+    >({
+      query: ({ schoolId, page = 1, limit = 20 }) => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('page', page.toString());
+        queryParams.append('limit', limit.toString());
+        return {
+          url: `/schools/${schoolId}/transfers/recently-accepted?${queryParams.toString()}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['School'],
+    }),
+
     completeTransfer: builder.mutation<
       ResponseDto<{
         transferId: string;
@@ -2979,15 +3145,17 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
   }),
 });
 
-export const { 
+export const {
   useGetMySchoolQuery,
   useUploadSchoolLogoMutation,
   useUpdateMySchoolMutation,
   useRequestEditTokenMutation,
   useVerifyEditTokenMutation,
-  useGetSchoolAdminDashboardQuery, 
+  useGetSchoolAdminDashboardQuery,
   useGetStaffListQuery,
   useGetStaffMemberQuery,
+  useDeleteAdminMutation,
+  useDeleteTeacherMutation,
   // Teacher Subject hooks
   useGetTeacherSubjectsQuery,
   useGetTeacherWithSubjectsQuery,
@@ -3012,6 +3180,7 @@ export const {
   useEndTermMutation,
   useReactivateTermMutation,
   useEndSessionMutation,
+  useUpdateTermDatesMutation,
   // Timetable hooks
   useGetTimetableForClassArmQuery,
   useGetTimetableForTeacherQuery,
@@ -3019,8 +3188,8 @@ export const {
   useGetTimetablesForSchoolTypeQuery,
   useCreateTimetablePeriodMutation,
   useUpdateTimetablePeriodMutation,
-    useDeleteTimetablePeriodMutation,
-    useDeleteTimetableForClassMutation,
+  useDeleteTimetablePeriodMutation,
+  useDeleteTimetableForClassMutation,
   useCreateMasterScheduleMutation,
   // Resource hooks
   useGetClassLevelsQuery,
@@ -3159,6 +3328,7 @@ export const {
   useRevokeTacMutation,
   useInitiateTransferMutation,
   useGetIncomingTransfersQuery,
+  useGetRecentlyAcceptedTransfersQuery,
   useCompleteTransferMutation,
   useRejectTransferMutation,
 } = schoolAdminApi;

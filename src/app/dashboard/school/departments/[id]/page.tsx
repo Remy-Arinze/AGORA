@@ -10,6 +10,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   BookOpen,
   Users,
@@ -132,8 +133,8 @@ export default function DepartmentDetailPage() {
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <BookOpen className="h-8 w-8 text-white" />
+              <div className="w-16 h-16 rounded-xl bg-[var(--avatar-placeholder-bg)] flex items-center justify-center shadow-lg text-[var(--avatar-placeholder-text)]">
+                <BookOpen className="h-8 w-8" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -226,7 +227,7 @@ export default function DepartmentDetailPage() {
                   </div>
                 ) : levels.length === 0 ? (
                   <div className="text-center py-12">
-                    <Layers className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="location" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No levels created yet
                     </p>
@@ -264,7 +265,7 @@ export default function DepartmentDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <BookMarked className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="document" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                     No courses added yet
                   </p>
@@ -290,7 +291,7 @@ export default function DepartmentDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="person_outline" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                     No lecturers assigned yet
                   </p>

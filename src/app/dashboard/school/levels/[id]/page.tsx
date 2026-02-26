@@ -11,6 +11,7 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   Users,
   GraduationCap,
@@ -176,8 +177,8 @@ export default function LevelDetailPage() {
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <Layers className="h-8 w-8 text-white" />
+              <div className="w-16 h-16 rounded-xl bg-[var(--avatar-placeholder-bg)] flex items-center justify-center shadow-lg text-[var(--avatar-placeholder-text)]">
+                <Layers className="h-8 w-8" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -259,7 +260,7 @@ export default function LevelDetailPage() {
                   </div>
                 ) : filteredStudents.length === 0 ? (
                   <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="person_outline" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       {studentSearch ? 'No students match your search.' : 'No students enrolled in this level yet.'}
                     </p>
@@ -292,8 +293,8 @@ export default function LevelDetailPage() {
                                     className="w-8 h-8 rounded-full object-cover"
                                   />
                                 ) : (
-                                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                  <div className="w-8 h-8 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-medium" style={{ fontSize: 'var(--text-small)' }}>
+                                    <span>
                                       {student.firstName[0]}{student.lastName[0]}
                                     </span>
                                   </div>
@@ -350,7 +351,7 @@ export default function LevelDetailPage() {
                   </div>
                 ) : courses.length === 0 ? (
                   <div className="text-center py-12">
-                    <BookMarked className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="document" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No courses assigned to this level yet.
                     </p>
@@ -379,14 +380,14 @@ export default function LevelDetailPage() {
                   </div>
                 ) : !termId ? (
                   <div className="text-center py-12">
-                    <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No active academic session found.
                     </p>
                   </div>
                 ) : timetable.length === 0 ? (
                   <div className="text-center py-12">
-                    <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No timetable set for this level yet.
                     </p>
@@ -457,7 +458,7 @@ export default function LevelDetailPage() {
                   </div>
                 ) : curriculum.length === 0 ? (
                   <div className="text-center py-12">
-                    <FileText className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="document_not_found" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No curriculum added for this level yet.
                     </p>
@@ -492,7 +493,7 @@ export default function LevelDetailPage() {
                   </div>
                 ) : resources.length === 0 ? (
                   <div className="text-center py-12">
-                    <FolderOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="document_not_found" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No resources uploaded for this level yet.
                     </p>

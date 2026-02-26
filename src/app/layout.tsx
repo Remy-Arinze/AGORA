@@ -117,7 +117,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={montserrat.variable}>
+      <body>
         <ThemeProvider>
           <StoreProvider>
             {children}

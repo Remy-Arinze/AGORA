@@ -27,6 +27,7 @@ import {
   Edit,
   UserX,
 } from 'lucide-react';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   useGetMySchoolQuery,
   useGetClassByIdQuery,
@@ -52,6 +53,7 @@ import { SubjectCurriculumList } from '@/components/curriculum';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import toast from 'react-hot-toast';
+import { ViewToggle } from '@/components/ui/ViewToggle';
 
 type TabType = 'students' | 'teachers' | 'timetable' | 'resources' | 'curriculum';
 
@@ -79,6 +81,8 @@ export default function ClassDetailPage() {
     resource: null,
   });
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [studentsView, setStudentsView] = useState<'list' | 'grid'>('list');
+  const [studentsPage, setStudentsPage] = useState(1);
 
   // Get school ID and type
   const { data: schoolResponse } = useGetMySchoolQuery();
@@ -292,6 +296,11 @@ export default function ClassDetailPage() {
   // For PRIMARY schools, only allow one form teacher
   const hasFormTeacher = teachersByRole.formTeachers.length > 0;
   const canAssignTeacher = schoolType !== 'PRIMARY' || !hasFormTeacher;
+  const pageSizeList = 12;
+  const pageSizeGrid = 9; // 3 columns * 3 rows
+  const pageSize = studentsView === 'grid' ? pageSizeGrid : pageSizeList;
+  const totalPages = Math.max(1, Math.ceil((students?.length || 0) / pageSize));
+  const paginatedStudents = students.slice((studentsPage - 1) * pageSize, studentsPage * pageSize);
 
   return (
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
@@ -312,8 +321,8 @@ export default function ClassDetailPage() {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               {/* Class Icon */}
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center shadow-lg flex-shrink-0">
-                <BookOpen className="h-6 w-6 text-white" />
+              <div className="w-12 h-12 rounded-lg bg-[var(--avatar-placeholder-bg)] flex items-center justify-center shadow-lg flex-shrink-0 text-[var(--avatar-placeholder-text)]">
+                <BookOpen className="h-6 w-6" />
               </div>
               
               {/* Class Info */}
@@ -346,7 +355,7 @@ export default function ClassDetailPage() {
                       teachersByRole.formTeachers.length > 0 ? (
                         <>
                           <Link 
-                            href={`/dashboard/school/teachers/${teachersByRole.formTeachers[0].teacherId}`}
+                            href={`/dashboard/school/staff/${teachersByRole.formTeachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {teachersByRole.formTeachers[0].firstName} {teachersByRole.formTeachers[0].lastName}
@@ -355,7 +364,7 @@ export default function ClassDetailPage() {
                       ) : classData.teachers.length > 0 ? (
                         <>
                           <Link 
-                            href={`/dashboard/school/teachers/${classData.teachers[0].teacherId}`}
+                            href={`/dashboard/school/staff/${classData.teachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {classData.teachers[0].firstName} {classData.teachers[0].lastName}
@@ -364,23 +373,13 @@ export default function ClassDetailPage() {
                       ) : (
                         <>
                           <span className="italic">No teacher assigned</span>
-                          <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={() => setShowAssignModal(true)}
-                              className="ml-1"
-                            >
-                              Assign Teacher
-                            </Button>
-                          </PermissionGate>
                         </>
                       )
                     ) : classData.type === 'SECONDARY' ? (
                       teachersByRole.formTeachers.length > 0 ? (
                         <>
                           <Link 
-                            href={`/dashboard/school/teachers/${teachersByRole.formTeachers[0].teacherId}`}
+                            href={`/dashboard/school/staff/${teachersByRole.formTeachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {teachersByRole.formTeachers[0].firstName} {teachersByRole.formTeachers[0].lastName}
@@ -389,16 +388,6 @@ export default function ClassDetailPage() {
                       ) : (
                         <>
                           <span className="italic">No form teacher assigned</span>
-                          <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={() => setShowAssignModal(true)}
-                              className="ml-1"
-                            >
-                              Assign Teacher
-                            </Button>
-                          </PermissionGate>
                         </>
                       )
                     ) : (
@@ -408,16 +397,6 @@ export default function ClassDetailPage() {
                         ) : (
                           <>
                             <span className="italic">No lecturer assigned</span>
-                            <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => setShowAssignModal(true)}
-                                className="ml-1"
-                              >
-                                Assign Lecturer
-                              </Button>
-                            </PermissionGate>
                           </>
                         )}
                       </>
@@ -432,19 +411,36 @@ export default function ClassDetailPage() {
               </div>
             </div>
             
-            {/* Edit Class Button */}
+            {/* Actions */}
             <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
-              <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 text-xs">
-                <Edit className="h-3 w-3" />
-                Edit Class
-              </Button>
+              <div className="flex items-center gap-2">
+                {(
+                  (classData.type === 'PRIMARY' && !hasFormTeacher && classData.teachers.length === 0) ||
+                  (classData.type === 'SECONDARY' && !hasFormTeacher) ||
+                  (classData.type === 'TERTIARY' && classData.teachers.length === 0)
+                ) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2 h-8 text-xs"
+                    onClick={() => setShowAssignModal(true)}
+                  >
+                    Assign {classData.type === 'TERTIARY' ? 'Lecturer' : 'Teacher'}
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 text-xs">
+                  <Edit className="h-3 w-3 mr-1" />
+                  Edit Class
+                </Button>
+              </div>
             </PermissionGate>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="border-b border-light-border dark:border-dark-border">
-          <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center justify-between">
+            <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -460,6 +456,16 @@ export default function ClassDetailPage() {
                 {tab.label}
               </button>
             ))}
+            </div>
+            {activeTab === 'students' && (
+              <ViewToggle
+                value={studentsView}
+                onChange={(mode) => {
+                  setStudentsView(mode);
+                  setStudentsPage(1);
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -472,14 +478,13 @@ export default function ClassDetailPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary" />
-                  <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-section-title)' }}>
+                  <p className="font-base text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-section-title)' }}>
                     Students in Class
                   </p>
                 </div>
                 <PermissionGate resource={PermissionResource.STUDENTS} type={PermissionType.WRITE}>
                   <Link href={`/dashboard/school/admissions?new=true`}>
                     <Button variant="primary" size="sm" className="h-8 text-xs">
-                      <Plus className="h-3 w-3 mr-2" />
                       Add Student
                     </Button>
                   </Link>
@@ -494,9 +499,7 @@ export default function ClassDetailPage() {
               ) : students.length === 0 ? (
                 <Card>
                   <CardContent className="py-16 text-center">
-                    <div className="w-20 h-20 rounded-full bg-light-surface dark:bg-dark-surface flex items-center justify-center mx-auto mb-4">
-                      <Users className="h-10 w-10 text-light-text-muted dark:text-dark-text-muted" />
-                    </div>
+                    <EmptyStateIcon type="person_outline" />
                     <p className="font-medium text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-card-title)' }}>
                       No students enrolled yet
                     </p>
@@ -505,7 +508,7 @@ export default function ClassDetailPage() {
                     </p>
                   </CardContent>
                 </Card>
-              ) : (
+              ) : studentsView === 'list' ? (
                 <Card>
                   <CardContent>
                     <div className="overflow-x-auto">
@@ -530,14 +533,14 @@ export default function ClassDetailPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {students.map((student) => (
+                          {paginatedStudents.map((student) => (
                             <tr
                               key={student.id}
                               className="border-b border-light-border dark:border-dark-border hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                             >
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                                  <div className="w-9 h-9 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center flex-shrink-0 text-[var(--avatar-placeholder-text)] font-medium" style={{ fontSize: 'var(--text-small)' }}>
                                     {student.profileImage ? (
                                       <img
                                         src={student.profileImage}
@@ -545,7 +548,7 @@ export default function ClassDetailPage() {
                                         className="w-9 h-9 rounded-full object-cover"
                                       />
                                     ) : (
-                                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                      <span>
                                         {student.firstName?.[0]}{student.lastName?.[0]}
                               </span>
                                     )}
@@ -568,12 +571,12 @@ export default function ClassDetailPage() {
                               <td className="py-3 px-4">
                                 <span className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
                                   {student.uid || '-'}
-                      </span>
+                                </span>
                               </td>
                               <td className="py-3 px-4">
                                 <span className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
                                   {student.enrollment?.classLevel || '-'}
-                      </span>
+                                </span>
                               </td>
                               <td className="py-3 px-4">
                                 <span
@@ -599,8 +602,104 @@ export default function ClassDetailPage() {
                         </tbody>
                       </table>
                     </div>
-                    <div className="pt-4 text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-body)' }}>
-                      Total: {students.length} student{students.length !== 1 ? 's' : ''}
+                    <div className="pt-4 flex items-center justify-between">
+                      <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-body)' }}>
+                        Total: {students.length} student{students.length !== 1 ? 's' : ''}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={studentsPage <= 1}
+                          onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
+                          className="h-8 text-xs"
+                        >
+                          Prev
+                        </Button>
+                        <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                          Page {studentsPage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={studentsPage >= totalPages}
+                          onClick={() => setStudentsPage((p) => Math.min(totalPages, p + 1))}
+                          className="h-8 text-xs"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {paginatedStudents.map((student) => (
+                        <Link key={student.id} href={`/dashboard/school/students/${student.id}`} className="block">
+                          <div className="p-4 rounded-lg border border-light-border dark:border-dark-border bg-[var(--light-surface)] dark:bg-[var(--dark-surface)] hover:bg-[var(--light-hover)] dark:hover:bg-[var(--dark-hover)] transition-colors cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center flex-shrink-0 text-[var(--avatar-placeholder-text)] font-medium">
+                                {student.profileImage ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={student.profileImage} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                ) : (
+                                  <span>{student.firstName?.[0]}{student.lastName?.[0]}</span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-light-text-primary dark:text-dark-text-primary truncate" style={{ fontSize: 'var(--text-body)' }}>
+                                  {student.firstName} {student.lastName}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${
+                                      student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                    }`}
+                                    style={{ fontSize: 'var(--text-small)' }}
+                                  >
+                                    {student.user?.accountStatus || 'Active'}
+                                  </span>
+                                  <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                                    {student.enrollment?.classLevel || '-'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                    <div className="pt-4 flex items-center justify-between">
+                      <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-body)' }}>
+                        Total: {students.length} student{students.length !== 1 ? 's' : ''}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={studentsPage <= 1}
+                          onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
+                          className="h-8 text-xs"
+                        >
+                          Prev
+                        </Button>
+                        <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                          Page {studentsPage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={studentsPage >= totalPages}
+                          onClick={() => setStudentsPage((p) => Math.min(totalPages, p + 1))}
+                          className="h-8 text-xs"
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -632,7 +731,7 @@ export default function ClassDetailPage() {
                   </div>
                 ) : teachersByRole.formTeachers.length === 0 && timetableTeachers.length === 0 ? (
                   <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="person_outline" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No teachers assigned to this class yet.
                     </p>
@@ -684,7 +783,7 @@ export default function ClassDetailPage() {
                                   </div>
                                   <div>
                                     <Link 
-                                      href={`/dashboard/school/teachers/${teacher.teacherId}`}
+                                      href={`/dashboard/school/staff/${teacher.teacherId}`}
                                       className="font-medium text-light-text-primary dark:text-dark-text-primary hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                                     >
                                       {teacher.teacherName}
@@ -780,14 +879,14 @@ export default function ClassDetailPage() {
                   </div>
                 ) : !activeTerm ? (
                       <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No active term. Please set up an academic session first.
                     </p>
                   </div>
                 ) : timetable.length === 0 ? (
                   <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" />
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No timetable set up for this class yet.
                     </p>
@@ -902,7 +1001,7 @@ export default function ClassDetailPage() {
                       </div>
                 ) : resources.length === 0 ? (
                   <div className="text-center py-12">
-                        <FileText className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                        <EmptyStateIcon type="document_not_found" />
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                           No resources uploaded yet.
                         </p>
@@ -979,7 +1078,7 @@ export default function ClassDetailPage() {
                   />
                 ) : (
                   <div className="text-center py-12">
-                    <ListOrdered className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="document" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       {!activeTerm?.id 
                         ? 'No active term. Please set up an academic session first.'
@@ -1066,15 +1165,15 @@ function TeacherCard({
   return (
     <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-center justify-between p-3 border border-light-border dark:border-dark-border rounded-lg hover:bg-light-surface dark:hover:bg-dark-bg transition-colors">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+        <div className="w-9 h-9 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-medium" style={{ fontSize: 'var(--text-small)' }}>
+          <span>
             {teacher.firstName[0]}{teacher.lastName[0]}
           </span>
                         </div>
         <div>
           <div className="flex items-center gap-2">
             <Link
-              href={`/dashboard/school/teachers/${teacher.teacherId}`}
+              href={`/dashboard/school/staff/${teacher.teacherId}`}
               className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary hover:text-blue-600 dark:hover:text-blue-400"
             >
               {teacher.firstName} {teacher.lastName}

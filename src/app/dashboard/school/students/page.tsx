@@ -18,6 +18,7 @@ import { StudentImportModal } from '@/components/modals/StudentImportModal';
 import { StudentAdmissionModal } from '@/components/modals/StudentAdmissionModal';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -56,7 +57,7 @@ const StudentAvatar = ({
   }
   
   return (
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
+      <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
       {getInitials(firstName, lastName)}
     </div>
   );
@@ -393,13 +394,14 @@ function StudentsPageContent() {
           {filteredStudents.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
+                <EmptyStateIcon type="person_outline" />
                 <p className="text-light-text-secondary dark:text-[#9ca3af]">
                   No students found. Click &quot;Add Student&quot; to add one.
                 </p>
               </CardContent>
             </Card>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredStudents.map((student) => {
                 
                 const statusConfig = getStatusBadge(student.user?.accountStatus);

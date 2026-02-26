@@ -25,8 +25,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Clock, GripVertical, X, Loader2, Sparkles } from 'lucide-react';
+import { Clock, GripVertical, X, Loader2, Sparkles, Plus, BookOpen, Info } from 'lucide-react';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import Link from 'next/link';
 import {
   type TimetablePeriod,
   type DayOfWeek,
@@ -202,8 +203,8 @@ function TimetableCell({
           ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500 border-dashed'
           : periodData
             ? readOnly 
-              ? 'bg-blue-50 dark:bg-blue-900/30'
-              : 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+              ? ''
+              : ' hover:bg-blue-100 dark:hover:bg-blue-900/50'
             : readOnly
               ? 'bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border'
               : 'bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-dark-surface/80 border border-light-border dark:border-dark-border'
@@ -229,8 +230,8 @@ function TimetableCell({
                 </span>
               ) : (
                 <span className="text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
-                  + Assign teacher
-                </span>
+                + Assign
+              </span>
               )}
             </button>
           ) : periodData.teacherName ? (
@@ -606,15 +607,25 @@ export function TimetableBuilder({
               
               <SortableContext items={draggableItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-hide">
-                  {draggableItems.length === 0 ? (
-                    <p className="text-sm text-light-text-muted dark:text-dark-text-muted text-center py-4">
-                      No {schoolType === 'TERTIARY' ? 'courses' : 'subjects'} available
-                    </p>
-                  ) : (
-                    draggableItems.map((item) => (
-                      <DraggableItem key={item.id} item={item} />
-                    ))
+                  {draggableItems.length <= 1 && (
+                    <div className="p-4 border border-light-border dark:border-dark-border rounded-lg bg-gray-50/50 dark:bg-gray-900/20 mb-4">
+                      <div className="flex items-start gap-2 mb-3">
+                        <Info className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                          You haven&apos;t created any {schoolType === 'TERTIARY' ? 'courses' : 'subjects'} yet.
+                        </p>
+                      </div>
+                      <Link href={schoolType === 'TERTIARY' ? "/dashboard/school/courses" : "/dashboard/school/subjects"}>
+                        <Button variant="ghost" size="sm" className="w-full text-light-text-primary dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-gray-800/50">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add {schoolType === 'TERTIARY' ? 'Courses' : 'Subjects'}
+                        </Button>
+                      </Link>
+                    </div>
                   )}
+                  {draggableItems.map((item) => (
+                    <DraggableItem key={item.id} item={item} />
+                  ))}
                 </div>
               </SortableContext>
             </CardContent>

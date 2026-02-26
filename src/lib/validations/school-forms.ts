@@ -88,28 +88,33 @@ export const studentAdmissionFormSchema = z.object({
     ),
   email: z
     .string()
-    .optional()
-    .transform((val) => (val && val.trim() ? sanitizeEmail(val) : undefined))
+    .min(1, 'Email is required')
+    .transform((val) => (val && val.trim() ? sanitizeEmail(val) : ''))
+    .refine((val) => val.length > 0, { message: 'Email is required' })
     .refine(
-      (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
       { message: 'Invalid email address' }
     ),
   phone: z
     .string()
     .min(1, 'Phone number is required')
     .transform((val) => sanitizePhone(val))
-    .refine(
-      (val) => val.length >= 10,
-      { message: 'Phone number must be at least 10 characters' }
-    )
-    .refine(
-      (val) => /^\+?[1-9]\d{1,14}$/.test(val),
-      { message: 'Invalid phone format' }
-    ),
+    .refine((val) => val.length >= 10, { message: 'Phone number must be at least 10 characters' })
+    .refine((val) => /^\+?\d{10,15}$/.test(val) && /^\+?[1-9]/.test(val), { message: 'Invalid phone format' }),
   address: z
     .string()
     .optional()
     .transform((val) => (val ? sanitizeString(val, 500) : undefined)),
+  nationality: z
+    .string()
+    .min(1, 'Nationality is required')
+    .max(100, 'Nationality must be at most 100 characters')
+    .transform((val) => (val ? sanitizeString(val, 100) : '')),
+  state: z
+    .string()
+    .min(1, 'State is required')
+    .max(100, 'State must be at most 100 characters')
+    .transform((val) => (val ? sanitizeString(val, 100) : '')),
   classLevel: z
     .string()
     .optional()
@@ -133,14 +138,8 @@ export const studentAdmissionFormSchema = z.object({
     .string()
     .min(1, 'Parent/Guardian phone is required')
     .transform((val) => sanitizePhone(val))
-    .refine(
-      (val) => val.length >= 10,
-      { message: 'Parent/Guardian phone must be at least 10 characters' }
-    )
-    .refine(
-      (val) => /^\+?[1-9]\d{1,14}$/.test(val),
-      { message: 'Invalid phone format' }
-    ),
+    .refine((val) => val.length >= 10, { message: 'Parent/Guardian phone must be at least 10 characters' })
+    .refine((val) => /^\+?\d{10,15}$/.test(val) && /^\+?[1-9]/.test(val), { message: 'Invalid phone format' }),
   parentEmail: z
     .string()
     .optional()
@@ -179,8 +178,8 @@ export const studentAdmissionFormSchema = z.object({
       return sanitized.length >= 10 ? sanitized : undefined;
     })
     .refine(
-      (val) => !val || /^\+?[1-9]\d{1,14}$/.test(val),
-      { message: 'Emergency contact phone must be at least 10 characters if provided' }
+      (val) => !val || (/^\+?\d{10,15}$/.test(val) && /^\+?[1-9]/.test(val)),
+      { message: 'Emergency contact phone must be valid if provided' }
     ),
   medicalNotes: z
     .string()
