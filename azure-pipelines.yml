@@ -21,11 +21,15 @@ stages:
     - script: npm ci --legacy-peer-deps
       displayName: 'Install Dependencies'
 
-    - script: npm run build
+    - script: |
+        echo "=== DEBUGGING API URL ==="
+        echo "The URL Azure sees is: $(NEXT_PUBLIC_API_URL)"
+        echo "========================="
+        npm run build
       displayName: 'Build Next.js App'
       env:
         NEXT_PUBLIC_API_URL: $(NEXT_PUBLIC_API_URL)
-
+        
     - bash: |
         echo "Copying static assets..."
         # In a standalone repo, Next.js creates files directly inside .next/standalone
