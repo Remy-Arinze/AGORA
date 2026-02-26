@@ -11,8 +11,12 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Pagination } from '@/components/ui/Pagination';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { Users, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, BookOpen, CheckCircle, Clock, Ban, Mail, Loader2 } from 'lucide-react';
-import { useGetStaffListQuery, useGetMySchoolQuery, useResendPasswordResetForStaffMutation } from '@/lib/store/api/schoolAdminApi';
+import { Users, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, BookOpen, CheckCircle, Clock, Ban, Mail, Loader2, Trash2 } from 'lucide-react';
+import { useGetStaffListQuery, useGetMySchoolQuery, useResendPasswordResetForStaffMutation, useDeleteAdminMutation, useDeleteTeacherMutation } from '@/lib/store/api/schoolAdminApi';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/store/store';
+import { Modal } from '@/components/ui/Modal';
+import { isPrincipalRole } from '@/hooks/useSchoolType'; // I'll check if it's exported there, if not I'll define it. Actually I didn't export it. I'll define it locally for now or modify useSchoolType.
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
 import { PermissionAssignmentModal } from '@/components/permissions/PermissionAssignmentModal';
@@ -41,10 +45,45 @@ export default function StaffPage() {
     role: string;
   } | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<{ id: string; type: 'admin' | 'teacher'; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Get school ID
+  const user = useSelector((state: RootState) => state.auth.user);
+
+  // Use the adminRole from the school profile as the source of truth
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
+  const currentProfileId = schoolResponse?.data?.currentAdmin?.id;
+  const currentProfileRole = schoolResponse?.data?.currentAdmin?.role;
+
+  const currentUserAdminRole = (currentProfileRole || user?.adminRole || '').toLowerCase().trim();
+
+  const canDeleteStaff = (staffMember: any) => {
+    if (!currentUserAdminRole) return false;
+
+    const normalize = (r: string) => (r || '').toLowerCase().trim().replace(/[\s_-]+/g, '');
+    const currentNorm = normalize(currentUserAdminRole);
+    const targetNorm = normalize(staffMember.role || '');
+
+    // 1. School owner cannot be deleted
+    if (targetNorm === 'schoolowner') return false;
+
+    // 2. Cannot delete yourself
+    if (staffMember.userId === user?.id || staffMember.id === currentProfileId || staffMember.id === user?.profileId) return false;
+
+    // 3. School owner can delete anyone else (teachers, admins, principals)
+    if (currentNorm === 'schoolowner') return true;
+
+    // 4. Principals can delete teachers and regular admins (non-principals)
+    const principalRoles = ['principal', 'schoolprincipal', 'headteacher', 'headmaster', 'headmistress', 'schoolowner'];
+    const targetIsPrincipal = principalRoles.includes(targetNorm);
+    const currentUserIsPrincipal = principalRoles.includes(currentNorm);
+
+    if (currentUserIsPrincipal && !targetIsPrincipal) return true;
+
+    return false;
+  };
+
 
   // Get school type and terminology
   const { currentType } = useSchoolType();
@@ -53,6 +92,10 @@ export default function StaffPage() {
   // Resend invitation mutation
   const [resendInvitation, { isLoading: isResending }] = useResendPasswordResetForStaffMutation();
   const [resendingStaffId, setResendingStaffId] = useState<string | null>(null);
+
+  // Delete mutations
+  const [deleteAdmin] = useDeleteAdminMutation();
+  const [deleteTeacher] = useDeleteTeacherMutation();
 
   // Debounce search query
   useEffect(() => {
@@ -88,7 +131,7 @@ export default function StaffPage() {
     const active = staff.filter(s => s.accountStatus === 'ACTIVE').length;
     const pending = staff.filter(s => s.accountStatus === 'SHADOW').length;
     const suspended = staff.filter(s => s.accountStatus === 'SUSPENDED').length;
-    
+
     return { total, active, pending, suspended };
   }, [staff, meta]);
 
@@ -111,17 +154,17 @@ export default function StaffPage() {
   };
 
   // Avatar component for staff
-  const StaffAvatar = ({ 
-    profileImage, 
-    firstName, 
-    lastName 
-  }: { 
-    profileImage?: string | null; 
-    firstName?: string; 
-    lastName?: string; 
+  const StaffAvatar = ({
+    profileImage,
+    firstName,
+    lastName
+  }: {
+    profileImage?: string | null;
+    firstName?: string;
+    lastName?: string;
   }) => {
     const [imageError, setImageError] = useState(false);
-    
+
     if (profileImage && !imageError) {
       return (
         <div className="relative w-12 h-12 flex-shrink-0">
@@ -134,7 +177,7 @@ export default function StaffPage() {
         </div>
       );
     }
-    
+
     return (
       <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
         {getInitials(firstName, lastName)}
@@ -146,7 +189,7 @@ export default function StaffPage() {
   const handleResendInvitation = async (staffId: string, staffName: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!schoolId) return;
-    
+
     setResendingStaffId(staffId);
     try {
       await resendInvitation({ schoolId, staffId }).unwrap();
@@ -158,7 +201,26 @@ export default function StaffPage() {
     }
   };
 
-  // Get status badge config
+  // Handle delete staff
+  const handleDeleteStaff = async () => {
+    if (!staffToDelete || !schoolId) return;
+
+    setIsDeleting(true);
+    try {
+      if (staffToDelete.type === 'admin') {
+        await deleteAdmin({ schoolId, adminId: staffToDelete.id }).unwrap();
+      } else {
+        await deleteTeacher({ schoolId, teacherId: staffToDelete.id }).unwrap();
+      }
+      toast.success(`${staffToDelete.name} deleted successfully`);
+      setStaffToDelete(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to delete staff member');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const getStatusBadge = (accountStatus: string) => {
     switch (accountStatus) {
       case 'ACTIVE':
@@ -205,10 +267,10 @@ export default function StaffPage() {
   }
 
   if (error) {
-    const errorMessage = error && 'status' in error 
+    const errorMessage = error && 'status' in error
       ? (error as any).data?.message || 'Failed to fetch staff'
       : 'Failed to load staff';
-    
+
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
         <div className="w-full">
@@ -397,13 +459,13 @@ export default function StaffPage() {
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredStaff.map((staffMember) => {
-                
+
                 const statusConfig = getStatusBadge(staffMember.accountStatus);
                 const StatusIcon = statusConfig.icon;
 
                 return (
                   <FadeInUp key={staffMember.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
-                    <Card 
+                    <Card
                       className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col"
                       onClick={() => router.push(`/dashboard/school/staff/${staffMember.id}`)}
                     >
@@ -430,14 +492,45 @@ export default function StaffPage() {
                               </p>
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            className="text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white p-1"
-                          >
-                            <MoreVertical className="h-5 w-5" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {staffMember.accountStatus === 'SHADOW' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleResendInvitation(staffMember.id, `${staffMember.firstName} ${staffMember.lastName}`, e);
+                                }}
+                                title="Resend Invitation"
+                                className="text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-500 p-1"
+                              >
+                                <Mail className="h-4 w-4" />
+                              </button>
+                            )}
+                            {canDeleteStaff(staffMember) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setStaffToDelete({
+                                    id: staffMember.id,
+                                    type: staffMember.type,
+                                    name: `${staffMember.firstName} ${staffMember.lastName}`
+                                  });
+                                }}
+                                title="Delete Staff"
+                                className="text-light-text-secondary dark:text-[#9ca3af] hover:text-red-500 p-1"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Additional menu options could go here
+                              }}
+                              className="text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white p-1"
+                            >
+                              <MoreVertical className="h-5 w-5" />
+                            </button>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-4 text-light-text-secondary dark:text-[#9ca3af] mt-auto" style={{ fontSize: 'var(--text-body)' }}>
@@ -447,8 +540,8 @@ export default function StaffPage() {
                               staffMember.role === 'Principal'
                                 ? 'bg-purple-500/20 text-purple-400'
                                 : staffMember.role === 'Teacher'
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-blue-500/20 text-blue-400'
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : 'bg-blue-500/20 text-blue-400'
                             )} style={{ fontSize: 'var(--text-small)' }}>
                               {staffMember.role || 'N/A'}
                             </span>
@@ -500,8 +593,8 @@ export default function StaffPage() {
                                   staffMember.role === 'Principal'
                                     ? 'bg-purple-500/20 text-purple-400'
                                     : staffMember.role === 'Teacher'
-                                    ? 'bg-green-500/20 text-green-400'
-                                    : 'bg-blue-500/20 text-blue-400'
+                                      ? 'bg-green-500/20 text-green-400'
+                                      : 'bg-blue-500/20 text-blue-400'
                                 )}>
                                   {staffMember.role || 'N/A'}
                                 </span>
@@ -511,15 +604,48 @@ export default function StaffPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-6">
-                            <div className="text-right">
-                              <p className="font-medium text-light-text-primary dark:text-white" style={{ fontSize: 'var(--text-body)' }}>
-                                {staffMember.phone || 'N/A'}
-                              </p>
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              {staffMember.accountStatus === 'SHADOW' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResendInvitation(staffMember.id, `${staffMember.firstName} ${staffMember.lastName}`, e);
+                                  }}
+                                  title="Resend Invitation"
+                                  className="text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-500 p-1"
+                                >
+                                  <Mail className="h-4 w-4" />
+                                </button>
+                              )}
+                              {canDeleteStaff(staffMember) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setStaffToDelete({
+                                      id: staffMember.id,
+                                      type: staffMember.type,
+                                      name: `${staffMember.firstName} ${staffMember.lastName}`
+                                    });
+                                  }}
+                                  className="text-red-500 hover:text-red-600 p-2"
+                                  title="Delete Staff"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/dashboard/school/staff/${staffMember.id}`);
+                                }}
+                                className="text-blue-600 dark:text-blue-400 font-medium p-0 h-auto"
+                              >
+                                View →
+                              </Button>
                             </div>
-                            <span className="text-blue-600 dark:text-blue-400 font-medium" style={{ fontSize: 'var(--text-body)' }}>
-                              View →
-                            </span>
                           </div>
                         </div>
                       </CardContent>
@@ -564,6 +690,35 @@ export default function StaffPage() {
             adminRole={selectedAdminForPermissions.role}
           />
         )}
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={!!staffToDelete}
+          onClose={() => setStaffToDelete(null)}
+          title="Delete Staff Member"
+        >
+          <div className="space-y-4">
+            <p className="text-light-text-primary dark:text-white">
+              Are you sure you want to delete <span className="font-bold">{staffToDelete?.name}</span>? This action cannot be undone and will remove all their access to the school data.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="secondary"
+                onClick={() => setStaffToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeleteStaff}
+                isLoading={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Staff'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </ProtectedRoute>
   );

@@ -9,6 +9,7 @@ export interface SchoolAdmin {
   email: string | null;
   phone: string;
   role: string;
+  schoolType?: string | null;
   accountStatus?: 'SHADOW' | 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
   userId?: string;
   createdAt: string;
@@ -112,6 +113,7 @@ export interface AddAdminDto {
   role: string;
   employeeId?: string;
   profileImage?: string;
+  schoolType?: string;
   /**
    * Optional custom permissions to assign during creation.
    * If not provided, default READ permissions for all resources will be assigned.
@@ -155,6 +157,7 @@ export interface ResponseDto<T> {
   message: string;
   data: T;
   timestamp?: string;
+  warnings?: string[];
 }
 
 // Pagination types
@@ -357,16 +360,16 @@ export const schoolsApi = apiSlice.injectEndpoints({
       queryFn: async ({ schoolId, teacherId, file }, _api, _extraOptions) => {
         const formData = new FormData();
         formData.append('image', file);
-        
+
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/schools/${schoolId}/teachers/${teacherId}/image`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
@@ -374,18 +377,18 @@ export const schoolsApi = apiSlice.injectEndpoints({
         if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
           headers['x-tenant-id'] = tenantId;
         }
-        
+
         const response = await fetch(url, {
           method: 'POST',
           headers,
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ message: 'Upload failed' }));
           return { error: { status: response.status, data: error } };
         }
-        
+
         const data = await response.json();
         return { data };
       },
@@ -400,16 +403,16 @@ export const schoolsApi = apiSlice.injectEndpoints({
       queryFn: async ({ schoolId, adminId, file }, _api, _extraOptions) => {
         const formData = new FormData();
         formData.append('image', file);
-        
+
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/schools/${schoolId}/admins/${adminId}/image`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
@@ -417,18 +420,18 @@ export const schoolsApi = apiSlice.injectEndpoints({
         if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
           headers['x-tenant-id'] = tenantId;
         }
-        
+
         const response = await fetch(url, {
           method: 'POST',
           headers,
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ message: 'Upload failed' }));
           return { error: { status: response.status, data: error } };
         }
-        
+
         const data = await response.json();
         return { data };
       },

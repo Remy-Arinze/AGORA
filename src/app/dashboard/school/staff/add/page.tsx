@@ -53,10 +53,10 @@ export default function AddStaffPage() {
   const [schoolId, setSchoolId] = useState<string | null>(null);
   // Admin permissions - initialized with default READ permissions
   const [adminPermissions, setAdminPermissions] = useState<AdminPermissionInput[]>(getDefaultReadPermissions());
-  
+
   const { addTeacher, isLoading: isAddingTeacher } = useAddTeacher(schoolId);
   const { addAdmin, isLoading: isAddingAdmin } = useAddAdmin(schoolId);
-  
+
   // Get school type and terminology
   const { currentType } = useSchoolType();
   const terminology = getTerminology(currentType);
@@ -86,10 +86,10 @@ export default function AddStaffPage() {
       if (!user?.id || user.role !== 'SCHOOL_ADMIN') return;
 
       // First, try to get from localStorage (stored during login)
-      const storedSchoolId = typeof window !== 'undefined' 
-        ? localStorage.getItem('currentSchoolId') 
+      const storedSchoolId = typeof window !== 'undefined'
+        ? localStorage.getItem('currentSchoolId')
         : null;
-      
+
       if (storedSchoolId) {
         setSchoolId(storedSchoolId);
         return;
@@ -234,7 +234,7 @@ export default function AddStaffPage() {
         }
 
         const result = await addTeacher(teacherData);
-        
+
         // Upload image after creation if we have a file but no URL
         if (selectedImageFile && result?.data?.id && schoolId) {
           try {
@@ -270,6 +270,8 @@ export default function AddStaffPage() {
           role: capitalizeWords(adminRole),
           employeeId: formData.employeeId.trim() || undefined,
           profileImage: profileImageUrl,
+          // Scope admin to current school type
+          schoolType: currentType || undefined,
           // Only include permissions for non-principal roles
           permissions: isPrincipalRoleCheck ? undefined : adminPermissions,
         };
@@ -280,7 +282,7 @@ export default function AddStaffPage() {
         });
 
         const result = await addAdmin(adminData);
-        
+
         // Upload image after creation if we have a file but no URL
         if (selectedImageFile && result?.data?.id && schoolId) {
           try {
@@ -317,8 +319,8 @@ export default function AddStaffPage() {
       <div className="w-full max-w-4xl mx-auto">
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <BackButton fallbackUrl="/dashboard/school/staff" className="mb-4" />
-          <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-            Add New {terminology.staffSingular}
+          <h1 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
+            Add New Staff
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
             Register a new {terminology.staffSingular.toLowerCase()} in your school
@@ -351,27 +353,24 @@ export default function AddStaffPage() {
                       setStaffType('teacher');
                       setErrors({});
                     }}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      staffType === 'teacher'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${staffType === 'teacher'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <Users
-                        className={`h-5 w-5 ${
-                          staffType === 'teacher'
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-light-text-secondary dark:text-dark-text-secondary'
-                        }`}
+                        className={`h-5 w-5 ${staffType === 'teacher'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-light-text-secondary dark:text-dark-text-secondary'
+                          }`}
                       />
                       <div className="text-left">
                         <p
-                          className={`font-semibold ${
-                            staffType === 'teacher'
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-light-text-primary dark:text-dark-text-primary'
-                          }`}
+                          className={`font-semibold ${staffType === 'teacher'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-light-text-primary dark:text-dark-text-primary'
+                            }`}
                         >
                           {terminology.staffSingular}
                         </p>
@@ -389,27 +388,24 @@ export default function AddStaffPage() {
                       // Reset permissions to defaults when switching to admin
                       setAdminPermissions(getDefaultReadPermissions());
                     }}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      staffType === 'admin'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${staffType === 'admin'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <UserPlus
-                        className={`h-5 w-5 ${
-                          staffType === 'admin'
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-light-text-secondary dark:text-dark-text-secondary'
-                        }`}
+                        className={`h-5 w-5 ${staffType === 'admin'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-light-text-secondary dark:text-dark-text-secondary'
+                          }`}
                       />
                       <div className="text-left">
                         <p
-                          className={`font-semibold ${
-                            staffType === 'admin'
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-light-text-primary dark:text-dark-text-primary'
-                          }`}
+                          className={`font-semibold ${staffType === 'admin'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-light-text-primary dark:text-dark-text-primary'
+                            }`}
                         >
                           Administrator
                         </p>
@@ -578,6 +574,14 @@ export default function AddStaffPage() {
                     helperText="Enter the administrative role (e.g., Vice Principal, Bursar, Administrator, etc.)"
                     error={errors.adminRole}
                   />
+                  {currentType && (
+                    <div className="mt-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <p className="text-blue-700 dark:text-blue-300" style={{ fontSize: 'var(--text-small)' }}>
+                        📍 This admin will be added to the <strong>{currentType.charAt(0) + currentType.slice(1).toLowerCase()}</strong> school section.
+                        They will only appear in the staff list when the {currentType.charAt(0) + currentType.slice(1).toLowerCase()} tab is selected.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -587,7 +591,7 @@ export default function AddStaffPage() {
                   <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                     Teaching Information
                   </h3>
-                  
+
                   {/* For SECONDARY schools - Multi-subject selection */}
                   {currentType === 'SECONDARY' && schoolId && (
                     <div className="mb-4 relative">
