@@ -360,17 +360,19 @@ export default function ClassDetailPage() {
                           >
                             {teachersByRole.formTeachers[0].firstName} {teachersByRole.formTeachers[0].lastName}
                           </Link>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setRemoveModal({ isOpen: true, teacher: teachersByRole.formTeachers[0] });
-                            }}
-                            title="Unassign teacher from this class"
-                            className="ml-1 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-light-text-muted dark:text-dark-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                          >
-                            <UserX className="h-3.5 w-3.5 text-red-500" />
-                          </button>
+                          <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setRemoveModal({ isOpen: true, teacher: teachersByRole.formTeachers[0] });
+                              }}
+                              title="Unassign teacher from this class"
+                              className="ml-1 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-light-text-muted dark:text-dark-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                            >
+                              <UserX className="h-3.5 w-3.5 text-red-500" />
+                            </button>
+                          </PermissionGate>
                         </>
                       ) : classData.teachers.length > 0 ? (
                         <>
@@ -380,17 +382,19 @@ export default function ClassDetailPage() {
                           >
                             {classData.teachers[0].firstName} {classData.teachers[0].lastName}
                           </Link>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setRemoveModal({ isOpen: true, teacher: classData.teachers[0] });
-                            }}
-                            title="Unassign teacher from this class"
-                            className="ml-1 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-light-text-muted dark:text-dark-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                          >
-                            <UserX className="h-3.5 w-3.5" />
-                          </button>
+                          <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setRemoveModal({ isOpen: true, teacher: classData.teachers[0] });
+                              }}
+                              title="Unassign teacher from this class"
+                              className="ml-1 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-light-text-muted dark:text-dark-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                            >
+                              <UserX className="h-3.5 w-3.5" />
+                            </button>
+                          </PermissionGate>
                         </>
                       ) : (
                         <>

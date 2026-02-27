@@ -343,39 +343,41 @@ export default function ClassesPage() {
                         <div className="flex flex-col items-end gap-2">
                           {/* Edit and Delete Buttons */}
                           <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditModal({
-                                  isOpen: true,
-                                  classId: classItem.id,
-                                  currentName: classItem.name,
-                                });
-                              }}
-                              className="h-8 w-8 p-0 text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-600 dark:hover:text-blue-400"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClass(
-                                  classItem.id,
-                                  classItem.name,
-                                  classItem.classLevel ?? undefined,
-                                  classItem.studentsCount,
-                                  !!classItem.classArmId
-                                );
-                              }}
-                              disabled={isDeletingClass}
-                              className="h-8 w-8 p-0 text-light-text-secondary dark:text-[#9ca3af] hover:text-red-600 dark:hover:text-red-400"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditModal({
+                                    isOpen: true,
+                                    classId: classItem.id,
+                                    currentName: classItem.name,
+                                  });
+                                }}
+                                className="h-8 w-8 p-0 text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-600 dark:hover:text-blue-400"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClass(
+                                    classItem.id,
+                                    classItem.name,
+                                    classItem.classLevel ?? undefined,
+                                    classItem.studentsCount,
+                                    !!classItem.classArmId
+                                  );
+                                }}
+                                disabled={isDeletingClass}
+                                className="h-8 w-8 p-0 text-light-text-secondary dark:text-[#9ca3af] hover:text-red-600 dark:hover:text-red-400"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </PermissionGate>
                           </div>
                           {/* Status Badge */}
                           <span

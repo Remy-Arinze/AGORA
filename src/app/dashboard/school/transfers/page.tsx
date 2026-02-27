@@ -58,7 +58,7 @@ function HistoricalGradesModal({
 }) {
   const { data: gradesResponse, isLoading, error, isError } = useGetTransferHistoricalGradesQuery(
     { schoolId, transferId },
-    { 
+    {
       skip: !schoolId || !transferId,
       // Refetch when modal opens
       refetchOnMountOrArgChange: true,
@@ -156,8 +156,8 @@ function HistoricalGradesModal({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <TransferEnrollmentsDisplay 
-                  enrollments={historicalData.enrollments} 
+                <TransferEnrollmentsDisplay
+                  enrollments={historicalData.enrollments}
                   grades={[]}
                 />
               </CardContent>
@@ -181,8 +181,8 @@ function HistoricalGradesModal({
                     {error && 'data' in error
                       ? (error.data as any)?.message || 'Failed to load historical records'
                       : error && 'status' in error
-                      ? `Error ${(error as any).status}: Failed to load historical records`
-                      : 'Failed to load historical records. Please try again.'}
+                        ? `Error ${(error as any).status}: Failed to load historical records`
+                        : 'Failed to load historical records. Please try again.'}
                   </p>
                   <p className="text-xs mt-2 text-light-text-muted dark:text-dark-text-muted">
                     Transfer ID: {transferId} | School ID: {schoolId}
@@ -241,11 +241,11 @@ function TransferEnrollmentsDisplay({ enrollments, grades }: { enrollments?: any
   // Calculate cumulative score for an enrollment
   const calculateCumulativeScore = (enrollmentGrades: any[]) => {
     if (enrollmentGrades.length === 0) return { percentage: 0, totalScore: 0, totalMaxScore: 0 };
-    
+
     const totalScore = enrollmentGrades.reduce((sum, g) => sum + (g.score || 0), 0);
     const totalMaxScore = enrollmentGrades.reduce((sum, g) => sum + (g.maxScore || 0), 0);
     const percentage = totalMaxScore > 0 ? Math.round((totalScore / totalMaxScore) * 100) : 0;
-    
+
     return { percentage, totalScore, totalMaxScore };
   };
 
@@ -453,7 +453,7 @@ export default function TransfersPage() {
   // Get school ID
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
-  
+
   // Get school type
   const { currentType } = useSchoolType();
 
@@ -687,22 +687,20 @@ export default function TransfersPage() {
           <div className="flex space-x-1">
             <button
               onClick={() => setActiveTab('recently-accepted')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'recently-accepted'
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'recently-accepted'
                   ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                   : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-              }`}
+                }`}
             >
               <CheckCircle2 className="h-4 w-4" />
               Recently accepted
             </button>
             <button
               onClick={() => setActiveTab('outgoing')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'outgoing'
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'outgoing'
                   ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                   : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-              }`}
+                }`}
             >
               <ArrowUp className="h-4 w-4" />
               Outgoing Transfers
@@ -840,67 +838,66 @@ export default function TransfersPage() {
                               </div>
                             </button>
                             <div
-                              className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-                                isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                              }`}
+                              className={`grid transition-[grid-template-rows] duration-300 ease-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                                }`}
                             >
                               <div className={`min-h-0 overflow-hidden transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                                 <div className="border-t border-light-border dark:border-dark-border px-4 py-4 bg-light-surface dark:bg-dark-bg space-y-4">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-                                  <div>
-                                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">From school</p>
-                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.fromSchool?.name || '—'}</p>
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                                    <div>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">From school</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.fromSchool?.name || '—'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Previous class</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{sourceLabel}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Admitted to</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{targetLabel}</p>
+                                    </div>
+                                    {item.student?.email && (
+                                      <div>
+                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Email</p>
+                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.email}</p>
+                                      </div>
+                                    )}
+                                    {item.student?.phone && (
+                                      <div>
+                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Phone</p>
+                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.phone}</p>
+                                      </div>
+                                    )}
+                                    {item.student?.dateOfBirth && (
+                                      <div>
+                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Date of birth</p>
+                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                          {new Date(item.student.dateOfBirth).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {perf && (
+                                      <div>
+                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Performance (previous school)</p>
+                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                          {perf.averagePercentage != null ? `${perf.averagePercentage}% average` : '—'} ({perf.gradeCount} grades)
+                                        </p>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
-                                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Previous class</p>
-                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{sourceLabel}</p>
+                                  <div className="pt-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/dashboard/school/students/${item.student?.id}`);
+                                      }}
+                                    >
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      View student profile
+                                    </Button>
                                   </div>
-                                  <div>
-                                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Admitted to</p>
-                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{targetLabel}</p>
-                                  </div>
-                                  {item.student?.email && (
-                                    <div>
-                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Email</p>
-                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.email}</p>
-                                    </div>
-                                  )}
-                                  {item.student?.phone && (
-                                    <div>
-                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Phone</p>
-                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.phone}</p>
-                                    </div>
-                                  )}
-                                  {item.student?.dateOfBirth && (
-                                    <div>
-                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Date of birth</p>
-                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                        {new Date(item.student.dateOfBirth).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                                      </p>
-                                    </div>
-                                  )}
-                                  {perf && (
-                                    <div>
-                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Performance (previous school)</p>
-                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                        {perf.averagePercentage != null ? `${perf.averagePercentage}% average` : '—'} ({perf.gradeCount} grades)
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="pt-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      router.push(`/dashboard/school/students/${item.student?.id}`);
-                                    }}
-                                  >
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View student profile
-                                  </Button>
-                                </div>
                                 </div>
                               </div>
                             </div>
@@ -1062,15 +1059,17 @@ export default function TransfersPage() {
                                     </Button>
                                   )}
                                   {transfer.tac && !transfer.tacUsedAt && transfer.status !== 'COMPLETED' && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleRevokeTac(transfer.id)}
-                                      disabled={isRevoking}
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-1" />
-                                      Revoke
-                                    </Button>
+                                    <PermissionGate resource={PermissionResource.TRANSFERS} type={PermissionType.WRITE}>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRevokeTac(transfer.id)}
+                                        disabled={isRevoking}
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-1" />
+                                        Revoke
+                                      </Button>
+                                    </PermissionGate>
                                   )}
                                 </div>
                               </td>
@@ -1400,8 +1399,8 @@ export default function TransfersPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <TransferEnrollmentsDisplay 
-                    enrollments={showTransferPreview.studentData?.enrollments} 
+                  <TransferEnrollmentsDisplay
+                    enrollments={showTransferPreview.studentData?.enrollments}
                     grades={showTransferPreview.studentData?.grades}
                   />
                 </CardContent>

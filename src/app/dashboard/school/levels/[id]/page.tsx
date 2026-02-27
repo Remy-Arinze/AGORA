@@ -54,7 +54,7 @@ export default function LevelDetailPage() {
   const levelId = params.id as string;
   const [activeTab, setActiveTab] = useState<TabType>('students');
   const [studentSearch, setStudentSearch] = useState('');
-  
+
   const { currentType } = useSchoolType();
 
   // Get school data
@@ -216,11 +216,10 @@ export default function LevelDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-1 py-3 border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-1 py-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -311,11 +310,10 @@ export default function LevelDetailPage() {
                               {student.user?.email || '-'}
                             </td>
                             <td className="py-3 px-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                student.user?.accountStatus === 'ACTIVE'
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${student.user?.accountStatus === 'ACTIVE'
                                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                   : 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400'
-                              }`}>
+                                }`}>
                                 {student.user?.accountStatus || 'Shadow'}
                               </span>
                             </td>
@@ -338,10 +336,12 @@ export default function LevelDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Courses ({courses.length})</CardTitle>
-                  <Button variant="primary" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Course
-                  </Button>
+                  <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                    <Button variant="primary" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Course
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardHeader>
               <CardContent>
@@ -391,10 +391,12 @@ export default function LevelDetailPage() {
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No timetable set for this level yet.
                     </p>
-                    <Button variant="primary" className="mt-4">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Timetable
-                    </Button>
+                    <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                      <Button variant="primary" className="mt-4">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Timetable
+                      </Button>
+                    </PermissionGate>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -414,13 +416,12 @@ export default function LevelDetailPage() {
                               .map((period) => (
                                 <div
                                   key={period.id}
-                                  className={`px-3 py-2 rounded-lg text-sm ${
-                                    period.type === 'BREAK'
+                                  className={`px-3 py-2 rounded-lg text-sm ${period.type === 'BREAK'
                                       ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                                       : period.type === 'ASSEMBLY'
-                                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-                                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                                  }`}
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                    }`}
                                 >
                                   <div className="font-medium">{period.startTime} - {period.endTime}</div>
                                   <div>{period.subjectName || period.type}</div>
@@ -445,10 +446,12 @@ export default function LevelDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Curriculum</CardTitle>
-                  <Button variant="primary" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Curriculum
-                  </Button>
+                  <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                    <Button variant="primary" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Curriculum
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardHeader>
               <CardContent>
@@ -480,10 +483,12 @@ export default function LevelDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Resources</CardTitle>
-                  <Button variant="primary" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Upload Resource
-                  </Button>
+                  <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                    <Button variant="primary" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Upload Resource
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardHeader>
               <CardContent>
@@ -531,11 +536,10 @@ function CourseCard({ course }: { course: LevelCourse }) {
             )}
           </div>
           {course.isCore !== undefined && (
-            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              course.isCore
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${course.isCore
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                 : 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400'
-            }`}>
+              }`}>
               {course.isCore ? 'Core' : 'Elective'}
             </span>
           )}

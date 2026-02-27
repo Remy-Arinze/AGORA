@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import Link from 'next/link';
 import { useCurrentAdminPermissions, PermissionResource, PermissionType } from '@/hooks/usePermissions';
 
 interface PermissionGateProps {
@@ -8,23 +9,23 @@ interface PermissionGateProps {
    * The resource to check permission for
    */
   resource: PermissionResource;
-  
+
   /**
    * The type of permission required (default: READ)
    */
   type?: PermissionType;
-  
+
   /**
    * Content to render if permission is granted
    */
   children: ReactNode;
-  
+
   /**
    * Optional fallback to render if permission is denied
    * If not provided, nothing is rendered
    */
   fallback?: ReactNode;
-  
+
   /**
    * If true, shows a loading skeleton while permissions are being fetched
    */
@@ -57,7 +58,7 @@ export function PermissionGate({
   showLoading = false,
 }: PermissionGateProps) {
   const { hasPermission, isLoading } = useCurrentAdminPermissions();
-  
+
   if (isLoading && showLoading) {
     return (
       <div className="animate-pulse">
@@ -65,16 +66,16 @@ export function PermissionGate({
       </div>
     );
   }
-  
+
   if (isLoading) {
     // If not showing loading, return nothing until we know the permissions
     return null;
   }
-  
+
   if (hasPermission(resource, type)) {
     return <>{children}</>;
   }
-  
+
   return <>{fallback}</>;
 }
 
@@ -89,7 +90,7 @@ export function withPermission<P extends object>(
 ) {
   return function PermissionProtectedComponent(props: P) {
     const { hasPermission, isLoading } = useCurrentAdminPermissions();
-    
+
     if (isLoading) {
       return (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -97,14 +98,14 @@ export function withPermission<P extends object>(
         </div>
       );
     }
-    
+
     if (!hasPermission(resource, type)) {
       if (FallbackComponent) {
         return <FallbackComponent />;
       }
       return <AccessDenied resource={resource} />;
     }
-    
+
     return <WrappedComponent {...props} />;
   };
 }
@@ -132,7 +133,7 @@ function AccessDenied({ resource }: { resource: PermissionResource }) {
     [PermissionResource.TRANSFERS]: 'Transfers',
     [PermissionResource.INTEGRATIONS]: 'Integrations',
   };
-  
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
       <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
@@ -143,10 +144,16 @@ function AccessDenied({ resource }: { resource: PermissionResource }) {
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
         Access Denied
       </h2>
-      <p className="text-gray-600 dark:text-gray-400 max-w-md">
+      <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
         You don&apos;t have permission to access <span className="font-medium">{resourceLabels[resource]}</span>.
         Please contact your school administrator if you believe this is an error.
       </p>
+      <Link
+        href="/dashboard/school"
+        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white transition-colors border border-transparent rounded-lg bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+      >
+        Return to Dashboard
+      </Link>
     </div>
   );
 }

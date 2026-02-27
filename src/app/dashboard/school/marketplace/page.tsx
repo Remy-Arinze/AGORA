@@ -9,7 +9,7 @@ import { Alert } from '@/components/ui/Alert';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
-import { 
+import {
   Puzzle,
   Sparkles,
   Smartphone,
@@ -23,6 +23,8 @@ import {
   Settings,
   Eye
 } from 'lucide-react';
+import { PermissionGate } from '@/components/permissions/PermissionGate';
+import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 
 // Mock data - will be replaced with API calls later
 const allPlugins = [
@@ -126,9 +128,9 @@ export default function MarketplacePage() {
       plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       plugin.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       plugin.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesCategory = filterCategory === 'all' || plugin.category === filterCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -214,7 +216,7 @@ export default function MarketplacePage() {
                 .map((plugin, index) => {
                   const Icon = plugin.icon;
                   return (
-                    <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
+                    <FadeInUp delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                       <Card className="h-full border-2 border-green-500 dark:border-green-400">
                         <CardHeader>
                           <div className="flex items-start justify-between mb-2">
@@ -250,10 +252,12 @@ export default function MarketplacePage() {
                                 ({plugin.reviews})
                               </span>
                             </div>
-                            <Button variant="ghost" size="sm">
-                              <Settings className="h-4 w-4 mr-1" />
-                              Manage
-                            </Button>
+                            <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                              <Button variant="ghost" size="sm">
+                                <Settings className="h-4 w-4 mr-1" />
+                                Manage
+                              </Button>
+                            </PermissionGate>
                           </div>
                         </CardContent>
                       </Card>
@@ -287,7 +291,7 @@ export default function MarketplacePage() {
                 .map((plugin, index) => {
                   const Icon = plugin.icon;
                   return (
-                    <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
+                    <FadeInUp delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                       <Card className="h-full hover:shadow-lg transition-shadow">
                         <CardHeader>
                           <div className="flex items-start justify-between mb-2">
@@ -337,17 +341,19 @@ export default function MarketplacePage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button
-                              variant="primary"
-                              className="flex-1"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedPlugin(plugin.id);
-                                setShowSubscribeModal(true);
-                              }}
-                            >
-                              Subscribe
-                            </Button>
+                            <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                              <Button
+                                variant="primary"
+                                className="flex-1"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPlugin(plugin.id);
+                                  setShowSubscribeModal(true);
+                                }}
+                              >
+                                Subscribe
+                              </Button>
+                            </PermissionGate>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -423,14 +429,16 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <Button
-                      variant="primary"
-                      className="flex-1"
-                      onClick={() => handleSubscribe(plugin.id)}
-                      isLoading={isSubscribing}
-                    >
-                      Confirm Subscription
-                    </Button>
+                    <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                      <Button
+                        variant="primary"
+                        className="flex-1"
+                        onClick={() => handleSubscribe(plugin.id)}
+                        isLoading={isSubscribing}
+                      >
+                        Confirm Subscription
+                      </Button>
+                    </PermissionGate>
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -528,15 +536,17 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button
-                      variant="primary"
-                      className="flex-1"
-                      onClick={() => {
-                        setShowSubscribeModal(true);
-                      }}
-                    >
-                      Subscribe Now
-                    </Button>
+                    <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                      <Button
+                        variant="primary"
+                        className="flex-1"
+                        onClick={() => {
+                          setShowSubscribeModal(true);
+                        }}
+                      >
+                        Subscribe Now
+                      </Button>
+                    </PermissionGate>
                     <Button
                       variant="ghost"
                       onClick={() => setSelectedPlugin(null)}

@@ -265,7 +265,7 @@ export default function FacultiesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFaculties.map((faculty, index) => (
-              <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
+              <FadeInUp delay={index * 0.05} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
                   <CardContent
                     className="pt-6 flex-1 cursor-pointer"
@@ -289,11 +289,10 @@ export default function FacultiesPage() {
                         </div>
                       </div>
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          faculty.isActive
+                        className={`px-2 py-1 rounded text-xs font-medium ${faculty.isActive
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                        }`}
+                          }`}
                       >
                         {faculty.isActive ? 'Active' : 'Inactive'}
                       </span>
@@ -324,26 +323,28 @@ export default function FacultiesPage() {
                   </CardContent>
 
                   <div className="px-6 pb-4 pt-2 border-t border-light-border dark:border-dark-border flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditModal({ isOpen: true, faculty });
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteModal({ isOpen: true, faculty });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditModal({ isOpen: true, faculty });
+                        }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteModal({ isOpen: true, faculty });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </PermissionGate>
                   </div>
                 </Card>
               </FadeInUp>

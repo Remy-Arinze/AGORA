@@ -35,6 +35,8 @@ import {
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { PermissionGate } from '@/components/permissions/PermissionGate';
+import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 
 // ─── Confirmation Modal ────────────────────────────────────────────────────────
 
@@ -77,14 +79,14 @@ function ConfirmationModal({
           <div className="p-6">
             <div
               className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${confirmVariant === 'danger'
-                  ? 'bg-red-100 dark:bg-red-900/30'
-                  : 'bg-orange-100 dark:bg-orange-900/30'
+                ? 'bg-red-100 dark:bg-red-900/30'
+                : 'bg-orange-100 dark:bg-orange-900/30'
                 }`}
             >
               <AlertTriangle
                 className={`h-6 w-6 ${confirmVariant === 'danger'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-orange-600 dark:text-orange-400'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-orange-600 dark:text-orange-400'
                   }`}
               />
             </div>
@@ -102,8 +104,8 @@ function ConfirmationModal({
                 onClick={onConfirm}
                 disabled={isLoading}
                 className={`flex-1 ${confirmVariant === 'danger'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-orange-600 hover:bg-orange-700 text-white'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-orange-600 hover:bg-orange-700 text-white'
                   }`}
               >
                 {isLoading ? (
@@ -591,8 +593,8 @@ export default function SessionWizardPage() {
               <div className="flex flex-col items-center">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= step
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}
                 >
                   {currentStep > step ? (
@@ -608,8 +610,8 @@ export default function SessionWizardPage() {
               {idx < stepLabels.length - 1 && (
                 <div
                   className={`flex-1 h-1 mx-2 ${currentStep > step
-                      ? 'bg-blue-600'
-                      : 'bg-gray-200 dark:bg-gray-700'
+                    ? 'bg-blue-600'
+                    : 'bg-gray-200 dark:bg-gray-700'
                     }`}
                 />
               )}
@@ -649,8 +651,8 @@ export default function SessionWizardPage() {
                   <button
                     onClick={() => setSessionType('NEW_SESSION')}
                     className={`p-4 rounded-lg border-2 transition-colors ${sessionType === 'NEW_SESSION'
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                       }`}
                   >
                     <h3 className="font-semibold mb-1">New Session</h3>
@@ -661,8 +663,8 @@ export default function SessionWizardPage() {
                   <button
                     onClick={() => setSessionType('NEW_TERM')}
                     className={`p-4 rounded-lg border-2 transition-colors ${sessionType === 'NEW_TERM'
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                       }`}
                   >
                     <h3 className="font-semibold mb-1">New {termLabel}</h3>
@@ -719,14 +721,16 @@ export default function SessionWizardPage() {
                             new one. This will mark all{' '}
                             {termLabel.toLowerCase()}s as completed.
                           </p>
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowEndSessionModal(true)}
-                            className="border-orange-500 text-orange-700 hover:bg-orange-100 dark:border-orange-400 dark:text-orange-300 dark:hover:bg-orange-900/40"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            End Current Session
-                          </Button>
+                          <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowEndSessionModal(true)}
+                              className="border-orange-500 text-orange-700 hover:bg-orange-100 dark:border-orange-400 dark:text-orange-300 dark:hover:bg-orange-900/40"
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              End Current Session
+                            </Button>
+                          </PermissionGate>
                         </div>
                       </div>
                     </div>
@@ -750,14 +754,16 @@ export default function SessionWizardPage() {
                             You must end the current {termLabel.toLowerCase()}{' '}
                             before starting a new one.
                           </p>
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowEndTermModal(true)}
-                            className="border-blue-500 text-blue-700 hover:bg-blue-100 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-900/40"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            End Current {termLabel}
-                          </Button>
+                          <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowEndTermModal(true)}
+                              className="border-blue-500 text-blue-700 hover:bg-blue-100 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              End Current {termLabel}
+                            </Button>
+                          </PermissionGate>
                         </div>
                       </div>
                     </div>
@@ -806,8 +812,8 @@ export default function SessionWizardPage() {
                           onChange={(e) => setSelectedTermId(e.target.value)}
                           disabled={hasActiveTerm}
                           className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary ${hasActiveTerm
-                              ? 'opacity-50 cursor-not-allowed'
-                              : ''
+                            ? 'opacity-50 cursor-not-allowed'
+                            : ''
                             }`}
                         >
                           <option value="">
@@ -869,28 +875,30 @@ export default function SessionWizardPage() {
               )}
 
               <div className="flex justify-end">
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceedStep1 || isReactivating}
-                >
-                  {isReactivation ? (
-                    isReactivating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Continuing {termLabel}...
-                      </>
+                <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canProceedStep1 || isReactivating}
+                  >
+                    {isReactivation ? (
+                      isReactivating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Continuing {termLabel}...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Continue {termLabel}
+                        </>
+                      )
                     ) : (
                       <>
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Continue {termLabel}
+                        Next <ArrowRight className="h-4 w-4 ml-2" />
                       </>
-                    )
-                  ) : (
-                    <>
-                      Next <ArrowRight className="h-4 w-4 ml-2" />
-                    </>
-                  )}
-                </Button>
+                    )}
+                  </Button>
+                </PermissionGate>
               </div>
             </CardContent>
           </Card>
@@ -968,8 +976,8 @@ export default function SessionWizardPage() {
                             key={num}
                             onClick={() => setStartingTermNumber(num)}
                             className={`p-3 rounded-lg border-2 transition-all text-center ${startingTermNumber === num
-                                ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 shadow-sm'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                              ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 shadow-sm'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                               }`}
                           >
                             <p className="font-semibold text-sm">
@@ -1023,14 +1031,14 @@ export default function SessionWizardPage() {
                           setUseCustomTermDates(!useCustomTermDates)
                         }
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useCustomTermDates
-                            ? 'bg-blue-600'
-                            : 'bg-gray-300 dark:bg-gray-600'
+                          ? 'bg-blue-600'
+                          : 'bg-gray-300 dark:bg-gray-600'
                           }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${useCustomTermDates
-                              ? 'translate-x-6'
-                              : 'translate-x-1'
+                            ? 'translate-x-6'
+                            : 'translate-x-1'
                             }`}
                         />
                       </button>
@@ -1042,8 +1050,8 @@ export default function SessionWizardPage() {
                           <div
                             key={td.number}
                             className={`p-4 rounded-lg border transition-colors ${td.number === startingTermNumber
-                                ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/10'
-                                : 'border-gray-200 dark:border-gray-700'
+                              ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/10'
+                              : 'border-gray-200 dark:border-gray-700'
                               }`}
                           >
                             <div className="flex items-center gap-2 mb-3">
@@ -1109,29 +1117,31 @@ export default function SessionWizardPage() {
                 <Button variant="ghost" onClick={handleBack}>
                   Back
                 </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={
-                    !canProceedStep2 || isStarting || isReactivating
-                  }
-                >
-                  {totalSteps > 2 && currentStep < totalSteps ? (
-                    <>
-                      Next <ArrowRight className="h-4 w-4 ml-2" />
-                    </>
-                  ) : isStarting || isReactivating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {isReactivation ? 'Continuing' : 'Starting'}{' '}
-                      {termLabel}...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {isReactivation ? 'Continue' : 'Start'} {termLabel}
-                    </>
-                  )}
-                </Button>
+                <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                  <Button
+                    onClick={handleNext}
+                    disabled={
+                      !canProceedStep2 || isStarting || isReactivating
+                    }
+                  >
+                    {totalSteps > 2 && currentStep < totalSteps ? (
+                      <>
+                        Next <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
+                    ) : isStarting || isReactivating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {isReactivation ? 'Continuing' : 'Starting'}{' '}
+                        {termLabel}...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {isReactivation ? 'Continue' : 'Start'} {termLabel}
+                      </>
+                    )}
+                  </Button>
+                </PermissionGate>
               </div>
             </CardContent>
           </Card>
@@ -1153,8 +1163,8 @@ export default function SessionWizardPage() {
                   <button
                     onClick={() => setCarryOver(true)}
                     className={`p-4 rounded-lg border-2 transition-colors ${carryOver
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                       }`}
                   >
                     <h3 className="font-semibold mb-1">Yes - Carry Over</h3>
@@ -1165,8 +1175,8 @@ export default function SessionWizardPage() {
                   <button
                     onClick={() => setCarryOver(false)}
                     className={`p-4 rounded-lg border-2 transition-colors ${!carryOver
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                       }`}
                   >
                     <h3 className="font-semibold mb-1">No - Promote</h3>
@@ -1195,23 +1205,25 @@ export default function SessionWizardPage() {
                 <Button variant="ghost" onClick={handleBack}>
                   Back
                 </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isStarting}
-                  className="flex items-center gap-2"
-                >
-                  {isStarting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Starting {termLabel}...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Start {termLabel}
-                    </>
-                  )}
-                </Button>
+                <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isStarting}
+                    className="flex items-center gap-2"
+                  >
+                    {isStarting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Starting {termLabel}...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Start {termLabel}
+                      </>
+                    )}
+                  </Button>
+                </PermissionGate>
               </div>
             </CardContent>
           </Card>

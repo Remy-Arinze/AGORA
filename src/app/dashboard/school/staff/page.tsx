@@ -500,43 +500,45 @@ export default function StaffPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            {staffMember.accountStatus === 'SHADOW' && (
+                            <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
+                              {staffMember.accountStatus === 'SHADOW' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResendInvitation(staffMember.id, `${staffMember.firstName} ${staffMember.lastName}`, e);
+                                  }}
+                                  title="Resend Invitation"
+                                  className="text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-500 p-1"
+                                >
+                                  <Mail className="h-4 w-4" />
+                                </button>
+                              )}
+                              {canDeleteStaff(staffMember) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setStaffToDelete({
+                                      id: staffMember.id,
+                                      type: staffMember.type,
+                                      name: `${staffMember.firstName} ${staffMember.lastName}`
+                                    });
+                                  }}
+                                  title="Delete Staff"
+                                  className="text-light-text-secondary dark:text-[#9ca3af] hover:text-red-500 p-1"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleResendInvitation(staffMember.id, `${staffMember.firstName} ${staffMember.lastName}`, e);
+                                  // Additional menu options could go here
                                 }}
-                                title="Resend Invitation"
-                                className="text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-500 p-1"
+                                className="text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white p-1"
                               >
-                                <Mail className="h-4 w-4" />
+                                <MoreVertical className="h-5 w-5" />
                               </button>
-                            )}
-                            {canDeleteStaff(staffMember) && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setStaffToDelete({
-                                    id: staffMember.id,
-                                    type: staffMember.type,
-                                    name: `${staffMember.firstName} ${staffMember.lastName}`
-                                  });
-                                }}
-                                title="Delete Staff"
-                                className="text-light-text-secondary dark:text-[#9ca3af] hover:text-red-500 p-1"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Additional menu options could go here
-                              }}
-                              className="text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white p-1"
-                            >
-                              <MoreVertical className="h-5 w-5" />
-                            </button>
+                            </PermissionGate>
                           </div>
                         </div>
 
@@ -626,47 +628,49 @@ export default function StaffPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              {staffMember.accountStatus === 'SHADOW' && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResendInvitation(staffMember.id, `${staffMember.firstName} ${staffMember.lastName}`, e);
-                                  }}
-                                  title="Resend Invitation"
-                                  className="text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-500 p-1"
-                                >
-                                  <Mail className="h-4 w-4" />
-                                </button>
-                              )}
-                              {canDeleteStaff(staffMember) && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setStaffToDelete({
-                                      id: staffMember.id,
-                                      type: staffMember.type,
-                                      name: `${staffMember.firstName} ${staffMember.lastName}`
-                                    });
-                                  }}
-                                  className="text-red-500 hover:text-red-600 p-2"
-                                  title="Delete Staff"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  router.push(`/dashboard/school/staff/${staffMember.id}`);
-                                }}
-                                className="text-blue-600 dark:text-blue-400 font-medium p-0 h-auto"
-                              >
-                                View →
-                              </Button>
-                            </div>
+                            <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
+                              <div className="flex items-center gap-2">
+                                {staffMember.accountStatus === 'SHADOW' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResendInvitation(staffMember.id, `${staffMember.firstName} ${staffMember.lastName}`, e);
+                                    }}
+                                    title="Resend Invitation"
+                                    className="text-light-text-secondary dark:text-[#9ca3af] hover:text-blue-500 p-1"
+                                  >
+                                    <Mail className="h-4 w-4" />
+                                  </button>
+                                )}
+                                {canDeleteStaff(staffMember) && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setStaffToDelete({
+                                        id: staffMember.id,
+                                        type: staffMember.type,
+                                        name: `${staffMember.firstName} ${staffMember.lastName}`
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-600 p-2"
+                                    title="Delete Staff"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </PermissionGate>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/dashboard/school/staff/${staffMember.id}`);
+                              }}
+                              className="text-blue-600 dark:text-blue-400 font-medium p-0 h-auto"
+                            >
+                              View →
+                            </Button>
                           </div>
                         </div>
                       </CardContent>

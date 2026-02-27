@@ -7,11 +7,11 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  Users, 
-  Mail, 
-  Phone, 
-  BookOpen, 
+import {
+  Users,
+  Mail,
+  Phone,
+  BookOpen,
   GraduationCap,
   Edit,
   Clock,
@@ -79,7 +79,7 @@ const PassportPhoto = ({
   lastName?: string;
 }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
@@ -169,16 +169,16 @@ export default function StaffDetailPage() {
     teacherId: staffId,
     skip: !isTeacher || !schoolId,
   });
-  
+
   // Resend password reset mutation
   const [resendPasswordReset, { isLoading: isResendingPasswordReset }] = useResendPasswordResetForStaffMutation();
-  
+
   // Check if user hasn't set their password yet
   const hasNotSetPassword = staff?.user?.accountStatus === 'SHADOW';
-  
+
   const handleResendPasswordReset = async () => {
     if (!schoolId || !staffId) return;
-    
+
     try {
       await resendPasswordReset({ schoolId, staffId }).unwrap();
       toast.success('Password reset email sent successfully');
@@ -240,15 +240,17 @@ export default function StaffDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               {hasNotSetPassword && (
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  onClick={handleResendPasswordReset}
-                  disabled={isResendingPasswordReset}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isResendingPasswordReset ? 'Sending...' : 'Resend Password Setup Email'}
-                </Button>
+                <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.WRITE}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleResendPasswordReset}
+                    disabled={isResendingPasswordReset}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {isResendingPasswordReset ? 'Sending...' : 'Resend Password Setup Email'}
+                  </Button>
+                </PermissionGate>
               )}
               {isAdmin && !isPrincipal && (
                 <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.ADMIN}>
@@ -275,11 +277,10 @@ export default function StaffDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                     : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -335,13 +336,12 @@ export default function StaffDetailPage() {
                           Role
                         </p>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            isPrincipal
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isPrincipal
                               ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
                               : staff.role === 'Teacher'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                          }`}
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                            }`}
                         >
                           {staff.role || (isAdmin ? 'Administrator' : 'Teacher')}
                         </span>
@@ -361,11 +361,10 @@ export default function StaffDetailPage() {
                           Status
                         </p>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            staff.status === 'active'
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${staff.status === 'active'
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                               : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                          }`}
+                            }`}
                         >
                           {staff.status}
                         </span>
@@ -424,19 +423,19 @@ export default function StaffDetailPage() {
                       )}
 
                       {/* Empty State - No classes at all */}
-                      {!isLoadingClasses && !isLoadingTimetableClasses && 
-                       teacherClasses.length === 0 && 
-                       (!timetableClasses || timetableClasses.classes.length === 0) && (
-                        <div className="text-center py-8">
-                          <EmptyStateIcon type="document" />
-                          <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                            This teacher is not assigned to any classes yet.
-                          </p>
-                          <p className="text-sm text-light-text-muted dark:text-dark-text-muted mt-2">
-                            Assign them as a form teacher, or add them to class timetables.
-                          </p>
-                        </div>
-                      )}
+                      {!isLoadingClasses && !isLoadingTimetableClasses &&
+                        teacherClasses.length === 0 &&
+                        (!timetableClasses || timetableClasses.classes.length === 0) && (
+                          <div className="text-center py-8">
+                            <EmptyStateIcon type="document" />
+                            <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                              This teacher is not assigned to any classes yet.
+                            </p>
+                            <p className="text-sm text-light-text-muted dark:text-dark-text-muted mt-2">
+                              Assign them as a form teacher, or add them to class timetables.
+                            </p>
+                          </div>
+                        )}
 
                       <div className="space-y-6">
                         {/* PRIMARY/TERTIARY Classes - Form Teacher/Assistant Roles */}
@@ -463,11 +462,10 @@ export default function StaffDetailPage() {
                                           <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
                                             {classItem.name}
                                           </h3>
-                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            classItem.type === 'TERTIARY'
+                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${classItem.type === 'TERTIARY'
                                               ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400'
                                               : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                                          }`}>
+                                            }`}>
                                             {classItem.type === 'TERTIARY' ? 'Course' : classItem.type}
                                           </span>
                                           {assignment?.isPrimary && (
@@ -602,12 +600,11 @@ export default function StaffDetailPage() {
                                         {subject.classLevelName}
                                       </span>
                                     )}
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      subject.assignedClassCount > 0
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${subject.assignedClassCount > 0
                                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                                         : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                    }`}>
-                                      {subject.assignedClassCount > 0 
+                                      }`}>
+                                      {subject.assignedClassCount > 0
                                         ? `Teaching ${subject.assignedClassCount} class${subject.assignedClassCount !== 1 ? 'es' : ''}`
                                         : 'Not assigned'}
                                     </span>
