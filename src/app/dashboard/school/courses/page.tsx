@@ -130,7 +130,7 @@ export default function ClassesPage() {
 
   const handleDeleteClass = async (classId: string, className: string, classLevel?: string, studentsCount?: number, isClassArm?: boolean) => {
     if (!schoolId) return;
-    
+
     setDeleteModal({
       isOpen: true,
       classId,
@@ -206,7 +206,7 @@ export default function ClassesPage() {
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
                 {terminology.courses}
               </h1>
-         
+
               {activeSession?.session && (
                 <div className="flex items-center gap-2 mt-2">
                   <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -246,7 +246,7 @@ export default function ClassesPage() {
                 size="lg"
               />
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* View Toggle Buttons */}
               <div className="flex items-center gap-1 bg-light-surface dark:bg-[#151a23] rounded-lg p-1 border border-light-border dark:border-[#1a1f2e]">
@@ -304,17 +304,17 @@ export default function ClassesPage() {
             </CardContent>
           </Card>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredClasses.map((classItem: Class, index: number) => {
               const primaryTeacher = classItem.teachers?.find((t) => t.isPrimary);
               const teacherName = primaryTeacher
                 ? `${primaryTeacher.firstName} ${primaryTeacher.lastName}`
                 : classItem.teachers && classItem.teachers.length > 0
-                ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
-                : 'No teacher assigned';
+                  ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
+                  : 'No teacher assigned';
 
               return (
-                <FadeInUp key={classItem.id} delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
+                <FadeInUp key={classItem.id} delay={index * 0.05} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                   <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
                     <CardContent
                       className="pt-6 flex-1 cursor-pointer"
@@ -333,7 +333,7 @@ export default function ClassesPage() {
                                 {classItem.name}
                               </h3>
                               {classItem.classArmId && (
-                                <span className="px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" style={{ fontSize: 'var(--text-small)' }}>
+                                <span className="px-2 py-0.5 rounded font-medium text-blue-800  dark:text-blue-400" style={{ fontSize: 'var(--text-small)' }}>
                                   ClassArm
                                 </span>
                               )}
@@ -379,11 +379,10 @@ export default function ClassesPage() {
                           </div>
                           {/* Status Badge */}
                           <span
-                            className={`px-2 py-1 rounded font-medium ${
-                              classItem.isActive
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                            }`}
+                            className={`px-2 py-1 rounded ${classItem.isActive
+                              ? 'text-green-900 dark:text-green-400 text-xs'
+                              : ' text-gray-900 dark:text-gray-400 text-xs'
+                              }`}
                             style={{ fontSize: 'var(--text-small)' }}
                           >
                             {classItem.isActive ? 'Active' : 'Inactive'}
@@ -393,13 +392,13 @@ export default function ClassesPage() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
-                          <p className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
+                          <p className="text-light-text-primary dark:[var(--dark-text-secondary)]" style={{ fontSize: 'var(--text-body)' }}>
                             {teacherName}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <GraduationCap className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
-                          <p className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
+                          <p className="text-light-text-primary dark:[var(--dark-text-secondary)]" style={{ fontSize: 'var(--text-body)' }}>
                             {classItem.studentsCount || 0} students
                           </p>
                         </div>
@@ -417,8 +416,8 @@ export default function ClassesPage() {
               const teacherName = primaryTeacher
                 ? `${primaryTeacher.firstName} ${primaryTeacher.lastName}`
                 : classItem.teachers && classItem.teachers.length > 0
-                ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
-                : 'No teacher assigned';
+                  ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
+                  : 'No teacher assigned';
 
               return (
                 <FadeInUp key={classItem.id} from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>

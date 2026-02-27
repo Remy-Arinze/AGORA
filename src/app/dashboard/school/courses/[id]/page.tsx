@@ -26,6 +26,7 @@ import {
   ArrowLeft,
   Edit,
   UserX,
+  User,
 } from 'lucide-react';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
@@ -117,18 +118,18 @@ export default function ClassDetailPage() {
     const baseTabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
       { id: 'students', label: 'Students', icon: <Users className="h-4 w-4" /> },
     ];
-    
+
     // Add Teachers tab for SECONDARY schools (they have multiple subject teachers)
     if (classData?.type === 'SECONDARY') {
       baseTabs.push({ id: 'teachers', label: 'Teachers', icon: <GraduationCap className="h-4 w-4" /> });
     }
-    
+
     baseTabs.push(
       { id: 'timetable', label: 'Timetable', icon: <Calendar className="h-4 w-4" /> },
       { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" /> },
       { id: 'curriculum', label: 'Curriculum', icon: <ListOrdered className="h-4 w-4" /> }
     );
-    
+
     return baseTabs;
   }, [classData?.type]);
 
@@ -150,17 +151,17 @@ export default function ClassDetailPage() {
   // Extract unique teacher-subject pairs from timetable (for SECONDARY)
   const timetableTeachers = useMemo(() => {
     if (!timetable || timetable.length === 0) return [];
-    
+
     const teacherSubjectMap = new Map<string, {
       teacherId: string;
       teacherName: string;
       subjects: Map<string, { subjectId: string; subjectName: string; periodCount: number }>;
     }>();
-    
+
     timetable.forEach((period) => {
       if (!period.teacherId || !period.teacherName) return;
       if (!period.subjectId || !period.subjectName) return;
-      
+
       if (!teacherSubjectMap.has(period.teacherId)) {
         teacherSubjectMap.set(period.teacherId, {
           teacherId: period.teacherId,
@@ -168,7 +169,7 @@ export default function ClassDetailPage() {
           subjects: new Map(),
         });
       }
-      
+
       const teacherData = teacherSubjectMap.get(period.teacherId)!;
       if (!teacherData.subjects.has(period.subjectId)) {
         teacherData.subjects.set(period.subjectId, {
@@ -179,7 +180,7 @@ export default function ClassDetailPage() {
       }
       teacherData.subjects.get(period.subjectId)!.periodCount++;
     });
-    
+
     // Convert to array
     return Array.from(teacherSubjectMap.values()).map((teacher) => ({
       teacherId: teacher.teacherId,
@@ -239,8 +240,8 @@ export default function ClassDetailPage() {
 
     try {
       await deleteResource({
-    schoolId,
-    classId,
+        schoolId,
+        classId,
         resourceId: deleteResourceModal.resource.id,
       }).unwrap();
       toast.success('Resource deleted successfully');
@@ -308,7 +309,7 @@ export default function ClassDetailPage() {
         {/* Header */}
         <div className="space-y-6">
           {/* Back Button */}
-          <Link 
+          <Link
             href="/dashboard/school/courses"
             className="inline-flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary transition-colors"
             style={{ fontSize: 'var(--text-body)' }}
@@ -316,7 +317,7 @@ export default function ClassDetailPage() {
             <ArrowLeft className="h-4 w-4" />
             Back to Classes
           </Link>
-          
+
           {/* Class Header */}
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -324,22 +325,21 @@ export default function ClassDetailPage() {
               <div className="w-12 h-12 rounded-lg bg-[var(--avatar-placeholder-bg)] flex items-center justify-center shadow-lg flex-shrink-0 text-[var(--avatar-placeholder-text)]">
                 <BookOpen className="h-6 w-6" />
               </div>
-              
+
               {/* Class Info */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     {classData.name}
                   </h1>
-                  <span className={`px-2.5 py-1 rounded-full font-medium ${
-                    classData.isActive
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                  }`} style={{ fontSize: 'var(--text-small)' }}>
+                  <span className={`px-2.5 py-1 rounded-full font-medium ${classData.isActive
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    }`} style={{ fontSize: 'var(--text-small)' }}>
                     {classData.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>
-                
+
                 {/* Class Details */}
                 <div className="flex flex-wrap items-center gap-6 text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                   <div className="flex items-center gap-2">
@@ -348,27 +348,49 @@ export default function ClassDetailPage() {
                       {classData.classLevel || 'N/A'} • {classData.academicYear || 'N/A'}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
-                    <UserX className="h-4 w-4 flex-shrink-0" />
+                    <User className="h-4 w-4 flex-shrink-0" />
                     {classData.type === 'PRIMARY' ? (
                       teachersByRole.formTeachers.length > 0 ? (
                         <>
-                          <Link 
+                          <Link
                             href={`/dashboard/school/staff/${teachersByRole.formTeachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {teachersByRole.formTeachers[0].firstName} {teachersByRole.formTeachers[0].lastName}
                           </Link>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setRemoveModal({ isOpen: true, teacher: teachersByRole.formTeachers[0] });
+                            }}
+                            title="Unassign teacher from this class"
+                            className="ml-1 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-light-text-muted dark:text-dark-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          >
+                            <UserX className="h-3.5 w-3.5 text-red-500" />
+                          </button>
                         </>
                       ) : classData.teachers.length > 0 ? (
                         <>
-                          <Link 
+                          <Link
                             href={`/dashboard/school/staff/${classData.teachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
                             {classData.teachers[0].firstName} {classData.teachers[0].lastName}
                           </Link>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setRemoveModal({ isOpen: true, teacher: classData.teachers[0] });
+                            }}
+                            title="Unassign teacher from this class"
+                            className="ml-1 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-light-text-muted dark:text-dark-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          >
+                            <UserX className="h-3.5 w-3.5" />
+                          </button>
                         </>
                       ) : (
                         <>
@@ -378,7 +400,7 @@ export default function ClassDetailPage() {
                     ) : classData.type === 'SECONDARY' ? (
                       teachersByRole.formTeachers.length > 0 ? (
                         <>
-                          <Link 
+                          <Link
                             href={`/dashboard/school/staff/${teachersByRole.formTeachers[0].teacherId}`}
                             className="font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                           >
@@ -402,7 +424,7 @@ export default function ClassDetailPage() {
                       </>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 flex-shrink-0" />
                     <span>{classData.studentsCount || 0} student{(classData.studentsCount || 0) !== 1 ? 's' : ''} enrolled</span>
@@ -410,7 +432,7 @@ export default function ClassDetailPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Actions */}
             <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
               <div className="flex items-center gap-2">
@@ -419,15 +441,15 @@ export default function ClassDetailPage() {
                   (classData.type === 'SECONDARY' && !hasFormTeacher) ||
                   (classData.type === 'TERTIARY' && classData.teachers.length === 0)
                 ) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 h-8 text-xs"
-                    onClick={() => setShowAssignModal(true)}
-                  >
-                    Assign {classData.type === 'TERTIARY' ? 'Lecturer' : 'Teacher'}
-                  </Button>
-                )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2 h-8 text-xs"
+                      onClick={() => setShowAssignModal(true)}
+                    >
+                      Assign {classData.type === 'TERTIARY' ? 'Lecturer' : 'Teacher'}
+                    </Button>
+                  )}
                 <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 text-xs">
                   <Edit className="h-3 w-3 mr-1" />
                   Edit Class
@@ -441,21 +463,20 @@ export default function ClassDetailPage() {
         <div className="border-b border-light-border dark:border-dark-border">
           <div className="flex items-center justify-between">
             <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors whitespace-nowrap text-xs ${
-                  activeTab === tab.id
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors whitespace-nowrap text-xs ${activeTab === tab.id
                     ? 'border-b-2 border-[#2490FD] dark:border-[#2490FD] text-[#2490FD] dark:text-[#2490FD]'
                     : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
-                style={{ fontSize: 'var(--text-small)' }}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+                    }`}
+                  style={{ fontSize: 'var(--text-small)' }}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
             </div>
             {activeTab === 'students' && (
               <ViewToggle
@@ -477,7 +498,6 @@ export default function ClassDetailPage() {
               {/* Section Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary" />
                   <p className="font-base text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-section-title)' }}>
                     Students in Class
                   </p>
@@ -485,12 +505,12 @@ export default function ClassDetailPage() {
                 <PermissionGate resource={PermissionResource.STUDENTS} type={PermissionType.WRITE}>
                   <Link href={`/dashboard/school/admissions?new=true`}>
                     <Button variant="primary" size="sm" className="h-8 text-xs">
-                      Add Student
+                      Assign Student
                     </Button>
                   </Link>
                 </PermissionGate>
               </div>
-              
+
               {/* Content */}
               {isLoadingStudents ? (
                 <div className="flex items-center justify-center py-12">
@@ -550,10 +570,10 @@ export default function ClassDetailPage() {
                                     ) : (
                                       <span>
                                         {student.firstName?.[0]}{student.lastName?.[0]}
-                              </span>
+                                      </span>
                                     )}
-                    </div>
-                      <div>
+                                  </div>
+                                  <div>
                                     <Link
                                       href={`/dashboard/school/students/${student.id}`}
                                       className="font-medium text-light-text-primary dark:text-dark-text-primary hover:text-blue-600 dark:hover:text-blue-400"
@@ -565,8 +585,8 @@ export default function ClassDetailPage() {
                                         {student.user.email}
                                       </p>
                                     )}
-                      </div>
-                  </div>
+                                  </div>
+                                </div>
                               </td>
                               <td className="py-3 px-4">
                                 <span className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
@@ -580,11 +600,10 @@ export default function ClassDetailPage() {
                               </td>
                               <td className="py-3 px-4">
                                 <span
-                                  className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${
-                                    student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                  }`}
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                    }`}
                                   style={{ fontSize: 'var(--text-small)' }}
                                 >
                                   {student.user?.accountStatus || 'Active'}
@@ -654,11 +673,10 @@ export default function ClassDetailPage() {
                                 </p>
                                 <div className="flex items-center gap-2 mt-1">
                                   <span
-                                    className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${
-                                      student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
-                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                    }`}
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                      }`}
                                     style={{ fontSize: 'var(--text-small)' }}
                                   >
                                     {student.user?.accountStatus || 'Active'}
@@ -763,7 +781,7 @@ export default function ClassDetailPage() {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Subject Teachers from Timetable */}
                     {timetableTeachers.length > 0 && (
                       <div>
@@ -772,7 +790,7 @@ export default function ClassDetailPage() {
                         </h4>
                         <div className="space-y-3">
                           {timetableTeachers.map((teacher) => (
-                            <div 
+                            <div
                               key={teacher.teacherId}
                               className="p-4 rounded-lg border border-light-border dark:border-dark-border bg-[var(--light-surface)] dark:bg-[var(--dark-surface)] hover:bg-[var(--light-hover)] dark:hover:bg-[var(--dark-hover)] transition-colors"
                             >
@@ -782,7 +800,7 @@ export default function ClassDetailPage() {
                                     <GraduationCap className="h-5 w-5 text-green-600 dark:text-green-400" />
                                   </div>
                                   <div>
-                                    <Link 
+                                    <Link
                                       href={`/dashboard/school/staff/${teacher.teacherId}`}
                                       className="font-medium text-light-text-primary dark:text-dark-text-primary hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                                     >
@@ -790,7 +808,7 @@ export default function ClassDetailPage() {
                                     </Link>
                                     <div className="flex flex-wrap gap-2 mt-1">
                                       {teacher.subjects.map((subject) => (
-                                        <span 
+                                        <span
                                           key={subject.subjectId}
                                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs"
                                         >
@@ -830,7 +848,7 @@ export default function ClassDetailPage() {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Other Teachers */}
                     {teachersByRole.otherTeachers.length > 0 && (
                       <div>
@@ -847,22 +865,22 @@ export default function ClassDetailPage() {
                           ))}
                         </div>
                       </div>
-                              )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Timetable Tab */}
           {activeTab === 'timetable' && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     <CardTitle>Class Timetable</CardTitle>
-                      </div>
+                  </div>
                   <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
                     <Link href={`/dashboard/school/timetable?class=${classId}`}>
                       <Button variant="primary" size="sm" className="h-8 text-xs">
@@ -870,15 +888,15 @@ export default function ClassDetailPage() {
                       </Button>
                     </Link>
                   </PermissionGate>
-                  </div>
-                </CardHeader>
-                <CardContent>
+                </div>
+              </CardHeader>
+              <CardContent>
                 {isLoadingTimetable ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                   </div>
                 ) : !activeTerm ? (
-                      <div className="text-center py-12">
+                  <div className="text-center py-12">
                     <EmptyStateIcon type="statistics" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No active term. Please set up an academic session first.
@@ -887,7 +905,7 @@ export default function ClassDetailPage() {
                 ) : timetable.length === 0 ? (
                   <div className="text-center py-12">
                     <EmptyStateIcon type="statistics" />
-                        <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No timetable set up for this class yet.
                     </p>
                     <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
@@ -898,44 +916,43 @@ export default function ClassDetailPage() {
                         </Button>
                       </Link>
                     </PermissionGate>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
-                            <tr>
+                        <tr>
                           <th className="p-2 text-left text-xs font-semibold text-light-text-muted dark:text-dark-text-muted border-b border-light-border dark:border-dark-border">
                             Time
-                              </th>
+                          </th>
                           {DAY_SHORT.map((day, idx) => (
                             <th key={day} className="p-2 text-center text-xs font-semibold text-light-text-muted dark:text-dark-text-muted border-b border-light-border dark:border-dark-border">
                               {day}
-                              </th>
+                            </th>
                           ))}
-                            </tr>
-                          </thead>
+                        </tr>
+                      </thead>
                       <tbody>
                         {timeSlots.map((slot) => {
                           const [start, end] = slot.split('-');
-                              return (
+                          return (
                             <tr key={slot}>
                               <td className="p-2 text-xs text-light-text-secondary dark:text-dark-text-secondary border-b border-light-border dark:border-dark-border whitespace-nowrap">
                                 {start} - {end}
-                                  </td>
+                              </td>
                               {DAYS_OF_WEEK.map((day) => {
                                 const period = timetableByTimeSlot[slot]?.find((p) => p.dayOfWeek === day);
                                 return (
                                   <td key={day} className="p-1 border-b border-light-border dark:border-dark-border">
                                     {period ? (
-                                      <div className={`p-2 rounded text-xs ${
-                                        period.type === 'BREAK' || period.type === 'LUNCH'
-                                          ? 'bg-gray-100 dark:bg-gray-800'
-                                          : period.type === 'ASSEMBLY'
+                                      <div className={`p-2 rounded text-xs ${period.type === 'BREAK' || period.type === 'LUNCH'
+                                        ? 'bg-gray-100 dark:bg-gray-800'
+                                        : period.type === 'ASSEMBLY'
                                           ? 'bg-purple-50 dark:bg-purple-900/20'
                                           : period.subjectName || period.courseName
-                                          ? 'bg-blue-50 dark:bg-blue-900/20'
-                                          : 'bg-green-50 dark:bg-green-900/20'
-                                      }`}>
+                                            ? 'bg-blue-50 dark:bg-blue-900/20'
+                                            : 'bg-green-50 dark:bg-green-900/20'
+                                        }`}>
                                         {period.type === 'BREAK' ? (
                                           <span className="text-light-text-muted dark:text-dark-text-muted">Break</span>
                                         ) : period.type === 'LUNCH' ? (
@@ -953,23 +970,23 @@ export default function ClassDetailPage() {
                                               </p>
                                             )}
                                           </>
-                                      )}
-                                    </div>
+                                        )}
+                                      </div>
                                     ) : (
                                       <div className="h-12" />
                                     )}
                                   </td>
                                 );
                               })}
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                </CardContent>
-              </Card>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Resources Tab */}
@@ -998,40 +1015,40 @@ export default function ClassDetailPage() {
                 {isLoadingResources ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                      </div>
+                  </div>
                 ) : resources.length === 0 ? (
                   <div className="text-center py-12">
-                        <EmptyStateIcon type="document_not_found" />
-                        <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                          No resources uploaded yet.
-                        </p>
+                    <EmptyStateIcon type="document_not_found" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                      No resources uploaded yet.
+                    </p>
                     <PermissionGate resource={PermissionResource.RESOURCES} type={PermissionType.WRITE}>
                       <Button variant="primary" onClick={() => setShowUploadModal(true)} size="sm" className="text-xs">
                         <Upload className="h-3 w-3 mr-2" />
                         Upload First Resource
                       </Button>
                     </PermissionGate>
-                      </div>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {resources.map((resource) => (
                       <div
-                          key={resource.id}
+                        key={resource.id}
                         className="flex items-center justify-between p-4 border border-light-border dark:border-dark-border rounded-lg hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded">
                             <File className="h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
-                              </div>
+                          </div>
                           <div>
                             <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                  {resource.name}
+                              {resource.name}
                             </p>
                             <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
                               {resource.fileSize} • {new Date(resource.createdAt).toLocaleDateString()}
                             </p>
-                                </div>
-                              </div>
+                          </div>
+                        </div>
                         <div className="flex items-center gap-2">
                           {resource.downloadUrl && (
                             <a href={resource.downloadUrl} target="_blank" rel="noopener noreferrer">
@@ -1040,18 +1057,18 @@ export default function ClassDetailPage() {
                               </Button>
                             </a>
                           )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setDeleteResourceModal({ isOpen: true, resource })}
                             className="text-red-600 hover:text-red-700 dark:text-red-400 h-8 w-8 p-0"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                      ))}
-                    </div>
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1080,7 +1097,7 @@ export default function ClassDetailPage() {
                   <div className="text-center py-12">
                     <EmptyStateIcon type="document" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                      {!activeTerm?.id 
+                      {!activeTerm?.id
                         ? 'No active term. Please set up an academic session first.'
                         : 'Unable to load curriculum data.'}
                     </p>
@@ -1089,7 +1106,7 @@ export default function ClassDetailPage() {
               </CardContent>
             </Card>
           )}
-                </div>
+        </div>
 
         {/* Modals */}
         {showAssignModal && schoolId && classData?.type && (
@@ -1115,9 +1132,8 @@ export default function ClassDetailPage() {
           title="Remove Teacher"
           message={
             removeModal.teacher
-              ? `Are you sure you want to remove ${removeModal.teacher.firstName} ${removeModal.teacher.lastName}${
-                  removeModal.teacher.subject ? ` from teaching ${removeModal.teacher.subject}` : ''
-                } from this class?`
+              ? `Are you sure you want to remove ${removeModal.teacher.firstName} ${removeModal.teacher.lastName}${removeModal.teacher.subject ? ` from teaching ${removeModal.teacher.subject}` : ''
+              } from this class?`
               : ''
           }
           confirmText="Remove"
@@ -1169,7 +1185,7 @@ function TeacherCard({
           <span>
             {teacher.firstName[0]}{teacher.lastName[0]}
           </span>
-                        </div>
+        </div>
         <div>
           <div className="flex items-center gap-2">
             <Link
@@ -1177,18 +1193,18 @@ function TeacherCard({
               className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary hover:text-blue-600 dark:hover:text-blue-400"
             >
               {teacher.firstName} {teacher.lastName}
-                        </Link>
+            </Link>
             {isPrimary && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                 <Crown className="h-3 w-3" />
                 Form
               </span>
             )}
-            </div>
+          </div>
           {teacher.subject && (
             <p className="text-xs text-light-text-muted dark:text-dark-text-muted">{teacher.subject}</p>
           )}
-    </div>
+        </div>
       </div>
       <Button
         variant="ghost"

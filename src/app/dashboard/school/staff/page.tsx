@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Pagination } from '@/components/ui/Pagination';
+import { Select } from '@/components/ui';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { Users, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, BookOpen, CheckCircle, Clock, Ban, Mail, Loader2, Trash2 } from 'lucide-react';
+import { Users, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, BookOpen, CheckCircle, Clock, Ban, Mail, Loader2, Trash2, GraduationCap } from 'lucide-react';
 import { useGetStaffListQuery, useGetMySchoolQuery, useResendPasswordResetForStaffMutation, useDeleteAdminMutation, useDeleteTeacherMutation } from '@/lib/store/api/schoolAdminApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
@@ -38,7 +39,7 @@ export default function StaffPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filter, setFilter] = useState<FilterType>('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const itemsPerPage = 4; // Show 4 items per page (2 rows of 2 columns)
+  const itemsPerPage = 6; // Show 6 items per page (2 rows of 3 columns)
   const [selectedAdminForPermissions, setSelectedAdminForPermissions] = useState<{
     id: string;
     name: string;
@@ -137,8 +138,16 @@ export default function StaffPage() {
 
   // Filter staff by status
   const filteredStaff = useMemo(() => {
-    if (filter === 'all') return staff;
-    return staff.filter(s => {
+    let result = staff;
+
+    // Filter out School Owner role
+    result = result.filter(s => {
+      const role = (s.role || '').toLowerCase().trim().replace(/[\s_-]+/g, '');
+      return role !== 'schoolowner';
+    });
+
+    if (filter === 'all') return result;
+    return result.filter(s => {
       if (filter === 'active') return s.accountStatus === 'ACTIVE';
       if (filter === 'pending') return s.accountStatus === 'SHADOW';
       if (filter === 'suspended') return s.accountStatus === 'SUSPENDED';
@@ -385,24 +394,22 @@ export default function StaffPage() {
             </div>
 
             {/* Role Filter */}
-            <div className="w-40">
-              <select
-                value={roleFilter}
-                onChange={(e) => {
-                  setRoleFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full px-2 py-1.5 border border-light-border dark:border-[#1a1f2e] rounded-lg bg-light-card dark:bg-[#151a23] text-light-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2490FD] h-9"
-                style={{ fontSize: 'var(--text-body)' }}
-              >
-                <option value="All">All Roles</option>
-                {availableRoles.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              value={roleFilter}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              wrapperClassName="w-32"
+              className="h-9 px-2.5 py-1.5"
+            >
+              <option value="All">All Roles</option>
+              {availableRoles.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </Select>
 
             {/* View Toggle */}
             <div className="flex items-center gap-1 bg-light-surface dark:bg-[#151a23] border border-light-border dark:border-[#1a1f2e] rounded-lg p-1">
@@ -457,7 +464,7 @@ export default function StaffPage() {
               </CardContent>
             </Card>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredStaff.map((staffMember) => {
 
                 const statusConfig = getStatusBadge(staffMember.accountStatus);
@@ -546,7 +553,19 @@ export default function StaffPage() {
                               {staffMember.role || 'N/A'}
                             </span>
                           </div>
-                          {staffMember.subject && (
+                          {/* PRIMARY teachers: show assigned class */}
+                          {staffMember.type === 'teacher' && currentType === 'PRIMARY' && (
+                            <div className="flex items-center gap-1">
+                              <GraduationCap className="h-4 w-4 flex-shrink-0" />
+                              {staffMember.assignedClass ? (
+                                <span className="font-medium text-green-500 dark:text-green-400">{staffMember.assignedClass.name}</span>
+                              ) : (
+                                <span className="italic text-light-text-muted dark:text-dark-text-muted">No class assigned</span>
+                              )}
+                            </div>
+                          )}
+                          {/* SECONDARY/TERTIARY/admin: show subject */}
+                          {(staffMember.type !== 'teacher' || currentType !== 'PRIMARY') && staffMember.subject && (
                             <div className="flex items-center gap-1">
                               <BookOpen className="h-4 w-4" />
                               <span>{staffMember.subject}</span>
@@ -600,7 +619,9 @@ export default function StaffPage() {
                                 </span>
                               </div>
                               <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
-                                {staffMember.email || 'No email'} • {staffMember.subject || 'No subject'}
+                                {staffMember.email || 'No email'} • {staffMember.type === 'teacher' && currentType === 'PRIMARY'
+                                  ? (staffMember.assignedClass ? staffMember.assignedClass.name : 'No class assigned')
+                                  : (staffMember.subject || 'No subject')}
                               </p>
                             </div>
                           </div>

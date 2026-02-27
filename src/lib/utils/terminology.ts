@@ -5,6 +5,8 @@ export interface Terminology {
   staffSingular: string; // Teacher or Lecturer
   courses: string; // Classes or Courses
   courseSingular: string; // Class or Course
+  classPlural: string; // Classes or Courses
+  classSingular: string; // Class or Course
   periods: string; // Terms or Semesters
   periodSingular: string; // Term or Semester
   subjects: string; // Subjects or Courses
@@ -24,6 +26,8 @@ export function getTerminology(schoolType: SchoolType | 'MIXED' | null): Termino
       staffSingular: 'Lecturer',
       courses: 'Courses',
       courseSingular: 'Course',
+      classPlural: 'Courses',
+      classSingular: 'Course',
       periods: 'Semesters',
       periodSingular: 'Semester',
       subjects: 'Courses',
@@ -37,6 +41,8 @@ export function getTerminology(schoolType: SchoolType | 'MIXED' | null): Termino
     staffSingular: 'Teacher',
     courses: 'Classes',
     courseSingular: 'Class',
+    classPlural: 'Classes',
+    classSingular: 'Class',
     periods: 'Terms',
     periodSingular: 'Term',
     subjects: 'Subjects',

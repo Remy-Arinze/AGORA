@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Alert } from '@/components/ui/Alert';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { PhoneInput } from '@/components/ui/PhoneInput';
@@ -25,8 +27,15 @@ import { getTerminology } from '@/lib/utils/terminology';
 import { useUploadTeacherImageMutation, useUploadAdminImageMutation, AdminPermissionInput } from '@/lib/store/api/schoolsApi';
 import { SubjectMultiSelect } from '@/components/teachers/SubjectMultiSelect';
 import { PermissionSelector, getDefaultReadPermissions } from '@/components/permissions';
-import toast from 'react-hot-toast';
-import { isPrincipalRole } from '@/lib/constants/roles';
+import {
+  useGetMySchoolQuery,
+  useGetClassArmsQuery,
+  useGetClassLevelsQuery,
+  useGenerateDefaultClassesMutation
+} from '@/lib/store/api/schoolAdminApi';
+import { isPrincipalRole, isSchoolOwnerRole } from '@/lib/constants/roles';
+import { useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
 
 type StaffType = 'teacher' | 'admin';
 
@@ -61,6 +70,9 @@ export default function AddStaffPage() {
   const { currentType } = useSchoolType();
   const terminology = getTerminology(currentType);
 
+  const { data: schoolResponse } = useGetMySchoolQuery();
+  const currentAdminRole = schoolResponse?.data?.currentAdmin?.role;
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -74,11 +86,60 @@ export default function AddStaffPage() {
     employeeId: '',
     isTemporary: false,
     profileImage: null as string | null,
+    classArmId: '',
   });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [uploadTeacherImage] = useUploadTeacherImageMutation();
   const [uploadAdminImage] = useUploadAdminImageMutation();
+
+  // Get ClassArms for PRIMARY schools
+  const isPrimary = currentType === 'PRIMARY';
+  const {
+    data: classArmsResponse,
+    isLoading: isLoadingClassArms,
+    isFetching: isFetchingClassArms
+  } = useGetClassArmsQuery(
+    { schoolId: schoolId!, schoolType: 'PRIMARY' },
+    { skip: !schoolId || !isPrimary }
+  );
+  const classArms = classArmsResponse?.data || [];
+
+  const {
+    data: classLevelsResponse,
+    isLoading: isLoadingClassLevels,
+    isFetching: isFetchingClassLevels
+  } = useGetClassLevelsQuery(
+    { schoolId: schoolId! },
+    { skip: !schoolId || !isPrimary }
+  );
+  const classLevels = classLevelsResponse?.data || [];
+
+  // Group ClassArms by ClassLevel
+  const classArmsByLevel = useMemo(() => {
+    return classLevels.reduce((acc, level) => {
+      acc[level.id] = classArms.filter(arm => arm.classLevelId === level.id);
+      return acc;
+    }, {} as Record<string, typeof classArms>);
+  }, [classArms, classLevels]);
+
+  const classArmsLoaded = !isLoadingClassArms && !isFetchingClassArms && !isLoadingClassLevels && !isFetchingClassLevels;
+
+  // Generate default classes mutation
+  const [generateDefaultClasses, { isLoading: isGeneratingClasses }] = useGenerateDefaultClassesMutation();
+
+  const handleGenerateClasses = async () => {
+    if (!schoolId || !currentType) return;
+    try {
+      await generateDefaultClasses({
+        schoolId,
+        schoolType: currentType,
+      }).unwrap();
+      toast.success('Default classes generated successfully! You can now assign a class to the teacher.');
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to generate classes');
+    }
+  };
 
   // Get school ID from localStorage (stored during login) or fetch from API
   useEffect(() => {
@@ -138,7 +199,9 @@ export default function AddStaffPage() {
       if (staffType === 'teacher') {
         addTeacherFormSchema.parse({
           ...formData,
-          subject: formData.subject || undefined,
+          subject: currentType === 'PRIMARY'
+            ? (classArms.find(a => a.id === formData.classArmId) ? `${classArms.find(a => a.id === formData.classArmId)?.classLevelName} ${classArms.find(a => a.id === formData.classArmId)?.name}` : undefined)
+            : formData.subject || undefined,
           employeeId: formData.employeeId || undefined,
         });
       } else {
@@ -146,6 +209,16 @@ export default function AddStaffPage() {
           setErrors({ adminRole: 'Role is required' });
           return false;
         }
+
+        // Only school owners can add principal roles
+        if (isPrincipalRole(adminRole) && !isSchoolOwnerRole(currentAdminRole)) {
+          setErrors({
+            adminRole: 'Only a School Owner can add staff with principal roles (Principal, Head Teacher, etc.)'
+          });
+          toast.error('Unauthorized role assignment');
+          return false;
+        }
+
         addAdminFormSchema.parse({
           ...formData,
           role: adminRole,
@@ -154,9 +227,9 @@ export default function AddStaffPage() {
       }
       return true;
     } catch (error) {
-      if (error instanceof z.ZodError && error.errors) {
+      if (error instanceof z.ZodError) {
         const fieldErrors: FormErrors = {};
-        error.errors.forEach((err) => {
+        error.issues.forEach((err) => {
           if (err.path[0]) {
             fieldErrors[err.path[0] as string] = err.message;
           }
@@ -215,6 +288,8 @@ export default function AddStaffPage() {
           isTemporary: boolean;
           employeeId?: string;
           profileImage?: string;
+          schoolType?: string;
+          classArmId?: string;
         } = {
           firstName: capitalizeWords(formData.firstName),
           lastName: capitalizeWords(formData.lastName),
@@ -223,17 +298,34 @@ export default function AddStaffPage() {
           isTemporary: formData.isTemporary,
           employeeId: formData.employeeId.trim() || undefined,
           profileImage: profileImageUrl,
+          schoolType: currentType || undefined,
         };
 
         // For SECONDARY schools, use subjectIds for multi-subject support
         if (currentType === 'SECONDARY' && formData.subjectIds.length > 0) {
           teacherData.subjectIds = formData.subjectIds;
+        } else if (currentType === 'PRIMARY' && formData.classArmId) {
+          // For PRIMARY, send classArmId so the backend creates the ClassTeacher assignment
+          teacherData.classArmId = formData.classArmId;
+          // Also set subject for display purposes
+          const selectedArm = classArms.find(arm => arm.id === formData.classArmId);
+          if (selectedArm) {
+            teacherData.subject = `${selectedArm.classLevelName} ${selectedArm.name}`;
+          }
         } else if (formData.subject.trim()) {
-          // For PRIMARY/TERTIARY or if no subjectIds, use single subject
+          // For TERTIARY or if no classArmId/subjectIds, use single subject
           teacherData.subject = capitalizeWords(formData.subject);
         }
 
         const result = await addTeacher(teacherData);
+
+        // Show warning if class assignment was skipped (class already has a teacher)
+        if (result?.classAssignmentSkipped) {
+          toast(result.classAssignmentReason || 'Class assignment was skipped — the class already has a teacher.', {
+            icon: '⚠️',
+            duration: 5000,
+          });
+        }
 
         // Upload image after creation if we have a file but no URL
         if (selectedImageFile && result?.data?.id && schoolId) {
@@ -569,9 +661,17 @@ export default function AddStaffPage() {
                         setAdminRole(capitalized);
                       }
                     }}
-                    placeholder="e.g., Administrator, Vice Principal, Bursar, Guidance Counselor"
+                    placeholder={
+                      isSchoolOwnerRole(currentAdminRole)
+                        ? "e.g., Principal, Vice Principal, Bursar"
+                        : "e.g., Vice Principal, Bursar, Secretary"
+                    }
                     required
-                    helperText="Enter the administrative role (e.g., Vice Principal, Bursar, Administrator, etc.)"
+                    helperText={
+                      isSchoolOwnerRole(currentAdminRole)
+                        ? "Define the administrative role for this staff member."
+                        : "Note: You cannot add staff with principal-level privileges (Principal, Head Teacher, etc.)."
+                    }
                     error={errors.adminRole}
                   />
                   {currentType && (
@@ -600,16 +700,92 @@ export default function AddStaffPage() {
                         selectedSubjectIds={formData.subjectIds}
                         onChange={(ids) => setFormData({ ...formData, subjectIds: ids })}
                         schoolType="SECONDARY"
-                        label="Subjects Teacher Can Teach *"
-                        helperText="Select all subjects this teacher is qualified to teach. They can be assigned to different classes for these subjects."
+                        label="Subjects Teacher Can Teach"
+                        helperText="Optional: Select subjects this teacher is qualified to teach. They can be assigned to different classes later."
                         error={errors.subject}
                         disabled={isLoadingState}
                       />
                     </div>
                   )}
 
-                  {/* For PRIMARY/TERTIARY - Single subject input */}
-                  {currentType !== 'SECONDARY' && (
+                  {/* For PRIMARY - Class Arm selection */}
+                  {currentType === 'PRIMARY' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
+                          Assigned {terminology.classSingular}
+                        </label>
+                        {!classArmsLoaded ? (
+                          <div className="w-full px-4 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-card dark:bg-dark-surface">
+                            <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>Loading class arms...</span>
+                            </div>
+                          </div>
+                        ) : classArms.length === 0 ? (
+                          <div className="p-4 border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg space-y-3">
+                            <p className="text-yellow-700 dark:text-yellow-400 text-sm font-medium">
+                              ⚠️ No {terminology.classPlural.toLowerCase()} found for your {currentType?.toLowerCase()} school section.
+                            </p>
+                            <p className="text-yellow-600 dark:text-yellow-500 text-xs">
+                              You must have {terminology.classPlural.toLowerCase()} created before you can assign a {terminology.staffSingular.toLowerCase()} to one.
+                              {isSchoolOwnerRole(currentAdminRole)
+                                ? ` As a School Owner, you can generate default ${terminology.classPlural.toLowerCase()} now or create them manually in Settings.`
+                                : ` Please contact the School Owner to set up the school ${terminology.classPlural.toLowerCase()}.`}
+                            </p>
+                            {isSchoolOwnerRole(currentAdminRole) && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="border-yellow-300 hover:bg-yellow-100 dark:border-yellow-700 dark:hover:bg-yellow-900/30"
+                                onClick={handleGenerateClasses}
+                                isLoading={isGeneratingClasses}
+                              >
+                                Generate Default {terminology.classPlural}
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <Select
+                            name="classArmId"
+                            value={formData.classArmId}
+                            onChange={(e) => {
+                              setFormData({ ...formData, classArmId: e.target.value });
+                              if (errors.subject) setErrors({ ...errors, subject: undefined });
+                            }}
+                            error={errors.subject}
+                            placeholder="Select Class (Optional)"
+                          >
+                            <option value="">Select Class (Optional)</option>
+                            {classLevels.map((level) => {
+                              const armsForLevel = classArmsByLevel[level.id] || [];
+                              if (armsForLevel.length === 0) return null;
+                              return (
+                                <optgroup key={level.id} label={level.name}>
+                                  {armsForLevel.map((arm) => (
+                                    <option
+                                      key={arm.id}
+                                      value={arm.id}
+                                      disabled={!!arm.assignedTeacher}
+                                    >
+                                      {level.name} {arm.name}{arm.assignedTeacher ? ` — ${arm.assignedTeacher.name} (assigned)` : ''}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              );
+                            })}
+                          </Select>
+                        )}
+                        <p className="text-light-text-muted dark:text-dark-text-muted text-xs mt-1">
+                          Optional: You can assign the teacher to a class arm now, or do it later.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* For TERTIARY - Single subject input */}
+                  {currentType === 'TERTIARY' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Input
                         label="Subject"
