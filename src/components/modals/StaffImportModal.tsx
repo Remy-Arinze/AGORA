@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { Upload, FileText, X, CheckCircle2, XCircle, AlertCircle, Download } from 'lucide-react';
 import { useBulkImportStaffMutation } from '@/lib/store/api/schoolAdminApi';
 import toast from 'react-hot-toast';
+import { useSchoolType } from '@/hooks/useSchoolType';
+import { getTerminology } from '@/lib/utils/terminology';
 
 interface StaffImportModalProps {
   isOpen: boolean;
@@ -26,6 +28,9 @@ export function StaffImportModal({ isOpen, onClose, schoolId }: StaffImportModal
   const [showGuidance, setShowGuidance] = useState(true);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [bulkImportStaff, { isLoading }] = useBulkImportStaffMutation();
+  const { currentType } = useSchoolType();
+  const terminology = getTerminology(currentType || 'PRIMARY');
+  const isPrimary = currentType === 'PRIMARY';
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -47,7 +52,11 @@ export function StaffImportModal({ isOpen, onClose, schoolId }: StaffImportModal
     }
 
     try {
-      const result = await bulkImportStaff({ schoolId, file }).unwrap();
+      const result = await bulkImportStaff({
+        schoolId,
+        file,
+        schoolType: currentType || undefined
+      }).unwrap();
       if (result.data) {
         setImportResult(result.data);
         if (result.data.errorCount === 0) {
@@ -69,9 +78,12 @@ export function StaffImportModal({ isOpen, onClose, schoolId }: StaffImportModal
   };
 
   const downloadTemplate = () => {
+    const exampleSubject = isPrimary ? 'Primary 1A' : 'Mathematics';
+    const exampleSubject2 = isPrimary ? 'Primary 2B' : 'English';
+
     const csvContent = `type,firstName,lastName,email,phone,role,subject,employeeId,isTemporary
-teacher,John,Doe,john.doe@school.com,+2348012345678,,Mathematics,EMP001,false
-teacher,Jane,Smith,jane.smith@school.com,+2348012345679,,English,EMP002,false
+teacher,John,Doe,john.doe@school.com,+2348012345678,,${exampleSubject},EMP001,false
+teacher,Jane,Smith,jane.smith@school.com,+2348012345679,,${exampleSubject2},EMP002,false
 admin,Mary,Johnson,mary.j@school.com,+2348012345680,Bursar,,,
 admin,Peter,Williams,peter.w@school.com,+2348012345681,Administrator,,,`;
 
@@ -120,11 +132,11 @@ admin,Peter,Williams,peter.w@school.com,+2348012345681,Administrator,,,`;
                       </ul>
                     </div>
                     <div>
-                      <strong className="text-blue-900 dark:text-blue-100">For teachers (optional):</strong>
+                      <strong className="text-blue-900 dark:text-blue-100">For {terminology.staffPlural} (Optional fields):</strong>
                       <ul className="list-disc list-inside ml-2 text-blue-800 dark:text-blue-200">
-                        <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">subject</code> - Subject name (must match an existing subject in your school, e.g., &quot;Mathematics&quot;)</li>
+                        <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">subject</code> - {isPrimary ? 'Class Arm name (e.g. "Primary 1A")' : 'Subject name (must match an existing subject, e.g. "Mathematics")'}</li>
                         <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">employeeId</code> - Employee ID</li>
-                        <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">isTemporary</code> - &quot;true&quot; or &quot;false&quot;</li>
+                        <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">isTemporary</code> - "true" or "false"</li>
                       </ul>
                     </div>
                     <div>
@@ -147,7 +159,11 @@ admin,Peter,Williams,peter.w@school.com,+2348012345681,Administrator,,,`;
                     <li>Email and phone must be unique within your school</li>
                     <li>If a principal already exists, you cannot add another one</li>
                     <li>Teaching roles (e.g., &quot;Teacher&quot;, &quot;Instructor&quot;) cannot be used for admin type</li>
-                    <li><strong>For subject assignment:</strong> Generate subjects first, then use the exact subject name (e.g., &quot;Mathematics&quot;, &quot;English Language&quot;)</li>
+                    {isPrimary ? (
+                      <li><strong>For optional Class Arm assignment:</strong> Use the exact name of the Class Arm (e.g., &quot;Primary 1A&quot;) in the <code className="px-1 bg-amber-100 dark:bg-amber-800 rounded">subject</code> column. Leave blank to assign later.</li>
+                    ) : (
+                      <li><strong>For optional subject assignment:</strong> Generate subjects first, then use the exact subject name (e.g., &quot;Mathematics&quot;, &quot;English Language&quot;). Leave blank to assign later.</li>
+                    )}
                     <li>Each row will be processed individually - errors in one row won&apos;t stop others</li>
                     <li>Password reset emails will be sent automatically to imported staff</li>
                   </ul>

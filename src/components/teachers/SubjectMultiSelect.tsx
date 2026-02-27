@@ -2,14 +2,14 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  Check, 
-  X, 
-  ChevronDown, 
-  Search, 
-  BookOpen, 
+import {
+  Check,
+  X,
+  ChevronDown,
+  Search,
+  BookOpen,
   Loader2,
-  AlertCircle 
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -141,7 +141,7 @@ export function SubjectMultiSelect({
       if (disabled) return;
 
       const isSelected = selectedSubjectIds.includes(subjectId);
-      
+
       if (isSelected) {
         onChange(selectedSubjectIds.filter((id) => id !== subjectId));
       } else {
@@ -211,7 +211,7 @@ export function SubjectMultiSelect({
     <div className="space-y-2" data-subject-multiselect>
       {/* Label */}
       {label && (
-        <label className="block text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+        <label className="block text-xs text-light-text-primary dark:text-gray-500">
           {label}
         </label>
       )}
@@ -253,9 +253,8 @@ export function SubjectMultiSelect({
             )}
           </div>
           <ChevronDown
-            className={`h-5 w-5 text-light-text-muted dark:text-dark-text-muted transition-transform ${
-              isOpen ? 'rotate-180' : ''
-            }`}
+            className={`h-5 w-5 text-light-text-muted dark:text-dark-text-muted transition-transform ${isOpen ? 'rotate-180' : ''
+              }`}
           />
         </div>
       </div>
@@ -277,135 +276,135 @@ export function SubjectMultiSelect({
 
       {/* Dropdown */}
       {isOpen && (
-          <FadeInUp
-            from={{ opacity: 0, y: -10 }}
-            to={{ opacity: 1, y: 0 }}
-            duration={0.15}
-            className="absolute z-50 mt-1 w-full max-w-md bg-light-card dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-lg shadow-xl overflow-hidden"
-            style={{ maxHeight: '400px' }}
-          >
-            {/* Search */}
-            <div className="p-2 border-b border-light-border dark:border-dark-border">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
-                <input
-                  type="text"
-                  placeholder="Search subjects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-light-border dark:border-dark-border rounded-md bg-light-bg dark:bg-dark-bg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  autoFocus
-                />
-              </div>
+        <FadeInUp
+          from={{ opacity: 0, y: -10 }}
+          to={{ opacity: 1, y: 0 }}
+          duration={0.15}
+          className="absolute z-50 mt-1 w-full max-w-md bg-light-card dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-lg shadow-xl overflow-hidden"
+          style={{ maxHeight: '400px' }}
+        >
+          {/* Search */}
+          <div className="p-2 border-b border-light-border dark:border-dark-border">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
+              <input
+                type="text"
+                placeholder="Search subjects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm border border-light-border dark:border-dark-border rounded-md bg-light-bg dark:bg-dark-bg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                autoFocus
+              />
             </div>
+          </div>
 
-            {/* Subject list */}
-            <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: '340px' }}>
-              {isLoading ? (
-                <div className="p-8 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-2" />
-                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                    Loading subjects...
-                  </p>
-                </div>
-              ) : fetchError ? (
-                <div className="p-4">
-                  <Alert variant="error">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>Failed to load subjects. Please try again.</span>
-                    </div>
-                  </Alert>
-                </div>
-              ) : filteredGroups.length === 0 ? (
-                <div className="p-8 text-center">
-                  <BookOpen className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted mx-auto mb-2" />
-                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                    {searchQuery ? 'No subjects match your search' : 'No subjects available'}
-                  </p>
-                </div>
-              ) : (
-                filteredGroups.map((group) => (
-                  <div key={group.name}>
-                    {/* Group header */}
-                    <div
-                      className="sticky top-0 px-3 py-2 bg-light-surface dark:bg-dark-bg border-b border-light-border dark:border-dark-border flex items-center justify-between cursor-pointer hover:bg-light-bg dark:hover:bg-dark-surface"
-                      onClick={() => toggleGroup(group)}
-                    >
-                      <span className="text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
-                        {group.name}
-                      </span>
-                      <span className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                        {group.subjects.filter((s) => selectedSubjectIds.includes(s.id)).length}/{group.subjects.length}
-                      </span>
-                    </div>
+          {/* Subject list */}
+          <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: '340px' }}>
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-2" />
+                <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                  Loading subjects...
+                </p>
+              </div>
+            ) : fetchError ? (
+              <div className="p-4">
+                <Alert variant="error">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Failed to load subjects. Please try again.</span>
+                  </div>
+                </Alert>
+              </div>
+            ) : filteredGroups.length === 0 ? (
+              <div className="p-8 text-center">
+                <BookOpen className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted mx-auto mb-2" />
+                <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                  {searchQuery ? 'No subjects match your search' : 'No subjects available'}
+                </p>
+              </div>
+            ) : (
+              filteredGroups.map((group) => (
+                <div key={group.name}>
+                  {/* Group header */}
+                  <div
+                    className="sticky top-0 px-3 py-2 bg-light-surface dark:bg-dark-bg border-b border-light-border dark:border-dark-border flex items-center justify-between cursor-pointer hover:bg-light-bg dark:hover:bg-dark-surface"
+                    onClick={() => toggleGroup(group)}
+                  >
+                    <span className="text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
+                      {group.name}
+                    </span>
+                    <span className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                      {group.subjects.filter((s) => selectedSubjectIds.includes(s.id)).length}/{group.subjects.length}
+                    </span>
+                  </div>
 
-                    {/* Subjects in group */}
-                    {group.subjects.map((subject) => {
-                      const isSelected = selectedSubjectIds.includes(subject.id);
-                      const isDisabledByMax = !isSelected && maxSelections && selectedSubjectIds.length >= maxSelections;
+                  {/* Subjects in group */}
+                  {group.subjects.map((subject) => {
+                    const isSelected = selectedSubjectIds.includes(subject.id);
+                    const isDisabledByMax = !isSelected && maxSelections && selectedSubjectIds.length >= maxSelections;
 
-                      return (
-                        <div
-                          key={subject.id}
-                          onClick={() => !isDisabledByMax && toggleSubject(subject.id)}
-                          className={`
+                    return (
+                      <div
+                        key={subject.id}
+                        onClick={() => !isDisabledByMax && toggleSubject(subject.id)}
+                        className={`
                             px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors
                             ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-light-surface dark:hover:bg-dark-bg'}
                             ${isDisabledByMax ? 'opacity-50 cursor-not-allowed' : ''}
                           `}
-                        >
-                          <div
-                            className={`
+                      >
+                        <div
+                          className={`
                               flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
                               ${isSelected
-                                ? 'bg-blue-500 border-blue-500 text-white'
-                                : 'border-light-border dark:border-dark-border'
-                              }
+                              ? 'bg-blue-500 border-blue-500 text-white'
+                              : 'border-light-border dark:border-dark-border'
+                            }
                             `}
-                          >
-                            {isSelected && <Check className="h-3 w-3" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary truncate">
-                              {subject.name}
-                            </p>
-                            {subject.code && (
-                              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                                {subject.code}
-                              </p>
-                            )}
-                          </div>
+                        >
+                          {isSelected && <Check className="h-3 w-3" />}
                         </div>
-                      );
-                    })}
-                  </div>
-                ))
-              )}
-            </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary truncate">
+                            {subject.name}
+                          </p>
+                          {subject.code && (
+                            <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                              {subject.code}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))
+            )}
+          </div>
 
-            {/* Footer actions */}
-            <div className="p-2 border-t border-light-border dark:border-dark-border flex justify-between">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onChange([])}
-                disabled={selectedSubjectIds.length === 0}
-              >
-                Clear all
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-              >
-                Done ({selectedSubjectIds.length})
-              </Button>
-            </div>
-          </FadeInUp>
-        )}
+          {/* Footer actions */}
+          <div className="p-2 border-t border-light-border dark:border-dark-border flex justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange([])}
+              disabled={selectedSubjectIds.length === 0}
+            >
+              Clear all
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+            >
+              Done ({selectedSubjectIds.length})
+            </Button>
+          </div>
+        </FadeInUp>
+      )}
     </div>
   );
 }

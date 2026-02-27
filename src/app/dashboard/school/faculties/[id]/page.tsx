@@ -72,7 +72,7 @@ export default function FacultyDetailPage() {
   const stats = useMemo(() => {
     const totalStudents = departments.reduce((sum, dept) => sum + (dept.studentsCount || 0), 0);
     const totalLevels = departments.reduce((sum, dept) => sum + (dept.levelsCount || 0), 0);
-    
+
     return {
       departmentsCount: departments.length,
       totalStudents,
@@ -169,12 +169,14 @@ export default function FacultyDetailPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button variant="secondary" onClick={() => setShowEditModal(true)}>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit Faculty
-              </Button>
-            </div>
+            <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+              <div className="flex items-center gap-3">
+                <Button variant="secondary" onClick={() => setShowEditModal(true)}>
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit Faculty
+                </Button>
+              </div>
+            </PermissionGate>
           </div>
         </FadeInUp>
 
@@ -263,12 +265,14 @@ export default function FacultyDetailPage() {
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   {departments.length === 0 && (
-                    <AutoGenerateButton
-                      onClick={handleGenerateDepartments}
-                      isLoading={isGenerating}
-                      label="Generate Departments"
-                      loadingLabel="Generating..."
-                    />
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <AutoGenerateButton
+                        onClick={handleGenerateDepartments}
+                        isLoading={isGenerating}
+                        label="Generate Departments"
+                        loadingLabel="Generating..."
+                      />
+                    </PermissionGate>
                   )}
                   <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
                     <Button variant="primary" onClick={() => setShowCreateDeptModal(true)}>
@@ -291,15 +295,17 @@ export default function FacultyDetailPage() {
                     No departments in this faculty yet.
                   </p>
                   <div className="flex flex-col items-center gap-3">
-                    <AutoGenerateButton
-                      onClick={handleGenerateDepartments}
-                      isLoading={isGenerating}
-                      label="Generate Default Departments"
-                      loadingLabel="Generating..."
-                      variant="primary"
-                    />
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <AutoGenerateButton
+                        onClick={handleGenerateDepartments}
+                        isLoading={isGenerating}
+                        label="Generate Default Departments"
+                        loadingLabel="Generating..."
+                        variant="primary"
+                      />
+                    </PermissionGate>
                     <p className="text-xs text-light-text-muted dark:text-dark-text-muted max-w-sm">
-                      Auto-generates common departments based on this faculty type 
+                      Auto-generates common departments based on this faculty type
                       (e.g., Physics, Chemistry, Biology for Science)
                     </p>
                     <div className="flex items-center gap-2 text-light-text-muted dark:text-dark-text-muted">
@@ -369,11 +375,10 @@ export default function FacultyDetailPage() {
                   <h4 className="text-sm font-medium text-light-text-muted dark:text-dark-text-muted mb-1">
                     Status
                   </h4>
-                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                    faculty.isActive
+                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${faculty.isActive
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                       : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                  }`}>
+                    }`}>
                     {faculty.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>

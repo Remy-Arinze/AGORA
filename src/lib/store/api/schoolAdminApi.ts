@@ -61,6 +61,7 @@ export interface StaffListItem {
   accountStatus: AccountStatus; // SHADOW=pending activation, ACTIVE=activated
   profileImage: string | null;
   schoolType: string | null;
+  assignedClass?: { id: string; name: string } | null;
   createdAt: string;
   user?: {
     id: string;
@@ -795,6 +796,7 @@ export interface ClassArm {
   classLevelId: string;
   classLevelName: string;
   isActive: boolean;
+  assignedTeacher?: { id: string; name: string } | null;
 }
 
 // Teacher with workload information
@@ -2849,8 +2851,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       ],
     }),
     // Bulk import staff
-    bulkImportStaff: builder.mutation<ResponseDto<{ totalRows: number; successCount: number; errorCount: number; generatedPublicIds: string[]; errors: Array<{ row: number; error: string }> }>, { schoolId: string; file: File }>({
-      queryFn: async ({ schoolId, file }, _api, _extraOptions, baseQuery) => {
+    bulkImportStaff: builder.mutation<ResponseDto<{ totalRows: number; successCount: number; errorCount: number; generatedPublicIds: string[]; errors: Array<{ row: number; error: string }> }>, { schoolId: string; file: File; schoolType?: string }>({
+      queryFn: async ({ schoolId, file, schoolType }, _api, _extraOptions, baseQuery) => {
         const formData = new FormData();
         formData.append('file', file);
 
@@ -2861,7 +2863,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
-        const url = `${baseUrl}/schools/${schoolId}/staff/bulk-import`;
+        const url = `${baseUrl}/schools/${schoolId}/staff/bulk-import${schoolType ? `?schoolType=${schoolType}` : ''}`;
 
         const headers: HeadersInit = {};
         if (token) {

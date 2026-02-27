@@ -180,6 +180,7 @@ export interface PaginatedResponse<T> {
 
 // RTK Query endpoints for schools
 export const schoolsApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     // Get all schools with pagination
     getSchools: builder.query<ResponseDto<PaginatedResponse<School>>, PaginationParams | void>({

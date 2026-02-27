@@ -28,7 +28,7 @@ export function Navbar() {
   const { data: studentSchoolResponse } = useGetMyStudentSchoolQuery(undefined, {
     skip: userRole !== 'STUDENT',
   });
-  
+
   // Combine school data from all sources
   const school = schoolResponse?.data || teacherSchoolResponse?.data || studentSchoolResponse?.data;
   const schoolName = school?.name;
@@ -37,11 +37,11 @@ export function Navbar() {
 
   // Show school type selector only for school admins
   const showSchoolTypeSelector = userRole === 'SCHOOL_ADMIN';
-  
+
   // Determine which logo to show - show school logo if available and no error, otherwise show Agora logo
-  const shouldShowSchoolLogo = 
+  const shouldShowSchoolLogo =
     (userRole === 'SCHOOL_ADMIN' || userRole === 'TEACHER' || userRole === 'STUDENT') &&
-    schoolLogo && 
+    schoolLogo &&
     !logoError;
 
   return (
@@ -75,8 +75,8 @@ export function Navbar() {
                   href={getDashboardPath()}
                   className="text-gray-700 dark:text-[#9ca3af] hover:text-[#2490FD] dark:hover:text-[#2490FD] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-             
-             
+
+
                 </Link>
               </div>
             )}
@@ -87,11 +87,10 @@ export function Navbar() {
             {user && (
               <Link
                 href="/dashboard/profile"
-                className={`p-2 rounded-lg transition-colors ${
-                  pathname === '/dashboard/profile'
+                className={`p-2 rounded-lg transition-colors ${pathname === '/dashboard/profile'
                     ? 'bg-blue-600 dark:bg-blue-500 text-white dark:text-white'
                     : 'text-[#9ca3af] dark:text-[#9ca3af] hover:bg-[#1f2937] dark:hover:bg-[#1f2937]'
-                }`}
+                  }`}
                 title="Profile"
               >
                 <User className="h-5 w-5" />

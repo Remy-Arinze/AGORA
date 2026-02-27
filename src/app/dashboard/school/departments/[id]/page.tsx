@@ -41,7 +41,7 @@ export default function DepartmentDetailPage() {
   const router = useRouter();
   const departmentId = params.id as string;
   const [activeTab, setActiveTab] = useState<TabType>('levels');
-  
+
   const { currentType } = useSchoolType();
 
   // Get school data
@@ -178,11 +178,10 @@ export default function DepartmentDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-1 py-3 border-b-2 transition-colors ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-1 py-3 border-b-2 transition-colors ${activeTab === tab.id
                     ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -199,24 +198,28 @@ export default function DepartmentDetailPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle>Levels</CardTitle>
                   {department.levelsCount === 0 ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleGenerateLevels}
-                      disabled={isGeneratingLevels}
-                    >
-                      {isGeneratingLevels ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-4 w-4 mr-2" />
-                      )}
-                      Generate Levels
-                    </Button>
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateLevels}
+                        disabled={isGeneratingLevels}
+                      >
+                        {isGeneratingLevels ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4 mr-2" />
+                        )}
+                        Generate Levels
+                      </Button>
+                    </PermissionGate>
                   ) : (
-                    <Button variant="secondary" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Level
-                    </Button>
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <Button variant="secondary" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Level
+                      </Button>
+                    </PermissionGate>
                   )}
                 </div>
               </CardHeader>
@@ -231,12 +234,14 @@ export default function DepartmentDetailPage() {
                     <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No levels created yet
                     </p>
-                    <AutoGenerateButton
-                      onClick={handleGenerateLevels}
-                      isLoading={isGeneratingLevels}
-                      label="Generate Default Levels (100L-400L)"
-                      variant="primary"
-                    />
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <AutoGenerateButton
+                        onClick={handleGenerateLevels}
+                        isLoading={isGeneratingLevels}
+                        label="Generate Default Levels (100L-400L)"
+                        variant="primary"
+                      />
+                    </PermissionGate>
                     <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-3">
                       Creates 100 Level, 200 Level, 300 Level, and 400 Level
                     </p>
@@ -257,10 +262,12 @@ export default function DepartmentDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Courses</CardTitle>
-                  <Button variant="primary" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Course
-                  </Button>
+                  <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                    <Button variant="primary" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Course
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardHeader>
               <CardContent>
@@ -269,10 +276,12 @@ export default function DepartmentDetailPage() {
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                     No courses added yet
                   </p>
-                  <Button variant="primary">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add First Course
-                  </Button>
+                  <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                    <Button variant="primary">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Course
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardContent>
             </Card>
@@ -283,10 +292,12 @@ export default function DepartmentDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Lecturers</CardTitle>
-                  <Button variant="primary" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Assign Lecturer
-                  </Button>
+                  <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
+                    <Button variant="primary" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign Lecturer
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardHeader>
               <CardContent>
@@ -295,10 +306,12 @@ export default function DepartmentDetailPage() {
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                     No lecturers assigned yet
                   </p>
-                  <Button variant="primary">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Assign First Lecturer
-                  </Button>
+                  <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
+                    <Button variant="primary">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign First Lecturer
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardContent>
             </Card>
@@ -313,9 +326,9 @@ export default function DepartmentDetailPage() {
 // Level Card Component
 function LevelCard({ level }: { level: DepartmentLevel }) {
   const router = useRouter();
-  
+
   return (
-    <Card 
+    <Card
       className="hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => router.push(`/dashboard/school/levels/${level.id}`)}
     >

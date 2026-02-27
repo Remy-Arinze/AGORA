@@ -20,6 +20,8 @@ import {
 } from '@/lib/store/api/schoolAdminApi';
 import type { School } from '@/lib/store/api/schoolsApi';
 import { Save, Mail, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { PermissionGate } from '@/components/permissions/PermissionGate';
+import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 
 export default function SchoolProfilePage() {
   const router = useRouter();
@@ -318,7 +320,7 @@ export default function SchoolProfilePage() {
                 <Label htmlFor="address">Address</Label>
                 <Input
                   id="address"
-                    value={formData.address || ''}
+                  value={formData.address || ''}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   disabled={isUpdating}
                 />
@@ -368,43 +370,47 @@ export default function SchoolProfilePage() {
 
               <div className="flex items-center gap-4 pt-4 border-t">
                 {hasSensitiveChanges && !hasTokenVerification && (
+                  <PermissionGate resource={PermissionResource.OVERVIEW} type={PermissionType.WRITE}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleRequestToken}
+                      disabled={isRequestingToken}
+                      className="flex items-center gap-2"
+                    >
+                      {isRequestingToken ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Requesting...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-4 w-4" />
+                          Request Verification
+                        </>
+                      )}
+                    </Button>
+                  </PermissionGate>
+                )}
+                <PermissionGate resource={PermissionResource.OVERVIEW} type={PermissionType.WRITE}>
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleRequestToken}
-                    disabled={isRequestingToken}
+                    type="submit"
+                    disabled={isUpdating || (hasSensitiveChanges && !hasTokenVerification)}
                     className="flex items-center gap-2"
                   >
-                    {isRequestingToken ? (
+                    {isUpdating ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Requesting...
+                        Updating...
                       </>
                     ) : (
                       <>
-                        <Mail className="h-4 w-4" />
-                        Request Verification
+                        <Save className="h-4 w-4" />
+                        Save Changes
                       </>
                     )}
                   </Button>
-                )}
-                <Button
-                  type="submit"
-                  disabled={isUpdating || (hasSensitiveChanges && !hasTokenVerification)}
-                  className="flex items-center gap-2"
-                >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </>
-                  )}
-                </Button>
+                </PermissionGate>
               </div>
             </form>
           </CardContent>
