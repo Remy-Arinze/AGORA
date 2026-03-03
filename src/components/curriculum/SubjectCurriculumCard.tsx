@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  BookOpen, 
-  Sparkles, 
-  Plus, 
-  Eye, 
-  Edit2, 
+import {
+  BookOpen,
+  Sparkles,
+  Plus,
+  Eye,
+  Edit2,
   Users,
   Clock,
   CheckCircle,
@@ -72,12 +72,11 @@ export function SubjectCurriculumCard({
   };
 
   return (
-    <div 
-      className={`relative bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border rounded-lg p-4 transition-all ${
-        isSelected 
-          ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
-          : 'border-light-border dark:border-dark-border hover:shadow-md hover:bg-[var(--light-hover)] dark:hover:bg-[var(--dark-hover)]'
-      } ${isSelectionMode && hasCurriculum ? 'cursor-pointer' : ''}`}
+    <div
+      className={`relative bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border rounded-lg p-4 transition-all ${isSelected
+        ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20'
+        : 'border-light-border dark:border-dark-border hover:shadow-md hover:bg-[var(--light-hover)] dark:hover:bg-[var(--dark-hover)]'
+        } ${isSelectionMode && hasCurriculum ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
       onContextMenu={handleContextMenu}
     >
@@ -89,11 +88,10 @@ export function SubjectCurriculumCard({
               e.stopPropagation();
               onToggleSelect?.();
             }}
-            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-              isSelected
-                ? 'bg-blue-500 border-blue-500 text-white'
-                : 'border-gray-300 dark:border-gray-600 bg-[var(--light-card)] dark:bg-[var(--dark-surface)] hover:border-blue-400'
-            }`}
+            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected
+              ? 'bg-blue-500 border-blue-500 text-white'
+              : 'border-gray-300 dark:border-gray-600 bg-[var(--light-card)] dark:bg-[var(--dark-surface)] hover:border-blue-400'
+              }`}
           >
             {isSelected && <Check className="h-4 w-4" />}
           </button>
@@ -103,11 +101,10 @@ export function SubjectCurriculumCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-            isSelected 
-              ? 'bg-blue-100 dark:bg-blue-900/50' 
-              : 'bg-blue-100 dark:bg-blue-900/30'
-          }`}>
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isSelected
+            ? 'bg-blue-100 dark:bg-blue-900/50'
+            : 'bg-blue-100 dark:bg-blue-900/30'
+            }`}>
             <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
@@ -148,11 +145,12 @@ export function SubjectCurriculumCard({
           <CurriculumProgressBar
             completed={subject.weeksCompleted}
             total={subject.weeksTotal}
+            variant="circular"
+            size="md"
           />
           {subject.isNerdcBased && (
             <div className="flex items-center gap-1.5 mt-2 text-xs text-purple-600 dark:text-purple-400">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Based on NERDC template</span>
+              <span>Generated Curriculum Outline</span>
             </div>
           )}
         </div>
@@ -169,7 +167,7 @@ export function SubjectCurriculumCard({
           {hasCurriculum ? (
             <>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => onView?.(subject.curriculumId!)}
                 className="flex-1"
@@ -188,8 +186,8 @@ export function SubjectCurriculumCard({
                   </Button>
                   {showMenu && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-10" 
+                      <div
+                        className="fixed inset-0 z-10"
                         onClick={() => setShowMenu(false)}
                       />
                       <div className="absolute right-0 top-full mt-1 z-20 w-36 bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border border-light-border dark:border-dark-border rounded-lg shadow-lg py-1">
@@ -223,18 +221,17 @@ export function SubjectCurriculumCard({
           ) : (
             <>
               <Button
-                variant="primary"
+                variant="secondary"
                 size="sm"
                 onClick={() => onGenerate?.(subject.subjectId)}
                 disabled={isGenerating}
                 className="flex-1"
               >
-                <Sparkles className="h-4 w-4 mr-1.5" />
-                {isGenerating ? 'Generating...' : 'Generate from NERDC'}
+                {isGenerating ? 'Generating...' : 'Auto Generate'}
               </Button>
               {canEdit && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onCreateManual?.(subject.subjectId)}
                 >

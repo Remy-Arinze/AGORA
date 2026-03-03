@@ -1092,6 +1092,7 @@ export default function ClassDetailPage() {
                   <SubjectCurriculumList
                     schoolId={schoolId}
                     classLevelId={classData.classLevelId}
+                    classId={classId}
                     termId={activeTerm.id}
                     schoolType={classData.type || schoolType || 'SECONDARY'}
                     teacherId={classData.teachers?.[0]?.teacherId}

@@ -240,8 +240,8 @@ function ProfilePageContent() {
     }));
 
     // Validate new password in real-time
-    if (field === 'newPassword' && sanitized) {
-      const error = validatePassword(sanitized);
+    if (field === 'newPassword' && value) {
+      const error = validatePassword(value);
       if (error) {
         setPasswordErrors((prev) => ({
           ...prev,
@@ -251,8 +251,8 @@ function ProfilePageContent() {
     }
 
     // Validate confirm password
-    if (field === 'confirmPassword' && sanitized) {
-      if (sanitized !== passwordForm.newPassword) {
+    if (field === 'confirmPassword' && value) {
+      if (value !== passwordForm.newPassword) {
         setPasswordErrors((prev) => ({
           ...prev,
           confirmPassword: 'Passwords do not match',

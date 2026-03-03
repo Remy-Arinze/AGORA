@@ -30,7 +30,7 @@ import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 const allPlugins = [
   {
     id: '2',
-    name: 'Socrates AI',
+    name: 'Agora AI',
     subtitle: "The Teacher's Assistant",
     description: 'AI-powered lesson planning and grading assistant. Generate compliant lesson notes aligned with NERDC curriculum and perform OCR-based essay grading.',
     category: 'AI & Automation',
@@ -90,27 +90,6 @@ const allPlugins = [
     rating: 4.6,
     reviews: 45,
     installed: 123,
-  },
-  {
-    id: '5',
-    name: 'PrepMaster',
-    subtitle: 'CBT Engine',
-    description: 'Computer-Based Testing platform for exam preparation. Perfect for JAMB, WAEC, and other standardized test preparation.',
-    category: 'Assessment',
-    icon: BookOpen,
-    price: '₦500/student/month',
-    pricingModel: 'Per student or school-wide license',
-    features: [
-      'CBT exam creation',
-      'Practice tests',
-      'Performance analytics',
-      'Question bank',
-      'Auto-grading',
-    ],
-    isSubscribed: false,
-    rating: 4.8,
-    reviews: 112,
-    installed: 267,
   },
 ];
 

@@ -2596,12 +2596,12 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
 
     markWeekComplete: builder.mutation<
       ResponseDto<CurriculumItem>,
-      { schoolId: string; curriculumId: string; weekNumber: number; notes?: string }
+      { schoolId: string; curriculumId: string; weekNumber: number; notes?: string; classId?: string }
     >({
-      query: ({ schoolId, curriculumId, weekNumber, notes }) => ({
+      query: ({ schoolId, curriculumId, weekNumber, notes, classId }) => ({
         url: `/schools/${schoolId}/curriculum/${curriculumId}/weeks/${weekNumber}/complete`,
         method: 'POST',
-        body: { notes },
+        body: { notes, classId },
       }),
       invalidatesTags: (result, error, { curriculumId }) => [
         { type: 'Curriculum' as const, id: curriculumId },
@@ -2611,11 +2611,12 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
 
     markWeekInProgress: builder.mutation<
       ResponseDto<CurriculumItem>,
-      { schoolId: string; curriculumId: string; weekNumber: number }
+      { schoolId: string; curriculumId: string; weekNumber: number; classId?: string }
     >({
-      query: ({ schoolId, curriculumId, weekNumber }) => ({
+      query: ({ schoolId, curriculumId, weekNumber, classId }) => ({
         url: `/schools/${schoolId}/curriculum/${curriculumId}/weeks/${weekNumber}/in-progress`,
         method: 'POST',
+        body: { classId },
       }),
       invalidatesTags: (result, error, { curriculumId }) => [
         { type: 'Curriculum' as const, id: curriculumId },
@@ -2625,12 +2626,12 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
 
     skipWeek: builder.mutation<
       ResponseDto<CurriculumItem>,
-      { schoolId: string; curriculumId: string; weekNumber: number; reason: string }
+      { schoolId: string; curriculumId: string; weekNumber: number; reason: string; classId?: string }
     >({
-      query: ({ schoolId, curriculumId, weekNumber, reason }) => ({
+      query: ({ schoolId, curriculumId, weekNumber, reason, classId }) => ({
         url: `/schools/${schoolId}/curriculum/${curriculumId}/weeks/${weekNumber}/skip`,
         method: 'POST',
-        body: { reason },
+        body: { reason, classId },
       }),
       invalidatesTags: (result, error, { curriculumId }) => [
         { type: 'Curriculum' as const, id: curriculumId },

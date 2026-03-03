@@ -68,6 +68,7 @@ export function useSidebarConfig(): {
             { label: 'Overview', href: '/dashboard/super-admin/overview', icon: LayoutDashboard },
             { label: 'Schools', href: '/dashboard/super-admin/schools', icon: Building2 },
             { label: 'Analytics', href: '/dashboard/super-admin/analytics', icon: BarChart3 },
+            { label: 'Plans', href: '/dashboard/super-admin/plans', icon: CreditCard },
             { label: 'Plugins', href: '/dashboard/super-admin/plugins', icon: Puzzle },
             { label: 'Profile', href: '/dashboard/profile', icon: User },
           ],
@@ -178,23 +179,23 @@ export function usePermissionFilteredSidebar(): {
   const { sections, terminology, currentType } = useSidebarConfig();
   const user = useSelector((state: RootState) => state.auth.user);
   const { canView, isLoading: isLoadingPermissions, isPrincipal } = useCurrentAdminPermissions();
-  
+
   const filteredSections = useMemo(() => {
     // Only filter for school admins
     if (user?.role !== 'SCHOOL_ADMIN') {
       return sections;
     }
-    
+
     // Principals have permanent full access - see everything (no loading needed)
     if (isPrincipal) {
       return sections;
     }
-    
+
     // While loading permissions, show empty sidebar to prevent flash
     if (isLoadingPermissions) {
       return sections.map((section) => ({ ...section, items: [] }));
     }
-    
+
     // Filter items based on permissions
     return sections.map((section) => ({
       ...section,
@@ -206,7 +207,7 @@ export function usePermissionFilteredSidebar(): {
       }),
     }));
   }, [sections, user?.role, isLoadingPermissions, isPrincipal, canView]);
-  
+
   return {
     sections: filteredSections,
     terminology,

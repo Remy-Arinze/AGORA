@@ -10,9 +10,8 @@ export interface PricingPlan {
 
 export interface PricingResponse {
   FREE: PricingPlan;
-  STARTER: PricingPlan;
-  PROFESSIONAL: PricingPlan;
-  ENTERPRISE: PricingPlan;
+  PRO: PricingPlan;
+  PRO_PLUS: PricingPlan;
 }
 
 export interface InitializePaymentRequest {

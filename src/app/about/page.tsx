@@ -50,7 +50,7 @@ const milestones = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
+    <div className="min-h-screen bg-[var(--dark-bg)] text-white">
       <LandingNavbar />
 
       {/* Hero Section */}
@@ -66,7 +66,7 @@ export default function AboutPage() {
               About <span className="text-blue-600 dark:text-blue-400">Agora</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
-              We&apos;re on a mission to give every African student a permanent, verifiable digital education identity 
+              We&apos;re on a mission to give every African student a permanent, verifiable digital education identity
               that follows them from their first day of primary school to university graduation and beyond.
             </p>
           </FadeInUp>
@@ -85,9 +85,9 @@ export default function AboutPage() {
               </div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Mission</h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                To build the digital infrastructure that connects every stage of African education—creating 
-                a Chain-of-Trust Registry where schools verify teachers, teachers verify data, and parents 
-                claim their children&apos;s identities forever. No more lost records. No more fraudulent certificates. 
+                To build the digital infrastructure that connects every stage of African education—creating
+                a Chain-of-Trust Registry where schools verify teachers, teachers verify data, and parents
+                claim their children&apos;s identities forever. No more lost records. No more fraudulent certificates.
                 Just truth, verified and immutable.
               </p>
             </AnimateInView>
@@ -101,8 +101,8 @@ export default function AboutPage() {
               </div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Vision</h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                A future where every child in Africa has a digital passport for education—one that opens doors 
-                to opportunities, validates achievements, and creates a seamless journey from classroom to career. 
+                A future where every child in Africa has a digital passport for education—one that opens doors
+                to opportunities, validates achievements, and creates a seamless journey from classroom to career.
                 We envision an Africa where educational credentials are universally trusted and instantly verifiable.
               </p>
             </AnimateInView>
@@ -121,7 +121,7 @@ export default function AboutPage() {
               Agora Education Platform
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              The foundation of everything we do—a complete school management system with 
+              The foundation of everything we do—a complete school management system with
               built-in Chain-of-Trust technology.
             </p>
           </AnimateInView>
@@ -160,7 +160,7 @@ export default function AboutPage() {
                 <div className="text-4xl mb-4">📂</div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Lost Records</h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  Millions of student records are lost every year due to paper-based systems, fires, floods, 
+                  Millions of student records are lost every year due to paper-based systems, fires, floods,
                   and administrative chaos. A student&apos;s academic history shouldn&apos;t disappear with their old school.
                 </p>
               </CardContent>
@@ -171,7 +171,7 @@ export default function AboutPage() {
                 <div className="text-4xl mb-4">🎭</div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Identity Fraud</h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  Ghost students, fake certificates, and identity theft plague the education sector. 
+                  Ghost students, fake certificates, and identity theft plague the education sector.
                   Without a trusted verification system, fraud thrives and legitimate achievements are devalued.
                 </p>
               </CardContent>
@@ -182,7 +182,7 @@ export default function AboutPage() {
                 <div className="text-4xl mb-4">🔀</div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Transfer Chaos</h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  Moving between schools is a nightmare of paperwork, lost transcripts, and unverified claims. 
+                  Moving between schools is a nightmare of paperwork, lost transcripts, and unverified claims.
                   Parents spend weeks chasing documents that should transfer instantly.
                 </p>
               </CardContent>
@@ -203,7 +203,7 @@ export default function AboutPage() {
 
           <div className="relative">
             <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full hidden md:block" />
-            
+
             <div className="space-y-12">
               {milestones.map((milestone, index) => (
                 <AnimateInView key={index} delay={index * 0.1} className={`flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>

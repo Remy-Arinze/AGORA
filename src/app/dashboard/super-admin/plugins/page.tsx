@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import Link from 'next/link';
-import { 
+import {
   Puzzle,
   Sparkles,
   Smartphone,
@@ -20,7 +20,7 @@ import {
 const allPlugins = [
   {
     id: '1',
-    name: 'Socrates AI',
+    name: 'Agora AI',
     subtitle: "The Teacher's Assistant",
     description: 'AI-powered lesson planning and grading assistant',
     monetization: 'Monthly subscription per teacher seat',
@@ -79,21 +79,6 @@ const allPlugins = [
       { id: '5', name: 'Abuja Academy', status: 'inactive' },
     ],
   },
-  {
-    id: '4',
-    name: 'PrepMaster',
-    subtitle: 'CBT Engine',
-    description: 'Computer-Based Testing platform for exam preparation',
-    monetization: 'Per-student subscription or school-wide license',
-    icon: BookOpen,
-    totalSchools: 3,
-    activeSchools: 2,
-    schools: [
-      { id: '1', name: 'Test Academy', status: 'active' },
-      { id: '2', name: 'Elite Secondary School', status: 'active' },
-      { id: '3', name: 'Premier High School', status: 'inactive' },
-    ],
-  },
 ];
 
 export default function PluginManagementPage() {
@@ -115,7 +100,7 @@ export default function PluginManagementPage() {
           {allPlugins.map((plugin, index) => {
             const Icon = plugin.icon;
             return (
-              <FadeInUp delay={index * 0.1 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
+              <FadeInUp delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card>
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -187,11 +172,10 @@ export default function PluginManagementPage() {
                                 </span>
                               </div>
                               <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  school.status === 'active'
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${school.status === 'active'
                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                     : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                                }`}
+                                  }`}
                               >
                                 {school.status === 'active' ? (
                                   <CheckCircle2 className="h-3 w-3" />
