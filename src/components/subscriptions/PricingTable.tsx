@@ -117,7 +117,7 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
               {/* Card Content Base */}
               <div className="p-8 flex-1 flex flex-col">
                 <div className="mb-6">
-                  <h3 className={`font-bold mb-2 ${isPrimary ? 'text-blue-600 dark:text-blue-400' : 'text-light-text-primary dark:text-dark-text-primary'
+                  <h3 className={`font-bold mb-1 ${isPrimary ? 'text-blue-600 dark:text-blue-400' : 'text-light-text-primary dark:text-dark-text-primary'
                     }`} style={{ fontSize: 'var(--text-section-title)' }}>
                     {plan.name}
                   </h3>
@@ -127,9 +127,9 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
                 </div>
 
                 {/* Price */}
-                <div className="mb-8 pb-8 border-b border-light-border dark:border-dark-border flex flex-col gap-2">
+                <div className="mb-5 pb-5 border-b border-light-border dark:border-dark-border flex flex-col gap-2">
                   <div className="flex items-end gap-2">
-                    <div className="font-extrabold text-light-text-primary dark:text-dark-text-primary tracking-tight text-4xl">
+                    <div className="font-bold text-light-text-primary dark:text-dark-text-primary tracking-tight text-4xl">
                       {formatPrice(price, plan.tierCode)}
                     </div>
                     {price !== null && price > 0 && (
@@ -139,7 +139,7 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
                     )}
                   </div>
                   {plan.yearlyPrice && plan.monthlyPrice && plan.monthlyPrice > 0 ? (
-                    <div className="text-sm font-medium text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full w-fit mt-2">
+                    <div className="text-xs text-green-600 dark:text-green-500 px-3 py-1 rounded-full w-fit ">
                       Save one month with annual billing
                     </div>
                   ) : null}
@@ -161,7 +161,7 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
                       </div>
                       <span className={`${feature.included
                         ? feature.isGlowing
-                          ? 'font-bold text-blue-600 dark:text-blue-400'
+                          ? 'font-semibold text-blue-600 dark:text-blue-400'
                           : 'text-light-text-primary dark:text-dark-text-primary font-medium'
                         : 'text-light-text-muted dark:text-dark-text-muted'
                         }`} style={{ fontSize: 'var(--text-body)' }}>

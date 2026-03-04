@@ -62,7 +62,7 @@ function ResetPasswordContent() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/auth/reset-password`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/auth/reset-password`,
         {
           method: 'POST',
           headers: {

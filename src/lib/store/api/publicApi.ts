@@ -21,6 +21,31 @@ interface ResponseDto<T> {
   data: T;
 }
 
+export interface RegisterSchoolDto {
+  name: string;
+  email: string;
+  phone: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  hasPrimary?: boolean;
+  hasSecondary?: boolean;
+  hasTertiary?: boolean;
+  registrationNote?: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhone: string;
+}
+
+export interface RegisterSchoolResponseDto {
+  schoolId: string;
+  name: string;
+  status: string;
+  message: string;
+}
+
 export const publicApi = createApi({
   reducerPath: 'publicApi',
   baseQuery: fetchBaseQuery({
@@ -40,8 +65,35 @@ export const publicApi = createApi({
       query: () => '/public/stats',
       transformResponse: (response: ResponseDto<PlatformStats>) => response.data,
     }),
+    registerSchool: builder.mutation<ResponseDto<RegisterSchoolResponseDto>, RegisterSchoolDto>({
+      query: (body) => ({
+        url: '/schools/public/register',
+        method: 'POST',
+        body: {
+          schoolName: body.name,
+          schoolEmail: body.email,
+          schoolPhone: body.phone,
+          address: body.address,
+          city: body.city,
+          state: body.state,
+          country: body.country,
+          levels: {
+            primary: body.hasPrimary,
+            secondary: body.hasSecondary,
+            tertiary: body.hasTertiary,
+          },
+          owner: {
+            firstName: body.ownerFirstName,
+            lastName: body.ownerLastName,
+            email: body.ownerEmail,
+            phone: body.ownerPhone,
+          },
+          registrationNote: body.registrationNote,
+        },
+      }),
+    }),
   }),
 });
 
-export const { useGetPublicSchoolsQuery, useGetPlatformStatsQuery } = publicApi;
+export const { useGetPublicSchoolsQuery, useGetPlatformStatsQuery, useRegisterSchoolMutation } = publicApi;
 

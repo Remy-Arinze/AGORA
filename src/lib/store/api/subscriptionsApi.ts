@@ -83,6 +83,19 @@ export interface ToolAccessResultDto {
   trialDaysRemaining?: number;
 }
 
+export interface AiUsageLogDto {
+  id: string;
+  action: string;
+  creditsUsed: number;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+  };
+}
+
 export interface AiCreditsResultDto {
   success: boolean;
   creditsUsed: number;
@@ -121,6 +134,10 @@ export interface SubscriptionPlanDto {
   isPublic: boolean;
   customSchoolId: string | null;
   customSchool?: { name: string; subdomain: string } | null;
+  maxStudents: number;
+  maxTeachers: number;
+  maxAdmins: number;
+  aiCredits: number;
 }
 
 // API Slice
@@ -164,6 +181,12 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
         body,
       }),
       invalidatesTags: ['Subscription'],
+    }),
+
+    // AI Usage History
+    getAiUsageHistory: builder.query<ResponseDto<AiUsageLogDto[]>, void>({
+      query: () => '/subscriptions/ai-usage',
+      providesTags: ['Subscription'],
     }),
 
     // Plans
@@ -224,5 +247,6 @@ export const {
   useCreatePlanAdminMutation,
   useUpdatePlanAdminMutation,
   useDeletePlanAdminMutation,
+  useGetAiUsageHistoryQuery,
 } = subscriptionsApi;
 

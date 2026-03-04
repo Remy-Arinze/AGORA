@@ -12,11 +12,29 @@ interface PlanFormModalProps {
     plan?: SubscriptionPlanDto | null;
 }
 
+interface FormDataType {
+    tierCode: SubscriptionTier;
+    name: string;
+    description: string;
+    monthlyPrice: number | string;
+    yearlyPrice: number | string;
+    cta: string;
+    accent: string;
+    highlight: boolean;
+    isPublic: boolean;
+    customSchoolId: string;
+    maxStudents: number | string;
+    maxTeachers: number | string;
+    maxAdmins: number | string;
+    aiCredits: number | string;
+    features: { text: string; included: boolean; isGlowing: boolean }[];
+}
+
 export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
     const [createPlan, { isLoading: isCreating }] = useCreatePlanAdminMutation();
     const [updatePlan, { isLoading: isUpdating }] = useUpdatePlanAdminMutation();
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormDataType>({
         tierCode: SubscriptionTier.FREE,
         name: '',
         description: '',
@@ -27,6 +45,10 @@ export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
         highlight: false,
         isPublic: true,
         customSchoolId: '',
+        maxStudents: 100,
+        maxTeachers: 10,
+        maxAdmins: 5,
+        aiCredits: 0,
         features: [{ text: '', included: true, isGlowing: false }],
     });
 
@@ -43,6 +65,10 @@ export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
                 highlight: plan.highlight,
                 isPublic: plan.isPublic,
                 customSchoolId: plan.customSchoolId || '',
+                maxStudents: plan.maxStudents ?? 100,
+                maxTeachers: plan.maxTeachers ?? 10,
+                maxAdmins: plan.maxAdmins ?? 5,
+                aiCredits: plan.aiCredits ?? 0,
                 features: plan.features?.length > 0 ? plan.features : [{ text: '', included: true, isGlowing: false }],
             });
         } else {
@@ -57,6 +83,10 @@ export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
                 highlight: false,
                 isPublic: true,
                 customSchoolId: '',
+                maxStudents: 100,
+                maxTeachers: 10,
+                maxAdmins: 5,
+                aiCredits: 0,
                 features: [{ text: '', included: true, isGlowing: false }],
             });
         }
@@ -65,9 +95,15 @@ export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const payload: Partial<SubscriptionPlanDto> = {
+            const payload: any = {
                 ...formData,
                 customSchoolId: formData.customSchoolId || null,
+                monthlyPrice: Number(formData.monthlyPrice) || 0,
+                yearlyPrice: Number(formData.yearlyPrice) || 0,
+                maxStudents: Number(formData.maxStudents) || 0,
+                maxTeachers: Number(formData.maxTeachers) || 0,
+                maxAdmins: Number(formData.maxAdmins) || 0,
+                aiCredits: Number(formData.aiCredits) || 0,
             };
 
             if (plan) {
@@ -149,7 +185,7 @@ export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
                         <Input
                             type="number"
                             value={formData.monthlyPrice}
-                            onChange={(e) => setFormData({ ...formData, monthlyPrice: Number(e.target.value) })}
+                            onChange={(e) => setFormData({ ...formData, monthlyPrice: e.target.value === '' ? '' : e.target.value })}
                             required
                         />
                     </div>
@@ -159,7 +195,7 @@ export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
                         <Input
                             type="number"
                             value={formData.yearlyPrice}
-                            onChange={(e) => setFormData({ ...formData, yearlyPrice: Number(e.target.value) })}
+                            onChange={(e) => setFormData({ ...formData, yearlyPrice: e.target.value === '' ? '' : e.target.value })}
                             required
                         />
                     </div>
@@ -217,6 +253,47 @@ export function PlanFormModal({ isOpen, onClose, plan }: PlanFormModalProps) {
                             />
                         </div>
                     )}
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Max Students</label>
+                        <Input
+                            type="number"
+                            value={formData.maxStudents}
+                            onChange={(e) => setFormData({ ...formData, maxStudents: e.target.value === '' ? '' : e.target.value })}
+                            required
+                        />
+                        <p className="text-xs text-light-text-muted mt-1">-1 for unlimited</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Max Teachers</label>
+                        <Input
+                            type="number"
+                            value={formData.maxTeachers}
+                            onChange={(e) => setFormData({ ...formData, maxTeachers: e.target.value === '' ? '' : e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Max Admins</label>
+                        <Input
+                            type="number"
+                            value={formData.maxAdmins}
+                            onChange={(e) => setFormData({ ...formData, maxAdmins: e.target.value === '' ? '' : e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Monthly AI Credits</label>
+                        <Input
+                            type="number"
+                            value={formData.aiCredits}
+                            onChange={(e) => setFormData({ ...formData, aiCredits: e.target.value === '' ? '' : e.target.value })}
+                            required
+                        />
+                    </div>
                 </div>
 
                 {/* Features Checklist */}

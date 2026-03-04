@@ -15,6 +15,11 @@ import {
   useUpdatePrincipalMutation,
   useDeletePrincipalMutation,
   useMakePrincipalMutation,
+  useVerifySchoolMutation,
+  useRejectSchoolMutation,
+  useActivateSchoolMutation,
+  useDeactivateSchoolMutation,
+  useDeleteSchoolMutation,
   useConvertTeacherToAdminMutation,
   CreateSchoolDto,
   AddAdminDto,
@@ -620,3 +625,162 @@ export function useConvertTeacherToAdmin(schoolId: string | null) {
   };
 }
 
+/**
+ * Hook for verifying a school
+ */
+export function useVerifySchool() {
+  const [verifySchoolMutation, { isLoading }] = useVerifySchoolMutation();
+
+  const verifySchool = useCallback(
+    async (schoolId: string) => {
+      try {
+        const result = await verifySchoolMutation(schoolId).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School verified successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to verify school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to verify school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [verifySchoolMutation]
+  );
+
+  return {
+    verifySchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for rejecting a school
+ */
+export function useRejectSchool() {
+  const [rejectSchoolMutation, { isLoading }] = useRejectSchoolMutation();
+
+  const rejectSchool = useCallback(
+    async (schoolId: string, reason: string) => {
+      try {
+        const result = await rejectSchoolMutation({ id: schoolId, reason }).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School rejected');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to reject school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to reject school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [rejectSchoolMutation]
+  );
+
+  return {
+    rejectSchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for activating a school
+ */
+export function useActivateSchool() {
+  const [activateSchoolMutation, { isLoading }] = useActivateSchoolMutation();
+
+  const activateSchool = useCallback(
+    async (schoolId: string) => {
+      try {
+        const result = await activateSchoolMutation(schoolId).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School activated successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to activate school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to activate school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [activateSchoolMutation]
+  );
+
+  return {
+    activateSchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for deactivating a school
+ */
+export function useDeactivateSchool() {
+  const [deactivateSchoolMutation, { isLoading }] = useDeactivateSchoolMutation();
+
+  const deactivateSchool = useCallback(
+    async (schoolId: string) => {
+      try {
+        const result = await deactivateSchoolMutation(schoolId).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School deactivated successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to deactivate school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to deactivate school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [deactivateSchoolMutation]
+  );
+
+  return {
+    deactivateSchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for deleting a school
+ */
+export function useDeleteSchool() {
+  const [deleteSchoolMutation, { isLoading }] = useDeleteSchoolMutation();
+
+  const deleteSchool = useCallback(
+    async (id: string) => {
+      try {
+        const result = await deleteSchoolMutation(id).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School deleted successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to delete school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to delete school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [deleteSchoolMutation]
+  );
+
+  return {
+    deleteSchool,
+    isLoading,
+  };
+}

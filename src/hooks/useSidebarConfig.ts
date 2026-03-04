@@ -35,6 +35,8 @@ export interface NavItem {
   badge?: string | number;
   /** Permission resource required to view this item (school admin only) */
   permission?: PermissionResource;
+  /** If true, only Principals (Owner, Head, etc.) can see this item, regardless of permissions */
+  principalOnly?: boolean;
 }
 
 export interface SidebarSection {
@@ -109,7 +111,7 @@ export function useSidebarConfig(): {
         { label: 'Timetables', href: '/dashboard/school/timetables', icon: Clock, permission: PermissionResource.TIMETABLES },
         { label: 'Calendar', href: '/dashboard/school/calendar', icon: Calendar, permission: PermissionResource.CALENDAR },
         { label: 'Transfers', href: '/dashboard/school/transfers', icon: ArrowRightLeft, permission: PermissionResource.ADMISSIONS }, // Transfers use same permission as admissions
-        { label: 'Subscription', href: '/dashboard/school/subscription', icon: CreditCard, permission: PermissionResource.SUBSCRIPTIONS },
+        { label: 'Subscription', href: '/dashboard/school/subscription', icon: CreditCard, permission: PermissionResource.SUBSCRIPTIONS, principalOnly: true },
         { label: 'Profile', href: '/dashboard/profile', icon: User }
       );
 
@@ -200,6 +202,9 @@ export function usePermissionFilteredSidebar(): {
     return sections.map((section) => ({
       ...section,
       items: section.items.filter((item) => {
+        // If it's a principal-only feature and user is not principal, hide it
+        if (item.principalOnly && !isPrincipal) return false;
+
         // If no permission specified, show the item
         if (!item.permission) return true;
         // Check if user has READ access to this resource

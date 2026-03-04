@@ -71,7 +71,7 @@ function LoginContent() {
 
       if (!response.ok) {
         // Handle validation errors from backend
-        const errorMessage = data.message || 
+        const errorMessage = data.message ||
           (data.error && typeof data.error === 'string' ? data.error : null) ||
           (data.error && Array.isArray(data.error) ? data.error.join(', ') : null) ||
           'Login failed';
@@ -153,7 +153,7 @@ function LoginContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data.message || 
+        const errorMessage = data.message ||
           (data.error && typeof data.error === 'string' ? data.error : null) ||
           (data.error && Array.isArray(data.error) ? data.error.join(', ') : null) ||
           'OTP verification failed';
@@ -263,14 +263,14 @@ function LoginContent() {
           <>
             {/* Logo */}
             <div className="flex items-center justify-center mb-8">
-                <Image
-                  src="/assets/logos/agora_worded_white.png"
-                  alt="Agora"
-                  width={100}
-                  height={24}
-                  className="h-6 w-auto"
-                  priority
-                />
+              <Image
+                src="/assets/logos/agora_worded_white.png"
+                alt="Agora"
+                width={100}
+                height={24}
+                className="h-6 w-auto"
+                priority
+              />
             </div>
 
             {/* Heading */}
@@ -357,7 +357,7 @@ function LoginContent() {
                 className="w-full py-3.5"
                 isLoading={isLoading}
                 disabled={
-                  !formData.password || 
+                  !formData.password ||
                   formData.password.length < 8 ||
                   !formData.emailOrPublicId
                 }
@@ -365,13 +365,22 @@ function LoginContent() {
                 Sign In
               </Button>
 
-              <div className="text-center pt-2">
-                <Link 
-                  href="/auth/forgot-password" 
-                  className="text-sm text-[#9ca3af] hover:text-[#2490FD] hover:underline transition-colors"
+              <div className="text-center pt-2 space-y-3">
+                <Link
+                  href="/auth/forgot-password"
+                  className="block text-sm text-[#9ca3af] hover:text-[#2490FD] hover:underline transition-colors"
                 >
                   Forgot your password?
                 </Link>
+                <div className="text-sm text-[#6b7280]">
+                  Don't have an account?{' '}
+                  <Link
+                    href="/auth/register-school"
+                    className="text-[var(--agora-blue)] hover:text-[#2490FD] hover:underline transition-colors"
+                  >
+                    Register your school
+                  </Link>
+                </div>
               </div>
             </form>
           </>

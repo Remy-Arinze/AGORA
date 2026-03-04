@@ -283,7 +283,7 @@ export const createSchoolFormSchema = z.object({
     (data) => data.primary || data.secondary || data.tertiary,
     { message: 'At least one school level must be selected' }
   ),
-  principal: z.object({
+  owner: z.object({
     firstName: z
       .string()
       .min(2, 'First name must be at least 2 characters')
@@ -306,7 +306,7 @@ export const createSchoolFormSchema = z.object({
         (val) => /^\+?[1-9]\d{1,14}$/.test(val),
         { message: 'Invalid phone format' }
       ),
-  }).optional(),
+  }),
   admins: z.array(
     z.object({
       firstName: z

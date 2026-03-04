@@ -206,26 +206,34 @@ export function PersonDetailModal({
           </div>
         </div>
         {(onEdit || onDelete || onMakePrincipal) && (
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-border">
+          <div className="flex items-center justify-end gap-1 pt-4 border-t border-gray-200 dark:border-dark-border">
             {onDelete && (
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={onDelete}
-                className="text-red-600 dark:text-red-400"
+                className="text-gray-400 hover:text-red-600 p-2"
+                title="Delete"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                <Trash2 className="h-4 w-4" />
               </Button>
             )}
             {onEdit && (
               <Button
-                variant="primary"
+                variant="ghost"
+                size="sm"
                 onClick={onEdit}
+                className="text-gray-400 hover:text-blue-600 p-2"
+                title="Edit"
               >
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit
+                <Pencil className="h-4 w-4" />
               </Button>
             )}
+
+            {onMakePrincipal && showMakePrincipal && (onEdit || onDelete) && (
+              <div className="w-px h-6 bg-gray-200 dark:bg-dark-border mx-2" />
+            )}
+
             {onMakePrincipal && showMakePrincipal && (
               <Button
                 variant="primary"

@@ -192,15 +192,15 @@ export interface SchoolTypeContext {
 }
 
 // Teacher subjects response (for grading authorization)
-export interface TeacherSubject {
+export interface TeacherGradingSubject {
   id: string;
   name: string;
-  code: string | null;
+  code?: string | null;
   source: 'PRIMARY_CLASS_TEACHER' | 'CLASS_TEACHER_ASSIGNMENT' | 'LEGACY_CLASS_TEACHER' | 'TIMETABLE' | 'COURSE_ASSIGNMENT';
 }
 
 export interface TeacherSubjectsResponse {
-  subjects: TeacherSubject[];
+  subjects: TeacherGradingSubject[];
   schoolType: SchoolType;
   isPrimaryTeacher: boolean;
   canGradeAllSubjects: boolean;
@@ -1187,6 +1187,7 @@ export interface CreateEventDto {
 
 // RTK Query endpoints for school admin
 export const schoolAdminApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     // Get my school (for school admin)
     getMySchool: builder.query<ResponseDto<School>, void>({
@@ -2096,7 +2097,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
     // Get subjects teacher can grade for a specific class
     getTeacherSubjectsForClass: builder.query<ResponseDto<TeacherSubjectsResponse>, { classId: string }>({
       query: ({ classId }) => `/teachers/me/subjects?classId=${classId}`,
-      providesTags: ['TeacherSubjects'],
+      providesTags: ['TeacherSubject'],
     }),
     // Student "me" endpoints
     getMyStudentProfile: builder.query<ResponseDto<any>, void>({
@@ -2720,7 +2721,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
           const updated = data?.data;
           if (updated && typeof updated === 'object') {
             dispatch(
-              apiSlice.util.updateQueryData('getStudentById', { schoolId, id }, (draft) => {
+              schoolAdminApi.util.updateQueryData('getStudentById', { schoolId, id }, (draft) => {
                 if (draft?.data) {
                   Object.assign(draft.data, updated);
                 }
@@ -2834,7 +2835,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
           const updatedStudent = data?.data;
           if (updatedStudent && typeof updatedStudent === 'object') {
             dispatch(
-              apiSlice.util.updateQueryData('getStudentById', { schoolId, id: studentId }, (draft) => {
+              schoolAdminApi.util.updateQueryData('getStudentById', { schoolId, id: studentId }, (draft) => {
                 if (draft?.data) {
                   Object.assign(draft.data, updatedStudent);
                 }

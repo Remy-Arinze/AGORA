@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { PhoneInput as LibPhoneInput } from 'react-international-phone';
+import { PhoneInput as LibPhoneInput, CountryIso2 } from 'react-international-phone';
 import 'react-international-phone/style.css';
 
 export interface PhoneInputProps {
@@ -17,12 +17,13 @@ export interface PhoneInputProps {
   /** Default country when value is empty (e.g. NG). Passed as iso2 to the library. */
   defaultCountryCode?: string;
   wrapperClassName?: string;
+  labelClassName?: string;
 }
 
 /** Preferred countries shown at top of dropdown (Nigeria first, then common African/other). */
 const PREFERRED_COUNTRIES = [
   'ng', 'gh', 'ke', 'za', 'eg', 'et', 'tz', 'ug', 'gb', 'us', 'ca', 'in', 'ae', 'sa', 'fr', 'de', 'cn',
-] as const;
+];
 
 export function PhoneInput({
   value,
@@ -35,6 +36,7 @@ export function PhoneInput({
   id,
   defaultCountryCode = 'NG',
   wrapperClassName,
+  labelClassName,
 }: PhoneInputProps) {
   const defaultCountry = defaultCountryCode.toLowerCase().slice(0, 2) as 'ng' | 'us' | string;
 
@@ -43,7 +45,10 @@ export function PhoneInput({
       {label && (
         <label
           htmlFor={id}
-          className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1"
+          className={cn(
+            "block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1",
+            labelClassName
+          )}
           style={{ fontSize: 'var(--text-body)' }}
         >
           {label}
@@ -54,7 +59,7 @@ export function PhoneInput({
         defaultCountry={defaultCountry}
         value={value}
         onChange={(phone) => onChange(phone)}
-        preferredCountries={PREFERRED_COUNTRIES}
+        preferredCountries={PREFERRED_COUNTRIES as CountryIso2[]}
         disabled={disabled}
         placeholder={placeholder}
         required={required}

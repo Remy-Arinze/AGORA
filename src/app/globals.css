@@ -7,6 +7,20 @@
 /* Bricolage Grotesque = headings | Poppins = body & UI */
 
 @layer base {
+
+  /* Hide number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
   :root {
     --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
     --font-sans: 'Poppins', system-ui, sans-serif;
@@ -25,7 +39,7 @@
     /* 24px - Page titles (h1) */
     --text-page-subtitle: .9rem;
     /* 16px - Page subtitles */
-    --text-section-title: .8rem;
+    --text-section-title: .9rem;
     /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
     --text-card-title: 1rem;
     /* 18px - Card titles */

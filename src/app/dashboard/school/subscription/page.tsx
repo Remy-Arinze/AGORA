@@ -4,11 +4,17 @@ import { useSubscription, SubscriptionTier } from '@/hooks/useSubscription';
 import { useToolAccess } from '@/hooks/useToolAccess';
 import { PricingTable } from '@/components/subscriptions/PricingTable';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { Sparkles, Zap, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Sparkles, Zap, ShieldCheck, ChevronDown, Coins } from 'lucide-react';
+
+import { useCurrentAdminPermissions } from '@/hooks/usePermissions';
+import { AiUsageHistory } from '@/components/subscriptions/AiUsageHistory';
 
 export default function SubscriptionPage() {
-  const { subscription, summary, isLoading } = useSubscription();
+  const { isPrincipal, isLoading: isLoadingAuth } = useCurrentAdminPermissions();
+  const { subscription, summary, isLoading: isLoadingSub } = useSubscription();
   const { aiCredits, accessibleTools } = useToolAccess();
+
+  const isLoading = isLoadingAuth || isLoadingSub;
 
   if (isLoading) {
     return (
@@ -20,12 +26,29 @@ export default function SubscriptionPage() {
     );
   }
 
+  // Final check: Only Principals (Owners, Heads) can access this page
+  if (!isPrincipal) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto text-center py-20">
+        <div className="bg-light-card dark:bg-dark-surface rounded-3xl border border-light-border dark:border-dark-border p-12 shadow-sm">
+          <ShieldCheck className="w-16 h-16 text-light-text-muted dark:text-dark-text-muted mx-auto mb-6 opacity-20" />
+          <h1 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary mb-4">
+            Access Restricted
+          </h1>
+          <p className="text-light-text-secondary dark:text-dark-text-secondary max-w-md mx-auto">
+            Only designated school leaders (School Owner, Principal, or Head Teacher) are authorized to access billing and subscription management.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const tier = summary?.tier || SubscriptionTier.FREE;
 
   const tierInfo: Record<string, { name: string; color: string; bgClass: string; icon: any }> = {
     [SubscriptionTier.FREE]: {
       name: 'Free Plan',
-      color: 'text-light-text-secondary dark:text-dark-text-secondary',
+      color: 'text-light-text-primary dark:text-dark-text-primary',
       bgClass: 'bg-gray-50 dark:bg-gray-900/40',
       icon: ShieldCheck
     },
@@ -98,7 +121,7 @@ export default function SubscriptionPage() {
 
                 <div className="space-y-4 pt-4 border-t border-light-border dark:border-dark-border">
                   <div className="flex justify-between items-center" style={{ fontSize: 'var(--text-body)' }}>
-                    <span className="text-light-text-secondary dark:text-dark-text-secondary font-medium">AI Tokens</span>
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary font-medium">Agora AI Tokens</span>
                     <span className="font-bold text-light-text-primary dark:text-dark-text-primary">
                       {aiCredits.remaining === -1 ? 'Unlimited' : `${aiCredits.remaining.toLocaleString()}`}
                       {aiCredits.total > 0 && aiCredits.total !== -1 && (
@@ -119,10 +142,89 @@ export default function SubscriptionPage() {
         </div>
       </FadeInUp>
 
+      {/* AI Usage & Metrics Section */}
+      <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} duration={0.6} delay={0.1}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Main Log Table */}
+          <div className="lg:col-span-2">
+            <AiUsageHistory />
+          </div>
+
+          {/* Sidebar Metrics/Info */}
+          <div className="space-y-6">
+            <div className={`relative overflow-hidden group p-8 rounded-3xl border border-light-border dark:border-dark-border shadow-xl ${tier === SubscriptionTier.FREE
+              ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
+              : 'bg-light-card dark:bg-dark-surface'
+              }`}>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6 opacity-70">
+                  <Sparkles className="w-5 h-5 text-amber-300" />
+                  <span className="font-bold tracking-widest uppercase text-[10px]">AI Utilization</span>
+                </div>
+
+                <h3 className={`text-2xl font-black mb-4 ${tier === SubscriptionTier.FREE ? 'text-white' : 'text-light-text-primary dark:text-dark-text-primary'
+                  }`}>
+                  Scale your school with AI power
+                </h3>
+
+                <p className={`mb-8 text-sm leading-relaxed ${tier === SubscriptionTier.FREE ? 'text-blue-50/80' : 'text-light-text-secondary dark:text-dark-text-secondary'
+                  }`}>
+                  {tier === SubscriptionTier.FREE
+                    ? "Upgrade to Agora PRO to give every teacher their own AI assistant for quizzes and grading."
+                    : "You are currently unlocking thousands of teacher hours through Agora's proprietary AI engine."
+                  }
+                </p>
+
+                {tier === SubscriptionTier.FREE && (
+                  <button
+                    onClick={() => {
+                      const pricingSection = document.getElementById('pricing-plans');
+                      pricingSection?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full bg-white text-blue-600 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+                  >
+                    View Upgrade Plans
+                  </button>
+                )}
+              </div>
+
+              {tier === SubscriptionTier.FREE && (
+                <>
+                  <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+                  <div className="absolute -left-10 -top-10 w-32 h-32 bg-indigo-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                </>
+              )}
+            </div>
+
+            <div className="bg-light-card dark:bg-dark-surface rounded-3xl border border-light-border dark:border-dark-border p-8">
+              <h4 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-6 flex items-center gap-2">
+                <Coins className="w-4 h-4 text-amber-500" />
+                Agora AI Tokens Rate
+              </h4>
+              <div className="space-y-4">
+                {[
+                  { label: 'Short Quiz', cost: '5 credits' },
+                  { label: 'Lesson Plan', cost: '10 credits' },
+                  { label: 'Full Assessment', cost: '15 credits' },
+                  { label: 'Essay Grading', cost: '3 credits' },
+                  { label: 'Study Summary', cost: '2 credits' },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center py-2.5 border-b border-light-border/40 dark:border-dark-border/40 last:border-0 hover:bg-light-bg/50 dark:hover:bg-dark-bg/50 transition-colors px-1 rounded-lg">
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary font-medium" style={{ fontSize: 'var(--text-small)' }}>{item.label}</span>
+                    <span className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>{item.cost}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </FadeInUp>
+
       {/* Pricing Section */}
+      <div id="pricing-plans" />
       <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.6} delay={0.1}>
         <div className="text-center mb-10 mt-16">
-          <h2 className="font-extrabold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
+          <h2 className="font-extrabold text-light-text-primary dark:text-dark-text-primary mb-4 text-lg">
             {tier === SubscriptionTier.FREE ? 'Upgrade your workflow' : 'Manage your scaling'}
           </h2>
           <p className="text-light-text-secondary dark:text-dark-text-secondary max-w-2xl mx-auto" style={{ fontSize: 'var(--text-body)' }}>
@@ -147,7 +249,7 @@ export default function SubscriptionPage() {
                 </p>
                 <div className="mt-8">
                   <a href="mailto:support@agora.ng" className="inline-flex items-center gap-2 font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors" style={{ fontSize: 'var(--text-body)' }}>
-                    Get in touch <Zap className="w-4 h-4" />
+                    Get in touch
                   </a>
                 </div>
               </div>

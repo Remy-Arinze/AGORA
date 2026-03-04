@@ -58,6 +58,9 @@ export interface School {
   admins: SchoolAdmin[];
   teachers: Teacher[];
   teachersCount: number;
+  registrationStatus?: 'UNAPPROVED' | 'VERIFIED' | 'REJECTED' | 'PENDING';
+  registrationNote?: string;
+  rejectionReason?: string;
   studentsCount?: number;
   schoolType?: SchoolTypeContext;
   // Current admin info for permission checks (set on getMySchool)
@@ -82,7 +85,7 @@ export interface CreateSchoolDto {
     secondary?: boolean;
     tertiary?: boolean;
   };
-  principal?: {
+  owner: {
     firstName: string;
     lastName: string;
     email: string;
@@ -202,6 +205,70 @@ export const schoolsApi = apiSlice.injectEndpoints({
     getSchool: builder.query<ResponseDto<School>, string>({
       query: (id) => `/schools/${id}`,
       providesTags: (result, error, id) => [{ type: 'School', id }],
+    }),
+
+    // Get pending schools
+    getPendingSchools: builder.query<ResponseDto<School[]>, void>({
+      query: () => '/schools/pending',
+      providesTags: ['School'],
+    }),
+
+    // Verify school
+    verifySchool: builder.mutation<ResponseDto<School>, string>({
+      query: (id) => ({
+        url: `/schools/${id}/verify`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Reject school
+    rejectSchool: builder.mutation<ResponseDto<School>, { id: string; reason: string }>({
+      query: ({ id, reason }) => ({
+        url: `/schools/${id}/reject`,
+        method: 'PATCH',
+        body: { reason },
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Activate school
+    activateSchool: builder.mutation<ResponseDto<School>, string>({
+      query: (id) => ({
+        url: `/schools/${id}/activate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Deactivate school
+    deactivateSchool: builder.mutation<ResponseDto<School>, string>({
+      query: (id) => ({
+        url: `/schools/${id}/deactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Delete school
+    deleteSchool: builder.mutation<ResponseDto<void>, string>({
+      query: (id) => ({
+        url: `/schools/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['School'],
     }),
 
     // Create school
@@ -447,6 +514,12 @@ export const schoolsApi = apiSlice.injectEndpoints({
 export const {
   useGetSchoolsQuery,
   useGetSchoolQuery,
+  useGetPendingSchoolsQuery,
+  useVerifySchoolMutation,
+  useRejectSchoolMutation,
+  useActivateSchoolMutation,
+  useDeactivateSchoolMutation,
+  useDeleteSchoolMutation,
   useCreateSchoolMutation,
   useUpdateSchoolMutation,
   useAddAdminMutation,

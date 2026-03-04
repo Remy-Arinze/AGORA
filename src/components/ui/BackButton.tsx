@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
+import { Button } from './Button';
+import { cn } from '@/lib/utils';
 
 interface BackButtonProps {
-  /** Custom label (default: "Back") */
+  /** Optional label, if provided shows text next to arrow */
   label?: string;
   /** Fallback URL if no history exists */
   fallbackUrl?: string;
@@ -16,16 +18,16 @@ interface BackButtonProps {
  * Reusable back navigation button
  * Uses router.back() to navigate to the previous page
  */
-export function BackButton({ 
-  label = 'Back', 
+export function BackButton({
+  label,
   fallbackUrl,
-  className = '' 
+  className,
 }: BackButtonProps) {
   const router = useRouter();
 
   const handleBack = () => {
-    // Check if there's history to go back to
-    if (typeof window !== 'undefined' && window.history.length > 1) {
+    // Check if there's history to go back to (history.length includes the current page)
+    if (typeof window !== 'undefined' && window.history.length > 2) {
       router.back();
     } else if (fallbackUrl) {
       router.push(fallbackUrl);
@@ -37,10 +39,14 @@ export function BackButton({
   return (
     <button
       onClick={handleBack}
-      className={`inline-flex items-center gap-2 text-sm text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary transition-colors ${className}`}
+      className={cn(
+        'inline-flex items-center text-light-text-secondary dark:text-dark-text-secondary hover:text-[#2490FD] transition-colors focus:outline-none',
+        className
+      )}
+      title={label || "Go Back"}
     >
-      <ArrowLeft className="h-4 w-4" />
-      {/* <span>{label}</span> */}
+      <ArrowLeft className="h-5 w-5" />
+      {label && <span className="ml-2 font-medium">{label}</span>}
     </button>
   );
 }

@@ -12,7 +12,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { EntityAvatar } from '@/components/ui/EntityAvatar';
 import { useSchools } from '@/hooks/useSchools';
-import { Search, Grid3x3, List, MoreVertical, Target, Users, Building2, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Grid3x3, List, MoreVertical, Target, Users, Building2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -47,27 +47,15 @@ export default function SchoolsPage() {
 
   // Calculate stats from current page data and pagination
   const activeSchoolsOnPage = schools.filter(s => s.isActive).length;
-  const inactiveSchoolsOnPage = schools.filter(s => !s.isActive).length;
-  
+  const inactiveSchoolsOnPage = schools.filter(s => !s.isActive && s.registrationStatus === 'VERIFIED').length;
+  const unapprovedSchoolsOnPage = schools.filter(s => s.registrationStatus === 'UNAPPROVED' || s.registrationStatus === 'PENDING').length;
+
   // For stats, we show totals from pagination when available
-  // When filtered, the pagination.total reflects the filtered count
   const totalSchools = pagination?.total ?? 0;
   const showingCount = schools.length;
-  
-  // Calculate active/inactive based on filter
-  // When filtered, all schools on page match the filter
-  // When "all", we estimate from current page (not perfect but gives an idea)
-  const activeCount = filter === 'active' 
-    ? totalSchools 
-    : filter === 'inactive' 
-    ? 0 
-    : activeSchoolsOnPage; // Estimate from current page
-    
-  const inactiveCount = filter === 'inactive' 
-    ? totalSchools 
-    : filter === 'active' 
-    ? 0 
-    : inactiveSchoolsOnPage; // Estimate from current page
+
+  const activeCount = filter === 'active' ? totalSchools : activeSchoolsOnPage;
+  const inactiveCount = filter === 'inactive' ? totalSchools : inactiveSchoolsOnPage;
 
 
   if (isLoading && !schools.length) {
@@ -81,10 +69,10 @@ export default function SchoolsPage() {
   }
 
   if (error) {
-    const errorMessage = error && 'status' in error 
+    const errorMessage = error && 'status' in error
       ? (error as any).data?.message || 'Failed to fetch schools'
       : 'Failed to load schools';
-    
+
     return (
       <ProtectedRoute roles={['SUPER_ADMIN']}>
         <div className="w-full">
@@ -103,17 +91,32 @@ export default function SchoolsPage() {
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-start justify-between">
           <div>
             <h1 className="font-bold text-light-text-primary dark:text-white mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-            Schools
-          </h1>
-            <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+              Schools
+            </h1>
+            <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-page-subtitle)', fontFamily: 'var(--font-outfit), sans-serif' }}>
               Create and manage schools on the platform
             </p>
           </div>
-          <Link href="/dashboard/super-admin/schools/add">
-            <Button variant="accent" size="md" className="bg-[#f97316] hover:bg-[#ea580c] text-white">
-              Create School
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/super-admin/schools/pending">
+              <Button
+                variant="secondary"
+                size="sm"
+                style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
+              >
+                Unapproved Registrations
+              </Button>
+            </Link>
+            <Link href="/dashboard/super-admin/schools/add">
+              <Button
+                variant="primary"
+                size="sm"
+                style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
+              >
+                Create School
+              </Button>
+            </Link>
+          </div>
         </FadeInUp>
 
         {/* Stats Cards */}
@@ -126,24 +129,24 @@ export default function SchoolsPage() {
             }
           />
           <StatCard
-            title="Active Schools"
+            title="Active"
             value={activeCount}
             icon={
-              <CheckCircle className="text-green-600 dark:text-green-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+              <CheckCircle className="text-green-600 dark:text-green-500" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
             }
           />
           <StatCard
-            title="Inactive Schools"
+            title="Inactive"
             value={inactiveCount}
             icon={
-              <XCircle className="text-gray-600 dark:text-gray-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+              <XCircle className="text-orange-600 dark:text-orange-500" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
             }
           />
           <StatCard
-            title="Showing"
-            value={`${showingCount} of ${totalSchools}`}
+            title="Unapproved"
+            value={unapprovedSchoolsOnPage}
             icon={
-              <Grid3x3 className="text-blue-600 dark:text-blue-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+              <Clock className="text-red-600 dark:text-red-500" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
             }
           />
         </div>
@@ -249,83 +252,87 @@ export default function SchoolsPage() {
 
                 return (
                   <FadeInUp key={school.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
-                    <Card 
+                    <Card
                       className="cursor-pointer hover:shadow-lg transition-all duration-200 h-full flex flex-col"
                       onClick={() => router.push(`/dashboard/super-admin/schools/${school.id}`)}
                     >
-                    <CardContent className="p-4 flex-1 flex flex-col" style={{ padding: 'var(--card-padding)' }}>
-                      <div className="flex items-start gap-3">
-                        {/* School Avatar */}
-                        <EntityAvatar
-                          name={school.name}
-                          imageUrl={school.logo || undefined}
-                          size="md"
-                          variant="rounded"
-                          className="flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          {/* Header Row: Name, Status, Menu */}
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <h3 className="font-semibold text-light-text-primary dark:text-white truncate" style={{ fontSize: 'var(--text-card-title)' }}>
-                              {school.name}
-                            </h3>
-                            <span
-                              className={cn(
-                                'px-2.5 py-0.5 rounded-full font-medium flex-shrink-0',
-                                school.isActive
-                                  ? 'bg-green-500/20 text-green-400'
-                                  : 'bg-gray-500/20 text-gray-400'
-                              )}
-                              style={{ fontSize: 'var(--text-small)' }}
-                            >
-                              {school.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // TODO: Add dropdown menu
-                              }}
-                              className="text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white p-1 flex-shrink-0 ml-auto"
-                            >
-                              <MoreVertical className="h-5 w-5" />
-                            </button>
-                          </div>
-
-                          {/* Location */}
-                          <p className="text-light-text-secondary dark:text-[#9ca3af] mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                            {school.city || 'N/A'}, {school.state || 'N/A'}
-                          </p>
-
-                          {/* School Levels */}
-                          {levels.length > 0 && (
-                            <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                              {levels.map((level) => (
-                                <span
-                                  key={level}
-                                  className="px-2 py-0.5 rounded font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                  style={{ fontSize: 'var(--text-small)' }}
-                                >
-                                  {level}
-                                </span>
-                              ))}
+                      <CardContent className="p-4 flex-1 flex flex-col" style={{ padding: 'var(--card-padding)' }}>
+                        <div className="flex items-start gap-3">
+                          {/* School Avatar */}
+                          <EntityAvatar
+                            name={school.name}
+                            imageUrl={school.logo || undefined}
+                            size="md"
+                            variant="rounded"
+                            className="flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            {/* Header Row: Name, Status, Menu */}
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <h3 className="font-semibold text-light-text-primary dark:text-white truncate" style={{ fontSize: 'var(--text-card-title)', fontFamily: 'var(--font-outfit), sans-serif' }}>
+                                {school.name}
+                              </h3>
+                              <span
+                                className={cn(
+                                  'px-2.5 py-0.5 rounded-full font-medium flex-shrink-0',
+                                  (!school.registrationStatus || school.registrationStatus === 'UNAPPROVED' || school.registrationStatus === 'PENDING')
+                                    ? 'bg-red-500/10 text-red-500'
+                                    : school.registrationStatus === 'REJECTED'
+                                      ? 'bg-gray-500/10 text-gray-500'
+                                      : school.isActive
+                                        ? 'bg-green-500/10 text-green-500'
+                                        : 'bg-orange-500/10 text-orange-500'
+                                )}
+                                style={{ fontSize: 'var(--text-small)', fontFamily: 'var(--font-outfit), sans-serif' }}
+                              >
+                                {(!school.registrationStatus || school.registrationStatus === 'UNAPPROVED' || school.registrationStatus === 'PENDING') ? 'Unapproved' : school.registrationStatus === 'REJECTED' ? 'Rejected' : school.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // TODO: Add dropdown menu
+                                }}
+                                className="text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white p-1 flex-shrink-0 ml-auto"
+                              >
+                                <MoreVertical className="h-5 w-5" />
+                              </button>
                             </div>
-                          )}
 
-                          {/* Teachers and Students - Inline */}
-                          <div className="flex items-center gap-4 text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
-                            <div className="flex items-center gap-1">
-                              <Target className="h-4 w-4" />
-                              <span>{school.teachersCount || 0} Teachers</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              <span>{school.studentsCount || 0} Students</span>
+                            {/* Location */}
+                            <p className="text-light-text-secondary dark:text-[#9ca3af] mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                              {school.city || 'N/A'}, {school.state || 'N/A'}
+                            </p>
+
+                            {/* School Levels */}
+                            {levels.length > 0 && (
+                              <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                                {levels.map((level) => (
+                                  <span
+                                    key={level}
+                                    className="px-2 py-0.5 rounded font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                    style={{ fontSize: 'var(--text-small)' }}
+                                  >
+                                    {level}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Teachers and Students - Inline */}
+                            <div className="flex items-center gap-4 text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
+                              <div className="flex items-center gap-1">
+                                <Target className="h-4 w-4" />
+                                <span>{school.teachersCount || 0} Teachers</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{school.studentsCount || 0} Students</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
                   </FadeInUp>
                 );
               })}
@@ -358,22 +365,26 @@ export default function SchoolsPage() {
                           <div className="flex-1 min-w-0">
                             {/* Header Row: Name, Status */}
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium text-light-text-primary dark:text-white truncate" style={{ fontSize: 'var(--text-card-title)' }}>
+                              <h3 className="font-medium text-light-text-primary dark:text-white truncate" style={{ fontSize: 'var(--text-card-title)', fontFamily: 'var(--font-outfit), sans-serif' }}>
                                 {school.name}
                               </h3>
                               <span
                                 className={cn(
                                   'px-2.5 py-0.5 rounded-full font-medium flex-shrink-0',
-                                  school.isActive
-                                    ? 'bg-green-500/20 text-green-400'
-                                    : 'bg-gray-500/20 text-gray-400'
+                                  (!school.registrationStatus || school.registrationStatus === 'UNAPPROVED' || school.registrationStatus === 'PENDING')
+                                    ? 'bg-red-500/10 text-red-500'
+                                    : school.registrationStatus === 'REJECTED'
+                                      ? 'bg-gray-500/10 text-gray-500'
+                                      : school.isActive
+                                        ? 'bg-green-500/10 text-green-500'
+                                        : 'bg-orange-500/10 text-orange-500'
                                 )}
-                                style={{ fontSize: 'var(--text-small)' }}
+                                style={{ fontSize: 'var(--text-small)', fontFamily: 'var(--font-outfit), sans-serif' }}
                               >
-                                {school.isActive ? 'Active' : 'Inactive'}
+                                {(!school.registrationStatus || school.registrationStatus === 'UNAPPROVED' || school.registrationStatus === 'PENDING') ? 'Unapproved' : school.registrationStatus === 'REJECTED' ? 'Rejected' : school.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </div>
-                            
+
                             {/* Location and Levels Row */}
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
