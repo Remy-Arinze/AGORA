@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Alert } from '@/components/ui/Alert';
-import { SessionWizardInfoModal } from '@/components/modals';
+import { SessionWizardInfoModal, EditTermDatesModal } from '@/components/modals';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import {
   Calendar,
@@ -20,6 +20,9 @@ import {
   GraduationCap,
   AlertTriangle,
   Info,
+  Pencil,
+  Clock,
+  Lock,
 } from 'lucide-react';
 import {
   useGetMySchoolQuery,
@@ -177,6 +180,7 @@ export default function SessionWizardPage() {
   // Confirmation modal states
   const [showEndSessionModal, setShowEndSessionModal] = useState(false);
   const [showEndTermModal, setShowEndTermModal] = useState(false);
+  const [editingTerm, setEditingTerm] = useState<import('@/lib/store/api/schoolAdminApi').Term | null>(null);
 
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
@@ -1230,6 +1234,124 @@ export default function SessionWizardPage() {
         )}
       </div>
 
+      {/* ═══════════════════ Manage Term Dates ═══════════════════ */}
+      {activeSession?.session && activeSession.session.terms && activeSession.session.terms.length > 0 && (
+        <FadeInUp
+          from={{ opacity: 0, y: 20 }}
+          to={{ opacity: 1, y: 0 }}
+          duration={0.4}
+          delay={0.2}
+          className="mt-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                Manage {termLabel} Dates
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                Adjust start and end dates for your {termLabel.toLowerCase()}s. Start dates can only be modified before the {termLabel.toLowerCase()} begins or within the first week.
+              </p>
+              <div className="space-y-3">
+                {[...activeSession.session.terms]
+                  .sort((a, b) => a.number - b.number)
+                  .map((term) => {
+                    const isActive = term.status === 'ACTIVE';
+                    const isDraft = term.status === 'DRAFT';
+                    const isCompleted = term.status === 'COMPLETED' || term.status === 'ARCHIVED';
+                    const termStart = new Date(term.startDate);
+                    const termEnd = new Date(term.endDate);
+                    const now = new Date();
+                    const isUpcoming = now < termStart;
+
+                    // Determine editability for visual cues
+                    let editableStatus: 'editable' | 'partial' | 'locked' = 'locked';
+                    if (isDraft || isUpcoming) {
+                      editableStatus = 'editable';
+                    } else if (isActive) {
+                      const gracePeriodEnd = new Date(termStart);
+                      gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
+                      editableStatus = now <= gracePeriodEnd ? 'partial' : 'partial'; // end date still editable
+                    }
+                    if (isCompleted) editableStatus = 'locked';
+
+                    return (
+                      <div
+                        key={term.id}
+                        className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${isActive
+                            ? 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10'
+                            : isDraft
+                              ? 'border-[var(--light-border)] dark:border-gray-700 bg-[var(--light-card)] dark:bg-dark-surface'
+                              : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30'
+                          }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                              {term.name}
+                            </span>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive
+                                  ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                                  : isDraft
+                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                    : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                                }`}
+                            >
+                              {term.status}
+                            </span>
+                            {isActive && term.currentWeek && (
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                Week {term.currentWeek}{term.totalWeeks ? ` of ${term.totalWeeks}` : ''}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                            <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>
+                              {termStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              {' — '}
+                              {termEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            {term.halfTermStart && term.halfTermEnd && (
+                              <span className="ml-2 text-xs text-light-text-muted dark:text-dark-text-muted">
+                                (Break: {new Date(term.halfTermStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {' – '}
+                                {new Date(term.halfTermEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 ml-4">
+                          {isCompleted ? (
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                              <Lock className="h-3.5 w-3.5" />
+                              Locked
+                            </div>
+                          ) : (
+                            <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                              <Button
+                                variant="ghost"
+                                onClick={() => setEditingTerm(term)}
+                                className="text-sm flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                Edit Dates
+                              </Button>
+                            </PermissionGate>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        </FadeInUp>
+      )}
+
       {/* ═══════════════════ Modals ═══════════════════ */}
 
       {/* End Session Confirmation */}
@@ -1289,6 +1411,18 @@ export default function SessionWizardPage() {
         })()}
         isLoading={isEndingTerm}
       />
+
+      {/* Edit Term Dates Modal */}
+      {editingTerm && activeSession?.session && schoolId && (
+        <EditTermDatesModal
+          isOpen={!!editingTerm}
+          onClose={() => setEditingTerm(null)}
+          term={editingTerm}
+          session={activeSession.session}
+          schoolId={schoolId}
+          termLabel={termLabel}
+        />
+      )}
     </ProtectedRoute>
   );
 }

@@ -21,12 +21,12 @@ export const metadata: Metadata = {
   },
   description: 'Agora creates a borderless academic identity for every student, turning static paper trails into a living, portable digital profile secured by a global student ledger.',
   keywords: [
-    'Digital Student Identity', 
-    'Global Student Ledger', 
-    'School Management System', 
-    'Digital Transcripts', 
-    'Academic Identity', 
-    'Verified Education Records', 
+    'Digital Student Identity',
+    'Global Student Ledger',
+    'School Management System',
+    'Digital Transcripts',
+    'Academic Identity',
+    'Verified Education Records',
     'EdTech Africa',
     'Student Data Portability',
     'Immutable Academic Records',
@@ -78,8 +78,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Initial Theme Script to avoid FOUC */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('agora-theme') === 'dark' || (!('agora-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else if (localStorage.getItem('agora-theme') === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                } else {
+                  // Default to dark mode natively if preferred, otherwise dark
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
         {/* Organization Schema */}
         <script
           type="application/ld+json"

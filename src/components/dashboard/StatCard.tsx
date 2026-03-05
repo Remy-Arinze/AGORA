@@ -32,10 +32,10 @@ export function StatCard({
         <CardContent className="h-full flex flex-col justify-center" style={{ padding: 'var(--stat-card-padding)' }}>
           <div className="flex items-center justify-between gap-3"> {/* Added gap for spacing */}
             <div className="flex-1 min-w-0"> {/* Added min-w-0 for text truncation */}
-              <p className="font-medium text-[#9ca3af] dark:text-[#9ca3af] mb-0.5 truncate" style={{ fontSize: 'var(--text-stat-label)' }}>
+              <p className="font-medium text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] mb-0.5 truncate" style={{ fontSize: 'var(--text-stat-label)' }}>
                 {title}
               </p>
-              <p className="font-bold text-white dark:text-white leading-tight" style={{ fontSize: 'var(--text-stat-value)' }}>
+              <p className="font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] leading-tight" style={{ fontSize: 'var(--text-stat-value)' }}>
                 {value}
               </p>
               {change && (
@@ -57,7 +57,7 @@ export function StatCard({
               )}
             </div>
             {icon && (
-              <div className="flex-shrink-0 flex items-center justify-center bg-gray-100 dark:bg-[#1a1f2e] p-2 rounded-lg" style={{ width: '40px', height: '40px' }}> {/* Fixed size container for icon */}
+              <div className="flex-shrink-0 flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-2 rounded-lg" style={{ width: '40px', height: '40px' }}> {/* Fixed size container for icon */}
                 {icon}
               </div>
             )}

@@ -13,10 +13,11 @@ import { getActivePluginsForTeacher } from '@/lib/plugins';
 import { usePermissionFilteredSidebar, type NavItem } from '@/hooks/useSidebarConfig';
 import { cn } from '@/lib/utils';
 import { SchoolTypeSwitcher } from '@/components/dashboard/SchoolTypeSwitcher';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 function LogoSection() {
   const { open } = useSidebar();
-  
+
   return (
     <div className="mb-4">
       <Link
@@ -45,8 +46,9 @@ function LogoutButton() {
       variant="ghost"
       size="sm"
       onClick={logout}
-      className="w-full justify-start gap-2 text-gray-700 dark:text-[#9ca3af] hover:bg-gray-100 dark:hover:bg-[#1f2937]"
+      className="flex-1 justify-start gap-2 text-gray-700 dark:text-[#9ca3af] hover:bg-gray-100 dark:hover:bg-[#1f2937] h-9 px-2 overflow-hidden"
     >
+      <LogOut className="h-4 w-4 flex-shrink-0" />
       <span
         className={cn(
           "text-[13px] transition-opacity duration-200",
@@ -59,10 +61,12 @@ function LogoutButton() {
   );
 }
 
+
+
 export function SidebarNew() {
   const user = useSelector((state: RootState) => state.auth.user);
   const pathname = usePathname();
-  
+
   // Use permission-filtered sidebar config
   const { sections, isLoadingPermissions } = usePermissionFilteredSidebar();
 
@@ -76,7 +80,7 @@ export function SidebarNew() {
       icon: <item.icon className="h-5 w-5 flex-shrink-0" />,
     }))
   );
-  
+
   // Show loading state for school admins while permissions load
   const showLoadingSkeleton = user.role === 'SCHOOL_ADMIN' && isLoadingPermissions;
 
@@ -84,7 +88,7 @@ export function SidebarNew() {
   if (user.role === 'TEACHER') {
     // Remove History from links if it exists (it's now in profile)
     links = links.filter(link => link.href !== '/dashboard/teacher/history');
-    
+
     const activePlugins = getActivePluginsForTeacher();
     const pluginLinks = activePlugins.map((plugin) => {
       const Icon = plugin.icon;
@@ -94,7 +98,7 @@ export function SidebarNew() {
         icon: <Icon className="h-5 w-5 flex-shrink-0" />,
       };
     });
-    
+
     // Add plugins
     if (pluginLinks.length > 0) {
       links = [
@@ -123,41 +127,42 @@ export function SidebarNew() {
             </>
           ) : (
             links.map((link, idx) => {
-            const isActive =
-              pathname === link.href ||
-              pathname.startsWith(link.href + '/') ||
-              (link.href === '/dashboard/super-admin/overview' &&
-                pathname === '/dashboard/super-admin') ||
-              (link.href === '/dashboard/school/overview' &&
-                (pathname === '/dashboard/school' || pathname === '/dashboard')) ||
-              (link.href === '/dashboard/student/overview' &&
-                (pathname === '/dashboard/student' || pathname === '/dashboard')) ||
-              (link.href === '/dashboard/teacher/timetables' &&
-                (pathname === '/dashboard/teacher' || pathname === '/dashboard')) ||
-              (link.href === '/dashboard/teacher/overview' &&
-                (pathname === '/dashboard/teacher' || pathname === '/dashboard'));
-            return (
-              <SidebarLink
-                key={idx}
-                link={link}
-                isActive={isActive}
-              />
-            );
+              const isActive =
+                pathname === link.href ||
+                pathname.startsWith(link.href + '/') ||
+                (link.href === '/dashboard/super-admin/overview' &&
+                  pathname === '/dashboard/super-admin') ||
+                (link.href === '/dashboard/school/overview' &&
+                  (pathname === '/dashboard/school' || pathname === '/dashboard')) ||
+                (link.href === '/dashboard/student/overview' &&
+                  (pathname === '/dashboard/student' || pathname === '/dashboard')) ||
+                (link.href === '/dashboard/teacher/timetables' &&
+                  (pathname === '/dashboard/teacher' || pathname === '/dashboard')) ||
+                (link.href === '/dashboard/teacher/overview' &&
+                  (pathname === '/dashboard/teacher' || pathname === '/dashboard'));
+              return (
+                <SidebarLink
+                  key={idx}
+                  link={link}
+                  isActive={isActive}
+                />
+              );
             })
           )}
         </div>
       </div>
 
-      {/* Logout Button at Bottom */}
-      <div className="pt-4">
-        {/* School Type Switcher - Only for SCHOOL_ADMIN with mixed schools */}
+      {/* Bottom Section */}
+      <div className="pt-4 px-2 pb-3">
+        {/* School Type Switcher - Handles ADMIN mixed schools */}
         {user.role === 'SCHOOL_ADMIN' && (
-          <div className="px-2 mb-3">
+          <div className="mb-3 px-1">
             <SchoolTypeSwitcher />
           </div>
         )}
-        <div className="border-t border-[var(--dark-border)] pt-4">
+        <div className="border-t border-gray-200 dark:border-[var(--dark-border)] pt-4 flex items-center gap-2">
           <LogoutButton />
+          <ThemeToggle className="h-7 w-7 min-w-[28px] focus-visible:ring-0 active:scale-95 transition-all" />
         </div>
       </div>
     </SidebarBody>

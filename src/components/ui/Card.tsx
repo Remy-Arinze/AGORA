@@ -10,9 +10,9 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', children, ...props }, ref) => {
     const variants = {
-      default: 'bg-blue-50 dark:bg-dark-surface',
-      outlined: 'bg-transparent',
-      elevated: 'bg-light-card dark:bg-dark-surface shadow-lg',
+      default: 'bg-[var(--light-card)] dark:bg-[var(--dark-surface)]',
+      outlined: 'bg-transparent border border-[var(--light-border)] dark:border-[var(--dark-border)]',
+      elevated: 'bg-[var(--light-card)] dark:bg-[var(--dark-surface)] shadow-lg',
     };
 
     return (
@@ -20,7 +20,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           'rounded-lg p-6',
-          'border-4 border-gray-50 dark:border-dark-border',
+          'border border-[var(--light-border)] dark:border-[var(--dark-border)]',
           'overflow-hidden',
           variants[variant],
           className
@@ -53,7 +53,7 @@ export const CardTitle = forwardRef<
 >(({ className, style, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn('font-semibold text-light-text-primary dark:text-white', className)}
+    className={cn('font-semibold text-light-text-primary dark:text-dark-text-primary', className)}
     style={{ fontSize: 'var(--text-card-title)', ...style }}
     {...props}
   />
@@ -66,7 +66,7 @@ export const CardContent = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('text-light-text-secondary dark:text-[#9ca3af]', className)}
+    className={cn('text-light-text-secondary dark:text-dark-text-secondary', className)}
     {...props}
   />
 ));

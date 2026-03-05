@@ -98,7 +98,7 @@ export const DesktopSidebar = ({
     <div
       ref={ref}
       className={cn(
-        "h-screen px-4 py-4 hidden md:flex md:flex-col bg-[var(--dark-bg)] border-r border-[var(--dark-border)] flex-shrink-0 fixed left-0 top-0 z-20",
+        "h-screen px-4 py-4 hidden md:flex md:flex-col bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-r border-[var(--light-border)] dark:border-[var(--dark-border)] flex-shrink-0 fixed left-0 top-0 z-20",
         className
       )}
       style={{ width: animate ? (open ? 250 : 80) : 250 }}
@@ -153,7 +153,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-[var(--dark-surface)] border-b border-[var(--dark-border)] w-full"
+          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-[var(--light-bg)] dark:bg-[var(--dark-surface)] border-b border-[var(--light-border)] dark:border-[var(--dark-border)] w-full"
         )}
         {...props}
       >
@@ -167,7 +167,7 @@ export const MobileSidebar = ({
           <div
             ref={ref}
             className={cn(
-              "fixed h-full w-full inset-0 bg-[var(--dark-bg)] p-10 z-[100] flex flex-col justify-between",
+              "fixed h-full w-full inset-0 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-10 z-[100] flex flex-col justify-between",
               className
             )}
             style={{ transform: 'translateX(-100%)', opacity: 0 }}
@@ -201,17 +201,17 @@ export const SidebarLink = ({
 
   const iconWithColor = isActive
     ? React.cloneElement(link.icon as React.ReactElement, {
-        className: cn(
-          (link.icon as React.ReactElement)?.props?.className,
-          "text-[#2490FD]"
-        ),
-      })
+      className: cn(
+        (link.icon as React.ReactElement)?.props?.className,
+        "text-[#2490FD]"
+      ),
+    })
     : React.cloneElement(link.icon as React.ReactElement, {
-        className: cn(
-          (link.icon as React.ReactElement)?.props?.className,
-          "text-[#9ca3af] group-hover/sidebar:text-white"
-        ),
-      });
+      className: cn(
+        (link.icon as React.ReactElement)?.props?.className,
+        "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] group-hover/sidebar:text-[var(--light-text-primary)] dark:group-hover/sidebar:text-[var(--dark-text-primary)]"
+      ),
+    });
 
   const showLabel = animate ? open : true;
 
@@ -219,10 +219,10 @@ export const SidebarLink = ({
     <Link
       href={link.href}
       className={cn(
-        "flex items-center justify-between gap-2 group/sidebar py-2 px-3 rounded-lg transition-colors relative",
+        "flex items-center justify-between gap-2 group/sidebar py-2 px-3 rounded-lg transition-all relative",
         isActive
-          ? "text-white dark:text-white"
-          : "text-[#9ca3af] dark:text-[#9ca3af] hover:bg-[#1f2937] dark:hover:bg-[#1f2937]",
+          ? "text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] bg-[var(--light-card)] dark:bg-[var(--dark-surface)] "
+          : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] hover:shadow-sm border border-transparent",
         className
       )}
       {...props}
@@ -231,8 +231,8 @@ export const SidebarLink = ({
         {iconWithColor}
         <span
           className={cn(
-            "text-[.8rem] group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre inline-block !p-0 !m-0",
-            isActive ? "text-white" : "text-[#9ca3af] group-hover/sidebar:text-white",
+            "text-sm group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
+            isActive ? " text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]" : "f text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
         >
@@ -242,7 +242,7 @@ export const SidebarLink = ({
       {isActive && (
         <span
           className={cn(
-            "text-white inline-block transition-all duration-200",
+            "text-gray-900 dark:text-white inline-block transition-all duration-200",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
         >

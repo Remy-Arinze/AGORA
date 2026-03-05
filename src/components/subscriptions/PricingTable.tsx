@@ -101,8 +101,8 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
               duration={0.5}
               delay={i * 0.1}
               className={`relative flex flex-col h-full bg-light-card dark:bg-dark-surface rounded-3xl transition-all duration-500 ${plan.highlight
-                ? 'border-2 border-primary dark:border-primary shadow-lg scale-[1.02] z-10'
-                : 'border border-light-border dark:border-dark-border shadow-md hover:shadow-lg'
+                ? 'border-2 border-primary dark:border-primary scale-[1.02] z-10'
+                : 'border border-light-border dark:border-dark-border'
                 }`}
             >
               {/* Popular Badge */}
@@ -178,7 +178,7 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
                   className={`w-full py-4 px-6 rounded-xl font-bold transition-all duration-300 ${isCurrentPlan
                     ? 'bg-light-bg dark:bg-dark-bg text-light-text-muted dark:text-dark-text-muted cursor-not-allowed border border-light-border dark:border-dark-border'
                     : plan.highlight
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md border border-transparent'
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white border border-transparent'
                       : canSelect
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border border-transparent hover:bg-gray-800 dark:hover:bg-gray-100'
                         : 'bg-light-bg dark:bg-dark-bg text-light-text-muted dark:text-dark-text-muted cursor-not-allowed border border-light-border dark:border-dark-border'

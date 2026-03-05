@@ -73,20 +73,20 @@ export default function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--dark-bg)] text-white overflow-x-hidden relative">
+    <div className="min-h-screen bg-[var(--dark-bg)] text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden relative">
       <LandingNavbar />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-32 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto mt-12 md:mt-16 z-10">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} delay={0.1} duration={0.8}>
-            <h1 className="text-5xl md:text-[4rem] font-bold text-white leading-tight mb-8 tracking-tight font-heading">
+            <h1 className="text-5xl md:text-[4rem] font-bold text-[var(--dark-text-primary)] leading-tight mb-8 tracking-tight font-heading">
               A digital borderless academic identity <br className="hidden md:block" /> for every student
             </h1>
           </FadeInUp>
 
           <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} delay={0.3} duration={0.8}>
-            <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-[var(--dark-text-secondary)] mb-12 max-w-2xl mx-auto leading-relaxed">
               One student identity, verified across every institution.
               Agora connects the African education ecosystem through a secure, lifelong registry.
             </p>
@@ -102,7 +102,7 @@ export default function HomeContent() {
               Get Started Free
             </Button>
             <Link href="#features" className="w-full sm:w-auto">
-              <span className="inline-flex items-center justify-center px-10 py-4 text-base rounded hover:scale-105 font-bold border border-white text-white hover:bg-white hover:text-black transition-colors duration-300 w-full cursor-pointer">
+              <span className="inline-flex items-center justify-center px-10 py-4 text-base rounded hover:scale-105 font-bold border border-[var(--dark-text-primary)] text-[var(--dark-text-primary)] hover:bg-[var(--dark-text-primary)] hover:text-[var(--dark-bg)] transition-colors duration-300 w-full cursor-pointer">
                 How it works
               </span>
             </Link>
@@ -112,14 +112,14 @@ export default function HomeContent() {
         {/* Dashboard Mockup Perspective */}
         <FadeInUp from={{ opacity: 0, y: 50 }} to={{ opacity: 1, y: 0 }} delay={0.7} duration={1} className="w-full max-w-5xl mx-auto mt-24 relative z-10 px-4">
           {/* Subtle glow behind the mockup */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-agora-blue/20 blur-[100px] rounded-full pointer-events-none z-[-1]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[var(--agora-blue)]/20 blur-[100px] rounded-full pointer-events-none z-[-1]" />
 
           <div
-            className="w-full rounded-xl border border-white/10 bg-[#1f1f22] overflow-hidden relative mx-auto"
+            className="w-full rounded-xl border border-[var(--dark-border)] bg-[var(--dark-surface)] overflow-hidden relative mx-auto"
             style={{
               transform: "perspective(1200px) rotateX(12deg) scale(1.05)",
               transformOrigin: "top center",
-              boxShadow: "0 25px 60px -12px rgba(0, 0, 0, 0.8), 0 0 40px 0 rgba(36, 144, 253, 0.1)"
+              boxShadow: "0 25px 60px -12px rgba(0, 0, 0, 0.4), 0 0 40px 0 rgba(36, 144, 253, 0.1)"
             }}
           >
             {/* Top Bar of Mockup */}
@@ -220,10 +220,10 @@ export default function HomeContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-20">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
               Powerful Unified Management System
             </h2>
-            <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto">
               Everything schools need to digitize legacy records and verify student identities.
             </p>
           </AnimateInView>
@@ -238,10 +238,10 @@ export default function HomeContent() {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white mb-3">
+                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
                   Multi-Tenant Architecture
                 </h3>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
                   Each school gets a white-label portal with total isolation. Perfect for districts, networks, and government systems.
                 </p>
               </div>
@@ -256,10 +256,10 @@ export default function HomeContent() {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white mb-3">
+                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
                   Secure & Immutable
                 </h3>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
                   Once a parent claims a profile, it becomes locked. We prevent identity fraud and ensure academic trust.
                 </p>
               </div>
@@ -274,10 +274,10 @@ export default function HomeContent() {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white mb-3">
+                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
                   Seamless Transfers
                 </h3>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
                   Move between schools with complete academic history. Debt checking ensures clean transfers for institutions.
                 </p>
               </div>
@@ -292,10 +292,10 @@ export default function HomeContent() {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white mb-3">
+                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
                   Offline-First
                 </h3>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
                   Works offline with local persistence. Perfect for areas with unreliable internet connectivity.
                 </p>
               </div>
@@ -319,11 +319,11 @@ export default function HomeContent() {
                 </svg> */}
                 Introducing Agora AI
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+              <h2 className="text-3xl md:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 leading-tight font-heading">
                 Your Intelligent <br className="hidden md:block" />
                 Education Assistant
               </h2>
-              <p className="text-lg text-gray-300 mb-8 leading-relaxed">
+              <p className="text-lg text-[var(--dark-text-secondary)] mb-8 leading-relaxed">
                 Agora AI is designed to supercharge educators and administrators.
                 Save countless hours on grading and gain deep insights into student performance with our advanced AI tools.
               </p>
@@ -336,8 +336,8 @@ export default function HomeContent() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold text-lg mb-1">Automated AI Grading</h4>
-                    <p className="text-gray-400 leading-relaxed text-sm">Instantly evaluating essays and assignments using custom rubrics, ensuring fair and consistent feedback.</p>
+                    <h4 className="text-[var(--dark-text-primary)] font-semibold text-lg mb-1 font-heading">Automated AI Grading</h4>
+                    <p className="text-[var(--dark-text-secondary)] leading-relaxed text-sm">Instantly evaluating essays and assignments using custom rubrics, ensuring fair and consistent feedback.</p>
                   </div>
                 </div>
 
@@ -348,8 +348,8 @@ export default function HomeContent() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold text-lg mb-1">Detailed Analytics</h4>
-                    <p className="text-gray-400 leading-relaxed text-sm">Get profound insights into cohort performance, identify learning gaps automatically, and personalize student paths.</p>
+                    <h4 className="text-[var(--dark-text-primary)] font-semibold text-lg mb-1 font-heading">Detailed Analytics</h4>
+                    <p className="text-[var(--dark-text-secondary)] leading-relaxed text-sm">Get profound insights into cohort performance, identify learning gaps automatically, and personalize student paths.</p>
                   </div>
                 </div>
               </div>
@@ -360,21 +360,21 @@ export default function HomeContent() {
                 <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors duration-500" />
                 <div className="relative z-10 flex flex-col gap-6">
                   {/* Mock UI for AI Grading */}
-                  <div className="bg-[#1c1c1c] rounded-xl p-4 border border-white/10 shadow-lg transform -rotate-1 hover:rotate-0 transition-transform duration-300">
-                    <div className="flex items-center gap-3 mb-3 border-b border-white/5 pb-3">
+                  <div className="bg-[var(--dark-surface)] rounded-xl p-4 border border-[var(--dark-border)] shadow-lg transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+                    <div className="flex items-center gap-3 mb-3 border-b border-[var(--dark-border)] pb-3">
                       <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium text-white">English Essay Analysis</span>
+                      <span className="text-sm font-medium text-[var(--dark-text-primary)]">English Essay Analysis</span>
                       <span className="ml-auto text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded-full">Graded in 1.2s</span>
                     </div>
                     <div className="space-y-2">
                       <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                         <div className="w-[85%] h-full bg-gradient-to-r from-blue-500 to-indigo-500" />
                       </div>
-                      <div className="flex justify-between text-xs text-gray-400">
+                      <div className="flex justify-between text-xs text-[var(--dark-text-muted)]">
                         <span>Originality: 98%</span>
                         <span>Grammar: 92%</span>
                         <span className="text-agora-success font-medium">Score: 85/100</span>
@@ -383,7 +383,7 @@ export default function HomeContent() {
                   </div>
 
                   {/* Mock UI for AI Generation */}
-                  <div className="bg-[#1c1c1c] rounded-xl p-4 border border-white/10 shadow-lg transform rotate-2 hover:rotate-0 transition-transform duration-300 ml-8">
+                  <div className="bg-[var(--dark-surface)] rounded-xl p-4 border border-[var(--dark-border)] shadow-lg transform rotate-2 hover:rotate-0 transition-transform duration-300 ml-8">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400 mt-1 shrink-0">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,8 +391,8 @@ export default function HomeContent() {
                         </svg>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-white block mb-1">Agora AI Assistant</span>
-                        <p className="text-xs text-gray-400 bg-white/5 p-3 rounded-lg border border-white/5 leading-relaxed">
+                        <span className="text-sm font-medium text-[var(--dark-text-primary)] block mb-1">Agora AI Assistant</span>
+                        <p className="text-xs text-[var(--dark-text-secondary)] bg-[var(--dark-bg)] p-3 rounded-lg border border-[var(--dark-border)] leading-relaxed">
                           "Based on recent test scores, I recommend focusing next week's lesson on quadratic equations. Here is a generated lesson plan draft..."
                         </p>
                       </div>
@@ -416,10 +416,10 @@ export default function HomeContent() {
             <span className="inline-block px-4 py-2 bg-indigo-900/50 text-indigo-400 rounded-full text-xs font-semibold mb-4">
               Flexible Pricing
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
               Simple, transparent pricing
             </h2>
-            <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto">
               Choose the plan that best fits your institution's needs
             </p>
           </AnimateInView>
@@ -441,10 +441,10 @@ export default function HomeContent() {
             <span className="inline-block px-4 py-2 bg-blue-900/50 text-blue-400 rounded-full text-xs font-semibold mb-4">
               Trusted Partners
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
               Schools Using Agora
             </h2>
-            <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto">
               Join the growing network of forward-thinking institutions
             </p>
           </AnimateInView>
@@ -555,10 +555,10 @@ export default function HomeContent() {
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <AnimateInView duration={0.8}>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 leading-tight tracking-tight font-heading">
               Ready to Transform Education in Africa?
             </h2>
-            <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] mb-12 max-w-3xl mx-auto leading-relaxed">
               Join schools, parents, and students building the future of
               digital education identity.
             </p>
@@ -567,7 +567,7 @@ export default function HomeContent() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[var(--dark-bg)] text-gray-400 py-16 border-t border-white/5">
+      <footer className="bg-[var(--dark-bg)] text-[var(--dark-text-secondary)] py-16 border-t border-[var(--dark-border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="col-span-1 md:col-span-1">
@@ -576,39 +576,42 @@ export default function HomeContent() {
                 alt="Agora - Verified Academic History Logo"
                 width={140}
                 height={38}
-                className="h-8 w-auto mb-6 opacity-90"
+                className="h-8 w-auto mb-6 opacity-90 transition-opacity"
               />
-              <p className="text-xs leading-relaxed text-gray-500">
+              <p className="text-xs leading-relaxed text-[var(--dark-text-muted)] max-w-[240px]">
                 The Chain-of-Trust Registry for the African education ecosystem. Securing academic identities forever.
               </p>
             </div>
             <div>
-              <h4 className="text-agora-blue font-semibold mb-4 text-sm">Product</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><Link href="#how-it-works" className="hover:text-white">Features</Link></li>
-                <li><Link href="/dashboard" className="hover:text-white">Dashboard</Link></li>
+              <h4 className="text-[var(--agora-blue)] font-semibold mb-6 text-sm font-heading uppercase tracking-widest">Product</h4>
+              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm">
+                <li><Link href="#features" className="hover:text-[var(--agora-blue)] transition-colors">Features</Link></li>
+                <li><Link href="/products" className="hover:text-[var(--agora-blue)] transition-colors">Solutions</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-agora-blue font-semibold mb-4 text-sm">Resources</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><Link href="/auth/login" className="hover:text-white">Documentation</Link></li>
-                <li><Link href="/auth/login" className="hover:text-white">Support</Link></li>
+              <h4 className="text-[var(--agora-blue)] font-semibold mb-6 text-sm font-heading uppercase tracking-widest">Company</h4>
+              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm">
+                <li><Link href="/about" className="hover:text-[var(--agora-blue)] transition-colors">About Us</Link></li>
+                <li><Link href="/contact" className="hover:text-[var(--agora-blue)] transition-colors">Contact</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-agora-blue font-semibold mb-4 text-sm">Legal</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><Link href="#" className="hover:text-white">Privacy</Link></li>
-                <li><Link href="#" className="hover:text-white">Terms</Link></li>
+              <h4 className="text-[var(--agora-blue)] font-semibold mb-6 text-sm font-heading uppercase tracking-widest">Legal</h4>
+              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm">
+                <li><Link href="/privacy" className="hover:text-[var(--agora-blue)] transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-[var(--agora-blue)] transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-            <p className="text-sm">&copy; 2025 Agora. All rights reserved.</p>
+          <div className="mt-16 pt-8 border-t border-[var(--dark-border)] flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-[var(--dark-text-muted)]">&copy; 2026 Agora. All rights reserved.</p>
+            <div className="flex gap-6">
+              {/* Placeholder for social links if needed */}
+            </div>
           </div>
         </div>
       </footer>
-    </div >
+    </div>
   );
 }

@@ -6,8 +6,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ThemeToggle } from '../ui/ThemeToggle';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export function LandingNavbar() {
+    const { theme } = useTheme();
     const { user } = useAuth();
     const pathname = usePathname();
     const isHomePage = pathname === '/';
@@ -33,10 +36,10 @@ export function LandingNavbar() {
         const checkInitialSection = () => {
             const sections = document.querySelectorAll('section');
             const viewportHeight = window.innerHeight;
-            
+
             // Hero section is always the first section
             const heroSection = sections[0] as HTMLElement | undefined;
-            
+
             if (heroSection) {
                 const heroRect = heroSection.getBoundingClientRect();
                 // Calculate visible height of hero section in viewport
@@ -44,14 +47,14 @@ export function LandingNavbar() {
                 const heroBottom = Math.min(viewportHeight, heroRect.bottom);
                 const heroVisibleHeight = Math.max(0, heroBottom - heroTop);
                 const heroVisiblePercent = heroVisibleHeight / viewportHeight;
-                
+
                 // Keep white navbar if hero is still more than 30% visible
                 if (heroVisiblePercent > 0.3) {
                     setIsLightSection(false);
                     return;
                 }
             }
-            
+
             // Hero is mostly scrolled past, check if we're over a light section
             let topLightSection: HTMLElement | null = null;
             let minTop = Infinity;
@@ -59,7 +62,7 @@ export function LandingNavbar() {
             sections.forEach((section) => {
                 const rect = section.getBoundingClientRect();
                 const needsLightNavbar = section.dataset.navbarLight === 'true';
-                
+
                 // Find the topmost light section that's in or near viewport
                 if (needsLightNavbar && rect.top >= -200 && rect.top < minTop) {
                     minTop = rect.top;
@@ -103,18 +106,21 @@ export function LandingNavbar() {
     };
 
     // Determine navbar style based on section
-    const useLightNavbar = isHomePage ? isLightSection : true;
+    // If the global theme is light, we MUST use light navbar styles
+    const forceLightNavbar = theme === 'light';
+    const useLightNavbar = forceLightNavbar || (isHomePage ? isLightSection : true);
+
     const logoColor = useLightNavbar ? 'bg-blue-600 dark:bg-blue-500' : 'bg-white';
-    const textColor = useLightNavbar ? 'text-blue-600 dark:text-blue-400' : 'text-white';
-    const linkColor = useLightNavbar 
-        ? 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-        : 'text-white/70 hover:text-white';
-    const activeLinkColor = useLightNavbar 
-        ? 'text-blue-600 dark:text-blue-400'
+    const textColor = useLightNavbar ? 'text-[var(--dark-text-primary)]' : 'text-white';
+    const linkColor = useLightNavbar
+        ? 'text-[var(--dark-text-secondary)] hover:text-[var(--agora-blue)] transition-colors'
+        : 'text-white/70 hover:text-white transition-colors';
+    const activeLinkColor = useLightNavbar
+        ? 'text-[var(--agora-blue)]'
         : 'text-white';
-    const navBg = useLightNavbar 
+    const navBg = useLightNavbar
         ? 'bg-[var(--light-bg)]/80 dark:bg-dark-bg/80 backdrop-blur-md'
-        : hasScrolled 
+        : hasScrolled
             ? 'bg-transparent backdrop-blur-md'
             : 'bg-transparent';
 
@@ -137,15 +143,13 @@ export function LandingNavbar() {
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`relative text-sm font-medium transition-colors pb-1 ${
-                                        isActive(link.href) ? activeLinkColor : linkColor
-                                    }`}
+                                    className={`relative text-sm font-medium transition-colors pb-1 ${isActive(link.href) ? activeLinkColor : linkColor
+                                        }`}
                                 >
                                     {link.label}
                                     {isActive(link.href) && (
-                                        <span className={`absolute bottom-0 left-0 w-full h-0.5 rounded-full ${
-                                            useLightNavbar ? 'bg-blue-500' : 'bg-white'
-                                        }`} />
+                                        <span className={`absolute bottom-0 left-0 w-full h-0.5 rounded-full ${useLightNavbar ? 'bg-[var(--agora-blue)]' : 'bg-white'
+                                            }`} />
                                     )}
                                 </Link>
                             ))}
@@ -167,6 +171,7 @@ export function LandingNavbar() {
                                 </Link>
                             </div>
                         )}
+                        <ThemeToggle />
                     </div>
                 </div>
             </div>

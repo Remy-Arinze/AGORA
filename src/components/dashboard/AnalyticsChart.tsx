@@ -90,7 +90,7 @@ export function AnalyticsChart({
           const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
           const x = cx + radius * Math.cos(-midAngle * RADIAN);
           const y = cy + radius * Math.sin(-midAngle * RADIAN);
-          
+
           return (
             <text
               x={x}
@@ -105,7 +105,7 @@ export function AnalyticsChart({
             </text>
           );
         };
-        
+
         return (
           <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
             <Pie
@@ -136,11 +136,11 @@ export function AnalyticsChart({
                 padding: '8px 12px',
               }}
             />
-            <Legend 
+            <Legend
               layout="vertical"
               verticalAlign="middle"
               align="right"
-              wrapperStyle={{ 
+              wrapperStyle={{
                 paddingLeft: '10px',
                 fontSize: '11px',
                 lineHeight: '1.6',
@@ -202,14 +202,14 @@ export function AnalyticsChart({
               })}
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1a1f2e" opacity={0.2} vertical={false} />
-            <XAxis 
-              dataKey="name" 
+            <XAxis
+              dataKey="name"
               tick={{ fill: '#6b7280', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               tickMargin={8}
             />
-            <YAxis 
+            <YAxis
               tick={{ fill: '#6b7280', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
@@ -274,11 +274,11 @@ export function AnalyticsChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-semibold text-white dark:text-white mb-1" style={{ fontSize: 'var(--text-section-title)' }}>
+        <CardTitle className="font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-section-title)' }}>
           {title}
         </CardTitle>
         {description && (
-          <p className="text-[#9ca3af] dark:text-[#9ca3af] mt-1" style={{ fontSize: 'var(--text-body)' }}>
+          <p className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] mt-1" style={{ fontSize: 'var(--text-body)' }}>
             {description}
           </p>
         )}

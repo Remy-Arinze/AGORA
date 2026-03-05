@@ -333,7 +333,7 @@ export default function ClassesPage() {
                                 {classItem.name}
                               </h3>
                               {classItem.classArmId && (
-                                <span className="px-2 py-0.5 rounded font-medium text-blue-800  dark:text-blue-400" style={{ fontSize: 'var(--text-small)' }}>
+                                <span className="px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" style={{ fontSize: 'var(--text-small)' }}>
                                   ClassArm
                                 </span>
                               )}
@@ -381,10 +381,12 @@ export default function ClassesPage() {
                           </div>
                           {/* Status Badge */}
                           <span
-                            className={`px-2 py-1 rounded ${classItem.isActive
-                              ? 'text-green-900 dark:text-green-400 text-xs'
-                              : ' text-gray-900 dark:text-gray-400 text-xs'
-                              }`}
+                            className={cn(
+                              'px-2 py-1 rounded font-medium text-xs',
+                              classItem.isActive
+                                ? 'bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-400'
+                            )}
                             style={{ fontSize: 'var(--text-small)' }}
                           >
                             {classItem.isActive ? 'Active' : 'Inactive'}
@@ -393,14 +395,14 @@ export default function ClassesPage() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
-                          <p className="text-light-text-primary dark:[var(--dark-text-secondary)]" style={{ fontSize: 'var(--text-body)' }}>
+                          <Users className="h-4 w-4 text-light-text-muted dark:text-dark-text-secondary" />
+                          <p className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
                             {teacherName}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <GraduationCap className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
-                          <p className="text-light-text-primary dark:[var(--dark-text-secondary)]" style={{ fontSize: 'var(--text-body)' }}>
+                          <GraduationCap className="h-4 w-4 text-light-text-muted dark:text-dark-text-secondary" />
+                          <p className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
                             {classItem.studentsCount || 0} students
                           </p>
                         </div>
@@ -435,7 +437,7 @@ export default function ClassesPage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium text-light-text-primary dark:text-white" style={{ fontSize: 'var(--text-card-title)' }}>
+                              <h3 className="font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                                 {classItem.name}
                               </h3>
                               {classItem.classArmId && (
@@ -455,7 +457,7 @@ export default function ClassesPage() {
                                 {classItem.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </div>
-                            <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
+                            <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                               {teacherName} • {classItem.studentsCount || 0} students
                             </p>
                           </div>

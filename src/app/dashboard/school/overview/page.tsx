@@ -9,11 +9,12 @@ import { AnalyticsChart } from '@/components/dashboard/AnalyticsChart';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { GraduationCap, Users, BookOpen, UserPlus, Loader2, AlertCircle, Calendar, XCircle, Upload } from 'lucide-react';
+import { GraduationCap, Users, BookOpen, UserPlus, Loader2, AlertCircle, Calendar, XCircle, Upload, Settings } from 'lucide-react';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { useRouter } from 'next/navigation';
 import { useGetSchoolAdminDashboardQuery, useGetActiveSessionQuery, useGetMySchoolQuery, useEndTermMutation, useUploadSchoolLogoMutation } from '@/lib/store/api/schoolAdminApi';
-import { EndTermModal } from '@/components/modals';
+import { EndTermModal, EditTermDatesModal } from '@/components/modals';
+import type { Term } from '@/lib/store/api/schoolAdminApi';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import toast from 'react-hot-toast';
@@ -83,11 +84,10 @@ function RecentStudentRow({ student }: { student: { id: string; name: string; pr
           </p>
         </div>
         <span
-          className={`px-3 py-1 rounded-full font-medium flex-shrink-0 ${
-            student.status === 'active'
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-          }`}
+          className={`px-3 py-1 rounded-full font-medium flex-shrink-0 ${student.status === 'active'
+            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+            }`}
           style={{ fontSize: 'var(--text-small)' }}
         >
           {student.status}
@@ -100,19 +100,19 @@ function RecentStudentRow({ student }: { student: { id: string; name: string; pr
 export default function AdminOverviewPage() {
   const router = useRouter();
   const { user } = useAuth();
-  
+
   // Get school type and terminology
   const { currentType } = useSchoolType();
-  
+
   const { data, isLoading, error, refetch } = useGetSchoolAdminDashboardQuery(
     currentType || undefined
   );
   const terminology = getTerminology(currentType);
-  
+
   // Get school and active session
   const { data: schoolResponse, refetch: refetchSchool } = useGetMySchoolQuery();
   const school = schoolResponse?.data;
-  
+
   // Get user's name for welcome message
   // If school_owner, show school name; if other principal, use principal's name; otherwise user's first name
   const userName = useMemo(() => {
@@ -146,6 +146,7 @@ export default function AdminOverviewPage() {
 
   const [endTerm, { isLoading: isEndingTerm }] = useEndTermMutation();
   const [showEndTermModal, setShowEndTermModal] = useState(false);
+  const [editingTerm, setEditingTerm] = useState<Term | null>(null);
 
   // Create preview URL when file is selected
   useEffect(() => {
@@ -204,7 +205,7 @@ export default function AdminOverviewPage() {
   // Determine button state
   const hasActiveSession = !!activeSession?.session;
   const hasActiveTerm = !!activeSession?.term;
-  
+
   const getButtonConfig = () => {
     if (!hasActiveSession) {
       return {
@@ -263,10 +264,10 @@ export default function AdminOverviewPage() {
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div>
-              <h1 className="font-bold text-light-text-primary dark:text-white " style={{ fontSize: 'var(--text-page-title)' }}>
+              <h1 className="font-semibold text-light-text-primary dark:text-white " style={{ fontSize: 'var(--text-page-title)' }}>
                 Welcome back, {userName}
               </h1>
-              
+
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {/* School Logo Upload - Passport Size */}
@@ -321,7 +322,7 @@ export default function AdminOverviewPage() {
                     </div>
                   ) : (
                     <div
-                      className="border-2 border-dashed border-light-border dark:border-dark-border rounded cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 group relative"
+                      className="border-2 border-dashed border-[var(--light-border)] dark:border-[var(--dark-border)] rounded cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors flex flex-col items-center justify-center bg-[var(--light-card)] dark:bg-[var(--dark-surface)] group relative"
                       style={{ width: '60px', height: '60px' }}
                       onClick={() => {
                         fileInputRef.current?.click();
@@ -415,17 +416,61 @@ export default function AdminOverviewPage() {
               </PermissionGate>
             </div>
           </div>
-          
-          {/* Term End Date Display - Only show if there's an active term */}
-          {hasActiveTerm && activeSession?.term?.endDate && (() => {
+
+          {/* Term Date Display - show upcoming or ending based on today's date */}
+          {hasActiveTerm && activeSession?.term && (() => {
+            const startDate = new Date(activeSession.term.startDate);
             const endDate = new Date(activeSession.term.endDate);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+
+            const isUpcoming = today < startDate;
+
+            if (isUpcoming) {
+              startDate.setHours(0, 0, 0, 0);
+              const daysUntilStart = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+              return (
+                <FadeInUp
+                  from={{ opacity: 0, y: -10 }}
+                  to={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-x-2"
+                  style={{ marginTop: '50px', fontSize: 'var(--text-body)' }}
+                >
+                  <Calendar className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                  <span className="text-light-text-secondary dark:text-dark-text-secondary">
+                    Upcoming {terminology.periodSingular} starts on{' '}
+                    <span className="font-semibold text-light-text-primary dark:text-dark-text-primary">
+                      {startDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </span>
+                    <span className="ml-2 text-orange-600 dark:text-orange-400 font-semibold">
+                      (Starts in {daysUntilStart} {daysUntilStart === 1 ? 'day' : 'days'})
+                    </span>
+                  </span>
+                  <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                    <button
+                      onClick={() => setEditingTerm(activeSession.term!)}
+                      className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                      title={`Adjust ${terminology.periodSingular} dates`}
+                    >
+                      <Settings className="h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary" />
+                    </button>
+                  </PermissionGate>
+                </FadeInUp>
+              );
+            }
+
+            // Normal active term logic (has started)
             endDate.setHours(0, 0, 0, 0);
             const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             const isPastDue = daysRemaining < 0;
             const isDueSoon = daysRemaining <= 7 && daysRemaining >= 0;
-            
+
             return (
               <FadeInUp
                 from={{ opacity: 0, y: -10 }}
@@ -458,6 +503,15 @@ export default function AdminOverviewPage() {
                     </span>
                   )}
                 </span>
+                <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                  <button
+                    onClick={() => setEditingTerm(activeSession.term!)}
+                    className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                    title={`Adjust ${terminology.periodSingular} dates`}
+                  >
+                    <Settings className="h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary" />
+                  </button>
+                </PermissionGate>
               </FadeInUp>
             );
           })()}
@@ -512,24 +566,24 @@ export default function AdminOverviewPage() {
                   <GraduationCap className="text-blue-600 dark:text-blue-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
                 }
               />
-          <StatCard
-            title={`Total ${terminology.staff}`}
-            value={formatNumber(stats.totalTeachers)}
-            change={formatChange(stats.teachersChange)}
-            changeType={getChangeType(stats.teachersChange)}
-            icon={
-              <Users className="text-green-600 dark:text-green-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
-            }
-          />
-          <StatCard
-            title={`Active ${terminology.courses}`}
-            value={formatNumber(stats.activeCourses)}
-            change={formatChange(stats.coursesChange)}
-            changeType={getChangeType(stats.coursesChange)}
-            icon={
-              <BookOpen className="text-purple-600 dark:text-purple-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
-            }
-          />
+              <StatCard
+                title={`Total ${terminology.staff}`}
+                value={formatNumber(stats.totalTeachers)}
+                change={formatChange(stats.teachersChange)}
+                changeType={getChangeType(stats.teachersChange)}
+                icon={
+                  <Users className="text-green-600 dark:text-green-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+                }
+              />
+              <StatCard
+                title={`Active ${terminology.courses}`}
+                value={formatNumber(stats.activeCourses)}
+                change={formatChange(stats.coursesChange)}
+                changeType={getChangeType(stats.coursesChange)}
+                icon={
+                  <BookOpen className="text-purple-600 dark:text-purple-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+                }
+              />
               <StatCard
                 title="Pending Admissions"
                 value={formatNumber(stats.pendingAdmissions)}
@@ -616,6 +670,18 @@ export default function AdminOverviewPage() {
           termLabel={terminology.periodSingular}
           termEndDate={activeSession?.term?.endDate}
         />
+
+        {/* Edit Term Dates Modal */}
+        {editingTerm && activeSession?.session && schoolId && (
+          <EditTermDatesModal
+            isOpen={!!editingTerm}
+            onClose={() => setEditingTerm(null)}
+            term={editingTerm}
+            session={activeSession.session}
+            schoolId={schoolId}
+            termLabel={terminology.periodSingular}
+          />
+        )}
 
         {/* Image Crop Modal */}
         {imageToCrop && (

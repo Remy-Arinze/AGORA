@@ -43,7 +43,7 @@
     /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
     --text-card-title: 1rem;
     /* 18px - Card titles */
-    --text-body: 0.85rem;
+    --text-body: 0.8rem;
     /* 14px - Body text */
     --text-small: 0.75rem;
     /* 12px - Small text */
@@ -64,32 +64,43 @@
     --card-padding-large: 1.5rem;
     /* 24px - Large card padding */
 
-    /* Dark Mode Colors - PRAX IQ inspired dark theme */
-    --dark-bg: #1b1b1c;
-    /* Darker bg */
-    --dark-surface: #1f1f22;
-    /* Darker card surface */
-    --dark-border: #232327;
-    /* Darker border */
-    --dark-input: #2f2f34;
-    /* Dark bluish grey for inputs */
-    --dark-text-primary: #ffffff;
-    /* White text for better contrast */
-    --dark-text-secondary: #9ca3af;
-    /* Secondary text - grey */
-    --dark-text-muted: #6b7280;
-    /* Muted text */
-    --dark-hover: #1a202e;
-    /* Hover background - subtle grey */
-    /* Input field background - use for inputs and image selector to match. Change here to update both. */
-    --light-input: #f3f4f6;
+    /* Light Mode Colors */
+    --light-bg: #f3f4f6;
+    --light-card: #e7e9ef;
+    --light-text-primary: #111827;
+    --light-text-secondary: #4b5563;
+    --light-text-muted: #9ca3af;
+    --light-border: #e5e7eb;
+    --light-hover: #f9fafb;
+
+    /* Map dark variables strictly to light colors by default for light mode scale */
+    --dark-bg: var(--light-bg);
+    --dark-surface: var(--light-card);
+    --dark-border: var(--light-border);
+    --light-input: #ffffff;
+    --dark-input: var(--light-input);
+    --dark-text-primary: var(--light-text-primary);
+    --dark-text-secondary: var(--light-text-secondary);
+    --dark-text-muted: var(--light-text-muted);
+    --dark-hover: var(--light-hover);
+
     --input-field-bg: var(--light-input);
-    /* Empty avatar/profile image placeholder - dark grayish; adjust here to change all school admin empty image fields */
+    /* Empty avatar/profile image placeholder */
     --avatar-placeholder-bg: #4b5563;
     --avatar-placeholder-text: #e5e7eb;
   }
 
   .dark {
+    /* Dark Mode Colors - PRAX IQ inspired dark theme */
+    --dark-bg: #1b1b1c;
+    --dark-surface: #1f1f22;
+    --dark-border: #232327;
+    --dark-input: #2f2f34;
+    --dark-text-primary: #ffffff;
+    --dark-text-secondary: #9ca3af;
+    --dark-text-muted: #6b7280;
+    --dark-hover: #1a202e;
+
     --input-field-bg: var(--dark-input);
     --avatar-placeholder-bg: #374151;
     --avatar-placeholder-text: #d1d5db;
@@ -98,9 +109,9 @@
   /* Border colors are applied via Tailwind classes, not globally */
 
   body {
-    /* Background is handled by layout.tsx div, not body */
-    color: var(--dark-text-primary);
-    transition: color 200ms;
+    background-color: var(--light-bg);
+    color: var(--light-text-primary);
+    transition: color 200ms, background-color 200ms;
     font-family: var(--font-sans), system-ui, sans-serif;
   }
 
@@ -114,7 +125,7 @@
   }
 
   .dark body {
-    /* Background is handled by layout.tsx div, not body */
+    background-color: var(--dark-bg);
     color: var(--dark-text-primary);
   }
 

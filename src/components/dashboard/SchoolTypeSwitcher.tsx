@@ -11,17 +11,17 @@ const typeConfig = {
   PRIMARY: {
     label: 'Primary',
     icon: GraduationCap,
-    color: 'from-blue-500 to-blue-600',
+    color: 'bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]', // Changed from arbitrary gradient to match standard theme inputs
   },
   SECONDARY: {
     label: 'Secondary',
     icon: BookOpen,
-    color: 'from-blue-500 to-blue-600',
+    color: 'bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]',
   },
   TERTIARY: {
     label: 'Tertiary',
     icon: University,
-    color: 'from-blue-500 to-blue-600',
+    color: 'bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]',
   },
 } as const;
 
@@ -83,13 +83,15 @@ export function SchoolTypeSwitcher() {
   // Locked admin: show static indicator (no dropdown)
   if (isLocked) {
     return (
-      <>
-        <p className='text-[12px] text-gray-500 mb-1'>School type</p>
-        <div className="rounded-lg border border-light-border dark:border-dark-border overflow-hidden bg-light-card dark:bg-dark-surface/50">
+      <div className="flex flex-col w-full gap-1">
+        <div className={cn("flex items-center", sidebarOpen ? "justify-between" : "justify-center")}>
+          <p className={cn('text-[12px] text-gray-500', !sidebarOpen && "hidden")}>School type</p>
+        </div>
+        <div className="rounded-lg border border-[var(--light-border)] dark:border-[var(--dark-border)] overflow-hidden bg-[var(--light-card)] dark:bg-[var(--dark-surface)]">
           <div
             className={cn(
               'relative flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[10px] font-medium overflow-hidden',
-              'text-white'
+              'text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]'
             )}
           >
             <div
@@ -98,7 +100,7 @@ export function SchoolTypeSwitcher() {
                 config.color,
               )}
             />
-            <Icon color='#2490FD' className="relative z-10 h-4 w-4 flex-shrink-0" />
+            <Icon className="text-blue-500 dark:text-blue-400 relative z-10 h-4 w-4 flex-shrink-0" />
             {sidebarOpen && (
               <span className="relative z-10 flex-1 text-left truncate">
                 {config.label}
@@ -109,37 +111,38 @@ export function SchoolTypeSwitcher() {
             )}
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
   // Unrestricted admin: show interactive switcher
   return (
-    <>
-      <p className='text-[12px] text-gray-500 mb-1'>School type</p>
+    <div className="flex flex-col w-full gap-1">
+      <div className={cn("flex items-center", sidebarOpen ? "justify-between" : "justify-center")}>
+        <p className={cn('text-[10px] text-gray-500', !sidebarOpen && "hidden")}>School type</p>
+      </div>
 
       <div
         ref={containerRef}
-        className="rounded-lg border border-light-border dark:border-dark-border overflow-hidden bg-light-card dark:bg-dark-surface/50"
+        className="rounded-lg border border-[var(--light-border)] dark:border-[var(--dark-border)] overflow-hidden bg-[var(--light-card)] dark:bg-[var(--dark-surface)]"
       >
         {/* Selected row: gradient bg, icon + label + chevron */}
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
           className={cn(
-            'relative flex w-full items-center gap-2.5 px-3 py-2 rounded-t-lg text-[10px] font-medium transition-all duration-200 overflow-hidden',
-            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-light-bg dark:focus:ring-offset-dark-bg',
-            'text-white'
+            'relative flex w-full items-center gap-2.5 px-3 py-2 text-[10px] font-medium transition-all duration-200 overflow-hidden',
+            'focus:outline-none focus:ring-0',
+            'text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]'
           )}
         >
           <div
             className={cn(
-              'absolute inset-0 rounded-t-lg',
+              'absolute inset-0',
               config.color,
-
             )}
           />
-          <Icon color='#2490FD' className="relative z-10 h-4 w-4 flex-shrink-0 " />
+          <Icon className="text-blue-500 dark:text-blue-400 relative z-10 h-4 w-4 flex-shrink-0 " />
           {sidebarOpen && (
             <span
               className={cn(
@@ -168,7 +171,7 @@ export function SchoolTypeSwitcher() {
             className="overflow-hidden origin-top"
             style={{ height: 0, opacity: 0 }}
           >
-            <div className="flex flex-col py-1.5 px-1 border-t border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg">
+            <div className="flex flex-col py-1.5 px-1 border-t border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
               {availableTypes.map((type) => {
                 const typeCfg = typeConfig[type];
                 const TypeIcon = typeCfg.icon;
@@ -185,11 +188,11 @@ export function SchoolTypeSwitcher() {
                     className={cn(
                       'flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[10px] font-medium transition-colors',
                       'focus:outline-none focus:ring-0',
-                      'text-light-text-primary dark:text-dark-text-primary',
-                      'hover:bg-light-card dark:hover:bg-dark-surface'
+                      'text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]',
+                      'hover:bg-gray-100 dark:hover:bg-[#1a202e]'
                     )}
                   >
-                    <TypeIcon className="h-3.5 w-3.5 flex-shrink-0 text-light-text-secondary dark:text-dark-text-secondary" />
+                    <TypeIcon className="h-3.5 w-3.5 flex-shrink-0 text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]" />
                     <span className="flex-1 text-left">{typeCfg.label}</span>
                     {isSelected ? (
                       <Check className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={2.5} />
@@ -203,6 +206,6 @@ export function SchoolTypeSwitcher() {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

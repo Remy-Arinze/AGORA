@@ -585,7 +585,7 @@ export default function ClassDetailPage() {
                                       {student.firstName} {student.lastName}
                                     </Link>
                                     {student.user?.email && (
-                                      <p className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                                      <p className="text-light-text-muted dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
                                         {student.user.email}
                                       </p>
                                     )}
@@ -626,7 +626,7 @@ export default function ClassDetailPage() {
                       </table>
                     </div>
                     <div className="pt-4 flex items-center justify-between">
-                      <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-body)' }}>
+                      <span className="text-light-text-muted dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                         Total: {students.length} student{students.length !== 1 ? 's' : ''}
                       </span>
                       <div className="flex items-center gap-2">
@@ -685,7 +685,7 @@ export default function ClassDetailPage() {
                                   >
                                     {student.user?.accountStatus || 'Active'}
                                   </span>
-                                  <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                                  <span className="text-light-text-muted dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
                                     {student.enrollment?.classLevel || '-'}
                                   </span>
                                 </div>

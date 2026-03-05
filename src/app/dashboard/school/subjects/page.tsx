@@ -600,7 +600,7 @@ function SubjectCard({
               <span className="font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
                 {currentType === 'SECONDARY' ? 'Competent Teachers:' : 'Teachers:'}
                 {currentType === 'PRIMARY' && (
-                  <span className="text-light-text-muted dark:text-dark-text-muted block mt-0.5" style={{ fontSize: '0.65rem' }}>
+                  <span className="text-light-text-muted dark:text-dark-text-secondary block mt-0.5" style={{ fontSize: '0.65rem' }}>
                     (One teacher only)
                   </span>
                 )}
@@ -626,7 +626,7 @@ function SubjectCard({
                     className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded"
                     style={{ fontSize: 'var(--text-small)' }}
                   >
-                    <span>
+                    <span className="text-light-text-primary dark:text-dark-text-primary">
                       {teacher.firstName} {teacher.lastName}
                     </span>
                     <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
@@ -978,8 +978,8 @@ function AssignTeacherModal({
                     <label
                       key={teacher.id}
                       className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${selectedTeacherIds.includes(teacher.id)
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                         }`}
                     >
                       <input

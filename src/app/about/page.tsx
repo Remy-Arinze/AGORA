@@ -50,7 +50,7 @@ const milestones = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[var(--dark-bg)] text-white">
+    <div className="min-h-screen bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] transition-colors duration-300">
       <LandingNavbar />
 
       {/* Hero Section */}
@@ -62,10 +62,10 @@ export default function AboutPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} duration={0.8} className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-              About <span className="text-blue-600 dark:text-blue-400">Agora</span>
+            <h1 className="text-5xl md:text-6xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-6 font-heading">
+              About <span className="text-[var(--agora-blue)]">Agora</span>
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p className="text-xl text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
               We&apos;re on a mission to give every African student a permanent, verifiable digital education identity
               that follows them from their first day of primary school to university graduation and beyond.
             </p>
@@ -83,8 +83,8 @@ export default function AboutPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Mission</h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+              <h2 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">Our Mission</h2>
+              <p className="text-lg text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
                 To build the digital infrastructure that connects every stage of African education—creating
                 a Chain-of-Trust Registry where schools verify teachers, teachers verify data, and parents
                 claim their children&apos;s identities forever. No more lost records. No more fraudulent certificates.
@@ -99,8 +99,8 @@ export default function AboutPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Vision</h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+              <h2 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">Our Vision</h2>
+              <p className="text-lg text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
                 A future where every child in Africa has a digital passport for education—one that opens doors
                 to opportunities, validates achievements, and creates a seamless journey from classroom to career.
                 We envision an Africa where educational credentials are universally trusted and instantly verifiable.
@@ -128,13 +128,13 @@ export default function AboutPage() {
 
           <AnimateInView from={{ opacity: 0, y: 40 }} to={{ opacity: 1, y: 0 }} duration={0.6} stagger={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {coreFeatures.map((feature, index) => (
-              <Card key={index} className="h-full hover:shadow-lg transition-shadow bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border-gray-200 dark:border-gray-800">
+              <Card key={index} className="h-full bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border-[var(--light-border)] dark:border-[var(--dark-border)] shadow-none">
                 <CardContent className="p-6">
                   <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-2 font-heading">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <p className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -148,8 +148,8 @@ export default function AboutPage() {
       <section className="py-20 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimateInView className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">The Problem We Solve</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">The Problem We Solve</h2>
+            <p className="text-xl text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] max-w-3xl mx-auto">
               Africa&apos;s education system faces critical challenges that Agora is designed to address
             </p>
           </AnimateInView>
@@ -195,8 +195,8 @@ export default function AboutPage() {
       <section className="py-20 bg-white dark:bg-dark-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimateInView className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Our Journey</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
+            <h2 className="text-4xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">Our Journey</h2>
+            <p className="text-xl text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]">
               Building the future of African education, one milestone at a time
             </p>
           </AnimateInView>
@@ -248,9 +248,9 @@ export default function AboutPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12">
+      <footer className="bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] py-12 border-t border-[var(--light-border)] dark:border-[var(--dark-border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2025 Agora. All rights reserved.</p>
+          <p className="text-sm">&copy; 2026 Agora. All rights reserved.</p>
         </div>
       </footer>
     </div>

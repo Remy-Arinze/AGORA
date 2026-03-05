@@ -91,7 +91,7 @@ export default function ProductsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--dark-bg)] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden">
       <LandingNavbar />
 
       {/* Hero Section */}
@@ -105,11 +105,11 @@ export default function ProductsPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} duration={0.8} className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-6 tracking-tight leading-tight font-heading">
               Powerful tools.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Infinite possibilities.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--agora-blue)] to-indigo-400">Infinite possibilities.</span>
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed max-w-2xl mx-auto">
               A meticulously crafted suite designed to transform every aspect of school management. From AI-powered assistants to bulletproof core infrastructure.
             </p>
           </FadeInUp>
@@ -132,11 +132,11 @@ export default function ProductsPage() {
           <AnimateInView from={{ opacity: 0, y: 40 }} to={{ opacity: 1, y: 0 }} stagger={0.15} className="space-y-12">
             {products.map((product, idx) => {
               const accentMap: Record<string, string> = {
-                blue: "text-blue-400 from-blue-500/20 to-blue-600/5 bg-blue-500/10 border-blue-500/20 shadow-blue-500/10",
-                indigo: "text-indigo-400 from-indigo-500/20 to-indigo-600/5 bg-indigo-500/10 border-indigo-500/20 shadow-indigo-500/10",
-                emerald: "text-emerald-400 from-emerald-500/20 to-emerald-600/5 bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/10",
-                amber: "text-amber-400 from-amber-500/20 to-amber-600/5 bg-amber-500/10 border-amber-500/20 shadow-amber-500/10",
-                cyan: "text-cyan-400 from-cyan-500/20 to-cyan-600/5 bg-cyan-500/10 border-cyan-500/20 shadow-cyan-500/10",
+                blue: "text-blue-500 from-blue-500/20 to-blue-600/5 bg-blue-500/10 border-blue-500/20",
+                indigo: "text-indigo-500 from-indigo-500/20 to-indigo-600/5 bg-indigo-500/10 border-indigo-500/20",
+                emerald: "text-emerald-500 from-emerald-500/20 to-emerald-600/5 bg-emerald-500/10 border-emerald-500/20",
+                amber: "text-amber-500 from-amber-500/20 to-amber-600/5 bg-amber-500/10 border-amber-500/20",
+                cyan: "text-cyan-500 from-cyan-500/20 to-cyan-600/5 bg-cyan-500/10 border-cyan-500/20",
               };
 
               // Safely fallback
@@ -149,7 +149,7 @@ export default function ProductsPage() {
               const isEven = idx % 2 === 0;
 
               return (
-                <div key={product.id} className="relative rounded-3xl overflow-hidden border border-white/5 bg-[#121620] shadow-2xl group transition-all duration-500 hover:border-white/10 hover:shadow-3xl">
+                <div key={product.id} className="relative rounded-3xl overflow-hidden border border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-card)] dark:bg-[var(--dark-surface)] shadow-none group transition-all duration-500">
                   {/* Subtle dynamic background gradient tailored to product */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${classes.split(' ')[1]} ${classes.split(' ')[2]} opacity-10 group-hover:opacity-20 transition-opacity duration-500`} />
 
@@ -162,7 +162,7 @@ export default function ProductsPage() {
                           {product.icon}
                         </div>
                         <div>
-                          <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">
+                          <h3 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1 tracking-tight font-heading">
                             {product.name}
                           </h3>
                           <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${bgClass} ${textClass} border ${borderClass}`}>
@@ -174,7 +174,7 @@ export default function ProductsPage() {
                       <h4 className={`text-xl font-semibold ${textClass} mb-4`}>
                         {product.tagline}
                       </h4>
-                      <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
+                      <p className="text-lg text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed mb-8">
                         {product.description}
                       </p>
                     </div>
@@ -191,7 +191,7 @@ export default function ProductsPage() {
                               <svg className={`w-5 h-5 ${textClass} flex-shrink-0 mt-0.5`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                               </svg>
-                              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium leading-relaxed">{feature}</span>
+                              <span className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] text-sm font-medium leading-relaxed">{feature}</span>
                             </li>
                           ))}
                         </ul>
@@ -215,15 +215,15 @@ export default function ProductsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }}>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+              <h2 className="text-4xl md:text-5xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-6 leading-tight tracking-tight font-heading">
                 An Ecosystem that <br />Works in Sync
               </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+              <p className="text-lg text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] mb-6 leading-relaxed">
                 All our products are intrinsically woven into the Agora Core Platform. Data flows seamlessly without silos.
               </p>
-              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+              <p className="text-lg text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
                 When a student enters the gates with RollCall, their attendance immediately informs analytics. Agora AI leverages real-time understanding to craft perfect assessments and adapt to curriculum changes effortlessly.
-                <span className="block mt-4 font-semibold text-white">One digital identity. Infinite synergies.</span>
+                <span className="block mt-4 font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]">One digital identity. Infinite synergies.</span>
               </p>
             </AnimateInView>
 
@@ -239,10 +239,10 @@ export default function ProductsPage() {
                 <div className="absolute w-[450px] h-[450px] border border-white/5 rounded-full animate-[spin_35s_linear_infinite_reverse]" />
 
                 {/* Nodes */}
-                <div className="absolute -top-6 w-14 h-14 bg-[#121620] border border-white/10 rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">🤖</div>
-                <div className="absolute -bottom-16 w-14 h-14 bg-[#121620] border border-white/10 rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">📍</div>
-                <div className="absolute -left-20 w-14 h-14 bg-[#121620] border border-white/10 rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">🏫</div>
-                <div className="absolute -right-20 w-14 h-14 bg-[#121620] border border-white/10 rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">💸</div>
+                <div className="absolute -top-6 w-14 h-14 bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border border-[var(--light-border)] dark:border-[var(--dark-border)] rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">🤖</div>
+                <div className="absolute -bottom-16 w-14 h-14 bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border border-[var(--light-border)] dark:border-[var(--dark-border)] rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">📍</div>
+                <div className="absolute -left-20 w-14 h-14 bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border border-[var(--light-border)] dark:border-[var(--dark-border)] rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">🏫</div>
+                <div className="absolute -right-20 w-14 h-14 bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border border-[var(--light-border)] dark:border-[var(--dark-border)] rounded-2xl flex items-center justify-center shadow-lg text-2xl z-30">💸</div>
               </div>
             </AnimateInView>
           </div>
@@ -280,9 +280,9 @@ export default function ProductsPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[var(--dark-bg)] text-gray-400 py-12 border-t border-white/5">
+      <footer className="bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] py-12 border-t border-[var(--light-border)] dark:border-[var(--dark-border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sm">&copy; 2025 Agora. All rights reserved.</p>
+          <p className="text-sm">&copy; 2026 Agora. All rights reserved.</p>
         </div>
       </footer>
     </div>

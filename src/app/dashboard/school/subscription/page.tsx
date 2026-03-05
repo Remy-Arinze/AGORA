@@ -79,7 +79,7 @@ export default function SubscriptionPage() {
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-12">
       {/* Header section */}
       <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.6}>
-        <div className="relative overflow-hidden rounded-3xl bg-light-card dark:bg-dark-surface border border-light-border dark:border-dark-border shadow-md">
+        <div className="relative overflow-hidden rounded-3xl bg-light-card dark:bg-dark-surface border border-light-border dark:border-dark-">
           <div className="relative p-8 md:p-12">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
 
