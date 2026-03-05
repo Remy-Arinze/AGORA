@@ -201,31 +201,32 @@ export default function ClassesPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-1" style={{ fontSize: 'var(--text-page-title)' }}>
                 {terminology.courses}
               </h1>
 
               {activeSession?.session && (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-1">
                   <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <span className="font-medium text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-body)' }}>
-                    Active Session: {activeSession.session.name}
-                    {activeSession.term && ` - ${activeSession.term.name}`}
+                    Active: {activeSession.session.name}
+                    {activeSession.term && ` (${activeSession.term.name})`}
                   </span>
                 </div>
               )}
             </div>
             <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <AutoGenerateButton
                   onClick={handleGenerateClasses}
                   isLoading={isGenerating}
-                  label={`Generate Default ${currentType === 'PRIMARY' ? 'Primary 1-6' : currentType === 'SECONDARY' ? 'JSS/SS Classes' : 'Year 1-4'}`}
+                  label={`Generate Default ${currentType === 'PRIMARY' ? 'Primary 1-6' : currentType === 'SECONDARY' ? 'JSS/SS' : 'Year 1-4'}`}
                   variant="secondary"
+                  className="w-full sm:w-auto text-xs h-9"
                 />
-                <Button variant="primary" onClick={() => setShowAddClass(true)}>
+                <Button variant="primary" onClick={() => setShowAddClass(true)} className="w-full sm:w-auto h-9 text-xs">
                   <Plus className="h-4 w-4 mr-2" />
                   Add {terminology.courseSingular}
                 </Button>
@@ -236,18 +237,18 @@ export default function ClassesPage() {
 
         {/* Search and View Controls */}
         <div className="mb-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1 max-w-md">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="flex-1 max-w-2xl">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder={`Search by ${terminology.courseSingular.toLowerCase()} name, level, or teacher...`}
+                placeholder={`Search ${terminology.courseSingular.toLowerCase()}...`}
                 containerClassName="w-full"
                 size="lg"
               />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between sm:justify-end gap-3">
               {/* View Toggle Buttons */}
               <div className="flex items-center gap-1 bg-light-surface dark:bg-[#151a23] rounded-lg p-1 border border-light-border dark:border-[#1a1f2e]">
                 <Button

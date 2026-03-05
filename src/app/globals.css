@@ -452,4 +452,14 @@
   input[type="file"]::file-selector-button:hover {
     background-color: #334155;
   }
+
+  .mockup-perspective {
+    transform: perspective(1200px) rotateX(12deg) scale(1.05);
+  }
+
+  @media (max-width: 767px) {
+    .mockup-perspective {
+      transform: none !important;
+    }
+  }
 }

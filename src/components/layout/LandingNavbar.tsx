@@ -118,18 +118,16 @@ export function LandingNavbar() {
     const activeLinkColor = useLightNavbar
         ? 'text-[var(--agora-blue)]'
         : 'text-white';
-    const navBg = useLightNavbar
-        ? 'bg-[var(--light-bg)]/80 dark:bg-dark-bg/80 backdrop-blur-md'
-        : hasScrolled
-            ? 'bg-transparent backdrop-blur-md'
-            : 'bg-transparent';
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
     return (
-        <nav className={`transition-all duration-300 fixed top-0 right-0 left-0 z-30 ${navBg}`}>
+        <nav className={`transition-all duration-300 fixed top-0 right-0 left-0 z-40 ${navBg}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16">
+                <div className="flex justify-between h-20">
                     <div className="flex items-center">
-                        <Link href="/" className="flex items-center">
+                        <Link href="/" className="flex items-center" onClick={() => setMobileMenuOpen(false)}>
                             <Image
                                 src="/assets/logos/agora_main.png"
                                 alt="Agora - Digital Education Identity Logo"
@@ -138,12 +136,12 @@ export function LandingNavbar() {
                                 className="h-8 w-auto flex-shrink-0 transition-opacity duration-300"
                             />
                         </Link>
-                        <div className="hidden md:flex items-center ml-10 space-x-6">
+                        <div className="hidden md:flex items-center ml-10 space-x-8">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`relative text-sm font-medium transition-colors pb-1 ${isActive(link.href) ? activeLinkColor : linkColor
+                                    className={`relative text-sm font-semibold transition-colors pb-1 ${isActive(link.href) ? activeLinkColor : linkColor
                                         }`}
                                 >
                                     {link.label}
@@ -157,21 +155,99 @@ export function LandingNavbar() {
                     </div>
 
                     <div className="flex items-center space-x-4">
+                        <div className="hidden md:flex items-center space-x-4">
+                            {isMounted && !user && (
+                                <div className="flex items-center space-x-3">
+                                    <Link href="/auth/login">
+                                        <Button variant="ghost" size="sm" className={cn("px-5 font-bold", textColor)}>
+                                            Login
+                                        </Button>
+                                    </Link>
+                                    <Link href="/auth/login">
+                                        <Button variant="primary" size="sm" className="rounded px-6 font-bold bg-agora-blue text-white">
+                                            Get Started
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
+                            <ThemeToggle />
+                        </div>
+
+                        {/* Mobile Menu Button */}
+                        <div className="md:hidden flex items-center gap-3">
+                            <ThemeToggle />
+                            <button
+                                onClick={toggleMobileMenu}
+                                className={`p-2 rounded-md transition-colors ${textColor}`}
+                                aria-label="Toggle menu"
+                            >
+                                {mobileMenuOpen ? (
+                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Navigation Overlay */}
+            <div
+                className={cn(
+                    "fixed inset-0 top-20 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] z-50 md:hidden transition-all duration-300 ease-in-out transform",
+                    mobileMenuOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
+                )}
+            >
+                <div className="flex flex-col p-6 h-full">
+                    <div className="flex flex-col space-y-4 mb-8">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={cn(
+                                    "text-2xl font-bold py-2 border-b border-gray-100 dark:border-gray-800 transition-colors",
+                                    isActive(link.href)
+                                        ? "text-[var(--agora-blue)]"
+                                        : "text-[var(--dark-text-primary)]"
+                                )}
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
+
+                    <div className="mt-auto pb-10 space-y-4">
                         {isMounted && !user && (
-                            <div className="flex items-center space-x-2">
-                                <Link href="/auth/login">
-                                    <Button variant="white" size="sm" className="rounded-full px-5 font-bold">
+                            <>
+                                <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="block w-full">
+                                    <Button variant="outline" size="lg" className="w-full text-lg font-bold">
                                         Login
                                     </Button>
                                 </Link>
-                                <Link href="/auth/login">
-                                    <Button variant="primary" size="sm" className="rounded-full px-5 font-bold">
-                                        Get Started
+                                <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="block w-full">
+                                    <Button variant="primary" size="lg" className="w-full text-lg font-bold bg-agora-blue text-white">
+                                        Get Started Free
                                     </Button>
                                 </Link>
-                            </div>
+                            </>
                         )}
-                        <ThemeToggle />
+                        {isMounted && user && (
+                            <Link
+                                href={user.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/school'}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="block w-full"
+                            >
+                                <Button variant="primary" size="lg" className="w-full text-lg font-bold bg-agora-blue text-white">
+                                    Go to Dashboard
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>

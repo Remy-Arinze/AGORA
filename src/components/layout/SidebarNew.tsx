@@ -6,7 +6,7 @@ import { RootState } from '@/lib/store/store';
 import { SidebarBody, SidebarLink, useSidebar } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
-import { LogOut } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getActivePluginsForTeacher } from '@/lib/plugins';
@@ -16,10 +16,10 @@ import { SchoolTypeSwitcher } from '@/components/dashboard/SchoolTypeSwitcher';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 function LogoSection() {
-  const { open } = useSidebar();
+  const { open, setOpen } = useSidebar();
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 flex items-center justify-between group">
       <Link
         href="/"
         className="font-normal flex items-center justify-center md:justify-start py-1 px-3 relative z-20"
@@ -33,6 +33,15 @@ function LogoSection() {
           priority
         />
       </Link>
+      <button
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-dark-surface transition-all md:flex hidden items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300",
+          !open && "mx-auto"
+        )}
+      >
+        {open ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      </button>
     </div>
   );
 }

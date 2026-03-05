@@ -115,9 +115,8 @@ export default function HomeContent() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[var(--agora-blue)]/20 blur-[100px] rounded-full pointer-events-none z-[-1]" />
 
           <div
-            className="w-full rounded-xl border border-[var(--dark-border)] bg-[var(--dark-surface)] overflow-hidden relative mx-auto"
+            className="w-full rounded-xl border border-[var(--dark-border)] bg-[var(--dark-surface)] overflow-hidden relative mx-auto transition-transform duration-700 hover:scale-[1.07] mockup-perspective"
             style={{
-              transform: "perspective(1200px) rotateX(12deg) scale(1.05)",
               transformOrigin: "top center",
               boxShadow: "0 25px 60px -12px rgba(0, 0, 0, 0.4), 0 0 40px 0 rgba(36, 144, 253, 0.1)"
             }}
