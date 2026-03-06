@@ -263,15 +263,13 @@ export default function AdminOverviewPage() {
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-            <div>
-              <h1 className="font-semibold text-light-text-primary dark:text-white " style={{ fontSize: 'var(--text-page-title)' }}>
+            <div className="flex items-center justify-between lg:justify-start w-full lg:w-auto gap-4">
+              <h1 className="font-medium lg:font-semibold text-xl lg:text-2xl text-light-text-primary dark:text-white leading-tight">
                 Welcome back, {userName}
               </h1>
 
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
               {/* School Logo Upload - Passport Size */}
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-1 shrink-0">
                 <div className="flex items-center gap-2">
                   <input
                     ref={fileInputRef}
@@ -394,6 +392,8 @@ export default function AdminOverviewPage() {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto mt-2 lg:mt-0">
               <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
                 <Button
                   variant={buttonConfig.variant}
