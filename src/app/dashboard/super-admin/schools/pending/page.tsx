@@ -84,7 +84,7 @@ export default function PendingSchoolsPage() {
     return (
         <ProtectedRoute roles={['SUPER_ADMIN']}>
             <div className="w-full space-y-6">
-                <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-start justify-between">
+                <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <BackButton />

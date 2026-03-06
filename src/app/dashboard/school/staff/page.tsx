@@ -295,7 +295,7 @@ export default function StaffPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full space-y-6">
         {/* Header Section */}
-        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-start justify-between">
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-bold text-light-text-primary dark:text-white mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
               Staff

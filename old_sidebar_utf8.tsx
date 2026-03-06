@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { cn } from "@/lib/utils";
 import Link, { LinkProps } from "next/link";
@@ -70,7 +70,7 @@ export const Sidebar = ({
   );
 };
 
-export const SidebarBody = (props: React.ComponentProps<"div"> & { hideMobileHeader?: boolean }) => {
+export const SidebarBody = (props: React.ComponentProps<"div">) => {
   return (
     <>
       <DesktopSidebar {...props} />
@@ -84,14 +84,15 @@ export const DesktopSidebar = ({
   children,
   ...props
 }: React.ComponentProps<"div">) => {
-  const { animate } = useSidebar();
+  const { open, animate } = useSidebar();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !animate) return;
-    gsap.to(el, { width: 250, duration: 0.25, ease: "power2.inOut" });
-  }, [animate]);
+    const width = open ? 250 : 80;
+    gsap.to(el, { width, duration: 0.25, ease: "power2.inOut" });
+  }, [open, animate]);
 
   return (
     <div
@@ -100,7 +101,7 @@ export const DesktopSidebar = ({
         "h-screen px-4 py-4 hidden md:flex md:flex-col bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-r border-[var(--light-border)] dark:border-[var(--dark-border)] flex-shrink-0 fixed left-0 top-0 z-20",
         className
       )}
-      style={{ width: 250 }}
+      style={{ width: animate ? (open ? 250 : 80) : 250 }}
       {...props}
     >
       {children}
@@ -111,9 +112,8 @@ export const DesktopSidebar = ({
 export const MobileSidebar = ({
   className,
   children,
-  hideMobileHeader = false,
   ...props
-}: React.ComponentProps<"div"> & { hideMobileHeader?: boolean }) => {
+}: React.ComponentProps<"div">) => {
   const { open, setOpen } = useSidebar();
   const ref = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(open);
@@ -151,52 +151,37 @@ export const MobileSidebar = ({
 
   return (
     <>
-      {!hideMobileHeader && (
-        <div
-          className={cn(
-            "h-[64px] px-4 py-4 flex flex-row md:hidden items-center justify-between bg-[var(--light-bg)] dark:bg-[var(--dark-surface)] border-b border-[var(--light-border)] dark:border-[var(--dark-border)] fixed top-0 w-full z-40 transition-all duration-300"
-          )}
-          {...props}
-        >
-          <div className="flex justify-start items-center">
-            <div className="h-8 w-8 bg-[#2490FD] rounded-lg flex items-center justify-center">
-              <span className="text-white text-xs font-bold">A</span>
-            </div>
-          </div>
-          <div className="flex justify-end z-20">
-            <Menu
-              className="text-gray-700 dark:text-dark-text-primary cursor-pointer h-6 w-6"
-              onClick={() => setOpen(!open)}
-            />
-          </div>
-        </div>
-      )}
-      {shouldRender && (
-        <div className="fixed inset-0 z-[100] md:hidden">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 transition-opacity duration-300"
-            onClick={() => setOpen(false)}
+      <div
+        className={cn(
+          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-[var(--light-bg)] dark:bg-[var(--dark-surface)] border-b border-[var(--light-border)] dark:border-[var(--dark-border)] w-full"
+        )}
+        {...props}
+      >
+        <div className="flex justify-end z-20 w-full">
+          <Menu
+            className="text-gray-700 dark:text-dark-text-primary cursor-pointer"
+            onClick={() => setOpen(!open)}
           />
-          {/* Drawer */}
+        </div>
+        {shouldRender && (
           <div
             ref={ref}
             className={cn(
-              "absolute top-0 left-0 h-full w-[280px] bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto",
+              "fixed h-full w-full inset-0 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-10 z-[100] flex flex-col justify-between",
               className
             )}
             style={{ transform: 'translateX(-100%)', opacity: 0 }}
           >
             <div
-              className="absolute right-4 top-4 z-50 text-gray-700 dark:text-dark-text-primary cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-dark-surface rounded-full transition-colors"
-              onClick={() => setOpen(false)}
+              className="absolute right-10 top-10 z-50 text-gray-700 dark:text-dark-text-primary cursor-pointer"
+              onClick={() => setOpen(!open)}
             >
-              <X className="h-5 w-5" />
+              <X />
             </div>
             {children}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 };
@@ -228,7 +213,7 @@ export const SidebarLink = ({
       ),
     });
 
-  const showLabel = true;
+  const showLabel = animate ? open : true;
 
   return (
     <Link
@@ -246,8 +231,8 @@ export const SidebarLink = ({
         {iconWithColor}
         <span
           className={cn(
-            "text-[0.8rem] group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
-            isActive ? " text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]" : " text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
+            "text-sm group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
+            isActive ? " text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]" : "f text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
         >

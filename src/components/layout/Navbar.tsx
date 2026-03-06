@@ -45,8 +45,7 @@ export function Navbar() {
     !logoError;
 
   return (
-    <nav className={`bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-b border-[var(--light-border)] dark:border-transparent transition-all duration-300 fixed top-0 right-0 left-0 z-30 ${open ? 'md:left-[250px]' : 'md:left-[80px]'
-      }`}>
+    <nav className={`bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-b border-[var(--light-border)] dark:border-transparent transition-all duration-300 fixed top-0 right-0 left-0 z-30 md:left-[250px]`}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center gap-3">
