@@ -34,7 +34,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     <div className="h-screen bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] transition-colors duration-200 flex flex-col overflow-hidden">
       {showNavbar && <Navbar />}
       <div className={cn(
-        "flex flex-1 overflow-hidden relative flex-col md:flex-row",
+        "flex flex-1 overflow-hidden relative",
         showNavbar && "pt-16"
       )}>
         <SidebarNew hideMobileHeader={showNavbar} />

@@ -41,7 +41,7 @@ export const SidebarProvider = ({
   setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   animate?: boolean;
 }) => {
-  const [openState, setOpenState] = useState(false);
+  const [openState, setOpenState] = useState(true);
   const open = openProp !== undefined ? openProp : openState;
   const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState;
 
@@ -176,7 +176,7 @@ export const MobileSidebar = ({
         <div
           ref={ref}
           className={cn(
-            "fixed h-full w-full inset-0 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-6 z-[100] flex flex-col justify-between",
+            "fixed h-full w-full inset-0 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-6 z-[100] flex flex-col justify-between md:hidden",
             className
           )}
           style={{ transform: 'translateX(-100%)', opacity: 0 }}

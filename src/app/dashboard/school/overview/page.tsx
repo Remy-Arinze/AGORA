@@ -262,138 +262,12 @@ export default function AdminOverviewPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-            <div className="flex items-center justify-between lg:justify-start w-full lg:w-auto gap-4">
-              <h1 className="font-medium lg:font-semibold text-xl lg:text-2xl text-light-text-primary dark:text-white leading-tight">
-                Welcome back, {userName}
-              </h1>
+          <div className="flex flex-wrap items-center justify-between gap-y-4 gap-x-4 w-full">
+            <h1 className="order-1 font-medium lg:font-semibold text-xl lg:text-2xl text-light-text-primary dark:text-white leading-tight flex-1 min-w-[200px]">
+              Welcome back, {userName}
+            </h1>
 
-              {/* School Logo Upload - Passport Size */}
-              <div className="flex flex-col items-center gap-1 shrink-0">
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleFileSelect(file);
-                      }
-                    }}
-                  />
-                  {/* Show preview if file is selected, otherwise show current logo or upload placeholder */}
-                  {logoPreview ? (
-                    <div className="relative group">
-                      <img
-                        src={logoPreview}
-                        alt="Logo Preview"
-                        className="object-cover border-2 border-blue-500 dark:border-blue-400 rounded shadow-sm"
-                        style={{ width: '60px', height: '60px' }}
-                      />
-                      <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center" style={{ fontSize: 'var(--text-small)' }}>
-                        !
-                      </div>
-                    </div>
-                  ) : school?.logo ? (
-                    <div className="relative group">
-                      <img
-                        src={school.logo}
-                        alt="School Logo"
-                        className="object-cover border-2 border-light-border dark:border-dark-border rounded shadow-sm"
-                        style={{ width: '60px', height: '60px' }}
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            fileInputRef.current?.click();
-                          }}
-                          className="text-white"
-                          style={{ fontSize: 'var(--text-small)' }}
-                        >
-                          Change
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      className="border-2 border-dashed border-[var(--light-border)] dark:border-[var(--dark-border)] rounded cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors flex flex-col items-center justify-center bg-[var(--light-card)] dark:bg-[var(--dark-surface)] group relative"
-                      style={{ width: '60px', height: '60px' }}
-                      onClick={() => {
-                        fileInputRef.current?.click();
-                      }}
-                      title="Click to upload school logo"
-                    >
-                      <Upload className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
-                      {/* Tooltip */}
-                      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10" style={{ fontSize: 'var(--text-small)' }}>
-                        Click to upload logo
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-800 rotate-45"></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {!school?.logo && !logoPreview && (
-                  <p className="text-light-text-muted dark:text-dark-text-muted text-center whitespace-nowrap" style={{ fontSize: 'var(--text-small)' }}>
-                    Upload logo
-                  </p>
-                )}
-                {selectedLogoFile && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={async () => {
-                        if (!selectedLogoFile) return;
-                        try {
-                          await uploadSchoolLogo({ file: selectedLogoFile }).unwrap();
-                          toast.success('School logo uploaded successfully!');
-                          setSelectedLogoFile(null);
-                          setLogoPreview(null);
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = '';
-                          }
-                          refetchSchool();
-                        } catch (error: any) {
-                          toast.error(error?.data?.message || 'Failed to upload logo');
-                        }
-                      }}
-                      disabled={isUploadingLogo}
-                    >
-                      {isUploadingLogo ? (
-                        <>
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-3 w-3 mr-1" />
-                          Upload
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedLogoFile(null);
-                        setLogoPreview(null);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
-                      }}
-                      disabled={isUploadingLogo}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto mt-2 lg:mt-0">
+            <div className="order-3 lg:order-2 w-full lg:w-auto flex justify-start lg:justify-end">
               <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
                 <Button
                   variant={buttonConfig.variant}
@@ -414,6 +288,131 @@ export default function AdminOverviewPage() {
                   )}
                 </Button>
               </PermissionGate>
+            </div>
+
+            {/* School Logo Upload - Passport Size */}
+            <div className="order-2 lg:order-3 flex flex-col items-center gap-1 shrink-0">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleFileSelect(file);
+                    }
+                  }}
+                />
+                {/* Show preview if file is selected, otherwise show current logo or upload placeholder */}
+                {logoPreview ? (
+                  <div className="relative group">
+                    <img
+                      src={logoPreview}
+                      alt="Logo Preview"
+                      className="object-cover border-2 border-blue-500 dark:border-blue-400 rounded shadow-sm"
+                      style={{ width: '60px', height: '60px' }}
+                    />
+                    <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center" style={{ fontSize: 'var(--text-small)' }}>
+                      !
+                    </div>
+                  </div>
+                ) : school?.logo ? (
+                  <div className="relative group">
+                    <img
+                      src={school.logo}
+                      alt="School Logo"
+                      className="object-cover border-2 border-light-border dark:border-dark-border rounded shadow-sm"
+                      style={{ width: '60px', height: '60px' }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          fileInputRef.current?.click();
+                        }}
+                        className="text-white"
+                        style={{ fontSize: 'var(--text-small)' }}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="border-2 border-dashed border-[var(--light-border)] dark:border-[var(--dark-border)] rounded cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors flex flex-col items-center justify-center bg-[var(--light-card)] dark:bg-[var(--dark-surface)] group relative"
+                    style={{ width: '60px', height: '60px' }}
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                    }}
+                    title="Click to upload school logo"
+                  >
+                    <Upload className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+                    {/* Tooltip */}
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10" style={{ fontSize: 'var(--text-small)' }}>
+                      Click to upload logo
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-800 rotate-45"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {!school?.logo && !logoPreview && (
+                <p className="text-light-text-muted dark:text-dark-text-muted text-center whitespace-nowrap" style={{ fontSize: 'var(--text-small)' }}>
+                  Upload logo
+                </p>
+              )}
+              {selectedLogoFile && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={async () => {
+                      if (!selectedLogoFile) return;
+                      try {
+                        await uploadSchoolLogo({ file: selectedLogoFile }).unwrap();
+                        toast.success('School logo uploaded successfully!');
+                        setSelectedLogoFile(null);
+                        setLogoPreview(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                        refetchSchool();
+                      } catch (error: any) {
+                        toast.error(error?.data?.message || 'Failed to upload logo');
+                      }
+                    }}
+                    disabled={isUploadingLogo}
+                  >
+                    {isUploadingLogo ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-3 w-3 mr-1" />
+                        Upload
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedLogoFile(null);
+                      setLogoPreview(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    disabled={isUploadingLogo}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -514,150 +513,157 @@ export default function AdminOverviewPage() {
                 </PermissionGate>
               </FadeInUp>
             );
-          })()}
-        </FadeInUp>
+          })()
+          }
+        </FadeInUp >
 
         {/* Error State */}
-        {error && (
-          <Alert variant="error" className="mb-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              <div>
-                <p className="font-semibold">Failed to load dashboard data</p>
-                <p className="mt-1" style={{ fontSize: 'var(--text-body)' }}>
-                  {error && 'data' in error
-                    ? (error.data as any)?.message || 'An error occurred while loading dashboard data'
-                    : 'An error occurred while loading dashboard data'}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => refetch()}
-                  className="mt-2"
-                >
-                  Try Again
-                </Button>
+        {
+          error && (
+            <Alert variant="error" className="mb-6">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                <div>
+                  <p className="font-semibold">Failed to load dashboard data</p>
+                  <p className="mt-1" style={{ fontSize: 'var(--text-body)' }}>
+                    {error && 'data' in error
+                      ? (error.data as any)?.message || 'An error occurred while loading dashboard data'
+                      : 'An error occurred while loading dashboard data'}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => refetch()}
+                    className="mt-2"
+                  >
+                    Try Again
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Alert>
-        )}
+            </Alert>
+          )
+        }
 
         {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
-            <span className="ml-3 text-light-text-secondary dark:text-dark-text-secondary">
-              Loading dashboard data...
-            </span>
-          </div>
-        )}
+        {
+          isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+              <span className="ml-3 text-light-text-secondary dark:text-dark-text-secondary">
+                Loading dashboard data...
+              </span>
+            </div>
+          )
+        }
 
         {/* Dashboard Content */}
-        {!isLoading && !error && stats && (
-          <>
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
-              <StatCard
-                title="Total Students"
-                value={formatNumber(stats.totalStudents)}
-                change={formatChange(stats.studentsChange)}
-                changeType={getChangeType(stats.studentsChange)}
-                icon={
-                  <GraduationCap className="text-blue-600 dark:text-blue-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
-                }
-              />
-              <StatCard
-                title={`Total ${terminology.staff}`}
-                value={formatNumber(stats.totalTeachers)}
-                change={formatChange(stats.teachersChange)}
-                changeType={getChangeType(stats.teachersChange)}
-                icon={
-                  <Users className="text-green-600 dark:text-green-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
-                }
-              />
-              <StatCard
-                title={`Active ${terminology.courses}`}
-                value={formatNumber(stats.activeCourses)}
-                change={formatChange(stats.coursesChange)}
-                changeType={getChangeType(stats.coursesChange)}
-                icon={
-                  <BookOpen className="text-purple-600 dark:text-purple-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
-                }
-              />
-              <StatCard
-                title="Pending Admissions"
-                value={formatNumber(stats.pendingAdmissions)}
-                change={formatChange(stats.pendingAdmissionsChange, false)}
-                changeType={getChangeType(stats.pendingAdmissionsChange)}
-                icon={
-                  <UserPlus className="text-orange-600 dark:text-orange-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
-                }
-              />
-            </div>
+        {
+          !isLoading && !error && stats && (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
+                <StatCard
+                  title="Total Students"
+                  value={formatNumber(stats.totalStudents)}
+                  change={formatChange(stats.studentsChange)}
+                  changeType={getChangeType(stats.studentsChange)}
+                  icon={
+                    <GraduationCap className="text-blue-600 dark:text-blue-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+                  }
+                />
+                <StatCard
+                  title={`Total ${terminology.staff}`}
+                  value={formatNumber(stats.totalTeachers)}
+                  change={formatChange(stats.teachersChange)}
+                  changeType={getChangeType(stats.teachersChange)}
+                  icon={
+                    <Users className="text-green-600 dark:text-green-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+                  }
+                />
+                <StatCard
+                  title={`Active ${terminology.courses}`}
+                  value={formatNumber(stats.activeCourses)}
+                  change={formatChange(stats.coursesChange)}
+                  changeType={getChangeType(stats.coursesChange)}
+                  icon={
+                    <BookOpen className="text-purple-600 dark:text-purple-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+                  }
+                />
+                <StatCard
+                  title="Pending Admissions"
+                  value={formatNumber(stats.pendingAdmissions)}
+                  change={formatChange(stats.pendingAdmissionsChange, false)}
+                  changeType={getChangeType(stats.pendingAdmissionsChange)}
+                  icon={
+                    <UserPlus className="text-orange-600 dark:text-orange-400" style={{ width: 'var(--stat-icon-size)', height: 'var(--stat-icon-size)' }} />
+                  }
+                />
+              </div>
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <AnalyticsChart
-                title="Growth Trends"
-                description="Overall enhancement in student, teacher, and course growth over time."
-                data={growthTrends}
-                type="area"
-                dataKeys={['students', 'teachers', 'courses']}
-                colors={['#3b82f6', '#10b981', '#a855f7']}
-              />
-              <AnalyticsChart
-                title="Student Distribution"
-                description="Distribution of students across different categories or levels."
-                data={growthTrends}
-                type="donut"
-                dataKeys={['students']}
-                colors={['#3b82f6', '#10b981', '#f59e0b', '#ef4444']}
-              />
-            </div>
+              {/* Charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <AnalyticsChart
+                  title="Growth Trends"
+                  description="Overall enhancement in student, teacher, and course growth over time."
+                  data={growthTrends}
+                  type="area"
+                  dataKeys={['students', 'teachers', 'courses']}
+                  colors={['#3b82f6', '#10b981', '#a855f7']}
+                />
+                <AnalyticsChart
+                  title="Student Distribution"
+                  description="Distribution of students across different categories or levels."
+                  data={growthTrends}
+                  type="donut"
+                  dataKeys={['students']}
+                  colors={['#3b82f6', '#10b981', '#f59e0b', '#ef4444']}
+                />
+              </div>
 
-            {/* Weekly Activity Trends */}
-            <div className="mb-6">
-              <AnalyticsChart
-                title="Weekly Activity Trends"
-                description="Tracking admissions and transfers to monitor school engagement and activity patterns."
-                data={weeklyActivity}
-                type="area"
-                dataKeys={['admissions', 'transfers']}
-                colors={['#3b82f6', '#10b981']}
-              />
-            </div>
+              {/* Weekly Activity Trends */}
+              <div className="mb-6">
+                <AnalyticsChart
+                  title="Weekly Activity Trends"
+                  description="Tracking admissions and transfers to monitor school engagement and activity patterns."
+                  data={weeklyActivity}
+                  type="area"
+                  dataKeys={['admissions', 'transfers']}
+                  colors={['#3b82f6', '#10b981']}
+                />
+              </div>
 
-            {/* Recent Students */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary">
-                    Recently Added Students
-                  </CardTitle>
-                  <Link href="/dashboard/school/students">
-                    <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400">
-                      View All →
-                    </Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {recentStudents.length === 0 ? (
-                  <div className="text-center py-8 text-light-text-secondary dark:text-dark-text-secondary">
-                    <EmptyStateIcon type="person_outline" />
-                    <p>No recent students found</p>
+              {/* Recent Students */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary">
+                      Recently Added Students
+                    </CardTitle>
+                    <Link href="/dashboard/school/students">
+                      <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400">
+                        View All →
+                      </Button>
+                    </Link>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {recentStudents.map((student: any) => (
-                      <RecentStudentRow key={student.id} student={student} />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
+                </CardHeader>
+                <CardContent>
+                  {recentStudents.length === 0 ? (
+                    <div className="text-center py-8 text-light-text-secondary dark:text-dark-text-secondary">
+                      <EmptyStateIcon type="person_outline" />
+                      <p>No recent students found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {recentStudents.map((student: any) => (
+                        <RecentStudentRow key={student.id} student={student} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )
+        }
 
         {/* End Term Modal */}
         <EndTermModal
@@ -672,39 +678,43 @@ export default function AdminOverviewPage() {
         />
 
         {/* Edit Term Dates Modal */}
-        {editingTerm && activeSession?.session && schoolId && (
-          <EditTermDatesModal
-            isOpen={!!editingTerm}
-            onClose={() => setEditingTerm(null)}
-            term={editingTerm}
-            session={activeSession.session}
-            schoolId={schoolId}
-            termLabel={terminology.periodSingular}
-          />
-        )}
+        {
+          editingTerm && activeSession?.session && schoolId && (
+            <EditTermDatesModal
+              isOpen={!!editingTerm}
+              onClose={() => setEditingTerm(null)}
+              term={editingTerm}
+              session={activeSession.session}
+              schoolId={schoolId}
+              termLabel={terminology.periodSingular}
+            />
+          )
+        }
 
         {/* Image Crop Modal */}
-        {imageToCrop && (
-          <ImageCropModal
-            isOpen={showCropModal}
-            onClose={() => {
-              setShowCropModal(false);
-              setImageToCrop(null);
-              if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-              }
-            }}
-            imageSrc={imageToCrop}
-            onCropComplete={handleCropComplete}
-            aspectRatio={1}
-            cropShape="rect"
-            title="Crop School Logo"
-            minZoom={1}
-            maxZoom={3}
-          />
-        )}
-      </div>
-    </ProtectedRoute>
+        {
+          imageToCrop && (
+            <ImageCropModal
+              isOpen={showCropModal}
+              onClose={() => {
+                setShowCropModal(false);
+                setImageToCrop(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+              }}
+              imageSrc={imageToCrop}
+              onCropComplete={handleCropComplete}
+              aspectRatio={1}
+              cropShape="rect"
+              title="Crop School Logo"
+              minZoom={1}
+              maxZoom={3}
+            />
+          )
+        }
+      </div >
+    </ProtectedRoute >
   );
 }
 

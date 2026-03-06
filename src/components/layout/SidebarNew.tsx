@@ -33,15 +33,6 @@ function LogoSection() {
           priority
         />
       </Link>
-      <button
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-dark-surface transition-all md:flex hidden items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300",
-          !open && "mx-auto"
-        )}
-      >
-        {open ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-      </button>
     </div>
   );
 }
