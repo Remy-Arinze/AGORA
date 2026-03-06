@@ -49,7 +49,14 @@ export function Navbar() {
       }`}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {/* Mobile Sidebar Toggle - Only visible when Navbar is present on mobile */}
+            <button
+              onClick={() => setOpen(!open)}
+              className="p-2 -ml-2 rounded-md md:hidden text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-surface"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
             {/* Hide logo and name for SUPER_ADMIN */}
             {userRole !== 'SUPER_ADMIN' && (
               <Link href="/" className="flex items-center space-x-2">

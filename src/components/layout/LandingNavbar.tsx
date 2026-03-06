@@ -119,13 +119,15 @@ export function LandingNavbar() {
     const activeLinkColor = useLightNavbar
         ? 'text-[var(--agora-blue)]'
         : 'text-white';
-    const navBg = useLightNavbar
-        ? 'bg-[var(--light-bg)]/80 dark:bg-dark-bg/80 backdrop-blur-md'
-        : hasScrolled
-            ? 'bg-transparent backdrop-blur-md'
-            : 'bg-transparent';
-
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const navBg = mobileMenuOpen
+        ? 'bg-white dark:bg-[var(--dark-bg)] shadow-md'
+        : useLightNavbar
+            ? 'bg-[var(--light-bg)]/80 dark:bg-dark-bg/80 backdrop-blur-md shadow-sm'
+            : hasScrolled
+                ? 'bg-transparent backdrop-blur-md'
+                : 'bg-transparent';
 
     const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
@@ -206,12 +208,15 @@ export function LandingNavbar() {
             {/* Mobile Navigation Overlay */}
             <div
                 className={cn(
-                    "fixed inset-0 top-20 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] z-50 md:hidden transition-all duration-300 ease-in-out transform",
+                    "fixed inset-0 top-20 bg-white dark:bg-[var(--dark-bg)] z-[60] md:hidden transition-all duration-500 ease-in-out transform shadow-2xl",
                     mobileMenuOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
                 )}
             >
-                <div className="flex flex-col p-6 h-full">
-                    <div className="flex flex-col space-y-4 mb-8">
+                {/* Optional: Subtle background pattern or gradient */}
+                <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+
+                <div className="flex flex-col p-8 h-full relative z-10 backdrop-blur-sm bg-white/90 dark:bg-[var(--dark-bg)]/90">
+                    <div className="flex flex-col space-y-6 mb-10 pt-4">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}

@@ -556,7 +556,7 @@ export default function AdminOverviewPage() {
         {!isLoading && !error && stats && (
           <>
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
               <StatCard
                 title="Total Students"
                 value={formatNumber(stats.totalStudents)}

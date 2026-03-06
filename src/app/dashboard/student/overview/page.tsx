@@ -6,12 +6,12 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  BookOpen, 
-  Clock, 
-  FileText, 
-  GraduationCap, 
-  Award, 
+import {
+  BookOpen,
+  Clock,
+  FileText,
+  GraduationCap,
+  Award,
   TrendingUp,
   Calendar,
   Loader2,
@@ -21,10 +21,10 @@ import {
   useGetUpcomingEventsQuery,
   useGetMyStudentCalendarQuery,
 } from '@/lib/store/api/schoolAdminApi';
-import { 
-  useStudentDashboard, 
-  getStudentTodaySchedule, 
-  getStudentTerminology 
+import {
+  useStudentDashboard,
+  getStudentTodaySchedule,
+  getStudentTerminology
 } from '@/hooks/useStudentDashboard';
 import { format, parseISO } from 'date-fns';
 
@@ -43,11 +43,11 @@ export default function StudentOverviewPage() {
     hasError,
     errorMessage,
   } = useStudentDashboard();
-  
+
   const terminology = getStudentTerminology(schoolType);
   const schoolId = school?.id;
   const activeTermId = activeTerm?.id;
-  
+
   // Get today's schedule
   const todaySchedule = useMemo(() => {
     return getStudentTodaySchedule(timetable);
@@ -123,7 +123,7 @@ export default function StudentOverviewPage() {
         </FadeInUp>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -232,28 +232,27 @@ export default function StudentOverviewPage() {
                     endTime.setHours(endHour, endMin, 0, 0);
                     const isOngoing = now >= startTime && now <= endTime;
                     const isUpcoming = now < startTime;
-                    
+
                     // Check if it's a free period (no subject/course or type is not LESSON)
-                    const isFreePeriod = period.type !== 'LESSON' || 
+                    const isFreePeriod = period.type !== 'LESSON' ||
                       (!period.subjectName && !period.subject?.name && !period.courseName && !period.course?.name);
-                    
-                    const periodTitle = isFreePeriod 
+
+                    const periodTitle = isFreePeriod
                       ? 'Free Period'
                       : (period.subjectName || period.subject?.name || period.courseName || period.course?.name || 'Class');
-                    
+
                     return (
                       <FadeInUp
                         key={period.id || index}
                         from={{ opacity: 0, y: 10 }}
                         to={{ opacity: 1, y: 0 }}
                         duration={0.4}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          isOngoing 
-                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-500' 
+                        className={`p-4 rounded-lg border-2 transition-all ${isOngoing
+                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-500'
                             : isUpcoming
-                            ? 'bg-gray-50 dark:bg-dark-surface border-gray-200 dark:border-dark-border'
-                            : 'bg-gray-50 dark:bg-dark-surface border-gray-200 dark:border-dark-border opacity-60'
-                        }`}
+                              ? 'bg-gray-50 dark:bg-dark-surface border-gray-200 dark:border-dark-border'
+                              : 'bg-gray-50 dark:bg-dark-surface border-gray-200 dark:border-dark-border opacity-60'
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">

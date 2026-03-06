@@ -72,7 +72,7 @@ function LogoutButton() {
 
 
 
-export function SidebarNew() {
+export function SidebarNew({ hideMobileHeader }: { hideMobileHeader?: boolean }) {
   const user = useSelector((state: RootState) => state.auth.user);
   const pathname = usePathname();
 
@@ -118,7 +118,7 @@ export function SidebarNew() {
   }
 
   return (
-    <SidebarBody className="justify-between gap-10">
+    <SidebarBody className="justify-between gap-10" hideMobileHeader={hideMobileHeader}>
       <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         <LogoSection />
 

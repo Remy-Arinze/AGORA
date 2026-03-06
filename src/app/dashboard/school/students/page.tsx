@@ -26,23 +26,23 @@ type ViewMode = 'grid' | 'list';
 type FilterType = 'all' | 'active' | 'pending' | 'suspended';
 
 // Avatar component for students
-const StudentAvatar = ({ 
-  profileImage, 
-  firstName, 
-  lastName 
-}: { 
-  profileImage?: string | null; 
-  firstName?: string; 
-  lastName?: string; 
+const StudentAvatar = ({
+  profileImage,
+  firstName,
+  lastName
+}: {
+  profileImage?: string | null;
+  firstName?: string;
+  lastName?: string;
 }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
     return first + last || '?';
   };
-  
+
   if (profileImage && !imageError) {
     return (
       <div className="relative w-12 h-12 flex-shrink-0">
@@ -55,9 +55,9 @@ const StudentAvatar = ({
       </div>
     );
   }
-  
+
   return (
-      <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
+    <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold border-2 border-[#1a1f2e] dark:border-[#1a1f2e] shadow-sm flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
       {getInitials(firstName, lastName)}
     </div>
   );
@@ -81,7 +81,7 @@ function StudentsPageContent() {
   useEffect(() => {
     const newParam = searchParams.get('new');
     const fromTransfer = searchParams.get('fromTransfer');
-    
+
     if (newParam === 'true') {
       setShowAdmissionModal(true);
       if (fromTransfer) {
@@ -94,12 +94,12 @@ function StudentsPageContent() {
   const handleAdmissionModalClose = () => {
     setShowAdmissionModal(false);
     setTransferId(null);
-    
+
     // Remove query params without refreshing
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.delete('new');
     newSearchParams.delete('fromTransfer');
-    
+
     const newPath = `${window.location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`;
     router.replace(newPath);
   };
@@ -127,7 +127,7 @@ function StudentsPageContent() {
   );
   const students = studentsResponse?.data?.items || [];
   const pagination = studentsResponse?.data;
-  
+
   // Calculate pagination helpers
   const hasNext = pagination ? pagination.page < pagination.totalPages : false;
   const hasPrev = pagination ? pagination.page > 1 : false;
@@ -138,14 +138,14 @@ function StudentsPageContent() {
     const active = students.filter(s => s.user?.accountStatus === 'ACTIVE').length;
     const pending = students.filter(s => s.user?.accountStatus === 'SHADOW').length;
     const suspended = students.filter(s => s.user?.accountStatus === 'SUSPENDED').length;
-    
+
     return { total, active, pending, suspended };
   }, [students, pagination]);
 
   // Filter students by status and search
   const filteredStudents = useMemo(() => {
     let filtered = students;
-    
+
     // Apply status filter
     if (filter !== 'all') {
       filtered = filtered.filter(s => {
@@ -155,7 +155,7 @@ function StudentsPageContent() {
         return true;
       });
     }
-    
+
     // Apply search filter
     if (debouncedSearch) {
       const query = debouncedSearch.toLowerCase();
@@ -166,7 +166,7 @@ function StudentsPageContent() {
           student.uid.toLowerCase().includes(query)
       );
     }
-    
+
     return filtered;
   }, [students, filter, debouncedSearch]);
 
@@ -174,7 +174,7 @@ function StudentsPageContent() {
   const handleResendInvitation = async (studentId: string, studentName: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!schoolId) return;
-    
+
     setResendingStudentId(studentId);
     try {
       await resendInvitation({ schoolId, studentId }).unwrap();
@@ -233,10 +233,10 @@ function StudentsPageContent() {
   }
 
   if (error) {
-    const errorMessage = error && 'status' in error 
+    const errorMessage = error && 'status' in error
       ? (error as any).data?.message || 'Failed to fetch students'
       : 'Failed to load students';
-    
+
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
         <div className="w-full">
@@ -276,7 +276,7 @@ function StudentsPageContent() {
         </FadeInUp>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <StatCard
             title="Total Students"
             value={stats.total}
@@ -403,13 +403,13 @@ function StudentsPageContent() {
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredStudents.map((student) => {
-                
+
                 const statusConfig = getStatusBadge(student.user?.accountStatus);
                 const StatusIcon = statusConfig.icon;
 
                 return (
                   <FadeInUp key={student.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
-                    <Card 
+                    <Card
                       className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col"
                       onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
                     >

@@ -16,10 +16,10 @@ export default function AnalyticsPage() {
   const [selectedDate, setSelectedDate] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   );
-  
+
   // Parse the selected date to get month and year
   const [selectedYear, selectedMonth] = selectedDate.split('-').map(Number);
-  
+
   const { analytics, isLoading, error } = useAnalytics(selectedMonth, selectedYear);
 
   if (isLoading) {
@@ -33,10 +33,10 @@ export default function AnalyticsPage() {
   }
 
   if (error || !analytics) {
-    const errorMessage = error && 'status' in error 
+    const errorMessage = error && 'status' in error
       ? (error as any).data?.message || 'Failed to fetch analytics'
       : 'Failed to load analytics data';
-    
+
     return (
       <ProtectedRoute roles={['SUPER_ADMIN']}>
         <div className="w-full">
@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
         </FadeInUp>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
           <StatCard
             title="Total Schools"
             value={analytics.totalSchools?.toLocaleString() ?? '0'}
