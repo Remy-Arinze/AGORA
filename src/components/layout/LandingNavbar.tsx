@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 
 export function LandingNavbar() {
     const { theme } = useTheme();
