@@ -118,6 +118,12 @@ export function LandingNavbar() {
     const activeLinkColor = useLightNavbar
         ? 'text-[var(--agora-blue)]'
         : 'text-white';
+    const navBg = useLightNavbar
+        ? 'bg-[var(--light-bg)]/80 dark:bg-dark-bg/80 backdrop-blur-md'
+        : hasScrolled
+            ? 'bg-transparent backdrop-blur-md'
+            : 'bg-transparent';
+
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
