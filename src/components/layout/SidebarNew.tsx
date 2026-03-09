@@ -46,15 +46,10 @@ function LogoutButton() {
       variant="ghost"
       size="sm"
       onClick={logout}
-      className="flex-1 justify-start gap-2 text-gray-700 dark:text-[#9ca3af] hover:bg-gray-100 dark:hover:bg-[#1f2937] h-9 px-2 overflow-hidden"
+      className="flex-1 justify-start gap-2 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] h-9 px-2 overflow-hidden"
     >
       <LogOut className="h-4 w-4 flex-shrink-0" />
-      <span
-        className={cn(
-          "text-[13px] transition-opacity duration-200",
-          !open && "opacity-0 w-0 overflow-hidden inline-block"
-        )}
-      >
+      <span className="text-[13px] transition-opacity duration-200">
         Logout
       </span>
     </Button>

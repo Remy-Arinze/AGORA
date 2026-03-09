@@ -5,6 +5,20 @@ import { AnimateInView } from '@/components/ui/AnimateInView';
 import { LandingNavbar } from '@/components/layout/LandingNavbar';
 import { Card, CardContent } from '@/components/ui/Card';
 import Link from 'next/link';
+import {
+  GraduationCap,
+  Users,
+  BarChart3,
+  RefreshCw,
+  ShieldCheck,
+  History,
+  AlertTriangle,
+  ArrowLeftRight,
+  Rocket,
+  Eye,
+  CheckCircle2,
+  ChevronRight
+} from 'lucide-react';
 
 const teamMembers = [
   {
@@ -16,27 +30,27 @@ const teamMembers = [
 
 const coreFeatures = [
   {
-    icon: '🎓',
+    icon: <GraduationCap className="w-6 h-6 text-blue-500" />,
     title: 'Student Management',
     description: 'Complete student lifecycle management from admission to graduation.',
   },
   {
-    icon: '👨‍🏫',
+    icon: <Users className="w-6 h-6 text-indigo-500" />,
     title: 'Teacher Portal',
     description: 'Streamlined tools for attendance, grading, and classroom management.',
   },
   {
-    icon: '📊',
+    icon: <BarChart3 className="w-6 h-6 text-emerald-500" />,
     title: 'Analytics Dashboard',
     description: 'Real-time insights into school performance and student progress.',
   },
   {
-    icon: '🔄',
+    icon: <RefreshCw className="w-6 h-6 text-purple-500" />,
     title: 'Seamless Transfers',
     description: 'One-click student transfers with complete academic history.',
   },
   {
-    icon: '🔐',
+    icon: <ShieldCheck className="w-6 h-6 text-agora-blue" />,
     title: 'Chain-of-Trust',
     description: 'Cryptographically secured records that cannot be tampered with.',
   },
@@ -50,91 +64,121 @@ const milestones = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden relative">
       <LandingNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-        </div>
+      {/* Background Glows (Same as landing page) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 dark:bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-0 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/5 dark:bg-indigo-600/10 rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 right-0 translate-y-1/2 w-[800px] h-[800px] bg-agora-blue/5 dark:bg-agora-blue/10 rounded-full blur-[160px]" />
+      </div>
 
+      {/* Hero Section */}
+      <section className="pt-40 pb-24 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} duration={0.8} className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-6 font-heading">
-              About <span className="text-[var(--agora-blue)]">Agora</span>
+            <h1 className="text-3xl md:text-5xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-6 font-heading leading-tight tracking-tight">
+              About <span className="text-agora-blue">Agora</span>
             </h1>
-            <p className="text-xl text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
-              We&apos;re on a mission to give every African student a permanent, verifiable digital education identity
-              that follows them from their first day of primary school to university graduation and beyond.
+            <p
+              className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed max-w-2xl mx-auto"
+              style={{ fontSize: 'var(--text-page-subtitle)' }}
+            >
+              We&apos;re building the digital bridge that connects every stage of African education—giving
+              every student a permanent, verifiable identity that lasts a lifetime.
             </p>
           </FadeInUp>
         </div>
       </section>
 
       {/* Mission & Vision */}
-      <section className="py-20 bg-white dark:bg-dark-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }} duration={0.6}>
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+      <section className="py-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+            <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }} duration={0.8}>
+              <div className="flex flex-col h-full bg-white/50 dark:bg-white/5 backdrop-blur-sm p-10 rounded-[2.5rem] border border-[var(--light-border)] dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-500 group">
+                <div className="w-14 h-14 bg-blue-500/10 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                  <Rocket className="w-6 h-6 text-blue-500" />
+                </div>
+                <h2
+                  className="font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading tracking-tight"
+                  style={{ fontSize: 'var(--text-page-title)' }}
+                >
+                  Our Mission
+                </h2>
+                <p
+                  className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed mb-6"
+                  style={{ fontSize: 'var(--text-body)' }}
+                >
+                  To eliminate lost records and fraudulent credentials through the creation of a universal, cryptographically secured education registry for all African schools.
+                </p>
+                <div className="mt-auto flex items-center gap-2 text-agora-blue font-semibold" style={{ fontSize: 'var(--text-small)' }}>
+                  <span>Learn about our Registry</span>
+                  <ChevronRight className="w-3 h-3" />
+                </div>
               </div>
-              <h2 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">Our Mission</h2>
-              <p className="text-lg text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
-                To build the digital infrastructure that connects every stage of African education—creating
-                a Chain-of-Trust Registry where schools verify teachers, teachers verify data, and parents
-                claim their children&apos;s identities forever. No more lost records. No more fraudulent certificates.
-                Just truth, verified and immutable.
-              </p>
             </AnimateInView>
 
-            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} duration={0.6}>
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} duration={0.8}>
+              <div className="flex flex-col h-full bg-white/50 dark:bg-white/5 backdrop-blur-sm p-10 rounded-[2.5rem] border border-[var(--light-border)] dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-500 group">
+                <div className="w-14 h-14 bg-indigo-500/10 dark:bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                  <Eye className="w-6 h-6 text-indigo-500" />
+                </div>
+                <h2
+                  className="font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading tracking-tight"
+                  style={{ fontSize: 'var(--text-page-title)' }}
+                >
+                  Our Vision
+                </h2>
+                <p
+                  className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed mb-6"
+                  style={{ fontSize: 'var(--text-body)' }}
+                >
+                  An Africa where educational achievements are universally trusted, credits transfer instantly between borders, and every learner holds the key to their own future.
+                </p>
+                <div className="mt-auto flex items-center gap-2 text-indigo-500 font-semibold" style={{ fontSize: 'var(--text-small)' }}>
+                  <span>Explore our Vision</span>
+                  <ChevronRight className="w-3 h-3" />
+                </div>
               </div>
-              <h2 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">Our Vision</h2>
-              <p className="text-lg text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
-                A future where every child in Africa has a digital passport for education—one that opens doors
-                to opportunities, validates achievements, and creates a seamless journey from classroom to career.
-                We envision an Africa where educational credentials are universally trusted and instantly verifiable.
-              </p>
             </AnimateInView>
           </div>
         </div>
       </section>
 
       {/* Core Platform */}
-      <section className="py-20 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <AnimateInView className="text-center mb-16">
-            <span className="inline-block px-4 py-2 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full text-sm font-semibold mb-4">
-              Core Platform
-            </span>
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Agora Education Platform
+      <section className="py-24 bg-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <AnimateInView className="text-center mb-20">
+            <h2 className="text-2xl md:text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading tracking-tight">
+              The Education Backbone
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              The foundation of everything we do—a complete school management system with
-              built-in Chain-of-Trust technology.
+            <p
+              className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] max-w-xl mx-auto leading-relaxed"
+              style={{ fontSize: 'var(--text-page-subtitle)' }}
+            >
+              Powerful tools designed to simplify school administration and protect student success.
             </p>
           </AnimateInView>
 
-          <AnimateInView from={{ opacity: 0, y: 40 }} to={{ opacity: 1, y: 0 }} duration={0.6} stagger={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimateInView from={{ opacity: 0, y: 40 }} to={{ opacity: 1, y: 0 }} duration={0.6} stagger={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {coreFeatures.map((feature, index) => (
-              <Card key={index} className="h-full bg-[var(--light-card)] dark:bg-[var(--dark-surface)] border-[var(--light-border)] dark:border-[var(--dark-border)] shadow-none">
-                <CardContent className="p-6">
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-lg font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-2 font-heading">
+              <Card key={index} className="h-full bg-white/40 dark:bg-white/5 backdrop-blur-sm border-[var(--light-border)] dark:border-white/10 rounded-[2rem] hover:bg-white dark:hover:bg-white/10 transition-all duration-300">
+                <CardContent className="p-8">
+                  <div className="w-14 h-14 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-[var(--light-border)] dark:border-white/10">
+                    {feature.icon}
+                  </div>
+                  <h3
+                    className="font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-2 font-heading tracking-tight"
+                    style={{ fontSize: 'var(--text-card-title)' }}
+                  >
                     {feature.title}
                   </h3>
-                  <p className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]">
+                  <p
+                    className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed"
+                    style={{ fontSize: 'var(--text-body)' }}
+                  >
                     {feature.description}
                   </p>
                 </CardContent>
@@ -144,82 +188,117 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* The Problem We Solve */}
-      <section className="py-20 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
+      {/* Problem Solver - Redesigned */}
+      <section className="py-24 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <AnimateInView className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">The Problem We Solve</h2>
-            <p className="text-xl text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] max-w-3xl mx-auto">
-              Africa&apos;s education system faces critical challenges that Agora is designed to address
+          <AnimateInView className="mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading tracking-tight">Solving Systemic Challenges</h2>
+            <p
+              className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] max-w-2xl leading-relaxed"
+              style={{ fontSize: 'var(--text-page-subtitle)' }}
+            >
+              We tackle the three biggest bottlenecks in African education records.
             </p>
           </AnimateInView>
 
-          <AnimateInView from={{ opacity: 0, y: 40 }} to={{ opacity: 1, y: 0 }} duration={0.6} stagger={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="h-full bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900">
-              <CardContent className="p-6">
-                <div className="text-4xl mb-4">📂</div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Lost Records</h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Millions of student records are lost every year due to paper-based systems, fires, floods,
-                  and administrative chaos. A student&apos;s academic history shouldn&apos;t disappear with their old school.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <AnimateInView delay={0.1} className="p-8 bg-red-500/5 dark:bg-red-500/10 border border-red-500/10 dark:border-red-500/20 rounded-[2rem]">
+              <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center mb-6">
+                <History className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3
+                className="font-bold text-[var(--light-text-primary)] dark:text-white mb-3 tracking-tight"
+                style={{ fontSize: 'var(--text-page-title)' }}
+              >
+                Lost Records
+              </h3>
+              <p
+                className="text-[var(--light-text-secondary)] dark:text-gray-300 leading-relaxed"
+                style={{ fontSize: 'var(--text-body)' }}
+              >
+                Ending the era where student history disappears due to administrative failure, hardware crashes, or physical damage.
+              </p>
+            </AnimateInView>
 
-            <Card className="h-full bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900">
-              <CardContent className="p-6">
-                <div className="text-4xl mb-4">🎭</div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Identity Fraud</h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Ghost students, fake certificates, and identity theft plague the education sector.
-                  Without a trusted verification system, fraud thrives and legitimate achievements are devalued.
-                </p>
-              </CardContent>
-            </Card>
+            <AnimateInView delay={0.2} className="p-8 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 rounded-[2rem]">
+              <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3
+                className="font-bold text-[var(--light-text-primary)] dark:text-white mb-3 tracking-tight"
+                style={{ fontSize: 'var(--text-page-title)' }}
+              >
+                Identity Fraud
+              </h3>
+              <p
+                className="text-[var(--light-text-secondary)] dark:text-gray-300 leading-relaxed"
+                style={{ fontSize: 'var(--text-body)' }}
+              >
+                Securing every achievement with immutable proof, rendering ghost students and fake certificates a thing of the past.
+              </p>
+            </AnimateInView>
 
-            <Card className="h-full bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900">
-              <CardContent className="p-6">
-                <div className="text-4xl mb-4">🔀</div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Transfer Chaos</h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Moving between schools is a nightmare of paperwork, lost transcripts, and unverified claims.
-                  Parents spend weeks chasing documents that should transfer instantly.
-                </p>
-              </CardContent>
-            </Card>
-          </AnimateInView>
+            <AnimateInView delay={0.3} className="p-8 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 dark:border-emerald-500/20 rounded-[2rem]">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
+                <ArrowLeftRight className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3
+                className="font-bold text-[var(--light-text-primary)] dark:text-white mb-3 tracking-tight"
+                style={{ fontSize: 'var(--text-page-title)' }}
+              >
+                Transfer Friction
+              </h3>
+              <p
+                className="text-[var(--light-text-secondary)] dark:text-gray-300 leading-relaxed"
+                style={{ fontSize: 'var(--text-body)' }}
+              >
+                Transforming the multi-week transcript nightmare into an instant, borderless digital transfer that respects privacy.
+              </p>
+            </AnimateInView>
+          </div>
         </div>
       </section>
 
-      {/* Timeline */}
-      <section className="py-20 bg-white dark:bg-dark-surface">
+      {/* Progress Timeline */}
+      <section className="py-24 relative overflow-hidden bg-white/30 dark:bg-white/5 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <AnimateInView className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading">Our Journey</h2>
-            <p className="text-xl text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]">
-              Building the future of African education, one milestone at a time
+          <AnimateInView className="text-center mb-20">
+            <h2 className="text-2xl md:text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 font-heading tracking-tight">Our Trajectory</h2>
+            <p
+              className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]"
+              style={{ fontSize: 'var(--text-page-subtitle)' }}
+            >
+              Building the future of African education, step by step.
             </p>
           </AnimateInView>
 
           <div className="relative">
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full hidden md:block" />
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-px bg-[var(--light-border)] dark:bg-white/10 hidden md:block" />
 
-            <div className="space-y-12">
+            <div className="space-y-16">
               {milestones.map((milestone, index) => (
                 <AnimateInView key={index} delay={index * 0.1} className={`flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
-                  <div className={`w-full md:w-1/2 ${index % 2 === 0 ? 'md:pr-12 md:text-right' : 'md:pl-12'}`}>
-                    <Card className="inline-block bg-[var(--light-card)] dark:bg-[var(--dark-surface)]">
-                      <CardContent className="p-6">
-                        <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full text-sm font-semibold mb-3">
-                          {milestone.year}
-                        </span>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{milestone.title}</h3>
-                        <p className="text-gray-600 dark:text-gray-300">{milestone.description}</p>
-                      </CardContent>
-                    </Card>
+                  <div className={`w-full md:w-1/2 ${index % 2 === 0 ? 'md:pr-20 md:text-right' : 'md:pl-20'}`}>
+                    <div className="relative group">
+                      <div className="absolute -top-10 left-0 md:left-auto md:right-0 bg-[var(--agora-blue)]/10 text-[var(--agora-blue)] px-4 py-1.2 rounded-full text-[10px] font-bold tracking-widest uppercase mb-4 inline-block">
+                        {milestone.year}
+                      </div>
+                      <h3
+                        className="font-bold text-[var(--light-text-primary)] dark:text-white mb-3 font-heading tracking-tight"
+                        style={{ fontSize: 'var(--text-page-title)' }}
+                      >
+                        {milestone.title}
+                      </h3>
+                      <p
+                        className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed"
+                        style={{ fontSize: 'var(--text-body)' }}
+                      >
+                        {milestone.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="hidden md:flex w-8 h-8 bg-blue-600 rounded-full items-center justify-center z-10 shadow-lg">
-                    <div className="w-3 h-3 bg-white rounded-full" />
+                  <div className="hidden md:flex w-10 h-10 bg-white dark:bg-dark-bg border-4 border-agora-blue rounded-full items-center justify-center z-10 shadow-lg group-hover:scale-125 transition-transform">
+                    <CheckCircle2 className="w-5 h-5 text-agora-blue" />
                   </div>
                   <div className="hidden md:block w-1/2" />
                 </AnimateInView>
@@ -229,31 +308,39 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* CTA - Premium Styled */}
+      <section className="py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-agora-blue overflow-hidden">
+          <div
+            className="absolute top-0 left-0 w-full h-full opacity-30"
+            style={{ backgroundImage: 'radial-gradient(circle at 30% 30%, white 0%, transparent 50%)' }}
+          />
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <AnimateInView>
-            <h2 className="text-4xl font-bold text-white mb-6">Join the Movement</h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Be part of the revolution transforming African education
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 font-heading tracking-tight">Ready to verify the future?</h2>
+            <p
+              className="text-blue-50 mb-10 leading-relaxed"
+              style={{ fontSize: 'var(--text-page-subtitle)' }}
+            >
+              Join the schools and institutions already building the Agora ecosystem.
             </p>
             <Link
               href="/auth/login"
-              className="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-xl"
+              className="inline-block px-8 py-4 bg-white text-agora-blue font-bold rounded-2xl hover:bg-blue-50 hover:scale-105 transition-all shadow-2xl text-base"
             >
-              Get Started Today
+              Get Started for Free
             </Link>
           </AnimateInView>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] py-12 border-t border-[var(--light-border)] dark:border-[var(--dark-border)]">
+      <footer className="bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] py-20 border-t border-[var(--light-border)] dark:border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sm">&copy; 2026 Agora. All rights reserved.</p>
+          <p className="text-sm font-medium tracking-wide">&copy; 2026 Agora. All rights reserved.</p>
         </div>
       </footer>
     </div>
   );
 }
-

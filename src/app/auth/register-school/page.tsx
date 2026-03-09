@@ -82,7 +82,7 @@ export default function RegisterSchoolPage() {
                     <p className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] mb-6">
                         Thank you for registering your school on Agora. Your application is currently under review by our administration team. You will be notified via email once your account has been verified.
                     </p>
-                    <Link href="/auth/login" className="text-[#2490FD] hover:text-[var(--light-text-primary)] dark:hover:text-[var(--dark-text-primary)] transition-colors">
+                    <Link href="/auth/login" className="text-agora-blue hover:underline transition-colors">
                         Return to Login
                     </Link>
                 </div>
@@ -97,17 +97,17 @@ export default function RegisterSchoolPage() {
                     <Image
                         src="/assets/logos/agora_word_blue.png"
                         alt="Agora"
-                        width={100}
-                        height={24}
-                        className="h-6 w-auto block dark:hidden"
+                        width={120}
+                        height={30}
+                        className="h-8 w-auto block dark:hidden"
                         priority
                     />
                     <Image
                         src="/assets/logos/agora_worded_white.png"
                         alt="Agora"
-                        width={100}
-                        height={24}
-                        className="h-6 w-auto hidden dark:block"
+                        width={120}
+                        height={30}
+                        className="h-8 w-auto hidden dark:block"
                         priority
                     />
                 </div>
@@ -136,7 +136,7 @@ export default function RegisterSchoolPage() {
                                     required
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="Official School Name"
                                 />
                             </div>
@@ -148,7 +148,7 @@ export default function RegisterSchoolPage() {
                                     required
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="contact@school.com"
                                 />
                             </div>
@@ -167,7 +167,7 @@ export default function RegisterSchoolPage() {
                                     type="text"
                                     value={formData.address}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="123 School Road"
                                 />
                             </div>
@@ -178,7 +178,7 @@ export default function RegisterSchoolPage() {
                                     type="text"
                                     value={formData.city}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="Lagos"
                                 />
                             </div>
@@ -189,7 +189,7 @@ export default function RegisterSchoolPage() {
                                     type="text"
                                     value={formData.state}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="Lagos State"
                                 />
                             </div>
@@ -206,7 +206,7 @@ export default function RegisterSchoolPage() {
                                     name="hasPrimary"
                                     checked={formData.hasPrimary}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-blue-600 focus:ring-blue-500"
                                 />
                                 Primary Education
                             </label>
@@ -216,7 +216,7 @@ export default function RegisterSchoolPage() {
                                     name="hasSecondary"
                                     checked={formData.hasSecondary}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-blue-600 focus:ring-blue-500"
                                 />
                                 Secondary Education
                             </label>
@@ -226,7 +226,7 @@ export default function RegisterSchoolPage() {
                                     name="hasTertiary"
                                     checked={formData.hasTertiary}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-blue-600 focus:ring-blue-500"
                                 />
                                 Tertiary Education
                             </label>
@@ -245,7 +245,7 @@ export default function RegisterSchoolPage() {
                                     required
                                     value={formData.ownerFirstName}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="John"
                                 />
                             </div>
@@ -257,7 +257,7 @@ export default function RegisterSchoolPage() {
                                     required
                                     value={formData.ownerLastName}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="Doe"
                                 />
                             </div>
@@ -269,7 +269,7 @@ export default function RegisterSchoolPage() {
                                     required
                                     value={formData.ownerEmail}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-bg)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
+                                    className="w-full px-4 py-2 border-2 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[var(--light-border)] dark:border-[var(--dark-border)]"
                                     placeholder="owner@school.com"
                                 />
                             </div>
