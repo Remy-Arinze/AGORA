@@ -70,11 +70,11 @@ export const Sidebar = ({
   );
 };
 
-export const SidebarBody = (props: React.ComponentProps<"div"> & { hideMobileHeader?: boolean }) => {
+export const SidebarBody = ({ hideMobileHeader, ...props }: React.ComponentProps<"div"> & { hideMobileHeader?: boolean }) => {
   return (
     <>
       <DesktopSidebar {...props} />
-      <MobileSidebar {...props} />
+      <MobileSidebar hideMobileHeader={hideMobileHeader} {...props} />
     </>
   );
 };

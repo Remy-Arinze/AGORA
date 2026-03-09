@@ -24,7 +24,7 @@ const config: Config = {
       colors: {
         // Agora Brand Colors
         'agora-blue': '#2490FD',
-        'agora-success': '#36FE96',
+        'agora-success': 'var(--agora-success)',
         'agora-text': '#02173D',
         'agora-accent': '#FF532A',
 
@@ -64,8 +64,8 @@ const config: Config = {
           200: '#bbf7d0',
           300: '#86efac',
           400: '#4ade80',
-          500: '#36FE96', // Agora success
-          600: '#36FE96', // Agora success
+          500: 'var(--agora-success)', // Agora success
+          600: 'var(--agora-success)', // Agora success
           700: '#2ee67d',
           800: '#2bd164',
           900: '#28bc4b',
@@ -73,14 +73,6 @@ const config: Config = {
       },
     },
   },
-  safelist: [
-    // Ensure column span classes are always generated
-    'lg:col-span-3',
-    'lg:col-span-4',
-    'lg:col-span-5',
-    'lg:col-span-6',
-    'lg:col-span-7',
-  ],
   plugins: [],
 };
 export default config;

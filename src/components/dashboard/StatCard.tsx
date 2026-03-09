@@ -21,7 +21,7 @@ export function StatCard({
   trend,
 }: StatCardProps) {
   const changeColors = {
-    positive: 'text-green-600 dark:text-green-400',
+    positive: 'text-[var(--agora-success)]',
     negative: 'text-red-600 dark:text-red-400',
     neutral: 'text-gray-600 dark:text-dark-text-secondary',
   };
@@ -41,7 +41,7 @@ export function StatCard({
               {change && (
                 <div className="flex items-center gap-1 mt-0.5">
                   {changeType === 'positive' && (
-                    <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 text-[var(--agora-success)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   )}

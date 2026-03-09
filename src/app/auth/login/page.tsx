@@ -238,7 +238,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="w-full max-w-md">
         {requiresOtp && otpSessionId && otpEmail ? (
           <>
@@ -264,17 +264,25 @@ function LoginContent() {
             {/* Logo */}
             <div className="flex items-center justify-center mb-8">
               <Image
+                src="/assets/logos/agora_word_blue.png"
+                alt="Agora"
+                width={100}
+                height={24}
+                className="h-6 w-auto block dark:hidden"
+                priority
+              />
+              <Image
                 src="/assets/logos/agora_worded_white.png"
                 alt="Agora"
                 width={100}
                 height={24}
-                className="h-6 w-auto"
+                className="h-6 w-auto hidden dark:block"
                 priority
               />
             </div>
 
             {/* Heading */}
-            <h1 className="text-3xl font-bold text-white mb-3 text-center">
+            <h1 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-white mb-3 text-center">
               Sign in to your account
             </h1>
 
@@ -298,7 +306,7 @@ function LoginContent() {
               <div className="w-full">
                 <label
                   htmlFor="email-input"
-                  className="block text-sm font-medium text-white mb-2"
+                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-white mb-2"
                 >
                   Email or Public ID
                 </label>
@@ -311,14 +319,14 @@ function LoginContent() {
                     setFormData({ ...formData, emailOrPublicId: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-3 border-2 rounded-lg bg-[#151a23] text-white placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[#1a1f2e]"
+                  className="w-full px-4 py-3 border-2 rounded-lg bg-white dark:bg-[#151a23] text-gray-900 dark:text-white placeholder-[#9ca3af] dark:placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
                 />
               </div>
 
               <div className="w-full">
                 <label
                   htmlFor="password-input"
-                  className="block text-sm font-medium text-white mb-2"
+                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-white mb-2"
                 >
                   Password
                 </label>
@@ -333,12 +341,12 @@ function LoginContent() {
                     }
                     required
                     minLength={8}
-                    className="w-full px-4 py-3 pr-10 border-2 rounded-lg bg-[#151a23] text-white placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[#1a1f2e]"
+                    className="w-full px-4 py-3 pr-10 border-2 rounded-lg bg-white dark:bg-[#151a23] text-gray-900 dark:text-white placeholder-[#9ca3af] dark:placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#2490FD] rounded p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[var(--light-text-primary)] dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#2490FD] rounded p-1"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     tabIndex={-1}
                   >
@@ -393,7 +401,7 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
         <LoadingSpinner />
       </div>
     }>

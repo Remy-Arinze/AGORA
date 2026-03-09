@@ -99,7 +99,7 @@ function ResetPasswordContent() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary text-center">
@@ -124,17 +124,25 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="w-full max-w-md">
         {/* Agora Logo */}
         <div className="flex items-center justify-center mb-8">
           <Link href="/" className="flex items-center">
             <Image
+              src="/assets/logos/agora_word_blue.png"
+              alt="Agora"
+              width={180}
+              height={48}
+              className="h-12 w-auto block dark:hidden"
+              priority
+            />
+            <Image
               src="/assets/logos/agora_worded_white.png"
               alt="Agora"
               width={180}
               height={48}
-              className="h-12 w-auto"
+              className="h-12 w-auto hidden dark:block"
               priority
             />
           </Link>
@@ -248,7 +256,7 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
         <LoadingSpinner />
       </div>
     }>
