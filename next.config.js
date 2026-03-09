@@ -1,6 +1,8 @@
+const { withSentryConfig } = require("@sentry/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // output: 'standalone',
   reactStrictMode: true,
   // Standalone frontend: no workspace packages to transpile
   images: {
@@ -26,6 +28,9 @@ const nextConfig = {
       "'self'",
       'http://localhost:4000',
       'https://api.agora-schools.com',
+      'https://*.sentry.io',
+      'https://*.ingest.sentry.io',
+      'https://*.ingest.de.sentry.io',
     ];
     if (apiUrl && !connectSources.includes(apiUrl)) {
       connectSources.push(apiUrl);
@@ -60,11 +65,6 @@ const nextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
   // Redirect legacy /teachers routes to /staff (staff is now the canonical section)
   async redirects() {
     return [
@@ -76,5 +76,19 @@ const nextConfig = {
   // ---------------------------------------
 };
 
-module.exports = nextConfig;
-
+module.exports = withSentryConfig(
+  nextConfig,
+  {
+    silent: true,
+    org: "agora-education",
+    project: "agora-frontend",
+  },
+  {
+    widenClientFileUpload: true,
+    transpileClientSDK: true,
+    // tunnelRoute: "/monitoring", // Disabled tunneling for troubleshooting
+    hideSourceMaps: true,
+    disableLogger: false, // Enable logger to see more info
+    automaticVercelMonitors: true,
+  }
+);

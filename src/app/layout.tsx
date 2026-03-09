@@ -4,6 +4,7 @@ import './globals.css';
 import StoreProvider from '@/lib/store/StoreProvider';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
+import * as Sentry from "@sentry/nextjs";
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -72,6 +73,15 @@ export const metadata: Metadata = {
   },
 };
 
+// Fallback initialization for browsers
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    debug: true,
+  });
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -138,7 +148,22 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <StoreProvider>
-            {children}
+            <Sentry.ErrorBoundary fallback={
+              <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)] text-[var(--dark-text-primary)]">
+                <div className="text-center p-8 bg-[var(--dark-surface)] rounded-2xl shadow-xl max-w-md">
+                  <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+                  <p className="mb-6 opacity-80">We've been notified and are looking into it. Please try refreshing the page.</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-2 bg-agora-blue text-white rounded-lg hover:bg-agora-blue/90 transition-colors"
+                  >
+                    Refresh Page
+                  </button>
+                </div>
+              </div>
+            }>
+              {children}
+            </Sentry.ErrorBoundary>
             <Toaster
               position="top-right"
               toastOptions={{
@@ -167,4 +192,3 @@ export default function RootLayout({
     </html>
   );
 }
-

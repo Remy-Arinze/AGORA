@@ -53,16 +53,38 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+import * as Sentry from '@sentry/nextjs';
+
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
+  const state = api.getState() as { auth: { refreshToken?: string | null; user?: any; currentSchoolId?: string } };
+  const user = state.auth.user;
+  const schoolId = state.auth.currentSchoolId || getTenantId();
+
+  // Update Sentry context with current user and school
+  if (user) {
+    Sentry.setUser({ id: user.id, email: user.email });
+  }
+  if (schoolId) {
+    Sentry.setTag('schoolId', schoolId);
+  }
+
   let result = await baseQuery(args, api, extraOptions);
+
+  // If we get an error (except 401 which is handled below), report to Sentry
+  if (result.error && result.error.status !== 401 && result.error.status !== 404) {
+    Sentry.withScope((scope) => {
+      scope.setExtra('apiArgs', args);
+      scope.setExtra('apiError', result.error);
+      Sentry.captureException(new Error(`API Error ${result.error.status}: ${JSON.stringify(result.error.data)}`));
+    });
+  }
 
   // If we get a 401, try to refresh the token
   if (result.error && result.error.status === 401) {
-    const state = api.getState() as { auth: { refreshToken?: string | null; user?: any } };
     const refreshToken = state.auth.refreshToken;
 
     if (refreshToken) {
