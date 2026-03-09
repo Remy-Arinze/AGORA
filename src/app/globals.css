@@ -27,7 +27,8 @@
     /* Agora Brand Colors */
     --agora-blue: #2490FD;
     /* Main accent blue */
-    --agora-success: #36FE96;
+    --agora-success: #059669;
+    /* emerald-600 for better contrast in light mode */
     /* Success/green color */
     --agora-text: #02173D;
     /* Primary text color */
@@ -92,6 +93,8 @@
 
   .dark {
     /* Dark Mode Colors - PRAX IQ inspired dark theme */
+    --agora-success: #36FE96;
+    /* Neon green for dark mode */
     --dark-bg: #1b1b1c;
     --dark-surface: #1f1f22;
     --dark-border: #232327;

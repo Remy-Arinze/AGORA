@@ -179,6 +179,13 @@ export function LandingNavbar() {
                                     </Link>
                                 </div>
                             )}
+                            {isMounted && user && (
+                                <Link href={user.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/school'}>
+                                    <Button variant="primary" size="sm" className="rounded px-6 font-bold bg-agora-blue text-white">
+                                        Go to dashboard
+                                    </Button>
+                                </Link>
+                            )}
                             <ThemeToggle />
                         </div>
 

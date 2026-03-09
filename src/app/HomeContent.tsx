@@ -94,15 +94,15 @@ export default function HomeContent() {
 
           <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} delay={0.5} duration={0.8} className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
-              size="lg"
+              size="md"
               variant="primary"
               onClick={handleGetStarted}
-              className="px-10 py-4 text-base rounded hover:scale-105 font-bold bg-agora-blue text-white w-full sm:w-auto hover:bg-agora-blue/90"
+              className="rounded hover:scale-105 font-bold bg-agora-blue text-white w-full sm:w-auto hover:bg-agora-blue/90"
             >
-              Get Started Free
+              {isLoggedIn ? 'Go to dashboard' : 'Get Started Free'}
             </Button>
-            <Link href="#features" className="w-full sm:w-auto">
-              <span className="inline-flex items-center justify-center px-10 py-4 text-base rounded hover:scale-105 font-bold border border-[var(--dark-text-primary)] text-[var(--dark-text-primary)] hover:bg-[var(--dark-text-primary)] hover:text-[var(--dark-bg)] transition-colors duration-300 w-full cursor-pointer">
+            <Link href="/about" className="w-full sm:w-auto">
+              <span className="inline-flex items-center justify-center px-4 py-2 text-base rounded hover:scale-105 font-bold border border-[var(--dark-text-primary)] text-[var(--dark-text-primary)] hover:bg-[var(--dark-text-primary)] hover:text-[var(--dark-bg)] transition-colors duration-300 w-full cursor-pointer">
                 How it works
               </span>
             </Link>
