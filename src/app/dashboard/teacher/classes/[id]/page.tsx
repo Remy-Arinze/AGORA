@@ -8,10 +8,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  BookOpen, 
-  Users, 
-  FileText, 
+import {
+  BookOpen,
+  Users,
+  FileText,
   Smartphone,
   ArrowLeft,
   Search,
@@ -27,10 +27,10 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { getActivePluginsForTeacher } from '@/lib/plugins';
-import { 
-  useGetClassByIdQuery, 
-  useGetMyTeacherSchoolQuery, 
-  useGetActiveSessionQuery, 
+import {
+  useGetClassByIdQuery,
+  useGetMyTeacherSchoolQuery,
+  useGetActiveSessionQuery,
   useGetClassStudentsQuery,
   useGetClassGradesQuery,
   useDeleteGradeMutation,
@@ -48,6 +48,9 @@ import { GradeEntryModal } from '@/components/modals/GradeEntryModal';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import toast from 'react-hot-toast';
+import { StoreProvider } from '@/lib/store/StoreProvider';
+import { safeDownload } from '@/lib/utils/download';
+import { cn } from '@/lib/utils';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
 
@@ -91,9 +94,9 @@ export default function ClassDetailPage() {
     { schoolId: schoolId!, classId },
     { skip: !schoolId || !classId }
   );
-  
+
   const classData = classResponse?.data;
-  
+
   // Derive school type from the class being viewed (more accurate than localStorage)
   const classType = classData?.type as 'PRIMARY' | 'SECONDARY' | 'TERTIARY' | undefined;
 
@@ -118,8 +121,8 @@ export default function ClassDetailPage() {
 
   // Get grades for class
   const { data: gradesResponse, refetch: refetchGrades } = useGetClassGradesQuery(
-    { 
-      schoolId: schoolId!, 
+    {
+      schoolId: schoolId!,
       classId,
       gradeType: gradeTypeFilter || undefined,
       termId: termFilter || undefined,
@@ -132,7 +135,7 @@ export default function ClassDetailPage() {
 
   const handlePublishGrade = async (gradeId: string) => {
     if (!schoolId) return;
-    
+
     try {
       await updateGrade({
         schoolId,
@@ -159,13 +162,13 @@ export default function ClassDetailPage() {
   );
   const students = studentsResponse?.data || [];
   const allGrades = gradesResponse?.data || [];
-  
+
   // Filter grades by sequence on frontend
   const grades = useMemo(() => {
     if (sequenceFilter === '') return allGrades;
     return allGrades.filter((grade: any) => grade.sequence === sequenceFilter);
   }, [allGrades, sequenceFilter]);
-  
+
   // Get unique sequence numbers from grades for filter dropdown
   const uniqueSequences = useMemo(() => {
     const sequences = allGrades
@@ -178,16 +181,16 @@ export default function ClassDetailPage() {
   // Extract all terms from sessions for timetable term selector - filtered by school type and deduplicated
   // Use classType (from the class being viewed) as primary, fallback to currentType (from localStorage)
   const effectiveSchoolType: 'PRIMARY' | 'SECONDARY' | 'TERTIARY' | null = classType || currentType || null;
-  
+
   const timetableTerms = useMemo(() => {
     if (!sessionsResponse?.data) return [];
-    
+
     // Filter sessions by the class's school type to show the correct terms
     const filteredSessions = sessionsResponse.data.filter((session: any) => {
       if (!effectiveSchoolType) return !session.schoolType;
       return session.schoolType === effectiveSchoolType;
     });
-    
+
     // Deduplicate sessions by name (keep first/latest)
     const uniqueSessionsMap = new Map<string, any>();
     filteredSessions.forEach((session: any) => {
@@ -195,7 +198,7 @@ export default function ClassDetailPage() {
         uniqueSessionsMap.set(session.name, session);
       }
     });
-    
+
     const terms: Array<{ id: string; name: string; sessionName: string }> = [];
     Array.from(uniqueSessionsMap.values()).forEach((session: any) => {
       if (session.terms && Array.isArray(session.terms)) {
@@ -216,7 +219,7 @@ export default function ClassDetailPage() {
 
   const filteredStudents = useMemo(() => {
     if (!searchQuery) return students;
-    
+
     const query = searchQuery.toLowerCase();
     return students.filter(
       (student: StudentWithEnrollment) =>
@@ -327,11 +330,10 @@ export default function ClassDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                     : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -464,93 +466,92 @@ export default function ClassDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                {filteredStudents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                      {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mb-4">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
-                        <Input
-                          placeholder="Search students by name or student ID..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10"
-                        />
+                  {filteredStudents.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                        {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                          <Input
+                            placeholder="Search students by name or student ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-light-border dark:border-dark-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Name
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Student ID
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Date of Birth
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Status
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredStudents.map((student: StudentWithEnrollment, index: number) => (
-                            <tr
-                              key={student.id}
-                              className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                            >
-                              <td className="py-4 px-4">
-                                <div>
-                                  <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                    {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                {student.uid}
-                              </td>
-                              <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                {new Date(student.dateOfBirth).toLocaleDateString()}
-                              </td>
-                              <td className="py-4 px-4">
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    !student.profileLocked
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                                  }`}
-                                >
-                                  {student.profileLocked ? 'Locked' : 'Active'}
-                                </span>
-                              </td>
-                              <td className="py-4 px-4">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => router.push(`/dashboard/teacher/students/${student.id}`)}
-                                >
-                                  View
-                                </Button>
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-light-border dark:border-dark-border">
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Name
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Student ID
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Date of Birth
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Status
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Actions
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
+                          </thead>
+                          <tbody>
+                            {filteredStudents.map((student: StudentWithEnrollment, index: number) => (
+                              <tr
+                                key={student.id}
+                                className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
+                              >
+                                <td className="py-4 px-4">
+                                  <div>
+                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                      {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
+                                    </p>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                                  {student.uid}
+                                </td>
+                                <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                                  {new Date(student.dateOfBirth).toLocaleDateString()}
+                                </td>
+                                <td className="py-4 px-4">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${!student.profileLocked
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                                      }`}
+                                  >
+                                    {student.profileLocked ? 'Locked' : 'Active'}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-4">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.push(`/dashboard/teacher/students/${student.id}`)}
+                                  >
+                                    View
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -704,13 +705,12 @@ export default function ClassDetailPage() {
                                     </div>
                                   </td>
                                   <td className="px-4 py-3">
-                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
-                                      grade.gradeType === 'CA'
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${grade.gradeType === 'CA'
                                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
                                         : grade.gradeType === 'ASSIGNMENT'
-                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                                        : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
-                                    }`}>
+                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                          : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
+                                      }`}>
                                       {grade.gradeType}
                                     </span>
                                   </td>
@@ -860,20 +860,13 @@ export default function ClassDetailPage() {
                                   if (!schoolId || !classId) return;
                                   const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/schools/${schoolId}/classes/${classId}/resources/${resource.id}/download`;
                                   const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('accessToken')) : null;
-                                  
+
                                   fetch(downloadUrl, {
                                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                                   })
                                     .then((response) => response.blob())
                                     .then((blob) => {
-                                      const url = window.URL.createObjectURL(blob);
-                                      const a = document.createElement('a');
-                                      a.href = url;
-                                      a.download = resource.name;
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      window.URL.revokeObjectURL(url);
-                                      document.body.removeChild(a);
+                                      safeDownload(blob, resource.name);
                                     })
                                     .catch((error) => {
                                       toast.error('Failed to download resource');

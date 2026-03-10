@@ -15,6 +15,7 @@ import {
   useGetMyStudentSchoolQuery,
 } from '@/lib/store/api/schoolAdminApi';
 import { FileUploadModal } from '@/components/modals/FileUploadModal';
+import { safeDownload } from '@/lib/utils/download';
 import toast from 'react-hot-toast';
 
 type ResourceType = 'class' | 'personal';
@@ -70,7 +71,7 @@ export default function StudentResourcesPage() {
     try {
       const baseUrl = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000/api';
       let downloadUrl: string;
-      
+
       if (isPersonal) {
         downloadUrl = `${baseUrl}/students/me/personal-resources/${resource.id}/download`;
       } else {
@@ -82,12 +83,10 @@ export default function StudentResourcesPage() {
         }
       }
 
+
       // Get auth token from localStorage
       const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || localStorage.getItem('token') : null;
-      
-      // Create a temporary link and trigger download
-      const link = document.createElement('a');
-      link.href = downloadUrl;
+
       if (token) {
         // For authenticated downloads, we need to fetch and create a blob
         const response = await fetch(downloadUrl, {
@@ -95,25 +94,17 @@ export default function StudentResourcesPage() {
             'Authorization': `Bearer ${token}`,
           },
         });
-        
+
         if (!response.ok) {
           throw new Error('Failed to download resource');
         }
-        
+
         const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        link.download = resource.name || resource.fileName || 'resource';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        const fileName = resource.name || resource.fileName || 'resource';
+        safeDownload(blob, fileName);
       } else {
-        // Fallback to direct link (may not work if auth is required)
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Fallback to direct link in new tab if no token (less secure but keeps functionality)
+        window.open(downloadUrl, '_blank');
       }
     } catch (error: any) {
       toast.error(error?.message || 'Failed to download resource');
@@ -163,14 +154,14 @@ export default function StudentResourcesPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-            <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
-                Resources
-              </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                Access class resources and manage your personal study materials
-              </p>
-            </div>
+          <div>
+            <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+              Resources
+            </h1>
+            <p className="text-light-text-secondary dark:text-dark-text-secondary">
+              Access class resources and manage your personal study materials
+            </p>
+          </div>
         </FadeInUp>
 
         {/* Resources List */}

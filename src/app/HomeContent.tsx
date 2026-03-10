@@ -12,6 +12,11 @@ import Image from 'next/image';
 import { useGetPublicSchoolsQuery, useGetPlatformStatsQuery } from '@/lib/store/api/publicApi';
 import { useState, useEffect, useRef } from 'react';
 import { PricingTable } from '@/components/subscriptions/PricingTable';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { SkewSection } from '@/components/ui/SkewSection';
+import { TransferVisual } from '@/components/ui/TransferVisual';
 
 // Helper to format large numbers
 const formatNumber = (num: number): string => {
@@ -34,14 +39,34 @@ export default function HomeContent() {
     setIsMounted(true);
   }, []);
 
-  // Hide scrollbar on landing page
+  // Initialize Lenis smooth scroll and sync with GSAP
   useEffect(() => {
-    document.documentElement.classList.add('scrollbar-hide');
-    document.body.classList.add('scrollbar-hide');
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+    });
+
+    lenis.on('scroll', ScrollTrigger.update);
+
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+    });
+
+    gsap.ticker.lagSmoothing(0);
+
+    // Refresh ScrollTrigger after a short delay for accurate positioning
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 100);
 
     return () => {
-      document.documentElement.classList.remove('scrollbar-hide');
-      document.body.classList.remove('scrollbar-hide');
+      lenis.destroy();
+      gsap.ticker.remove((time) => lenis.raf(time * 1000));
     };
   }, []);
 
@@ -81,14 +106,13 @@ export default function HomeContent() {
         <div className="max-w-4xl mx-auto mt-12 md:mt-16 z-10">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} delay={0.1} duration={0.8}>
             <h1 className="text-5xl md:text-[4rem] font-bold text-[var(--dark-text-primary)] leading-tight mb-8 tracking-tight font-heading">
-              A digital borderless academic identity <br className="hidden md:block" /> for every student
+              The way we manage schools can be better
             </h1>
           </FadeInUp>
 
           <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} delay={0.3} duration={0.8}>
             <p className="text-lg md:text-xl text-[var(--dark-text-secondary)] mb-12 max-w-2xl mx-auto leading-relaxed">
-              One student identity, verified across every institution.
-              Agora connects the African education ecosystem through a secure, lifelong registry.
+              Agora bridges the gap between fragmented data across schools, help manage activities, and facilitate transfer of students and their data across schools with a single click.
             </p>
           </FadeInUp>
 
@@ -110,9 +134,25 @@ export default function HomeContent() {
         </div>
 
         {/* Dashboard Mockup Perspective */}
+        {/* Hero Banner Image */}
+        <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} delay={0.6} duration={1} className="w-full max-w-6xl mx-auto mt-16 relative z-10 px-4">
+          <div className="relative rounded-[2rem] overflow-hidden border border-[var(--dark-border)] h-[300px] md:h-[400px]">
+            <Image
+              src="/smiling_students_banner.png"
+              alt="Smiling students collaborating"
+              width={1920}
+              height={1080}
+              className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-1000"
+              priority
+            />
+            {/* Subtle overlay for depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+          </div>
+        </FadeInUp>
+
+        {/* Dashboard Mockup Perspective - Commented out for now
         <FadeInUp from={{ opacity: 0, y: 50 }} to={{ opacity: 1, y: 0 }} delay={0.7} duration={1} className="w-full max-w-5xl mx-auto mt-24 relative z-10 px-4">
-          {/* Subtle glow behind the mockup */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[var(--agora-blue)]/20 blur-[100px] rounded-full pointer-events-none z-[-1]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
           <div
             className="w-full rounded-xl border border-[var(--dark-border)] bg-[var(--dark-surface)] overflow-hidden relative mx-auto transition-transform duration-700 hover:scale-[1.07] mockup-perspective"
@@ -121,7 +161,6 @@ export default function HomeContent() {
               boxShadow: "0 25px 60px -12px rgba(0, 0, 0, 0.4), 0 0 40px 0 rgba(36, 144, 253, 0.1)"
             }}
           >
-            {/* Top Bar of Mockup */}
             <div className="h-10 border-b border-white/5 bg-[#1b1b1c] flex items-center px-4 gap-2">
               <div className="w-3 h-3 rounded-full bg-red-500/80" />
               <div className="w-3 h-3 rounded-full bg-amber-500/80" />
@@ -129,9 +168,7 @@ export default function HomeContent() {
               <div className="ml-auto w-32 h-4 bg-white/5 rounded-full" />
             </div>
 
-            {/* Dashboard Mockup Body */}
             <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-4 gap-6 bg-[#1f1f22]">
-              {/* Sidebar Skeleton */}
               <div className="hidden md:flex flex-col gap-4 border-r border-white/5 pr-6">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded bg-agora-blue/20 flex-shrink-0" />
@@ -145,7 +182,6 @@ export default function HomeContent() {
                 ))}
               </div>
 
-              {/* Main Content Skeleton */}
               <div className="md:col-span-3 flex flex-col gap-6">
                 <div className="flex justify-between items-center hidden sm:flex pb-2">
                   <div className="h-6 w-48 bg-white/10 rounded-md" />
@@ -168,10 +204,8 @@ export default function HomeContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 bg-white/5 rounded-xl border border-white/5 h-[280px] p-5 relative overflow-hidden">
                     <div className="h-4 w-32 bg-white/10 rounded-md mb-8" />
-                    {/* Simulated chart */}
                     <div className="absolute bottom-0 left-0 right-0 h-48 px-5 pb-5">
                       <div className="w-full h-full border-b border-l border-white/10 relative">
-                        {/* Grid lines */}
                         <div className="absolute top-1/4 left-0 right-0 h-px bg-white/5" />
                         <div className="absolute top-2/4 left-0 right-0 h-px bg-white/5" />
                         <div className="absolute top-3/4 left-0 right-0 h-px bg-white/5" />
@@ -209,94 +243,183 @@ export default function HomeContent() {
             </div>
           </div>
         </FadeInUp>
+        */}
       </section>
 
-      {/* Key Features Section */}
-      <section data-navbar-light="true" className="py-24 relative">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+      {/* Command Center Section */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+            <AnimateInView className="max-w-2xl px-4 md:px-0">
+              <span className="inline-block px-4 py-1.5 bg-agora-blue/10 text-agora-blue rounded-full text-[10px] md:text-xs font-bold mb-4 uppercase tracking-wider">
+                Management
+              </span>
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-[var(--dark-text-primary)] mb-6 font-heading tracking-tight leading-[1.1]">
+                The Command Center <br /> for Modern Education.
+              </h2>
+              <p className="text-base md:text-lg text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                A comprehensive suite of tools designed to manage every aspect of your institution with surgical precision.
+              </p>
+            </AnimateInView>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Institutional Dashboard - Large Card */}
+            <AnimateInView delay={0.1} className="lg:col-span-2 bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 rounded-[2.5rem] p-8 md:p-12 relative group overflow-hidden">
+              <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-agora-blue/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-agora-blue/20 transition-colors duration-700" />
+
+              <div className="relative z-10">
+                <div className="mb-10 md:mb-12">
+                  <h3 className="text-2xl md:text-3xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">Institutional Dashboard</h3>
+                  <p className="text-[var(--dark-text-secondary)] max-w-xl text-base md:text-lg font-light leading-relaxed">
+                    Get a 360-degree view of your school's health. Monitor attendance, academic performance, and financial status in real-time.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+                  <div className="p-6 md:p-8 rounded-3xl bg-[var(--dark-bg)]/20 border border-[var(--dark-border)] backdrop-blur-md">
+                    <p className="text-xs md:text-sm text-[var(--dark-text-muted)] mb-2 font-medium">Active Students</p>
+                    <p className="text-3xl md:text-4xl font-bold text-agora-blue tracking-tighter">2,450</p>
+                    <div className="mt-4 h-1 w-full bg-agora-blue/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-agora-blue w-[85%] rounded-full" />
+                    </div>
+                  </div>
+
+                  <div className="p-6 md:p-8 rounded-3xl bg-[var(--dark-bg)]/20 border border-[var(--dark-border)] backdrop-blur-md">
+                    <p className="text-xs md:text-sm text-[var(--dark-text-muted)] mb-2 font-medium">Teacher Retention</p>
+                    <p className="text-3xl md:text-4xl font-bold text-agora-success tracking-tighter">98%</p>
+                    <div className="mt-4 h-1 w-full bg-agora-success/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-agora-success w-[98%] rounded-full" />
+                    </div>
+                  </div>
+
+                  <div className="p-6 md:p-8 rounded-3xl bg-[var(--dark-bg)]/20 border border-[var(--dark-border)] backdrop-blur-md">
+                    <p className="text-xs md:text-sm text-[var(--dark-text-muted)] mb-2 font-medium">Avg. Performance</p>
+                    <p className="text-3xl md:text-4xl font-bold text-agora-accent tracking-tighter">A-</p>
+                    <div className="mt-4 h-1 w-full bg-agora-accent/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-agora-accent w-[92%] rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </AnimateInView>
+
+            <div className="flex flex-col gap-8">
+              {/* Smart Scheduling */}
+              <AnimateInView delay={0.2} className="flex-1 bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 hover:bg-[var(--dark-surface)]/50 transition-colors group">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-6 h-6 md:w-7 md:h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h4 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">Smart Scheduling</h4>
+                <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                  Automated timetable generation that resolves teacher and room conflicts instantly using advanced algorithms.
+                </p>
+              </AnimateInView>
+
+              {/* Financial & Term Management */}
+              <AnimateInView delay={0.3} className="flex-1 bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 hover:bg-[var(--dark-surface)]/50 transition-colors group">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-agora-success/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-6 h-6 md:w-7 md:h-7 text-agora-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h4 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">Manage terms and Session</h4>
+                <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                  Orchestrate academic sessions and fiscal cycles in total synchronization. Automate term transitions.
+                </p>
+              </AnimateInView>
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* Protocol Stream Section */}
+      <section data-navbar-light="true" className="py-32 relative overflow-hidden">
+        {/* Subtle technical background grid */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <AnimateInView className="text-center mb-20">
-            <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
-              Powerful Unified Management System
+          <AnimateInView className="text-center mb-16 md:mb-24 px-4">
+            <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+              System_Protocol_v2.0
+            </span>
+            <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tighter leading-[1.1]">
+              Unified Data <br /> Infrastructure
             </h2>
-            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto">
-              Everything schools need to digitize legacy records and verify student identities.
+            <p className="text-base md:text-xl text-[var(--dark-text-secondary)] max-w-2xl mx-auto leading-relaxed font-light">
+              Agora removes the administrative walls between institutions. Transfer students, their grades, and their entire legacy across the globe as fast as a single click securely.
             </p>
           </AnimateInView>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-blue/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
-              <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-agora-blue/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-blue transition-colors duration-300">
-                  <svg className="w-8 h-8 text-agora-blue group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          {/* Protocol Stream Animation */}
+          <div className="mb-32">
+            <TransferVisual />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <AnimateInView delay={0.1} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-blue/20 transition-all duration-500 group relative overflow-hidden">
+              <div className="flex justify-between items-start mb-6 md:mb-8">
+                <div className="text-[10px] font-mono text-agora-blue uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity">
+                  PRTCL_MGR_01
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-agora-blue/5 flex items-center justify-center border border-agora-blue/10">
+                  <svg className="w-4 h-4 text-agora-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
-                  Multi-Tenant Architecture
-                </h3>
-                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
-                  Each school gets a white-label portal with total isolation. Perfect for districts, networks, and government systems.
-                </p>
+              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Data In-Motion</h3>
+              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                Academic history, verified credentials, and institutional records flow through an encrypted, high-availability backbone.
+              </p>
+              <div className="mt-8 pt-6 border-t border-[var(--dark-border)] flex gap-2">
+                <div className="w-1 h-1 rounded-full bg-agora-blue animate-pulse" />
+                <div className="text-[9px] font-mono text-[var(--dark-text-muted)] uppercase">Status: Latency_Optimized</div>
               </div>
             </AnimateInView>
 
-            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-success/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
-              <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-agora-success/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-success transition-colors duration-300">
-                  <svg className="w-8 h-8 text-agora-success group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <AnimateInView delay={0.2} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-success/20 transition-all duration-500 group relative overflow-hidden">
+              <div className="flex justify-between items-start mb-6 md:mb-8">
+                <div className="text-[10px] font-mono text-agora-success uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity">
+                  AUTH_NODE_02
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-agora-success/5 flex items-center justify-center border border-agora-success/10">
+                  <svg className="w-4 h-4 text-agora-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
-                  Secure & Immutable
-                </h3>
-                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
-                  Once a parent claims a profile, it becomes locked. We prevent identity fraud and ensure academic trust.
-                </p>
+              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Smart Verification</h3>
+              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                Enforce zero-trust financial clearance and automated academic auditing before any data transition is authorized.
+              </p>
+              <div className="mt-8 pt-6 border-t border-[var(--dark-border)] flex gap-2">
+                <div className="w-1 h-1 rounded-full bg-agora-success animate-pulse" />
+                <div className="text-[9px] font-mono text-[var(--dark-text-muted)] uppercase">Status: Checksum_Verified</div>
               </div>
             </AnimateInView>
 
-            <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-accent/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
-              <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-agora-accent/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-accent transition-colors duration-300">
-                  <svg className="w-8 h-8 text-agora-accent group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            <AnimateInView delay={0.3} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-accent/20 transition-all duration-500 group relative overflow-hidden">
+              <div className="flex justify-between items-start mb-6 md:mb-8">
+                <div className="text-[10px] font-mono text-agora-accent uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity">
+                  CONSENSUS_03
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-agora-accent/5 flex items-center justify-center border border-agora-accent/10">
+                  <svg className="w-4 h-4 text-agora-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16m-7 6h7" />
                   </svg>
                 </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
-                  Seamless Transfers
-                </h3>
-                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
-                  Move between schools with complete academic history. Debt checking ensures clean transfers for institutions.
-                </p>
-              </div>
-            </AnimateInView>
-
-            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} className="flex gap-6 p-8 rounded-3xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-agora-blue/20 transition-all duration-300 group shadow-sm hover:shadow-xl">
-              <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-agora-blue/10 rounded-2xl flex items-center justify-center group-hover:bg-agora-blue transition-colors duration-300">
-                  <svg className="w-8 h-8 text-agora-blue group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">
-                  Offline-First
-                </h3>
-                <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed">
-                  Works offline with local persistence. Perfect for areas with unreliable internet connectivity.
-                </p>
+              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Protocol Governance</h3>
+              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                Multi-institution consensus protocols ensure that both schools mutually acknowledge and secure the transfer process.
+              </p>
+              <div className="mt-8 pt-6 border-t border-[var(--dark-border)] flex gap-2">
+                <div className="w-1 h-1 rounded-full bg-agora-accent animate-pulse" />
+                <div className="text-[9px] font-mono text-[var(--dark-text-muted)] uppercase">Status: Protocol_Synced</div>
               </div>
             </AnimateInView>
           </div>
@@ -318,44 +441,80 @@ export default function HomeContent() {
                 </svg> */}
                 Introducing Agora AI
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 leading-tight font-heading">
-                Your Intelligent <br className="hidden md:block" />
-                Education Assistant
+              <h2 className="text-3xl md:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 leading-tight font-heading tracking-tight">
+                Empower Teachers <br className="hidden md:block" />
+                with Agora Ai
               </h2>
-              <p className="text-lg text-[var(--dark-text-secondary)] mb-8 leading-relaxed">
-                Agora AI is designed to supercharge educators and administrators.
-                Save countless hours on grading and gain deep insights into student performance with our advanced AI tools.
+              <p className="text-lg text-[var(--dark-text-secondary)] mb-10 leading-relaxed font-light">
+                Agora AI is an orchestral intelligence layer designed to remove cognitive load from educators.
+                Transition from manual overhead to high-precision pedagogical oversight.
               </p>
 
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
-                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+              <div className="grid grid-cols-1 gap-6">
+                {[
+                  {
+                    label: 'Assessment_Gen',
+                    title: 'Generate math assessments in seconds',
+                    desc: 'AI-driven question banking that adapts to curriculum standards and difficulty levels instantly.',
+                    icon: (
+                      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    ),
+                    color: 'blue'
+                  },
+                  {
+                    label: 'Neural_Grade',
+                    title: 'Auto-grade essay submissions',
+                    desc: 'Deep linguistic analysis providing students with instant, high-fidelity feedback and rubric-based scores.',
+                    icon: (
+                      <svg className="w-5 h-5 text-agora-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    ),
+                    color: 'success'
+                  },
+                  {
+                    label: 'Predictive_Ops',
+                    title: 'Predict student performance trends',
+                    desc: 'Machine learning models that identify students at risk and forecast academic outcomes across cohorts.',
+                    icon: (
+                      <svg className="w-5 h-5 text-agora-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    ),
+                    color: 'accent'
+                  },
+                  {
+                    label: 'Path_Optimization',
+                    title: 'Personalize learning paths',
+                    desc: 'Dynamically reconfigure curriculum delivery based on individual student mastery and velocity.',
+                    icon: (
+                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    ),
+                    color: 'indigo'
+                  }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex gap-5 group p-4 rounded-2xl hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5">
+                    <div className={`w-12 h-12 rounded-xl bg-${item.color}-500/10 flex items-center justify-center shrink-0 border border-${item.color}-500/20 group-hover:scale-110 transition-transform duration-500`}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="text-[var(--dark-text-primary)] font-bold text-base font-heading">{item.title}</h4>
+                        <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase tracking-tighter pt-0.5">{item.label}</span>
+                      </div>
+                      <p className="text-[var(--dark-text-secondary)] leading-relaxed text-sm font-light">{item.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-[var(--dark-text-primary)] font-semibold text-lg mb-1 font-heading">Automated AI Grading</h4>
-                    <p className="text-[var(--dark-text-secondary)] leading-relaxed text-sm">Instantly evaluating essays and assignments using custom rubrics, ensuring fair and consistent feedback.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20">
-                    <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-[var(--dark-text-primary)] font-semibold text-lg mb-1 font-heading">Detailed Analytics</h4>
-                    <p className="text-[var(--dark-text-secondary)] leading-relaxed text-sm">Get profound insights into cohort performance, identify learning gaps automatically, and personalize student paths.</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </AnimateInView>
 
-            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} delay={0.2} className="relative mt-8 lg:mt-0">
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-white/5 to-white/0 p-8 shadow-2xl backdrop-blur-sm group">
+            <AnimateInView from={{ opacity: 0, x: 30 }} to={{ opacity: 1, x: 0 }} delay={0.2} className="relative mt-12 lg:mt-0 px-4 md:px-0">
+              <div className="relative rounded-3xl overflow-hidden border border-[var(--dark-border)] bg-gradient-to-br from-[var(--dark-surface)]/20 to-transparent p-6 md:p-8 shadow-xl backdrop-blur-sm group">
                 <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors duration-500" />
                 <div className="relative z-10 flex flex-col gap-6">
                   {/* Mock UI for AI Grading */}

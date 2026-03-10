@@ -6,9 +6,9 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  BookOpen, 
-  Users, 
+import {
+  BookOpen,
+  Users,
   FileText,
   Clock,
   User,
@@ -18,7 +18,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import { 
+import {
   useGetMyStudentProfileQuery,
   useGetMyStudentClassesQuery,
   useGetMyStudentTimetableQuery,
@@ -29,6 +29,7 @@ import {
 } from '@/lib/store/api/schoolAdminApi';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import { useStudentSchoolType, getStudentTerminology } from '@/hooks/useStudentDashboard';
+import { safeDownload } from '@/lib/utils/download';
 import toast from 'react-hot-toast';
 
 type TabType = 'overview' | 'teachers' | 'resources' | 'curriculum' | 'timetable' | 'classmates';
@@ -94,7 +95,7 @@ export default function StudentClassesPage() {
   // Get student's classes
   const { data: classesResponse, isLoading: isLoadingClasses } = useGetMyStudentClassesQuery();
   const classes = classesResponse?.data || [];
-  
+
   // Get the active/primary class (first one, or could filter by isActive enrollment)
   const classData = useMemo(() => {
     // If multiple classes, show the first one (most recent enrollment)
@@ -149,13 +150,13 @@ export default function StudentClassesPage() {
   // Extract all terms from sessions for selector - filtered by school type and deduplicated
   const allTerms = useMemo(() => {
     if (!sessionsResponse?.data) return [];
-    
+
     // Filter sessions by current school type to avoid duplicates
     const filteredSessions = sessionsResponse.data.filter((session: any) => {
       if (!currentType) return !session.schoolType;
       return session.schoolType === currentType;
     });
-    
+
     // Deduplicate sessions by name (keep first/latest)
     const uniqueSessionsMap = new Map<string, any>();
     filteredSessions.forEach((session: any) => {
@@ -163,7 +164,7 @@ export default function StudentClassesPage() {
         uniqueSessionsMap.set(session.name, session);
       }
     });
-    
+
     const terms: Array<{ id: string; name: string; sessionName: string }> = [];
     Array.from(uniqueSessionsMap.values()).forEach((session: any) => {
       if (session.terms) {
@@ -176,7 +177,7 @@ export default function StudentClassesPage() {
         });
       }
     });
-    
+
     return terms.sort((a, b) => {
       if (a.sessionName !== b.sessionName) {
         return b.sessionName.localeCompare(a.sessionName);
@@ -200,27 +201,22 @@ export default function StudentClassesPage() {
 
       // Get auth token from localStorage
       const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || localStorage.getItem('token') : null;
-      
+
       // Fetch and create blob for download
       const response = await fetch(downloadUrl, {
         headers: token ? {
           'Authorization': `Bearer ${token}`,
         } : {},
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to download resource');
       }
-      
+
+
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = resource.name || resource.fileName || 'resource';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const fileName = resource.name || resource.fileName || 'resource';
+      safeDownload(blob, fileName);
     } catch (error: any) {
       toast.error(error?.message || 'Failed to download resource');
     }
@@ -325,11 +321,10 @@ export default function StudentClassesPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                     : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -581,8 +576,8 @@ export default function StudentClassesPage() {
                                   </p>
                                 </div>
                               </div>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => handleDownload(resource)}
                               >

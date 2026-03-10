@@ -30,7 +30,7 @@ export function AnimateInView({
   to = defaultTo,
   duration = 0.6,
   delay = 0,
-  ease = 'power2.out',
+  ease = 'power4.out',
   stagger,
   start = 'top 85%',
   once = true,
