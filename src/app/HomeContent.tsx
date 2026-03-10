@@ -588,124 +588,102 @@ export default function HomeContent() {
         </div>
       </section>
 
-      {/* Schools Using Agora Section */}
-      <section data-navbar-light="true" className="py-24 relative">
+      {/* Schools Network Section */}
+      <section data-navbar-light="true" className="py-32 relative overflow-hidden border-t border-white/[0.02]">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[600px] bg-agora-blue/5 rounded-full blur-[160px] pointer-events-none opacity-50" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <AnimateInView className="text-center mb-16">
-            <span className="inline-block px-4 py-2 bg-blue-900/50 text-blue-400 rounded-full text-xs font-semibold mb-4">
-              Trusted Partners
+          <AnimateInView className="text-center mb-20 px-4">
+            <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+              The_Agora_Network
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
-              Schools Using Agora
+            <h2 className="text-4xl md:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 font-heading tracking-tight leading-[1.1]">
+              Decentralized <br className="md:hidden" /> Institutional Nodes
             </h2>
-            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto">
-              Join the growing network of forward-thinking institutions
+            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto leading-relaxed font-light">
+              The growing infrastructure of world-class institutions running on the Agora protocol.
             </p>
           </AnimateInView>
 
           <AnimateInView delay={0.2} className="relative overflow-hidden">
-            {/* Carousel - scrolling right to left */}
-            <div className="relative py-8">
-              {/* Gradient fade edges */}
-              <div
-                className="absolute left-0 top-0 bottom-0 w-32 z-10 pointer-events-none"
-                style={{
-                  background: 'linear-gradient(to right, var(--dark-bg), transparent)',
-                }}
-              />
-              <div
-                className="absolute right-0 top-0 bottom-0 w-32 z-10 pointer-events-none"
-                style={{
-                  background: 'linear-gradient(to left, var(--dark-bg), transparent)',
-                }}
-              />
+            {/* Infinite Technical Marquee */}
+            <div className="relative py-12">
+              {/* Technical fade masks */}
+              <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[var(--dark-bg)] to-transparent z-10 pointer-events-none hidden md:block" />
+              <div className="absolute inset-y-0 right-0 w-48 bg-gradient-to-l from-[var(--dark-bg)] to-transparent z-10 pointer-events-none hidden md:block" />
 
-              {schools && schools.length > 0 ? (
-                <div className="flex gap-8 md:gap-12 animate-scroll items-center">
-                  {/* First set of logos */}
-                  {schools.map((school) => (
-                    <div
-                      key={school.id}
-                      className="flex-shrink-0 flex items-center justify-center group"
-                    >
-                      {school.logo ? (
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center p-3 transition-transform duration-300 group-hover:scale-110 shadow-lg">
-                          <Image
-                            src={school.logo}
-                            alt={school.name}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-contain"
-                          />
+              <div className="flex gap-6 animate-scroll mask-fade-out items-center">
+                {schools && schools.length > 0 ? (
+                  <>
+                    {[...schools, ...schools].map((school, idx) => (
+                      <div
+                        key={`${school.id}-${idx}`}
+                        className="flex-shrink-0 group"
+                      >
+                        <div className="relative p-6 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl group-hover:border-agora-blue/30 group-hover:bg-[var(--dark-surface)]/40 transition-all duration-700 min-w-[240px] md:min-w-[280px]">
+                          <div className="flex items-center gap-5">
+                            {/* School Identifier */}
+                            <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-2 group-hover:scale-110 transition-transform duration-500 shadow-xl">
+                              {school.logo ? (
+                                <Image
+                                  src={school.logo}
+                                  alt={school.name}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                                />
+                              ) : (
+                                <span className="text-agora-blue font-bold text-xl font-heading">
+                                  {school.name.substring(0, 2).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Node Metadata */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs md:text-sm font-bold text-[var(--dark-text-primary)] truncate block font-heading">
+                                  {school.name}
+                                </span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-agora-success animate-pulse shrink-0" />
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] md:text-[10px] font-mono text-[var(--dark-text-muted)] uppercase tracking-widest">
+                                  NODE_{idx.toString(16).padStart(3, '0').toUpperCase()}
+                                </span>
+                                <span className="text-[8px] font-mono text-agora-blue/50 group-hover:text-agora-blue transition-colors">
+                                  CONNECTED
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      ) : (
-                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 border border-white/10">
-                          <span className="text-white text-xl md:text-2xl font-bold">
-                            {school.name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {/* Duplicate set for seamless loop */}
-                  {schools.map((school) => (
-                    <div
-                      key={`${school.id}-duplicate`}
-                      className="flex-shrink-0 flex items-center justify-center group"
-                    >
-                      {school.logo ? (
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center p-3 transition-transform duration-300 group-hover:scale-110 shadow-lg">
-                          <Image
-                            src={school.logo}
-                            alt={school.name}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 border border-white/10">
-                          <span className="text-white text-xl md:text-2xl font-bold">
-                            {school.name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                // Show placeholder when no schools or loading
-                <div className="flex gap-8 md:gap-12 items-center">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div
-                      key={i}
-                      className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center opacity-40 border border-dashed border-gray-300 dark:border-gray-600"
-                    >
-                      <svg className="w-8 h-8 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  // Skeleton state
+                  [1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="w-64 h-24 rounded-2xl bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] animate-pulse shrink-0" />
+                  ))
+                )}
+              </div>
             </div>
           </AnimateInView>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 relative">
+      <section className="py-24 md:py-32 relative overflow-hidden border-t border-[var(--dark-border)]">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-agora-blue/5 rounded-full blur-[120px] pointer-events-none" />
         </div>
 
         {/* Animated background elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full opacity-5">
             <div className="absolute top-20 left-20 w-64 h-64 bg-agora-blue rounded-full blur-3xl animate-pulse" />
             <div className="absolute bottom-20 right-20 w-96 h-96 bg-agora-accent rounded-full blur-3xl animate-pulse delay-1000" />
           </div>
@@ -713,59 +691,68 @@ export default function HomeContent() {
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <AnimateInView duration={0.8}>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 leading-tight tracking-tight font-heading">
-              Ready to Transform Education in Africa?
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 leading-tight tracking-tight font-heading">
+              Ready to Transform <br /> Education in Africa?
             </h2>
-            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] mb-12 max-w-3xl mx-auto leading-relaxed">
-              Join schools, parents, and students building the future of
-              digital education identity.
+            <p className="text-lg md:text-xl text-[var(--dark-text-secondary)] mb-12 max-w-3xl mx-auto leading-relaxed font-light">
+              Join schools, parents, and students building the future of digital education identity.
             </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <Button
+                size="lg"
+                variant="primary"
+                onClick={handleGetStarted}
+                className="rounded-full px-12 py-6 text-lg hover:scale-105 font-bold transition-all"
+              >
+                {isLoggedIn ? 'Go to dashboard' : 'Get Started Free'}
+              </Button>
+            </div>
           </AnimateInView>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[var(--dark-bg)] text-[var(--dark-text-secondary)] py-16 border-t border-[var(--dark-border)]">
+      <footer className="bg-[var(--dark-bg)] text-[var(--dark-text-secondary)] py-20 border-t border-[var(--dark-border)] relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-8">
             <div className="col-span-1 md:col-span-1">
               <Image
                 src="/assets/logos/agora_worded_white.png"
                 alt="Agora - Verified Academic History Logo"
                 width={140}
                 height={38}
-                className="h-8 w-auto mb-6 opacity-90 transition-opacity"
+                className="h-8 w-auto mb-8 opacity-90 transition-opacity"
               />
-              <p className="text-xs leading-relaxed text-[var(--dark-text-muted)] max-w-[240px]">
+              <p className="text-xs leading-relaxed text-[var(--dark-text-muted)] max-w-[240px] font-light">
                 The Chain-of-Trust Registry for the African education ecosystem. Securing academic identities forever.
               </p>
             </div>
             <div>
-              <h4 className="text-[var(--agora-blue)] font-semibold mb-6 text-sm font-heading uppercase tracking-widest">Product</h4>
-              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm">
-                <li><Link href="#features" className="hover:text-[var(--agora-blue)] transition-colors">Features</Link></li>
-                <li><Link href="/products" className="hover:text-[var(--agora-blue)] transition-colors">Solutions</Link></li>
+              <h4 className="text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Product</h4>
+              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm font-light">
+                <li><Link href="#features" className="hover:text-agora-blue transition-colors">Features</Link></li>
+                <li><Link href="/products" className="hover:text-agora-blue transition-colors">Solutions</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-[var(--agora-blue)] font-semibold mb-6 text-sm font-heading uppercase tracking-widest">Company</h4>
-              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm">
-                <li><Link href="/about" className="hover:text-[var(--agora-blue)] transition-colors">About Us</Link></li>
-                <li><Link href="/contact" className="hover:text-[var(--agora-blue)] transition-colors">Contact</Link></li>
+              <h4 className="text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Company</h4>
+              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm font-light">
+                <li><Link href="/about" className="hover:text-agora-blue transition-colors">About Us</Link></li>
+                <li><Link href="/contact" className="hover:text-agora-blue transition-colors">Contact</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-[var(--agora-blue)] font-semibold mb-6 text-sm font-heading uppercase tracking-widest">Legal</h4>
-              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm">
-                <li><Link href="/privacy" className="hover:text-[var(--agora-blue)] transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-[var(--agora-blue)] transition-colors">Terms of Service</Link></li>
+              <h4 className="text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Legal</h4>
+              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm font-light">
+                <li><Link href="/privacy" className="hover:text-agora-blue transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-agora-blue transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
-          <div className="mt-16 pt-8 border-t border-[var(--dark-border)] flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-[var(--dark-text-muted)]">&copy; 2026 Agora. All rights reserved.</p>
-            <div className="flex gap-6">
-              {/* Placeholder for social links if needed */}
+          <div className="mt-20 pt-8 border-t border-[var(--dark-border)] flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-sm text-[var(--dark-text-muted)] font-light">&copy; 2026 Agora. All rights reserved.</p>
+            <div className="flex gap-8">
+              {/* Optional Social Icons */}
             </div>
           </div>
         </div>
