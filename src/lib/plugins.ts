@@ -25,14 +25,6 @@ export const getActivePluginsForTeacher = (): Plugin[] => {
       description: "The Teacher's Assistant",
       category: 'AI & Automation',
     },
-    {
-      id: '3',
-      name: 'RollCall',
-      slug: 'rollcall',
-      icon: Smartphone,
-      description: 'Attendance System',
-      category: 'Attendance',
-    },
   ];
 };
 

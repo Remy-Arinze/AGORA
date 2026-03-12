@@ -57,17 +57,17 @@
     /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
     --text-card-title: 1rem;
     /* 18px - Card titles */
-    --text-body: 0.8rem;
-    /* 14px - Body text */
-    --text-small: 0.75rem;
+    --text-body: 0.73rem;
+    /* 12px - Body text */
+    --text-small: 0.65rem;
     /* 12px - Small text */
-    --text-tiny: 0.7rem;
+    --text-tiny: 0.6rem;
     /* 11.2px - Tiny text for tabs/badges */
     --text-placeholder: var(--text-small);
     /* Placeholder text - consistent with small */
-    --text-stat-value: 1.5rem;
+    --text-stat-value: 1.2rem;
     /* 28px - Stat card values */
-    --text-stat-label: 0.875rem;
+    --text-stat-label: 0.785rem;
     /* 14px - Stat card labels */
 
     /* Component Sizes */
@@ -77,7 +77,7 @@
     /* 20px - Stat card icon size */
     --card-padding: .1rem;
     /* 20px - Standard card padding */
-    --card-padding-large: 1.5rem;
+    --card-padding-large: 1.2rem;
     /* 24px - Large card padding */
 
     /* Light Mode Colors */

@@ -3299,6 +3299,37 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Submissions', 'Assessments', 'Grades'],
     }),
+    // Attendance Endpoints
+    markAttendance: builder.mutation<ResponseDto<any>, { schoolId: string; attendanceData: any }>({
+      query: ({ schoolId, attendanceData }) => ({
+        url: `/schools/${schoolId}/attendance`,
+        method: 'POST',
+        body: attendanceData,
+      }),
+      invalidatesTags: ['Attendance'],
+    }),
+    markBulkAttendance: builder.mutation<ResponseDto<any[]>, { schoolId: string; attendanceData: any }>({
+      query: ({ schoolId, attendanceData }) => ({
+        url: `/schools/${schoolId}/attendance/bulk`,
+        method: 'POST',
+        body: attendanceData,
+      }),
+      invalidatesTags: ['Attendance'],
+    }),
+    getClassAttendance: builder.query<ResponseDto<any[]>, { schoolId: string; classId: string; classType: 'CLASS' | 'CLASS_ARM'; date: string }>({
+      query: ({ schoolId, classId, classType, date }) => ({
+        url: `/schools/${schoolId}/attendance/classes/${classId}`,
+        params: { classType, date },
+      }),
+      providesTags: ['Attendance'],
+    }),
+    getClassAttendanceSummary: builder.query<ResponseDto<any[]>, { schoolId: string; classId: string; classType: 'CLASS' | 'CLASS_ARM'; startDate: string; endDate: string }>({
+      query: ({ schoolId, classId, classType, startDate, endDate }) => ({
+        url: `/schools/${schoolId}/attendance/classes/${classId}/summary`,
+        params: { classType, startDate, endDate },
+      }),
+      providesTags: ['Attendance'],
+    }),
   }),
 });
 
@@ -3496,5 +3527,10 @@ export const {
   useSubmitAssessmentMutation,
   useGetAssessmentSubmissionQuery,
   useGradeAssessmentSubmissionMutation,
+  // Attendance hooks
+  useMarkAttendanceMutation,
+  useMarkBulkAttendanceMutation,
+  useGetClassAttendanceQuery,
+  useGetClassAttendanceSummaryQuery,
 } = schoolAdminApi;
 

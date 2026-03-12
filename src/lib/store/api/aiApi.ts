@@ -82,6 +82,38 @@ export const aiApi = apiSlice.injectEndpoints({
                 body,
             }),
         }),
+        askAi: builder.mutation<
+            { response: string; conversationId: string },
+            {
+                schoolId: string;
+                body: {
+                    messages: { role: 'user' | 'assistant' | 'system'; content: string }[];
+                    conversationId?: string;
+                };
+            }
+        >({
+            query: ({ schoolId, body }) => ({
+                url: `/schools/${schoolId}/ai/chat`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['AiHistory'],
+        }),
+        getChatHistory: builder.query<any[], { schoolId: string }>({
+            query: ({ schoolId }) => `/schools/${schoolId}/ai/history`,
+            providesTags: ['AiHistory'],
+        }),
+        getChatMessages: builder.query<any[], { schoolId: string; conversationId: string }>({
+            query: ({ schoolId, conversationId }) => `/schools/${schoolId}/ai/history/${conversationId}`,
+            providesTags: (result, error, { conversationId }) => [{ type: 'AiHistory', id: conversationId }],
+        }),
+        deleteConversation: builder.mutation<{ success: boolean }, { schoolId: string; conversationId: string }>({
+            query: ({ schoolId, conversationId }) => ({
+                url: `/schools/${schoolId}/ai/history/${conversationId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['AiHistory'],
+        }),
     }),
 });
 
@@ -90,4 +122,9 @@ export const {
     useGenerateAssessmentMutation,
     useGenerateQuizMutation,
     useGradeEssayMutation,
+    useAskAiMutation,
+    useGetChatHistoryQuery,
+    useGetChatMessagesQuery,
+    useLazyGetChatMessagesQuery,
+    useDeleteConversationMutation,
 } = aiApi;

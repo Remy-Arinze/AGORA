@@ -24,7 +24,8 @@ import {
   Download,
   Upload,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  QrCode
 } from 'lucide-react';
 import {
   useGetClassByIdQuery,
@@ -38,6 +39,9 @@ import {
   useGetTimetableForClassQuery,
   useGetSessionsQuery,
   useGetClassAssessmentsQuery,
+  useMarkAttendanceMutation,
+  useMarkBulkAttendanceMutation,
+  useGetClassAttendanceQuery,
   type StudentWithEnrollment,
   type Grade,
   type GradeType,
@@ -55,8 +59,12 @@ import { safeDownload } from '@/lib/utils/download';
 import { cn } from '@/lib/utils';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
+import { AgoraAiTools } from '@/components/ai/AgoraAiTools';
+import { FloatingAiCta } from '@/components/ai/FloatingAiCta';
+import { AiChatDrawer } from '@/components/ai/AiChatDrawer';
+import { Sparkles } from 'lucide-react';
 
-type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments';
+type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'ai' | 'rollcall';
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -76,6 +84,7 @@ export default function ClassDetailPage() {
   const [showUploadResourceModal, setShowUploadResourceModal] = useState(false);
   const [assessmentTermFilter, setAssessmentTermFilter] = useState<string>('');
   const [showCreateAssessmentModal, setShowCreateAssessmentModal] = useState(false);
+  const [showAiChat, setShowAiChat] = useState(false);
 
   const { currentType } = useSchoolType();
   const terminology = getTerminology(currentType) || {
@@ -270,8 +279,10 @@ export default function ClassDetailPage() {
     { id: 'students', label: 'Students', icon: <Users className="h-4 w-4" />, available: true },
     { id: 'grades', label: 'Grades', icon: <Award className="h-4 w-4" />, available: true },
     { id: 'assessments', label: 'Assessments', icon: <Award className="h-4 w-4" />, available: true },
+    { id: 'rollcall', label: 'Roll Call', icon: <Smartphone className="h-4 w-4" />, available: true },
     { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" />, available: true },
     { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
+    { id: 'ai', label: 'AI Assistant', icon: <Sparkles className="h-4 w-4" />, available: true },
   ];
 
   if (isLoading) {
@@ -1017,6 +1028,42 @@ export default function ClassDetailPage() {
             </div>
           )}
 
+          {/* AI Assistant Tab */}
+          {(activeTab as TabType) === 'ai' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                <div>
+                  <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
+                    <Sparkles className="h-5 w-5 text-indigo-500" />
+                    Class AI Assistant
+                  </h2>
+                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                    Context-aware tools for {classData.name}
+                  </p>
+                </div>
+              </div>
+
+              {schoolId && (
+                <AgoraAiTools
+                  schoolId={schoolId}
+                  defaultSubject={classData?.teachers?.[0]?.subject || ''}
+                  defaultGradeLevel={classData?.classLevel || ''}
+                  lockContext={true}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Roll Call Tab */}
+          {(activeTab as TabType) === 'rollcall' && schoolId && (
+            <RollCallView
+              schoolId={schoolId}
+              classId={classId}
+              classType={classData?.type === 'TERTIARY' ? 'CLASS' : 'CLASS_ARM'}
+              students={students}
+            />
+          )}
+
         </FadeInUp>
       </div>
 
@@ -1204,7 +1251,361 @@ export default function ClassDetailPage() {
         classId={classId}
         activeTermId={assessmentTermFilter || activeSession?.term?.id}
       />
+
+      {/* Floating AI CTA */}
+      <FloatingAiCta onClick={() => setShowAiChat(true)} />
+
+      {/* AI Chat Drawer */}
+      {schoolId && (
+        <AiChatDrawer
+          schoolId={schoolId}
+          isOpen={showAiChat}
+          onClose={() => setShowAiChat(false)}
+        />
+      )}
     </ProtectedRoute>
+  );
+}
+
+// Roll Call View Component
+function RollCallView({
+  schoolId,
+  classId,
+  classType,
+  students,
+}: {
+  schoolId: string;
+  classId: string;
+  classType: 'CLASS' | 'CLASS_ARM';
+  students: StudentWithEnrollment[];
+}) {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [scanCode, setScanCode] = useState('');
+
+  const { data: attendanceResponse, isLoading: isLoadingAttendance } = useGetClassAttendanceQuery(
+    {
+      schoolId,
+      classId,
+      classType,
+      date: selectedDate,
+    },
+    { skip: !schoolId || !classId || !selectedDate }
+  );
+
+  const [markAttendance] = useMarkAttendanceMutation();
+  const [markBulkAttendance, { isLoading: isBulkMarking }] = useMarkBulkAttendanceMutation();
+
+  const attendanceRecords = attendanceResponse?.data || [];
+
+  // Map attendance records to students
+  const attendanceMap = useMemo(() => {
+    const map = new Map<string, string>();
+    attendanceRecords.forEach((record: any) => {
+      map.set(record.enrollment.id, record.status);
+    });
+    return map;
+  }, [attendanceRecords]);
+
+  const handleMarkAttendance = async (enrollmentId: string, status: string) => {
+    try {
+      await markAttendance({
+        schoolId,
+        attendanceData: {
+          enrollmentId,
+          status,
+          date: selectedDate,
+        },
+      }).unwrap();
+      toast.success(`Marked as ${status.toLowerCase()}`);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to mark attendance');
+    }
+  };
+
+  const handleBulkMark = async (status: string) => {
+    try {
+      const attendanceData = {
+        classId,
+        classType,
+        date: selectedDate,
+        students: students.map((s) => ({
+          enrollmentId: s.enrollment?.id,
+          status,
+        })),
+      };
+
+      await markBulkAttendance({
+        schoolId,
+        attendanceData,
+      }).unwrap();
+      toast.success(`All marked as ${status.toLowerCase()}`);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to mark bulk attendance');
+    }
+  };
+
+  const handleScan = async () => {
+    if (!scanCode) return;
+
+    // Find student by UID (scanCode)
+    const student = students.find((s) => s.uid === scanCode || s.publicId === scanCode);
+
+    if (student && student.enrollment?.id) {
+      await handleMarkAttendance(student.enrollment.id, 'PRESENT');
+      setScanCode('');
+    } else {
+      toast.error('Student not found in this class');
+    }
+  };
+
+  const presentCount = attendanceRecords.filter((a: any) => a.status === 'PRESENT').length;
+  const absentCount = attendanceRecords.filter((a: any) => a.status === 'ABSENT').length;
+  const lateCount = attendanceRecords.filter((a: any) => a.status === 'LATE').length;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Total Students</p>
+              <h3 className="text-2xl font-bold text-blue-700 dark:text-blue-300">{students.length}</h3>
+            </div>
+            <Users className="h-8 w-8 text-blue-300 dark:text-blue-800" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">Present</p>
+              <h3 className="text-2xl font-bold text-green-700 dark:text-green-300">{presentCount}</h3>
+            </div>
+            <CheckCircle2 className="h-8 w-8 text-green-300 dark:text-green-800" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Absent</p>
+              <h3 className="text-2xl font-bold text-red-700 dark:text-red-300">{absentCount}</h3>
+            </div>
+            <XCircle className="h-8 w-8 text-red-300 dark:text-red-800" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-1">Late</p>
+              <h3 className="text-2xl font-bold text-amber-700 dark:text-amber-300">{lateCount}</h3>
+            </div>
+            <Clock className="h-8 w-8 text-amber-300 dark:text-amber-800" />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg font-bold">Attendance List</CardTitle>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-40 h-9"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkMark('PRESENT')}
+                  disabled={isBulkMarking || students.length === 0}
+                  className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/30 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Mark All Present
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkMark('ABSENT')}
+                  disabled={isBulkMarking || students.length === 0}
+                  className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Mark All Absent
+                </Button>
+              </div>
+
+              <div className="space-y-1">
+                {isLoadingAttendance ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4 animate-spin" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">Loading attendance...</p>
+                  </div>
+                ) : students.length > 0 ? (
+                  students.map((student) => {
+                    const status = attendanceMap.get(student.enrollment?.id || '');
+                    return (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-surface transition-colors border border-transparent hover:border-light-border dark:hover:border-dark-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden">
+                            {student.profileImage ? (
+                              <img src={student.profileImage} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              `${student.firstName[0]}${student.lastName[0]}`
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-light-text-primary dark:text-dark-text-primary">
+                              {student.firstName} {student.lastName}
+                            </p>
+                            <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                              {student.uid}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleMarkAttendance(student.enrollment!.id, 'PRESENT')}
+                            className={cn(
+                              "p-2 rounded-full transition-all",
+                              status === 'PRESENT'
+                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                : "text-light-text-muted dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-surface"
+                            )}
+                            title="Present"
+                          >
+                            <CheckCircle2 className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleMarkAttendance(student.enrollment!.id, 'LATE')}
+                            className={cn(
+                              "p-2 rounded-full transition-all",
+                              status === 'LATE'
+                                ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                                : "text-light-text-muted dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-surface"
+                            )}
+                            title="Late"
+                          >
+                            <Clock className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleMarkAttendance(student.enrollment!.id, 'ABSENT')}
+                            className={cn(
+                              "p-2 rounded-full transition-all",
+                              status === 'ABSENT'
+                                ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                                : "text-light-text-muted dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-surface"
+                            )}
+                            title="Absent"
+                          >
+                            <XCircle className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                      No students found in this class.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Smartphone className="h-5 w-5" />
+                Quick Scan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-6 bg-gray-50 dark:bg-dark-surface rounded-lg text-center border-2 border-dashed border-light-border dark:border-dark-border">
+                <QrCode className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                  Scan QR code or enter ID manually
+                </p>
+                <div className="space-y-3">
+                  <Input
+                    placeholder="Student ID / UID"
+                    value={scanCode}
+                    onChange={(e) => setScanCode(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleScan()}
+                  />
+                  <Button variant="primary" className="w-full" onClick={handleScan}>
+                    Mark Present
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-bold">Today&apos;s Insights</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="relative pt-1">
+                  <div className="flex mb-2 items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200 dark:bg-green-900/30 dark:text-green-400">
+                        Attendance Rate
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold inline-block text-green-600 dark:text-green-400">
+                        {students.length > 0 ? Math.round((presentCount / students.length) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-green-100 dark:bg-green-900/20">
+                    <div
+                      style={{ width: `${students.length > 0 ? (presentCount / students.length) * 100 : 0}%` }}
+                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500 transition-all duration-500"
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary">Expected Students</span>
+                    <span className="font-bold">{students.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary">Actual Present</span>
+                    <span className="font-bold text-green-600 dark:text-green-400">{presentCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary">Late Arrivals</span>
+                    <span className="font-bold text-amber-600 dark:text-amber-400">{lateCount}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }
 
