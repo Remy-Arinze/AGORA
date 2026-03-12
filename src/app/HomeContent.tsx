@@ -123,7 +123,7 @@ export default function HomeContent() {
         <div className="max-w-4xl mx-auto mt-12 md:mt-16 z-10">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} delay={0.1} duration={0.8}>
             <h1 className="text-5xl md:text-[4rem] font-bold text-[var(--dark-text-primary)] leading-tight mb-8 tracking-tight font-heading">
-              The Way You Manage Schools Can Be Better
+              The Way We Manage Schools Can Be Better
             </h1>
           </FadeInUp>
 
