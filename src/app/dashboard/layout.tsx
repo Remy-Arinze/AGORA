@@ -9,11 +9,12 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/lib/store/store';
 import { cn } from '@/lib/utils';
 
-function MainContent({ children, showNavbar }: { children: React.ReactNode, showNavbar: boolean }) {
+function MainContent({ children, showNavbar, userRole }: { children: React.ReactNode, showNavbar: boolean, userRole?: string }) {
   return (
     <main
       className={cn(
-        "flex-1 min-h-screen transition-all duration-300 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] scrollbar-hide overflow-y-auto overflow-x-hidden w-full",
+        "flex-1 min-h-screen transition-all duration-300 scrollbar-hide overflow-y-auto overflow-x-hidden w-full",
+        (userRole === 'TEACHER' || userRole === 'STUDENT') ? "bg-transparent" : "bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]",
         // Leave 250px on desktop for the fixed sidebar
         "md:ml-[250px]",
         // Leave padding on top if Navbar or mobile header is present
@@ -30,14 +31,17 @@ function MainContent({ children, showNavbar }: { children: React.ReactNode, show
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const userRole = useSelector((state: RootState) => state.auth.user?.role);
 
-  // Hide navbar for SUPER_ADMIN and SCHOOL_ADMIN
-  const showNavbar = userRole !== 'SUPER_ADMIN' && userRole !== 'SCHOOL_ADMIN';
+  // Hide navbar for SUPER_ADMIN, SCHOOL_ADMIN, TEACHER, and STUDENT
+  const showNavbar = userRole !== 'SUPER_ADMIN' && userRole !== 'SCHOOL_ADMIN' && userRole !== 'TEACHER' && userRole !== 'STUDENT';
 
   return (
-    <div className="min-h-screen bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] transition-colors duration-200 flex overflow-hidden w-full relative">
+    <div className={cn(
+      "min-h-screen transition-colors duration-200 flex overflow-hidden w-full relative",
+      (userRole === 'TEACHER' || userRole === 'STUDENT') ? "bg-transparent" : "bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]"
+    )}>
       {showNavbar && <Navbar />}
       <SidebarNew hideMobileHeader={showNavbar} />
-      <MainContent showNavbar={showNavbar}>{children}</MainContent>
+      <MainContent showNavbar={showNavbar} userRole={userRole}>{children}</MainContent>
     </div>
   );
 }

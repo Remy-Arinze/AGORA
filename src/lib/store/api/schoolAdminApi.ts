@@ -799,6 +799,105 @@ export interface ClassArm {
   assignedTeacher?: { id: string; name: string } | null;
 }
 
+// Assessment Types
+export type AssessmentType = 'QUIZ' | 'EXAM' | 'ASSIGNMENT';
+export type AssessmentStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED';
+export type QuestionType = 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'ESSAY';
+
+export interface AssessmentQuestion {
+  id: string;
+  assessmentId: string;
+  text: string;
+  type: QuestionType;
+  options?: string; // JSON string
+  correctAnswer?: string;
+  points: number;
+  order: number;
+}
+
+export interface Assessment {
+  id: string;
+  schoolId: string;
+  classId: string | null;
+  classArmId: string | null;
+  subjectId: string;
+  teacherId: string;
+  termId: string | null;
+  title: string;
+  description: string | null;
+  type: AssessmentType;
+  status: AssessmentStatus;
+  dueDate: string | null;
+  maxScore: number;
+  createdAt: string;
+  updatedAt: string;
+  questions?: AssessmentQuestion[];
+  _count?: {
+    submissions: number;
+  };
+}
+
+export interface AssessmentSubmission {
+  id: string;
+  assessmentId: string;
+  studentId: string;
+  status: 'SUBMITTED' | 'GRADED';
+  totalScore: number | null;
+  teacherFeedback: string | null;
+  aiFeedback: string | null;
+  submittedAt: string;
+  gradedAt: string | null;
+  student?: Student;
+  answers?: AssessmentAnswer[];
+}
+
+export interface AssessmentAnswer {
+  id: string;
+  submissionId: string;
+  questionId: string;
+  text?: string;
+  selectedOption?: string;
+  score?: number;
+  teacherFeedback?: string;
+  question?: AssessmentQuestion;
+}
+
+export interface CreateAssessmentDto {
+  title: string;
+  description?: string;
+  type: AssessmentType;
+  classId?: string;
+  classArmId?: string;
+  subjectId: string;
+  termId?: string;
+  dueDate?: string;
+  maxScore: number;
+  questions: {
+    text: string;
+    type: QuestionType;
+    options?: string[];
+    correctAnswer?: string;
+    points: number;
+    order: number;
+  }[];
+}
+
+export interface SubmitAssessmentDto {
+  answers: {
+    questionId: string;
+    text?: string;
+    selectedOption?: string;
+  }[];
+}
+
+export interface GradeSubmissionDto {
+  totalScore?: number;
+  teacherFeedback?: string;
+  questionScores?: Record<string, number>;
+  questionFeedback?: Record<string, string>;
+}
+
+
 // Teacher with workload information
 export interface TeacherWithWorkload {
   id: string;
@@ -1468,6 +1567,19 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, { classId }) => [{ type: 'Class', id: classId }, 'School'],
     }),
     // Session Management
+    getTerms: builder.query<ResponseDto<{ items: Term[] }>, { schoolId: string }>({
+      query: ({ schoolId }) => `/schools/${schoolId}/sessions`,
+      transformResponse: (response: ResponseDto<AcademicSession[]>) => {
+        const allTerms = response.data?.flatMap(session => session.terms) || [];
+        return {
+          ...response,
+          data: {
+            items: allTerms
+          }
+        } as ResponseDto<{ items: Term[] }>;
+      },
+      providesTags: ['Session'],
+    }),
     getSessions: builder.query<ResponseDto<AcademicSession[]>, { schoolId: string; schoolType?: string }>({
       query: ({ schoolId, schoolType }) => {
         const queryParams = new URLSearchParams();
@@ -3146,6 +3258,47 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['School'],
     }),
+
+    // Assessment Endpoints
+    createAssessment: builder.mutation<Assessment, { schoolId: string; classId: string; dto: CreateAssessmentDto }>({
+      query: ({ schoolId, classId, dto }) => ({
+        url: `/schools/${schoolId}/classes/${classId}/assessments`,
+        method: 'POST',
+        body: dto,
+      }),
+      invalidatesTags: ['Assessments'],
+    }),
+    getClassAssessments: builder.query<Assessment[], { schoolId: string; classId: string; termId?: string }>({
+      query: ({ schoolId, classId, termId }) => ({
+        url: `/schools/${schoolId}/classes/${classId}/assessments`,
+        params: { termId },
+      }),
+      providesTags: ['Assessments'],
+    }),
+    getAssessmentById: builder.query<Assessment, { schoolId: string; assessmentId: string }>({
+      query: ({ schoolId, assessmentId }) => `/schools/${schoolId}/assessments/${assessmentId}`,
+      providesTags: (_result, _error, { assessmentId }) => [{ type: 'Assessments', id: assessmentId }],
+    }),
+    submitAssessment: builder.mutation<AssessmentSubmission, { schoolId: string; assessmentId: string; dto: SubmitAssessmentDto }>({
+      query: ({ schoolId, assessmentId, dto }) => ({
+        url: `/schools/${schoolId}/assessments/${assessmentId}/submit`,
+        method: 'POST',
+        body: dto,
+      }),
+      invalidatesTags: ['Assessments'],
+    }),
+    getAssessmentSubmission: builder.query<AssessmentSubmission, { schoolId: string; submissionId: string }>({
+      query: ({ schoolId, submissionId }) => `/schools/${schoolId}/assessments/submissions/${submissionId}`,
+      providesTags: (_result, _error, { submissionId }) => [{ type: 'Submissions', id: submissionId }],
+    }),
+    gradeAssessmentSubmission: builder.mutation<AssessmentSubmission, { schoolId: string; submissionId: string; dto: GradeSubmissionDto }>({
+      query: ({ schoolId, submissionId, dto }) => ({
+        url: `/schools/${schoolId}/assessments/submissions/${submissionId}/grade`,
+        method: 'POST',
+        body: dto,
+      }),
+      invalidatesTags: ['Submissions', 'Assessments', 'Grades'],
+    }),
   }),
 });
 
@@ -3175,6 +3328,7 @@ export const {
   useAssignTeacherToClassMutation,
   useRemoveTeacherFromClassMutation,
   // Session hooks
+  useGetTermsQuery,
   useGetSessionsQuery,
   useGetActiveSessionQuery,
   useInitializeSessionMutation,
@@ -3335,5 +3489,12 @@ export const {
   useGetRecentlyAcceptedTransfersQuery,
   useCompleteTransferMutation,
   useRejectTransferMutation,
+  // Assessment hooks
+  useCreateAssessmentMutation,
+  useGetClassAssessmentsQuery,
+  useGetAssessmentByIdQuery,
+  useSubmitAssessmentMutation,
+  useGetAssessmentSubmissionQuery,
+  useGradeAssessmentSubmissionMutation,
 } = schoolAdminApi;
 

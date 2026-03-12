@@ -33,9 +33,10 @@ export default function RegisterSchoolPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
+
         if (type === 'checkbox') {
-            const target = e.target as HTMLInputElement;
-            setFormData(prev => ({ ...prev, [name]: target.checked }));
+            const checked = (e.target as HTMLInputElement).checked;
+            setFormData(prev => ({ ...prev, [name]: checked }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -200,35 +201,35 @@ export default function RegisterSchoolPage() {
                     <div>
                         <h2 className="text-sm text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2">School Type *</h2>
                         <div className="flex flex-wrap gap-6 text-xs">
-                            <label className="flex items-center gap-2 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer hover:text-blue-400 transition-colors">
+                            <label className="flex items-center gap-3 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer group">
                                 <input
                                     type="checkbox"
                                     name="hasPrimary"
                                     checked={formData.hasPrimary}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-blue-600 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 accent-agora-blue focus:ring-agora-blue cursor-pointer transition-all"
                                 />
-                                Primary Education
+                                <span className="text-sm font-medium group-hover:text-agora-blue transition-colors">Primary Education</span>
                             </label>
-                            <label className="flex items-center gap-2 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer hover:text-blue-400 transition-colors">
+                            <label className="flex items-center gap-3 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer group">
                                 <input
                                     type="checkbox"
                                     name="hasSecondary"
                                     checked={formData.hasSecondary}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-blue-600 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 accent-agora-blue focus:ring-agora-blue cursor-pointer transition-all"
                                 />
-                                Secondary Education
+                                <span className="text-sm font-medium group-hover:text-agora-blue transition-colors">Secondary Education</span>
                             </label>
-                            <label className="flex items-center gap-2 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer hover:text-blue-400 transition-colors">
+                            <label className="flex items-center gap-3 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer group">
                                 <input
                                     type="checkbox"
                                     name="hasTertiary"
                                     checked={formData.hasTertiary}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-[var(--light-border)] dark:border-[var(--dark-border)] bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-blue-600 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 accent-agora-blue focus:ring-agora-blue cursor-pointer transition-all"
                                 />
-                                Tertiary Education
+                                <span className="text-sm font-medium group-hover:text-agora-blue transition-colors">Tertiary Education</span>
                             </label>
                         </div>
                     </div>

@@ -28,6 +28,13 @@ function LoginContent() {
     password: '',
   });
   const sessionExpired = searchParams?.get('expired') === 'true';
+  const intendedPlan = searchParams?.get('plan');
+
+  useEffect(() => {
+    if (intendedPlan) {
+      sessionStorage.setItem('intendedPlan', intendedPlan);
+    }
+  }, [intendedPlan]);
 
   useEffect(() => {
     if (sessionExpired) {
@@ -112,7 +119,13 @@ function LoginContent() {
             STUDENT: '/dashboard/student',
           };
 
-          router.push(roleMap[data.data.user.role] || '/dashboard');
+          const storedPlan = sessionStorage.getItem('intendedPlan');
+          if (storedPlan && data.data.user.role === 'SCHOOL_ADMIN') {
+            sessionStorage.removeItem('intendedPlan');
+            router.push(`/?plan=${storedPlan}`);
+          } else {
+            router.push(roleMap[data.data.user.role] || '/dashboard');
+          }
         } else {
           console.error('Unexpected login response structure:', data);
           setError('Unexpected response from server. Please try again.');
@@ -180,7 +193,13 @@ function LoginContent() {
           STUDENT: '/dashboard/student',
         };
 
-        router.push(roleMap[data.data.user.role] || '/dashboard');
+        const storedPlan = sessionStorage.getItem('intendedPlan');
+        if (storedPlan && data.data.user.role === 'SCHOOL_ADMIN') {
+          sessionStorage.removeItem('intendedPlan');
+          router.push(`/?plan=${storedPlan}`);
+        } else {
+          router.push(roleMap[data.data.user.role] || '/dashboard');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'OTP verification failed');

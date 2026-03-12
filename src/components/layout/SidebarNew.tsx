@@ -49,7 +49,7 @@ function LogoutButton() {
       className="flex-1 justify-start gap-2 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] h-9 px-2 overflow-hidden"
     >
       <LogOut className="h-4 w-4 flex-shrink-0" />
-      <span className="text-[13px] transition-opacity duration-200">
+      <span className="font-semibold transition-opacity duration-200" style={{ fontSize: 'var(--text-body)' }}>
         Logout
       </span>
     </Button>

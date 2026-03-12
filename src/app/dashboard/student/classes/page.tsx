@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -26,13 +27,14 @@ import {
   useGetSessionsQuery,
   useGetCurriculumForClassQuery,
   useGetMyClassmatesQuery,
+  useGetClassAssessmentsQuery,
 } from '@/lib/store/api/schoolAdminApi';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import { useStudentSchoolType, getStudentTerminology } from '@/hooks/useStudentDashboard';
 import { safeDownload } from '@/lib/utils/download';
 import toast from 'react-hot-toast';
 
-type TabType = 'overview' | 'teachers' | 'resources' | 'curriculum' | 'timetable' | 'classmates';
+type TabType = 'assessments' | 'teachers' | 'resources' | 'curriculum' | 'timetable' | 'classmates';
 
 // Classmate Card Component
 function ClassmateCard({ classmate }: { classmate: any }) {
@@ -85,7 +87,8 @@ function ClassmateCard({ classmate }: { classmate: any }) {
 }
 
 export default function StudentClassesPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabType>('assessments');
   const [selectedTermId, setSelectedTermId] = useState<string>('');
 
   // Get school type from student's enrollment (not localStorage)
@@ -146,6 +149,25 @@ export default function StudentClassesPage() {
     { skip: !classData } // Skip until we know student is enrolled
   );
   const timetable = timetableResponse?.data || [];
+
+  // Get class assessments
+  const { data: assessmentsResponse, isLoading: isLoadingAssessments } = useGetClassAssessmentsQuery(
+    {
+      schoolId: schoolId!,
+      classId: classData?.id!,
+      termId: activeSession?.term?.id || undefined,
+    },
+    { skip: !schoolId || !classData?.id }
+  );
+  const assessments = Array.isArray(assessmentsResponse) ? assessmentsResponse : assessmentsResponse?.data || [];
+
+  // Calculate unread assessments (published and not submitted)
+  const pendingAssessmentsCount = useMemo(() => {
+    return assessments.filter((a: any) =>
+      a.status === 'PUBLISHED' &&
+      (!a.submissions || a.submissions.length === 0)
+    ).length;
+  }, [assessments]);
 
   // Extract all terms from sessions for selector - filtered by school type and deduplicated
   const allTerms = useMemo(() => {
@@ -224,10 +246,18 @@ export default function StudentClassesPage() {
 
   const tabs = [
     {
-      id: 'overview' as TabType,
-      label: 'Overview',
-      icon: <BookOpen className="h-4 w-4" />,
+      id: 'assessments' as TabType,
+      label: 'Assessments',
+      icon: (
+        <div className="relative">
+          <FileText className="h-4 w-4" />
+          {pendingAssessmentsCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-dark-bg" />
+          )}
+        </div>
+      ),
       available: true,
+      badge: pendingAssessmentsCount > 0 ? pendingAssessmentsCount : undefined,
     },
     {
       id: 'teachers' as TabType,
@@ -301,7 +331,7 @@ export default function StudentClassesPage() {
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-1" style={{ fontSize: 'var(--text-page-title)' }}>
                 {classData.name}
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary">
@@ -321,13 +351,21 @@ export default function StudentClassesPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
-                    ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
+                className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                  ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
                   }`}
+                style={{ fontSize: 'var(--text-tiny)' }}
               >
                 {tab.icon}
-                {tab.label}
+                <div className="flex items-center gap-1.5">
+                  {tab.label}
+                  {tab.badge && (
+                    <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                      {tab.badge}
+                    </span>
+                  )}
+                </div>
               </button>
             ))}
           </div>
@@ -335,60 +373,108 @@ export default function StudentClassesPage() {
 
         {/* Tab Content */}
         <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
+          {/* Assessments Tab */}
+          {activeTab === 'assessments' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                    {terminology.courseSingular} Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {classData.description && (
-                      <div>
-                        <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                          Description
-                        </p>
-                        <p className="text-light-text-primary dark:text-dark-text-primary">
-                          {classData.description}
-                        </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {isLoadingAssessments ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-t-lg" />
+                      <div className="p-6 space-y-3">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 w-3/4 rounded" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 w-1/2 rounded" />
                       </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                          Academic Year
-                        </p>
-                        <p className="text-light-text-primary dark:text-dark-text-primary">
-                          {classData.academicYear}
-                        </p>
-                      </div>
-                      {classData.type && (
-                        <div>
-                          <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                            Type
-                          </p>
-                          <p className="text-light-text-primary dark:text-dark-text-primary capitalize">
-                            {classData.type.toLowerCase()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    {classData.enrollment && (
-                      <div>
-                        <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                          Enrollment Date
-                        </p>
-                        <p className="text-light-text-primary dark:text-dark-text-primary">
-                          {new Date(classData.enrollment.enrollmentDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
+                    </Card>
+                  ))
+                ) : assessments.length > 0 ? (
+                  assessments.map((assessment: any) => {
+                    const submission = assessment.submissions?.[0];
+                    const isSubmitted = !!submission;
+                    const isGraded = submission?.status === 'GRADED';
+
+                    return (
+                      <FadeInUp key={assessment.id} duration={0.4}>
+                        <Card className="h-full group hover:shadow-xl transition-all duration-300 border-t-4 border-t-blue-500 overflow-hidden bg-light-card dark:bg-dark-surface">
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-start mb-2">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
+                                assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                                }`}>
+                                {assessment.type}
+                              </span>
+                              {isSubmitted ? (
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isGraded ? 'text-green-500' : 'text-blue-500'}`}>
+                                  {isGraded ? 'GRADED' : 'SUBMITTED'}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                                  PENDING
+                                </span>
+                              )}
+                            </div>
+                            <CardTitle className="group-hover:text-blue-600 transition-colors uppercase tracking-tight font-black" style={{ fontSize: 'var(--text-card-title)' }}>
+                              {assessment.title}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4 h-10" style={{ fontSize: 'var(--text-small)' }}>
+                              {assessment.description || 'No description provided.'}
+                            </p>
+
+                            {isGraded && (
+                              <div className="mb-4 bg-green-50 dark:bg-green-900/10 p-3 rounded-lg flex items-center justify-between border border-green-200 dark:border-green-800">
+                                <span className="font-bold text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-tiny)' }}>YOUR SCORE</span>
+                                <span className="font-black text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-stat-value)' }}>
+                                  {submission.totalScore} / {assessment.maxScore}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="space-y-2 pt-4 border-t border-light-border dark:border-dark-border">
+                              <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
+                                <span>Subject</span>
+                                <span className="text-light-text-primary dark:text-dark-text-primary">{assessment.subjectName || 'General'}</span>
+                              </div>
+                              <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
+                                <span>Due Date</span>
+                                <span className="text-light-text-primary dark:text-dark-text-primary">
+                                  {assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-6">
+                              {isSubmitted ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-2"
+                                  onClick={() => router.push(`/dashboard/student/assessments/${assessment.id}`)}
+                                >
+                                  View Result
+                                </Button>
+                              ) : (
+                                <Button
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                                  onClick={() => router.push(`/dashboard/student/assessments/${assessment.id}`)}
+                                >
+                                  Take Assessment
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </FadeInUp>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full py-20 text-center">
+                    <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No assessments available.</p>
+                    <p className="text-sm text-light-text-muted mt-2">When your teacher publishes an assessment, it will appear here.</p>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             </div>
           )}
 
@@ -397,7 +483,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     {terminology.staff}
                   </CardTitle>
                 </CardHeader>
@@ -465,7 +551,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Curriculum Overview
                   </CardTitle>
                 </CardHeader>
@@ -547,7 +633,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Resources
                   </CardTitle>
                 </CardHeader>
@@ -606,7 +692,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Weekly Timetable
                   </CardTitle>
                 </CardHeader>
@@ -640,7 +726,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Classmates
                   </CardTitle>
                 </CardHeader>

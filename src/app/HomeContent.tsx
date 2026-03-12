@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGetPublicSchoolsQuery, useGetPlatformStatsQuery } from '@/lib/store/api/publicApi';
-import { useState, useEffect, useRef } from 'react';
 import { PricingTable } from '@/components/subscriptions/PricingTable';
+import { useState, useEffect, useRef } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -76,8 +76,20 @@ export default function HomeContent() {
 
   // Debug: log errors in development
   if (process.env.NODE_ENV === 'development') {
-    if (statsError) console.error('Stats API error:', statsError);
-    if (schoolsError) console.error('Schools API error:', schoolsError);
+    if (statsError) {
+      console.error('Stats API error detail:', {
+        error: statsError,
+        message: 'status' in statsError ? statsError.status : 'Unknown status',
+        data: 'data' in statsError ? statsError.data : 'No data'
+      });
+    }
+    if (schoolsError) {
+      console.error('Schools API error detail:', {
+        error: schoolsError,
+        message: 'status' in schoolsError ? schoolsError.status : 'Unknown status',
+        data: 'data' in schoolsError ? schoolsError.data : 'No data'
+      });
+    }
   }
 
   // Only use user state after hydration to avoid mismatch
@@ -101,12 +113,17 @@ export default function HomeContent() {
     <div className="min-h-screen bg-[var(--dark-bg)] text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden relative">
       <LandingNavbar />
 
+      {/* Global Background Grid */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-0"
+        style={{ backgroundImage: 'radial-gradient(circle, var(--agora-blue) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+      />
+
       {/* Hero Section */}
       <section className="relative pt-32 pb-32 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto mt-12 md:mt-16 z-10">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} delay={0.1} duration={0.8}>
             <h1 className="text-5xl md:text-[4rem] font-bold text-[var(--dark-text-primary)] leading-tight mb-8 tracking-tight font-heading">
-              The way we manage schools can be better
+              The Way You Manage Schools Can Be Better
             </h1>
           </FadeInUp>
 
@@ -337,10 +354,6 @@ export default function HomeContent() {
 
       {/* Protocol Stream Section */}
       <section data-navbar-light="true" className="py-32 relative overflow-hidden">
-        {/* Subtle technical background grid */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16 md:mb-24 px-4">
             <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
@@ -589,21 +602,21 @@ export default function HomeContent() {
       </section>
 
       {/* Schools Network Section */}
-      <section data-navbar-light="true" className="py-32 relative overflow-hidden border-t border-white/[0.02]">
+      <section data-navbar-light="true" className="py-32 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[600px] bg-agora-blue/5 rounded-full blur-[160px] pointer-events-none opacity-50" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-20 px-4">
-            <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
               The_Agora_Network
             </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 font-heading tracking-tight leading-[1.1]">
-              Decentralized <br className="md:hidden" /> Institutional Nodes
+            <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tight leading-[1.1]">
+              Schools Already <br className="md:hidden" /> Using Agora
             </h2>
-            <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto leading-relaxed font-light">
-              The growing infrastructure of world-class institutions running on the Agora protocol.
+            <p className="text-base md:text-xl text-[var(--dark-text-secondary)] max-w-2xl mx-auto leading-relaxed font-light">
+              Join the growing ecosystem of world-class institutions digitizing the future of African education.
             </p>
           </AnimateInView>
 
@@ -676,25 +689,28 @@ export default function HomeContent() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 md:py-32 relative overflow-hidden border-t border-[var(--dark-border)]">
+      <section className="py-24 md:py-40 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-agora-blue/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-agora-blue/5 rounded-full blur-[160px] pointer-events-none" />
         </div>
 
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-full opacity-5">
-            <div className="absolute top-20 left-20 w-64 h-64 bg-agora-blue rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-20 right-20 w-96 h-96 bg-agora-accent rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute top-0 left-0 w-full h-full opacity-[0.07]">
+            <div className="absolute top-20 left-20 w-96 h-96 bg-agora-blue rounded-full blur-[100px] animate-pulse" />
+            <div className="absolute bottom-20 right-20 w-[600px] h-[600px] bg-agora-accent rounded-full blur-[120px] animate-pulse delay-1000" />
           </div>
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <AnimateInView duration={0.8}>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 leading-tight tracking-tight font-heading">
-              Ready to Transform <br /> Education in Africa?
+            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-10 uppercase tracking-[0.4em]">
+              Final_Protocol_Handshake
+            </span>
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-[var(--dark-text-primary)] mb-8 leading-[1.05] tracking-tight font-heading">
+              Ready to Transform <br className="hidden md:block" /> Education in Africa?
             </h2>
-            <p className="text-lg md:text-xl text-[var(--dark-text-secondary)] mb-12 max-w-3xl mx-auto leading-relaxed font-light">
+            <p className="text-lg md:text-2xl text-[var(--dark-text-secondary)] mb-14 max-w-3xl mx-auto leading-relaxed font-light">
               Join schools, parents, and students building the future of digital education identity.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -702,9 +718,9 @@ export default function HomeContent() {
                 size="lg"
                 variant="primary"
                 onClick={handleGetStarted}
-                className="rounded-full px-12 py-6 text-lg hover:scale-105 font-bold transition-all"
+                className="rounded-full px-16 py-8 text-xl hover:scale-105 font-bold transition-all shadow-[0_0_30px_rgba(36,144,253,0.3)] bg-agora-blue hover:bg-agora-blue/90"
               >
-                {isLoggedIn ? 'Go to dashboard' : 'Get Started Free'}
+                {isLoggedIn ? 'Go to Dashboard' : 'Get Started Free'}
               </Button>
             </div>
           </AnimateInView>
@@ -712,7 +728,7 @@ export default function HomeContent() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[var(--dark-bg)] text-[var(--dark-text-secondary)] py-20 border-t border-[var(--dark-border)] relative z-10">
+      <footer className="bg-[var(--dark-bg)] text-[var(--dark-text-secondary)] py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-8">
             <div className="col-span-1 md:col-span-1">

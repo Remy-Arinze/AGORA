@@ -246,10 +246,11 @@ export const SidebarLink = ({
         {iconWithColor}
         <span
           className={cn(
-            "text-[0.8rem] group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
+            "font-semibold group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
             isActive ? " text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]" : " text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
+          style={{ fontSize: 'var(--text-body)' }}
         >
           {link.label}
         </span>

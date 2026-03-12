@@ -49,9 +49,9 @@
     /* High-impact orange accent */
 
     /* Typography Sizes - Consistent across app */
-    --text-page-title: 1.5rem;
+    --text-page-title: 1.2rem;
     /* 24px - Page titles (h1) */
-    --text-page-subtitle: .9rem;
+    --text-page-subtitle: .8rem;
     /* 16px - Page subtitles */
     --text-section-title: .9rem;
     /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
@@ -61,6 +61,8 @@
     /* 14px - Body text */
     --text-small: 0.75rem;
     /* 12px - Small text */
+    --text-tiny: 0.7rem;
+    /* 11.2px - Tiny text for tabs/badges */
     --text-placeholder: var(--text-small);
     /* Placeholder text - consistent with small */
     --text-stat-value: 1.5rem;
@@ -79,8 +81,8 @@
     /* 24px - Large card padding */
 
     /* Light Mode Colors */
-    --light-bg: #f3f4f6;
-    --light-card: #e7e9ef;
+    --light-bg: #ebebeb;
+    --light-card: #dadde2;
     --light-text-primary: #111827;
     --light-text-secondary: #4b5563;
     --light-text-muted: #9ca3af;
@@ -144,6 +146,102 @@
     background-color: var(--dark-bg);
     color: var(--dark-text-primary);
   }
+
+  /* --- Glassmorphism Overrides for Teacher Dashboard --- */
+  body.teacher-dashboard-active {
+    background-color: var(--light-bg);
+    /* Fallback base color behind blobs */
+    --light-bg: transparent;
+    /* Make MainContent background transparent so blobs show through */
+    --dark-bg: transparent;
+    --light-card: rgba(255, 255, 255, 0.55);
+    /* For dark mode, we want a very light, almost invisible gloss over the dark base */
+    --dark-surface: rgba(255, 255, 255, 0.04);
+  }
+
+  .dark body.teacher-dashboard-active {
+    background-color: #0b0b0e !important;
+    --dark-bg: transparent;
+    /* Deep deep dark for better contrast with colorful glowing blobs */
+  }
+
+  /* Make sure background is totally transparent so blobs show through */
+  .teacher-dashboard-active main,
+  .teacher-dashboard-active .relative.z-10,
+  .teacher-dashboard-active>div>div>div {
+    background-color: transparent !important;
+  }
+
+  /* Target cards dynamically */
+  .teacher-glass-content .rounded-lg,
+  .teacher-glass-content .border-b,
+  .teacher-glass-content [class*="bg-[var(--light-bg)]"] {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  }
+
+  .dark .teacher-glass-content .rounded-lg,
+  .dark .teacher-glass-content .border-b,
+  .dark .teacher-glass-content [class*="bg-[var(--dark-bg)]"] {
+    background-color: rgba(30, 30, 35, 0.3) !important;
+    /* Extremely sheer tinted dark glass */
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    /* Crisper bright white edge reflection */
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+    /* Stronger top rim light */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* --- Glassmorphism Overrides for Student Dashboard --- */
+  body.student-dashboard-active {
+    background-color: var(--light-bg);
+    /* Fallback base color behind blobs */
+    --light-bg: transparent;
+    /* Make MainContent background transparent so blobs show through */
+    --dark-bg: transparent;
+    --light-card: rgba(255, 255, 255, 0.55);
+    /* For dark mode, we want a very light, almost invisible gloss over the dark base */
+    --dark-surface: rgba(255, 255, 255, 0.04);
+  }
+
+  .dark body.student-dashboard-active {
+    background-color: #0b0b0e !important;
+    --dark-bg: transparent;
+    /* Deep deep dark for better contrast with colorful glowing blobs */
+  }
+
+  /* Make background transparent */
+  .student-dashboard-active main,
+  .student-dashboard-active .relative.z-10,
+  .student-dashboard-active>div>div>div {
+    background-color: transparent !important;
+  }
+
+  /* Target cards dynamically - Matching Teacher Quality */
+  .student-glass-content .rounded-lg,
+  .student-glass-content .border-b,
+  .student-glass-content [class*="bg-[var(--light-bg)]"] {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  }
+
+  .dark .student-glass-content .rounded-lg,
+  .dark .student-glass-content .border-b,
+  .dark .student-glass-content [class*="bg-[var(--dark-bg)]"] {
+    background-color: rgba(30, 30, 35, 0.3) !important;
+    /* Extremely sheer tinted dark glass */
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    /* Crisper bright white edge reflection */
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+    /* Stronger top rim light */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* --------------------------------------------------- */
 
   /* Lenis Smooth Scroll CSS */
   html.lenis-smooth {

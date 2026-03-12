@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
 import { useSubscription, SubscriptionTier } from '@/hooks/useSubscription';
@@ -14,6 +15,8 @@ interface PricingTableProps {
 }
 
 export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isYearly] = useState(false);
   const [loadingTier, setLoadingTier] = useState<SubscriptionTier | null>(null);
 
@@ -44,7 +47,33 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
 
   const isLoading = isAuthenticated ? isLoadingSchool : isLoadingPublic;
 
+  // Auto-trigger plan selection if coming back from auth
+  useEffect(() => {
+    const planFromUrl = searchParams?.get('plan') as SubscriptionTier;
+    if (isAuthenticated && planFromUrl && !isLoading && plans.length > 0) {
+      const selectedPlan = plans.find(p => p.tierCode === planFromUrl);
+      if (selectedPlan && canUpgradeTo(planFromUrl)) {
+        // Scroll to pricing if not already there
+        const pricingSection = document.getElementById('pricing');
+        if (pricingSection) {
+          pricingSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Remove the param from URL to prevent re-triggering
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+
+        handleSelectPlan(planFromUrl);
+      }
+    }
+  }, [isAuthenticated, isLoading, plans, searchParams]);
+
   const handleSelectPlan = async (tier: SubscriptionTier) => {
+    if (!isAuthenticated) {
+      router.push(`/auth/login?plan=${tier}`);
+      return;
+    }
+
     setLoadingTier(tier);
     try {
       if (onSelectPlan) {
@@ -187,9 +216,11 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
                 >
                   {loadingTier === plan.tierCode
                     ? 'Processing...'
-                    : isCurrentPlan
-                      ? 'Current Active Plan'
-                      : plan.cta}
+                    : !isAuthenticated
+                      ? (plan.tierCode === SubscriptionTier.FREE ? 'Continue' : 'Get Started')
+                      : isCurrentPlan
+                        ? 'Current Active Plan'
+                        : plan.cta}
                 </button>
               </div>
             </FadeInUp>

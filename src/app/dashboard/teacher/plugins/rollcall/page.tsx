@@ -47,10 +47,10 @@ export default function RollCallPage() {
       prev.map((item) =>
         item.id === id
           ? {
-              ...item,
-              status: item.status === 'present' ? 'absent' : 'present',
-              time: item.status === 'present' ? null : new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            }
+            ...item,
+            status: item.status === 'present' ? 'absent' : 'present',
+            time: item.status === 'present' ? null : new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          }
           : item
       )
     );
@@ -69,7 +69,7 @@ export default function RollCallPage() {
               <Smartphone className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
                 RollCall
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary">
@@ -83,7 +83,7 @@ export default function RollCallPage() {
           {/* QR Code Scanner */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
+              <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
                 <QrCode className="h-5 w-5" />
                 Scan Student ID
               </CardTitle>
@@ -112,7 +112,7 @@ export default function RollCallPage() {
           {/* Stats */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+              <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-section-title)' }}>
                 Today&apos;s Attendance
               </CardTitle>
             </CardHeader>
@@ -122,7 +122,7 @@ export default function RollCallPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-green-800 dark:text-green-300">Present</p>
-                      <p className="text-2xl font-bold text-green-900 dark:text-green-400">{presentCount}</p>
+                      <p className="font-bold text-green-900 dark:text-green-400" style={{ fontSize: 'var(--text-stat-value)' }}>{presentCount}</p>
                     </div>
                     <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
                   </div>
@@ -131,7 +131,7 @@ export default function RollCallPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-red-800 dark:text-red-300">Absent</p>
-                      <p className="text-2xl font-bold text-red-900 dark:text-red-400">{absentCount}</p>
+                      <p className="font-bold text-red-900 dark:text-red-400" style={{ fontSize: 'var(--text-stat-value)' }}>{absentCount}</p>
                     </div>
                     <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
                   </div>
@@ -140,7 +140,7 @@ export default function RollCallPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Total</p>
-                      <p className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">{attendance.length}</p>
+                      <p className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-stat-value)' }}>{attendance.length}</p>
                     </div>
                     <Users className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted" />
                   </div>
@@ -153,7 +153,7 @@ export default function RollCallPage() {
         {/* Attendance List */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+            <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-section-title)' }}>
               Attendance List
             </CardTitle>
           </CardHeader>

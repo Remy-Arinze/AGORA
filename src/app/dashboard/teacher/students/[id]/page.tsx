@@ -7,10 +7,10 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  User, 
-  Mail, 
-  Phone, 
+import {
+  User,
+  Mail,
+  Phone,
   Calendar,
   BookOpen,
   Clock,
@@ -59,7 +59,7 @@ export default function TeacherStudentDetailPage() {
 
   const handlePublishGrade = async (gradeId: string) => {
     if (!schoolId) return;
-    
+
     try {
       await updateGrade({
         schoolId,
@@ -133,7 +133,7 @@ export default function TeacherStudentDetailPage() {
           </Button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
                 {student.firstName} {student.lastName}
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary">
@@ -150,11 +150,10 @@ export default function TeacherStudentDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                     : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -405,7 +404,7 @@ export default function TeacherStudentDetailPage() {
                                 )}
                               </div>
                               <div className="text-right">
-                                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                <p className="font-bold text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-stat-value)' }}>
                                   {grade.score}
                                 </p>
                                 <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
@@ -458,7 +457,7 @@ export default function TeacherStudentDetailPage() {
                     <div className="w-32 h-32 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4">
                       <Calendar className="h-16 w-16 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <p className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+                    <p className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-stat-value)' }}>
                       {student.attendance}%
                     </p>
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">

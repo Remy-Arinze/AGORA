@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/lib/store/store';
 import { useGetMySchoolQuery, useGetMyTeacherSchoolQuery, useGetMyStudentSchoolQuery } from '@/lib/store/api/schoolAdminApi';
-import { User } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export function Navbar() {

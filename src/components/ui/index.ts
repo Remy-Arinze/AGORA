@@ -10,4 +10,5 @@ export { ImageUpload } from './ImageUpload';
 export { ImageCropModal, type ImageCropModalProps } from './ImageCropModal';
 export { Checkbox } from './Checkbox';
 export { Label } from './Label';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 

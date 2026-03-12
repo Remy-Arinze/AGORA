@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { Clock, Calendar, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
-import { 
+import {
   useGetSessionsQuery,
   useGetTimetableForTeacherQuery,
 } from '@/lib/store/api/schoolAdminApi';
@@ -31,7 +31,7 @@ export default function TeacherTimetablesPage() {
 
   const schoolId = school?.id;
   const teacherId = teacher?.id;
-  
+
   const terminology = getTerminology(schoolType) || {
     courses: 'Classes',
     courseSingular: 'Class',
@@ -55,7 +55,7 @@ export default function TeacherTimetablesPage() {
   // If user selected a different term, fetch that timetable
   // Otherwise use the dashboard's timetable (which is for the active term)
   const needsSeparateFetch = selectedTermId && selectedTermId !== activeTerm?.id;
-  
+
   const { data: selectedTermTimetableResponse, isLoading: isLoadingSelectedTerm, error } = useGetTimetableForTeacherQuery(
     {
       schoolId: schoolId!,
@@ -66,22 +66,22 @@ export default function TeacherTimetablesPage() {
   );
 
   // Use selected term's timetable if fetched, otherwise use dashboard's timetable
-  const timetable = needsSeparateFetch 
+  const timetable = needsSeparateFetch
     ? (selectedTermTimetableResponse?.data || [])
     : dashboardTimetable;
-  
+
   const isLoading = isDashboardLoading || (needsSeparateFetch && isLoadingSelectedTerm);
 
   // Get all terms from sessions for term selector - filtered by school type and deduplicated
   const allTerms = useMemo(() => {
     if (!sessionsResponse?.data) return [];
-    
+
     // Filter sessions by current school type to avoid duplicates
     const filteredSessions = sessionsResponse.data.filter((session) => {
       if (!schoolType) return !session.schoolType;
       return session.schoolType === schoolType;
     });
-    
+
     // Deduplicate sessions by name (keep first/latest)
     const uniqueSessionsMap = new Map<string, typeof filteredSessions[0]>();
     filteredSessions.forEach((session) => {
@@ -89,7 +89,7 @@ export default function TeacherTimetablesPage() {
         uniqueSessionsMap.set(session.name, session);
       }
     });
-    
+
     const terms: Array<{ id: string; name: string; sessionName: string }> = [];
     Array.from(uniqueSessionsMap.values()).forEach((session) => {
       if (session.terms) {
@@ -102,7 +102,7 @@ export default function TeacherTimetablesPage() {
         });
       }
     });
-    
+
     // Sort by session name (desc) then term number
     return terms.sort((a, b) => {
       const sessionCompare = b.sessionName.localeCompare(a.sessionName);
@@ -116,7 +116,7 @@ export default function TeacherTimetablesPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+          <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             My Timetable
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">

@@ -26,7 +26,6 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
-import { getActivePluginsForTeacher } from '@/lib/plugins';
 import {
   useGetClassByIdQuery,
   useGetMyTeacherSchoolQuery,
@@ -38,13 +37,16 @@ import {
   useGetCurriculumForClassQuery,
   useGetTimetableForClassQuery,
   useGetSessionsQuery,
+  useGetClassAssessmentsQuery,
   type StudentWithEnrollment,
   type Grade,
-  type GradeType
+  type GradeType,
+  type Assessment
 } from '@/lib/store/api/schoolAdminApi';
 import { useClassResources } from '@/hooks/useClassResources';
 import { BulkGradeEntryModal } from '@/components/modals/BulkGradeEntryModal';
 import { GradeEntryModal } from '@/components/modals/GradeEntryModal';
+import { CreateAssessmentModal } from '@/components/modals/CreateAssessmentModal';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import toast from 'react-hot-toast';
@@ -54,13 +56,13 @@ import { cn } from '@/lib/utils';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
 
-type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'rollcall' | 'resources';
+type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments';
 
 export default function ClassDetailPage() {
   const params = useParams();
   const router = useRouter();
   const classId = params.id as string;
-  const [activeTab, setActiveTab] = useState<TabType>('curriculum');
+  const [activeTab, setActiveTab] = useState<TabType>('timetable');
   const [searchQuery, setSearchQuery] = useState('');
   const [showBulkGradeModal, setShowBulkGradeModal] = useState(false);
   const [showGradeModal, setShowGradeModal] = useState(false);
@@ -72,6 +74,8 @@ export default function ClassDetailPage() {
   const [sequenceFilter, setSequenceFilter] = useState<number | ''>('');
   const [selectedTimetableTermId, setSelectedTimetableTermId] = useState<string>('');
   const [showUploadResourceModal, setShowUploadResourceModal] = useState(false);
+  const [assessmentTermFilter, setAssessmentTermFilter] = useState<string>('');
+  const [showCreateAssessmentModal, setShowCreateAssessmentModal] = useState(false);
 
   const { currentType } = useSchoolType();
   const terminology = getTerminology(currentType) || {
@@ -129,6 +133,18 @@ export default function ClassDetailPage() {
     },
     { skip: !schoolId || !classId || activeTab !== 'grades' }
   );
+
+  // Get assessments for class
+  const { data: assessmentsResponse, isLoading: isLoadingAssessments } = useGetClassAssessmentsQuery(
+    {
+      schoolId: schoolId!,
+      classId,
+      termId: assessmentTermFilter || activeSession?.term?.id || undefined,
+    },
+    { skip: !schoolId || !classId || activeTab !== 'assessments' }
+  );
+
+  const assessments = assessmentsResponse?.data || assessmentsResponse || []; // Handle both direct array and ResponseDto
 
   const [deleteGrade, { isLoading: isDeleting }] = useDeleteGradeMutation();
   const [updateGrade, { isLoading: isPublishing }] = useUpdateGradeMutation();
@@ -248,17 +264,14 @@ export default function ClassDetailPage() {
     classId,
     activeTab,
   });
-  const activePlugins = getActivePluginsForTeacher();
-  const hasRollCall = activePlugins.some(p => p.slug === 'rollcall');
-
   // Build tabs dynamically based on available plugins
   const tabs: { id: TabType; label: string; icon: React.ReactNode; available: boolean }[] = [
-    { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
     { id: 'timetable', label: 'Timetable', icon: <Clock className="h-4 w-4" />, available: true },
     { id: 'students', label: 'Students', icon: <Users className="h-4 w-4" />, available: true },
     { id: 'grades', label: 'Grades', icon: <Award className="h-4 w-4" />, available: true },
+    { id: 'assessments', label: 'Assessments', icon: <Award className="h-4 w-4" />, available: true },
     { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" />, available: true },
-    { id: 'rollcall', label: 'RollCall', icon: <Smartphone className="h-4 w-4" />, available: hasRollCall },
+    { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
   ];
 
   if (isLoading) {
@@ -310,10 +323,10 @@ export default function ClassDetailPage() {
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
                 {classData.name}
               </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary">
+              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 {classData.code && `${classData.code} • `}
                 {classData.classLevel && `${classData.classLevel} • `}
                 {classData.academicYear}
@@ -330,10 +343,11 @@ export default function ClassDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
-                    ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
+                className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === tab.id
+                  ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
                   }`}
+                style={{ fontSize: 'var(--text-tiny)' }}
               >
                 {tab.icon}
                 {tab.label}
@@ -368,12 +382,12 @@ export default function ClassDetailPage() {
                               </span>
                             </div>
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
+                              <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-card-title)' }}>
                                 {item.topic}
                               </h3>
                               {item.objectives && item.objectives.length > 0 && (
                                 <div className="space-y-2 mb-3">
-                                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
+                                  <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                                     Learning Objectives:
                                   </p>
                                   <ul className="list-disc list-inside space-y-1 ml-2">
@@ -529,8 +543,8 @@ export default function ClassDetailPage() {
                                 <td className="py-4 px-4">
                                   <span
                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${!student.profileLocked
-                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                                       }`}
                                   >
                                     {student.profileLocked ? 'Locked' : 'Active'}
@@ -706,10 +720,10 @@ export default function ClassDetailPage() {
                                   </td>
                                   <td className="px-4 py-3">
                                     <span className={`px-2 py-1 text-xs font-medium rounded ${grade.gradeType === 'CA'
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
-                                        : grade.gradeType === 'ASSIGNMENT'
-                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                                          : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
+                                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
+                                      : grade.gradeType === 'ASSIGNMENT'
+                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                        : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
                                       }`}>
                                       {grade.gradeType}
                                     </span>
@@ -790,7 +804,92 @@ export default function ClassDetailPage() {
             </div>
           )}
 
+          {/* Assessments Tab */}
+          {(activeTab as TabType) === 'assessments' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                    Assessments
+                  </h2>
+                  <select
+                    value={assessmentTermFilter || activeSession?.term?.id || ''}
+                    onChange={(e) => setAssessmentTermFilter(e.target.value)}
+                    className="text-xs px-2 py-1.5 border border-light-border dark:border-dark-border rounded-md bg-transparent"
+                  >
+                    {timetableTerms.map((term: any) => (
+                      <option key={term.id} value={term.id}>{term.name} ({term.sessionName})</option>
+                    ))}
+                  </select>
+                </div>
+                <Button onClick={() => setShowCreateAssessmentModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Assessment
+                </Button>
+              </div>
+
+              {isLoadingAssessments ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+              ) : (assessments as Assessment[]).length === 0 ? (
+                <Card>
+                  <CardContent className="py-20 text-center">
+                    <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No assessments found for this term.</p>
+                    <p className="text-sm text-light-text-muted mt-2 mb-6">Create your first assessment or use AI to generate one.</p>
+                    <Button variant="outline" onClick={() => setShowCreateAssessmentModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" /> Create First Assessment
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(assessments as Assessment[]).map((assessment: Assessment) => (
+                    <Card key={assessment.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer" onClick={() => router.push(`/dashboard/teacher/assessments/${assessment.id}`)}>
+                      <div className="h-2 w-full bg-blue-500" />
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600' :
+                            assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                            }`}>
+                            {assessment.type}
+                          </span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${assessment.status === 'PUBLISHED' ? 'text-green-500' : 'text-amber-500'
+                            }`}>
+                            {assessment.status}
+                          </span>
+                        </div>
+                        <CardTitle className="mt-2 group-hover:text-blue-600 transition-colors">{assessment.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4">
+                          {assessment.description || 'No description provided.'}
+                        </p>
+                        <div className="space-y-2 pt-4 border-t border-light-border dark:border-dark-border">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-light-text-muted">Max Score:</span>
+                            <span className="font-bold">{assessment.maxScore}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-light-text-muted">Submissions:</span>
+                            <span className="font-bold">{assessment._count?.submissions || 0}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-light-text-muted">Due Date:</span>
+                            <span className="font-bold">{assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Resources Tab */}
+
           {(activeTab as TabType) === 'resources' && (
             <div className="space-y-6">
               <Card>
@@ -918,124 +1017,6 @@ export default function ClassDetailPage() {
             </div>
           )}
 
-          {/* RollCall Tab */}
-          {(activeTab as TabType) === 'rollcall' && hasRollCall && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                      RollCall Attendance
-                    </CardTitle>
-                    <Button
-                      size="sm"
-                      onClick={() => router.push('/dashboard/teacher/plugins/rollcall')}
-                      className="flex items-center gap-2"
-                    >
-                      <Smartphone className="h-4 w-4" />
-                      Open RollCall
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <Card className="border border-light-border dark:border-dark-border">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                Today&apos;s Attendance
-                              </p>
-                              <p className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                                {/* TODO: Replace with real attendance data when API is ready */}
-                                0/{students.length}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border border-light-border dark:border-dark-border">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                              <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                Absent Today
-                              </p>
-                              <p className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                                {/* TODO: Replace with real attendance data when API is ready */}
-                                0
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border border-light-border dark:border-dark-border">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                              <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                Late Today
-                              </p>
-                              <p className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                                {/* TODO: Replace with real attendance data when API is ready */}
-                                0
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                        Recent Attendance Records
-                      </h3>
-                      {/* TODO: Replace with real attendance data when API is ready */}
-                      <div className="text-center py-8">
-                        <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                        <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                          Attendance records will be available here once you start taking attendance.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* RollCall Tab - Not Available */}
-          {(activeTab as TabType) === 'rollcall' && !hasRollCall && (
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="pt-12 pb-12 text-center">
-                  <Smartphone className="h-16 w-16 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
-                    RollCall Plugin Not Available
-                  </h3>
-                  <p className="text-light-text-secondary dark:text-dark-text-secondary mb-6">
-                    Your school needs to subscribe to the RollCall plugin to use this feature.
-                  </p>
-                  <Button
-                    size="sm"
-                    onClick={() => router.push('/dashboard/school/marketplace')}
-                  >
-                    View Marketplace
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </FadeInUp>
       </div>
 
@@ -1112,7 +1093,7 @@ export default function ClassDetailPage() {
           <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-light-card dark:bg-dark-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                <h2 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-stat-value)' }}>
                   Upload Resource
                 </h2>
                 <button
@@ -1214,6 +1195,15 @@ export default function ClassDetailPage() {
           </FadeInUp>
         </div>
       )}
+
+      {/* Modals */}
+      <CreateAssessmentModal
+        isOpen={showCreateAssessmentModal}
+        onClose={() => setShowCreateAssessmentModal(false)}
+        schoolId={schoolId!}
+        classId={classId}
+        activeTermId={assessmentTermFilter || activeSession?.term?.id}
+      />
     </ProtectedRoute>
   );
 }

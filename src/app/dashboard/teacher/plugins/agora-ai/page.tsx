@@ -82,7 +82,7 @@ export default function AgoraAIPage() {
               <Sparkles className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
                 Agora AI
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary">
@@ -96,7 +96,7 @@ export default function AgoraAIPage() {
           {/* Lesson Plan Generator */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
+              <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
                 <FileText className="h-5 w-5 text-indigo-500" />
                 Generate Lesson Plan
               </CardTitle>
@@ -167,7 +167,7 @@ export default function AgoraAIPage() {
           {/* Quick Quiz Generator */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
+              <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
                 <FileQuestion className="h-5 w-5 text-indigo-500" />
                 Quick Quiz Generator
               </CardTitle>

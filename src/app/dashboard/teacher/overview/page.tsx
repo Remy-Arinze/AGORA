@@ -17,11 +17,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { TimetablePeriod } from '@/lib/store/api/schoolAdminApi';
-import { 
-  useTeacherDashboard, 
-  getTodaySchedule, 
+import {
+  useTeacherDashboard,
+  getTodaySchedule,
   getWeeklySchedule,
-  getCurrentAndUpcomingPeriods 
+  getCurrentAndUpcomingPeriods
 } from '@/hooks/useTeacherDashboard';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const;
@@ -50,7 +50,7 @@ const PERIOD_TYPE_COLORS: Record<string, { bg: string; text: string; border: str
 
 export default function TeacherOverviewPage() {
   const router = useRouter();
-  
+
   // Use unified teacher dashboard hook - handles all data fetching correctly
   const {
     teacher,
@@ -125,17 +125,17 @@ export default function TeacherOverviewPage() {
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mb-1">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-1" style={{ fontSize: 'var(--text-page-title)' }}>
                 Welcome back, {teacher?.firstName || 'Teacher'}!
               </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary">
+              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 {DAY_LABELS[currentDay]}, {now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
             {activeTerm && (
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <div className="text-sm">
+                <div style={{ fontSize: 'var(--text-body)' }}>
                   <span className="font-medium text-blue-700 dark:text-blue-300">
                     {activeTerm.name}
                   </span>
@@ -155,153 +155,149 @@ export default function TeacherOverviewPage() {
 
         {/* Today's Schedule */}
         <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
-                    <Calendar className="h-5 w-5 text-blue-600" />
-                    Today&apos;s Schedule
-                  </CardTitle>
-                  <span className="text-sm text-light-text-muted dark:text-dark-text-muted">
-                    {todaysPeriods.filter((p) => p.type === 'LESSON').length} lessons
-                  </span>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  Today&apos;s Schedule
+                </CardTitle>
+                <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                  {todaysPeriods.filter((p) => p.type === 'LESSON').length} lessons
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {todaysPeriods.length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-3" />
+                  <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                    No classes scheduled for today
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {todaysPeriods.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-3" />
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                      No classes scheduled for today
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {/* Current Period Highlight */}
-                    {currentPeriod && (
-                      <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-600">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-0.5 text-xs font-semibold bg-green-500 text-white rounded animate-pulse">
-                            NOW
-                          </span>
-                          <span className="text-sm text-green-700 dark:text-green-300 font-medium">
-                            {currentPeriod.startTime} - {currentPeriod.endTime}
-                          </span>
-                        </div>
-                        <p className="font-semibold text-green-900 dark:text-green-100">
-                          {currentPeriod.subjectName || 'Free Period'}
-                        </p>
-                        <p className="text-sm text-green-700 dark:text-green-300">
-                          {currentPeriod.classArmName || currentPeriod.className || ''}
-                        </p>
-                        {currentPeriod.roomName && (
-                          <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 mt-2">
-                            <MapPin className="h-3 w-3" />
-                            {currentPeriod.roomName}
-                          </div>
-                        )}
+              ) : (
+                <div className="space-y-3">
+                  {/* Current Period Highlight */}
+                  {currentPeriod && (
+                    <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-600">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-green-500 text-white rounded animate-pulse">
+                          NOW
+                        </span>
+                        <span className="text-green-700 dark:text-green-300 font-medium" style={{ fontSize: 'var(--text-body)' }}>
+                          {currentPeriod.startTime} - {currentPeriod.endTime}
+                        </span>
                       </div>
-                    )}
+                      <p className="font-semibold text-green-900 dark:text-green-100">
+                        {currentPeriod.subjectName || 'Free Period'}
+                      </p>
+                      <p className="text-green-700 dark:text-green-300" style={{ fontSize: 'var(--text-body)' }}>
+                        {currentPeriod.classArmName || currentPeriod.className || ''}
+                      </p>
+                      {currentPeriod.roomName && (
+                        <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 mt-2">
+                          <MapPin className="h-3 w-3" />
+                          {currentPeriod.roomName}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {/* Upcoming Periods */}
-                    {upcomingPeriods.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-light-text-muted dark:text-dark-text-muted uppercase tracking-wide">
-                          Coming Up
-                        </p>
-                        {upcomingPeriods.map((period) => {
-                          const colors = PERIOD_TYPE_COLORS[period.type] || PERIOD_TYPE_COLORS.LESSON;
-                          return (
-                            <div
-                              key={period.id}
-                              className={`p-3 rounded-lg border ${colors.bg} ${colors.border} ${colors.text}`}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-semibold text-sm">
-                                  {period.subjectName || period.type}
-                                </span>
-                                <span className="text-xs font-medium">
-                                  {period.startTime} - {period.endTime}
-                                </span>
-                              </div>
-                              {period.type === 'LESSON' && (
-                                <p className="text-xs opacity-80">
-                                  {period.classArmName || period.className || ''}
-                                </p>
-                              )}
+                  {/* Upcoming Periods */}
+                  {upcomingPeriods.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-light-text-muted dark:text-dark-text-muted uppercase tracking-wide">
+                        Coming Up
+                      </p>
+                      {upcomingPeriods.map((period) => {
+                        const colors = PERIOD_TYPE_COLORS[period.type] || PERIOD_TYPE_COLORS.LESSON;
+                        return (
+                          <div
+                            key={period.id}
+                            className={`p-3 rounded-lg border ${colors.bg} ${colors.border} ${colors.text}`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-semibold" style={{ fontSize: 'var(--text-body)' }}>
+                                {period.subjectName || period.type}
+                              </span>
+                              <span className="text-xs font-medium">
+                                {period.startTime} - {period.endTime}
+                              </span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                            {period.type === 'LESSON' && (
+                              <p className="text-xs opacity-80">
+                                {period.classArmName || period.className || ''}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                    {/* Full Today's List (collapsed) */}
-                    {todaysPeriods.length > (currentPeriod ? 1 : 0) + upcomingPeriods.length && (
-                      <div className="pt-3 border-t border-light-border dark:border-dark-border">
-                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted mb-2">
-                          Full Schedule
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {todaysPeriods
-                            .filter((p) => p.type === 'LESSON')
-                            .map((period) => {
-                              const isPast = period.endTime <= currentTime;
-                              const isCurrent = currentPeriod?.id === period.id;
-                              return (
-                                <div
-                                  key={period.id}
-                                  className={`p-2 rounded text-xs ${
-                                    isCurrent
-                                      ? 'bg-green-100 dark:bg-green-900/30'
-                                      : isPast
-                                        ? 'bg-gray-100 dark:bg-gray-800'
-                                        : 'bg-blue-50 dark:bg-blue-900/20'
+                  {/* Full Today's List (collapsed) */}
+                  {todaysPeriods.length > (currentPeriod ? 1 : 0) + upcomingPeriods.length && (
+                    <div className="pt-3 border-t border-light-border dark:border-dark-border">
+                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted mb-2">
+                        Full Schedule
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {todaysPeriods
+                          .filter((p) => p.type === 'LESSON')
+                          .map((period) => {
+                            const isPast = period.endTime <= currentTime;
+                            const isCurrent = currentPeriod?.id === period.id;
+                            return (
+                              <div
+                                key={period.id}
+                                className={`p-2 rounded text-xs ${isCurrent
+                                    ? 'bg-green-100 dark:bg-green-900/30'
+                                    : isPast
+                                      ? 'bg-gray-100 dark:bg-gray-800'
+                                      : 'bg-blue-50 dark:bg-blue-900/20'
                                   }`}
-                                >
-                                  <div className="flex items-center justify-between gap-1 mb-0.5">
-                                    <span className={`font-medium truncate ${
-                                      isCurrent
-                                        ? 'text-green-800 dark:text-green-200'
-                                        : isPast
-                                          ? 'text-gray-500 dark:text-gray-400 line-through'
-                                          : 'text-gray-900 dark:text-gray-100'
-                                    }`}>{period.subjectName}</span>
-                                    <span className={`text-[10px] font-medium flex-shrink-0 ${
-                                      isCurrent
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : isPast
-                                          ? 'text-gray-400 dark:text-gray-500'
-                                          : 'text-blue-600 dark:text-blue-400'
-                                    }`}>
-                                      {period.startTime} - {period.endTime}
-                                    </span>
-                                  </div>
-                                  <div className={`truncate font-medium ${
-                                    isCurrent
-                                      ? 'text-green-700 dark:text-green-300'
+                              >
+                                <div className="flex items-center justify-between gap-1 mb-0.5">
+                                  <span className={`font-medium truncate ${isCurrent
+                                      ? 'text-green-800 dark:text-green-200'
                                       : isPast
-                                        ? 'text-gray-400 dark:text-gray-500 line-through'
-                                        : 'text-purple-600 dark:text-purple-400'
-                                  }`}>
-                                    {period.classArmName || period.className}
-                                  </div>
+                                        ? 'text-gray-500 dark:text-gray-400 line-through'
+                                        : 'text-gray-900 dark:text-gray-100'
+                                    }`}>{period.subjectName}</span>
+                                  <span className={`text-[10px] font-medium flex-shrink-0 ${isCurrent
+                                      ? 'text-green-600 dark:text-green-400'
+                                      : isPast
+                                        ? 'text-gray-400 dark:text-gray-500'
+                                        : 'text-blue-600 dark:text-blue-400'
+                                    }`}>
+                                    {period.startTime} - {period.endTime}
+                                  </span>
                                 </div>
-                              );
-                            })}
-                        </div>
+                                <div className={`truncate font-medium ${isCurrent
+                                    ? 'text-green-700 dark:text-green-300'
+                                    : isPast
+                                      ? 'text-gray-400 dark:text-gray-500 line-through'
+                                      : 'text-purple-600 dark:text-purple-400'
+                                  }`}>
+                                  {period.classArmName || period.className}
+                                </div>
+                              </div>
+                            );
+                          })}
                       </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </FadeInUp>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </FadeInUp>
 
         {/* Weekly Schedule */}
         <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
+              <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                 <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Weekly Schedule
               </CardTitle>
@@ -315,19 +311,18 @@ export default function TeacherOverviewPage() {
                     return (
                       <div
                         key={day}
-                        className={`rounded-lg p-3 ${
-                          isToday
+                        className={`rounded-lg p-3 ${isToday
                             ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-400'
                             : 'bg-[var(--light-surface)] dark:bg-[var(--dark-surface)] border border-light-border dark:border-dark-border'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <h3
-                            className={`text-sm font-semibold ${
-                              isToday
+                            style={{ fontSize: 'var(--text-body)' }}
+                            className={`font-semibold ${isToday
                                 ? 'text-blue-700 dark:text-blue-300'
                                 : 'text-light-text-primary dark:text-dark-text-primary'
-                            }`}
+                              }`}
                           >
                             {DAY_LABELS[day].slice(0, 3)}
                           </h3>
@@ -380,7 +375,7 @@ export default function TeacherOverviewPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
+                <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                   <BookOpen className="h-5 w-5 text-purple-600" />
                   My Classes
                 </CardTitle>
@@ -398,7 +393,7 @@ export default function TeacherOverviewPage() {
             <CardContent>
               {classes.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
+                  <p className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-body)' }}>
                     No classes assigned yet
                   </p>
                 </div>
@@ -411,7 +406,7 @@ export default function TeacherOverviewPage() {
                       className="flex items-center justify-between p-3 rounded-lg border border-light-border dark:border-dark-border hover:bg-light-surface dark:hover:bg-[var(--dark-hover)] cursor-pointer transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-light-text-primary dark:text-dark-text-primary truncate">
+                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary truncate" style={{ fontSize: 'var(--text-body)' }}>
                           {cls.name}
                         </p>
                         {cls.teachers?.[0]?.subject && (

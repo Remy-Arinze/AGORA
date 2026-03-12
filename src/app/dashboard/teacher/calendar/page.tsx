@@ -317,7 +317,7 @@ export default function TeacherCalendarPage() {
           if (currentType === 'PRIMARY') {
             title = period.classArmName || 'Timetable Period';
           } else if (currentType === 'SECONDARY') {
-            title = period.subjectName && period.classArmName 
+            title = period.subjectName && period.classArmName
               ? `${period.subjectName} - ${period.classArmName}`
               : period.subjectName || period.classArmName || 'Timetable Period';
           } else if (currentType === 'TERTIARY') {
@@ -351,16 +351,16 @@ export default function TeacherCalendarPage() {
   // Filter events for the selected date
   const dayEvents = useMemo(() => {
     if (!selectedDate) return [];
-    
+
     const startOfDay = new Date(selectedDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(selectedDate);
     endOfDay.setHours(23, 59, 59, 999);
-    
+
     return calendarEvents.filter((event) => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
-      
+
       // Check if event overlaps with the selected day
       return (
         (eventStart >= startOfDay && eventStart <= endOfDay) ||
@@ -383,18 +383,18 @@ export default function TeacherCalendarPage() {
   const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
     // Check if this is a full day click (in month view) or a time slot click
     // In month view, clicking on a date cell typically selects the entire day
-    const isFullDayClick = 
-      view === 'month' || 
-      (slotInfo.start.getHours() === 0 && 
-       slotInfo.start.getMinutes() === 0 && 
-       slotInfo.end.getHours() === 23 && 
-       slotInfo.end.getMinutes() === 59);
-    
+    const isFullDayClick =
+      view === 'month' ||
+      (slotInfo.start.getHours() === 0 &&
+        slotInfo.start.getMinutes() === 0 &&
+        slotInfo.end.getHours() === 23 &&
+        slotInfo.end.getMinutes() === 59);
+
     // Calculate if the slot spans close to a full day (within 1 hour of full day)
     const slotDuration = slotInfo.end.getTime() - slotInfo.start.getTime();
     const fullDayDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     const isNearFullDay = slotDuration >= fullDayDuration * 0.95; // 95% of a day
-    
+
     if ((isFullDayClick || isNearFullDay) && view === 'month') {
       // Show day events modal for month view date cell clicks
       const clickedDate = new Date(slotInfo.start);
@@ -528,7 +528,7 @@ export default function TeacherCalendarPage() {
       <div className="w-full">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+          <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             Calendar
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
@@ -567,7 +567,7 @@ export default function TeacherCalendarPage() {
           {/* Upcoming Events Sidebar (1/4 width) */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+              <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-section-title)' }}>
                 Upcoming Events
               </CardTitle>
             </CardHeader>

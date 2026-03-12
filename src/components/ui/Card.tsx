@@ -4,7 +4,7 @@ import { HTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'outlined' | 'elevated';
+  variant?: 'default' | 'outlined' | 'elevated' | 'glass';
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
@@ -13,6 +13,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       default: 'bg-[var(--light-card)] dark:bg-[var(--dark-surface)]',
       outlined: 'bg-transparent border border-[var(--light-border)] dark:border-[var(--dark-border)]',
       elevated: 'bg-[var(--light-card)] dark:bg-[var(--dark-surface)] shadow-lg',
+      glass: 'bg-white/60 dark:bg-[#131824]/60 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-black/5 dark:shadow-black/20',
     };
 
     return (
