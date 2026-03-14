@@ -22,6 +22,7 @@ import type { School } from '@/lib/store/api/schoolsApi';
 import { Save, Mail, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { CountrySelector } from '@/components/ui';
 
 export default function SchoolProfilePage() {
   const router = useRouter();
@@ -305,12 +306,11 @@ export default function SchoolProfilePage() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="country">Country</Label>
-                  <Input
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
+                <div className="md:col-span-1">
+                  <CountrySelector
+                    label="Country"
+                    value={formData.country || 'Nigeria'}
+                    onChange={(val) => handleInputChange('country', val)}
                     disabled={isUpdating}
                   />
                 </div>

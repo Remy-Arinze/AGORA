@@ -57,11 +57,11 @@
     /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
     --text-card-title: 1rem;
     /* 18px - Card titles */
-    --text-body: 0.73rem;
+    --text-body: 0.8rem;
     /* 12px - Body text */
-    --text-small: 0.65rem;
+    --text-small: 0.7rem;
     /* 12px - Small text */
-    --text-tiny: 0.6rem;
+    --text-tiny: 0.65rem;
     /* 11.2px - Tiny text for tabs/badges */
     --text-placeholder: var(--text-small);
     /* Placeholder text - consistent with small */

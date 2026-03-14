@@ -94,7 +94,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
 
       const response = await askAi({
         schoolId,
-        body: { 
+        body: {
           messages: chatHistory,
           conversationId: currentConversationId || undefined
         }
@@ -120,9 +120,9 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
     try {
       setCurrentConversationId(id);
       setIsHistoryOpen(false);
-      
+
       const res = await getMessages({ schoolId, conversationId: id }).unwrap();
-      
+
       setMessages([
         {
           role: 'assistant',
@@ -135,7 +135,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
           timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }))
       ]);
-      
+
       toast.success('Conversation loaded');
     } catch (error) {
       toast.error('Failed to load conversation');
@@ -338,12 +338,12 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
       </div>
 
       {/* Redesigned Input Area */}
-      <div className="p-8 md:p-12 z-20 shrink-0">
+      <div className="p-4 md:p-12 z-20 shrink-0">
         <div className="max-w-4xl mx-auto relative px-4">
-          <div className="relative group flex flex-col bg-light-input dark:bg-[#141416]/95 backdrop-blur-3xl p-2 rounded-[2.8rem] border border-light-border dark:border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] transition-all duration-300 focus-within:ring-2 focus-within:ring-agora-blue/20 focus-within:border-agora-blue/50">
+          <div className="relative group flex flex-col bg-light-input dark:bg-[#141416]/95 backdrop-blur-3xl p-2 rounded-[2.8rem] border border-light-border dark:border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] transition-all duration-300 ">
             <div className="flex items-center">
               <button className="p-4 rounded-full text-light-text-muted dark:text-white/20 hover:text-agora-blue dark:hover:text-white transition-all shrink-0 hover:bg-light-hover dark:hover:bg-white/5">
-                <Paperclip size={20} />
+                <Paperclip size={15} />
               </button>
 
               <input
@@ -351,7 +351,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                className="flex-1 h-16 text-light-text-primary dark:text-white placeholder:text-light-text-muted dark:placeholder:text-white/15 focus:outline-none px-2 text-[15px] font-medium"
+                className="flex-1 h-13 bg-transparent text-light-text-primary dark:text-white placeholder:text-light-text-muted dark:placeholder:text-white/15 focus:outline-none px-2 text-[15px] font-medium"
               />
 
               <div className="flex items-center ml-5 gap-2 pr-3">

@@ -26,6 +26,7 @@
     "next": "^16.1.6",
     "react": "^18.2.0",
     "react-big-calendar": "^1.19.4",
+    "react-country-region-selector": "^4.0.6",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
     "react-easy-crop": "^5.5.6",

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { PhoneInput } from '@/components/ui/PhoneInput';
+import { CountrySelector } from '@/components/ui/CountrySelector';
 import { useRegisterSchoolMutation } from '@/lib/store/api/publicApi';
 
 export default function RegisterSchoolPage() {
@@ -116,8 +117,8 @@ export default function RegisterSchoolPage() {
                 <h1 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-3 text-center">
                     Register Your School
                 </h1>
-                <p className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] text-center mb-8">
-                    Join Agora to streamline your school's management.
+                <p className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] text-center mb-8 text-sm">
+                    Join Agora to streamline your school's management pipeline.
                 </p>
 
                 <form onSubmit={handleSubmit} className="bg-[var(--light-card)] dark:bg-[var(--dark-surface)] p-6 sm:p-8 rounded-xl border border-[var(--light-border)] dark:border-[var(--dark-border)] space-y-8">
@@ -130,7 +131,7 @@ export default function RegisterSchoolPage() {
                         <h2 className="text-xl font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2">School Details</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="col-span-1 sm:col-span-2">
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">School Name *</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>School Name *</label>
                                 <input
                                     name="name"
                                     type="text"
@@ -142,7 +143,7 @@ export default function RegisterSchoolPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">School Email *</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>School Email *</label>
                                 <input
                                     name="email"
                                     type="email"
@@ -162,7 +163,7 @@ export default function RegisterSchoolPage() {
                                 labelClassName="text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]"
                             />
                             <div className="col-span-1 sm:col-span-2">
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">Address</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>Address</label>
                                 <input
                                     name="address"
                                     type="text"
@@ -173,7 +174,7 @@ export default function RegisterSchoolPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">City</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>City</label>
                                 <input
                                     name="city"
                                     type="text"
@@ -184,7 +185,7 @@ export default function RegisterSchoolPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">State</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>State</label>
                                 <input
                                     name="state"
                                     type="text"
@@ -194,12 +195,20 @@ export default function RegisterSchoolPage() {
                                     placeholder="Lagos State"
                                 />
                             </div>
+                            <div className="col-span-1">
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>Country</label>
+                                <CountrySelector
+                                    value={formData.country}
+                                    onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                                    placeholder="Select country"
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* School Type */}
                     <div>
-                        <h2 className="text-sm text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2">School Type *</h2>
+                        <h2 className="font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2" style={{ fontSize: 'var(--text-section-title)' }}>School Type *</h2>
                         <div className="flex flex-wrap gap-6 text-xs">
                             <label className="flex items-center gap-3 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer group">
                                 <input
@@ -209,7 +218,7 @@ export default function RegisterSchoolPage() {
                                     onChange={handleChange}
                                     className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 accent-agora-blue focus:ring-agora-blue cursor-pointer transition-all"
                                 />
-                                <span className="text-sm font-medium group-hover:text-agora-blue transition-colors">Primary Education</span>
+                                <span className="text-xs font-medium group-hover:text-agora-blue transition-colors">Primary Education</span>
                             </label>
                             <label className="flex items-center gap-3 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer group">
                                 <input
@@ -219,7 +228,7 @@ export default function RegisterSchoolPage() {
                                     onChange={handleChange}
                                     className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 accent-agora-blue focus:ring-agora-blue cursor-pointer transition-all"
                                 />
-                                <span className="text-sm font-medium group-hover:text-agora-blue transition-colors">Secondary Education</span>
+                                <span className="font-medium group-hover:text-agora-blue transition-colors" style={{ fontSize: 'var(--text-body)' }}>Secondary Education</span>
                             </label>
                             <label className="flex items-center gap-3 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] cursor-pointer group">
                                 <input
@@ -229,17 +238,17 @@ export default function RegisterSchoolPage() {
                                     onChange={handleChange}
                                     className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 accent-agora-blue focus:ring-agora-blue cursor-pointer transition-all"
                                 />
-                                <span className="text-sm font-medium group-hover:text-agora-blue transition-colors">Tertiary Education</span>
+                                <span className="font-medium group-hover:text-agora-blue transition-colors" style={{ fontSize: 'var(--text-body)' }}>Tertiary Education</span>
                             </label>
                         </div>
                     </div>
 
                     {/* Owner Details */}
-                    <div>
-                        <h2 className="text-sm text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-4 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2">School Owner Details</h2>
+                    <div className="mt-10">
+                        <h2 className="font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2" style={{ fontSize: 'var(--text-section-title)' }}>School Owner Details</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">First Name *</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>First Name *</label>
                                 <input
                                     name="ownerFirstName"
                                     type="text"
@@ -251,7 +260,7 @@ export default function RegisterSchoolPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">Last Name *</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>Last Name *</label>
                                 <input
                                     name="ownerLastName"
                                     type="text"
@@ -263,7 +272,7 @@ export default function RegisterSchoolPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1">Email *</label>
+                                <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>Email *</label>
                                 <input
                                     name="ownerEmail"
                                     type="email"
@@ -289,7 +298,7 @@ export default function RegisterSchoolPage() {
                         <Button
                             type="submit"
                             variant="primary"
-                            className="w-full py-3.5 text-lg"
+                            className="w-full py-3 text-sm"
                             isLoading={isLoading}
                         >
                             Submit Registration

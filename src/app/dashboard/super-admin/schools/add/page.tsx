@@ -12,6 +12,7 @@ import { FadeInUp } from '@/components/ui/FadeInUp';
 import { ArrowLeft, Building2, UserPlus, X, User, GraduationCap } from 'lucide-react';
 import { useCreateSchool, useUpdateSchool, useSchool } from '@/hooks/useSchools';
 import { createSchoolFormSchema } from '@/lib/validations/school-forms';
+import { CountrySelector } from '@/components/ui';
 
 type AdminRole = 'PRINCIPAL' | 'BURSAR' | 'GUIDANCE_COUNSELOR' | 'VICE_PRINCIPAL' | 'ADMINISTRATOR';
 
@@ -335,15 +336,12 @@ export default function AddSchoolPage() {
                       placeholder="Enter state"
                     />
                   </div>
-                  <div>
-                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                      Country
-                    </label>
-                    <Input
-                      name="country"
+                  <div className="md:col-span-1">
+                    <CountrySelector
+                      label="Country"
                       value={formData.country}
-                      onChange={handleChange}
-                      placeholder="Enter country"
+                      onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                      placeholder="Select country"
                     />
                   </div>
                   <div>
