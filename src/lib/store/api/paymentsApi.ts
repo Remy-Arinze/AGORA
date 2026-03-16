@@ -17,6 +17,7 @@ export interface PricingResponse {
 export interface InitializePaymentRequest {
   tier: SubscriptionTier;
   isYearly?: boolean;
+  callbackUrl?: string;
 }
 
 export interface InitializePaymentResponse {

@@ -113,7 +113,8 @@ export function useSubscription(): SubscriptionManagement {
    */
   const upgrade = useCallback(async (
     tier: SubscriptionTier,
-    isYearly: boolean
+    isYearly: boolean,
+    callbackUrl?: string
   ): Promise<{ success: boolean; url?: string; error?: string }> => {
     if (tier === SubscriptionTier.FREE) {
       return { success: false, error: 'Cannot upgrade to free tier' };
@@ -125,7 +126,7 @@ export function useSubscription(): SubscriptionManagement {
     }
 
     try {
-      const result = await initializePayment({ tier, isYearly }).unwrap();
+      const result = await initializePayment({ tier, isYearly, callbackUrl }).unwrap();
 
       if (result.success && result.data?.authorizationUrl) {
         return { success: true, url: result.data.authorizationUrl };
