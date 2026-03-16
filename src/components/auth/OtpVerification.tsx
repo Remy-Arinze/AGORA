@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, FormEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useTheme } from '@/contexts/ThemeContext';
 import Image from 'next/image';
 
 interface OtpVerificationProps {
@@ -113,37 +115,54 @@ export function OtpVerification({
     }
   };
 
+  const { theme } = useTheme();
+
   // Focus first input on mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-lg mx-auto">
       {/* Logo */}
       <div className="flex items-center justify-center mb-8">
-        <div className="flex items-center gap-2 px-3 py-1.5 ">
-          <Image
-            src="/assets/logos/agora_worded_white.png"
-            alt="Agora"
-            width={100}
-            height={24}
-            className="h-6 w-auto"
-            priority
-          />
+        <div className="flex items-center gap-2 px-3 py-1.5">
+          {theme === 'light' ? (
+            <Image
+              src="/assets/logos/agora_main.png"
+              alt="Agora"
+              width={120}
+              height={32}
+              className="h-8 w-auto grayscale brightness-0"
+              priority
+            />
+          ) : (
+            <Image
+              src="/assets/logos/agora_worded_white.png"
+              alt="Agora"
+              width={120}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
+          )}
         </div>
       </div>
 
-
-
       {/* Instructions */}
-      <p className="text-sm text-[#9ca3af] mb-8 text-center leading-relaxed">
-        A 6-digit code has been sent to your email, <span className="text-white">{email}</span>. Please enter it below to sign in.
-      </p>
+      <div className="text-center mb-10">
+        <h2 className="text-2xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-3">
+          Verification Required
+        </h2>
+        <p className="text-base text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] leading-relaxed">
+          We&apos;ve sent a 6-digit verification code to <span className="text-[var(--agora-blue)] font-semibold">{email}</span>. 
+          Please enter it below to securely access your account.
+        </p>
+      </div>
 
       {/* Error Alert */}
       {error && (
-        <div className="mb-6">
+        <div className="mb-8">
           <Alert variant="error">{error}</Alert>
         </div>
       )}
@@ -153,15 +172,10 @@ export function OtpVerification({
           e.preventDefault();
           handleSubmit();
         }}
-        className="space-y-6"
+        className="space-y-8"
       >
-        {/* Enter Code Label */}
-        <label className="block text-sm font-medium text-white mb-3">
-          Enter Code
-        </label>
-
         {/* OTP Input Fields */}
-        <div className="flex justify-between  gap-3 mb-6">
+        <div className="flex justify-between gap-1.5 sm:gap-3 mb-8">
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -173,8 +187,8 @@ export function OtpVerification({
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
-              placeholder="-"
-              className="w-14 h-14 text-center text-2xl font-semibold border-2 rounded-lg bg-[#151a23] text-white border-[#1a1f2e] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-[#6b7280]"
+              placeholder="•"
+              className="w-[42px] h-[52px] sm:w-14 sm:h-14 text-center text-2xl font-bold border-2 rounded-xl bg-white dark:bg-[#151a23] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] border-gray-200 dark:border-[#1a1f2e] focus:outline-none focus:ring-4 focus:ring-[#2490FD]/20 focus:border-[#2490FD] transition-all disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)]"
               disabled={isLoading}
             />
           ))}
@@ -184,22 +198,22 @@ export function OtpVerification({
         <Button
           type="submit"
           variant="primary"
-          className="w-full py-3.5"
+          className="w-full py-4 text-base font-bold rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
           isLoading={isLoading}
           disabled={otp.some((digit) => !digit) || isLoading}
         >
-          Verify OTP
+          Complete Verification
         </Button>
 
         {/* Resend Link */}
         <div className="text-center pt-2">
-          <p className="text-sm text-[#9ca3af]">
-            Didn&apos;t get the code?{' '}
+          <p className="text-sm text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]">
+            Didn&apos;t receive the code?{' '}
             <button
               type="button"
               onClick={handleResend}
               disabled={resendCooldown > 0 || isResending || isLoading}
-              className="text-[#2490FD] hover:text-[#2a9fff] hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+              className="text-[#2490FD] hover:text-[#2a9fff] hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-colors ml-1"
             >
               {isResending ? (
                 <span className="flex items-center justify-center gap-2">
@@ -207,9 +221,9 @@ export function OtpVerification({
                   Sending...
                 </span>
               ) : resendCooldown > 0 ? (
-                `Resend it! (${resendCooldown}s)`
+                `Resend in ${resendCooldown}s`
               ) : (
-                'Resend it!'
+                'Resend Code'
               )}
             </button>
           </p>

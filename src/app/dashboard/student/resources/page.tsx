@@ -5,7 +5,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { FileText, Download, X, Loader2, AlertCircle, Upload } from 'lucide-react';
+import { FileText, Download, X, Loader2, AlertCircle, Upload, File, Image as ImageIcon, FileSpreadsheet, Presentation } from 'lucide-react';
 import {
   useGetMyStudentResourcesQuery,
   useGetMyStudentPersonalResourcesQuery,
@@ -135,17 +135,17 @@ export default function StudentResourcesPage() {
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
       case 'PDF':
-        return '📄';
+        return <FileText className="h-8 w-8 text-black dark:text-white" />;
       case 'IMAGE':
-        return '🖼️';
+        return <ImageIcon className="h-8 w-8 text-black dark:text-white" />;
       case 'DOCX':
-        return '📝';
+        return <File className="h-8 w-8 text-black dark:text-white" />;
       case 'XLSX':
-        return '📊';
+        return <FileSpreadsheet className="h-8 w-8 text-black dark:text-white" />;
       case 'PPTX':
-        return '📽️';
+        return <Presentation className="h-8 w-8 text-black dark:text-white" />;
       default:
-        return '📎';
+        return <FileText className="h-8 w-8 text-black dark:text-white" />;
     }
   };
 

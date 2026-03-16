@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/Button';
 import { SchoolTypeSelector } from './SchoolTypeSelector';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -44,6 +45,8 @@ export function Navbar() {
     schoolLogo &&
     !logoError;
 
+  const { theme } = useTheme();
+
   return (
     <nav className={`bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-b border-[var(--light-border)] dark:border-transparent transition-all duration-300 fixed top-0 right-0 left-0 z-30 md:left-[250px]`}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -68,9 +71,23 @@ export function Navbar() {
                   />
                 ) : (
                   // Agora default logo fallback
-                  <div className="h-8 w-9 bg-[#2490FD] dark:bg-[#2490FD] rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+                  theme === 'light' ? (
+                    <img
+                      src="/assets/logos/agora_main.png"
+                      alt="Agora"
+                      className="h-8 w-auto flex-shrink-0 grayscale brightness-0"
+                      style={{ height: '32px' }}
+                    />
+                  ) : (
+                    <img
+                      src="/assets/logos/agora_worded_white.png"
+                      alt="Agora"
+                      className="h-8 w-auto flex-shrink-0"
+                      style={{ height: '32px' }}
+                    />
+                  )
                 )}
-                <span className="text-2xl font-bold text-[#2490FD] dark:text-[#2490FD]">
+                <span className="text-2xl font-bold text-light-text-primary dark:text-white transition-colors duration-300">
                   {(userRole === 'SCHOOL_ADMIN' || userRole === 'TEACHER' || userRole === 'STUDENT') && schoolName ? schoolName : 'Agora'}
                 </span>
               </Link>

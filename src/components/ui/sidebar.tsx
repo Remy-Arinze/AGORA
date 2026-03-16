@@ -5,6 +5,7 @@ import Link, { LinkProps } from "next/link";
 import React, { useState, createContext, useContext, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { Menu, X } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface Links {
   label: string;
@@ -149,6 +150,8 @@ export const MobileSidebar = ({
     }
   }, [open, shouldRender]);
 
+  const { theme } = useTheme();
+
   return (
     <>
       {!hideMobileHeader && (
@@ -159,9 +162,23 @@ export const MobileSidebar = ({
           {...props}
         >
           <div className="flex justify-start items-center">
-            <div className="h-8 w-8 bg-[#2490FD] rounded-lg flex items-center justify-center">
-              <span className="text-white text-xs font-bold">A</span>
-            </div>
+            <Link href="/" className="flex items-center">
+              {theme === 'light' ? (
+                <img
+                  src="/assets/logos/agora_main.png"
+                  alt="Agora"
+                  className="h-8 w-auto flex-shrink-0 grayscale brightness-0"
+                  style={{ height: '32px' }}
+                />
+              ) : (
+                <img
+                  src="/assets/logos/agora_worded_white.png"
+                  alt="Agora"
+                  className="h-8 w-auto flex-shrink-0"
+                  style={{ height: '32px' }}
+                />
+              )}
+            </Link>
           </div>
           <div className="flex justify-end z-20">
             <Menu
@@ -214,19 +231,14 @@ export const SidebarLink = ({
 }) => {
   const { open, animate } = useSidebar();
 
-  const iconWithColor = isActive
-    ? React.cloneElement(link.icon as React.ReactElement, {
-      className: cn(
-        (link.icon as React.ReactElement)?.props?.className,
-        "text-[#2490FD]"
-      ),
-    })
-    : React.cloneElement(link.icon as React.ReactElement, {
-      className: cn(
-        (link.icon as React.ReactElement)?.props?.className,
-        "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] group-hover/sidebar:text-[var(--light-text-primary)] dark:group-hover/sidebar:text-[var(--dark-text-primary)]"
-      ),
-    });
+  const iconWithColor = React.cloneElement(link.icon as React.ReactElement, {
+    className: cn(
+      (link.icon as React.ReactElement)?.props?.className,
+      isActive 
+        ? "text-black dark:text-white" 
+        : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] group-hover/sidebar:text-black dark:group-hover/sidebar:text-white"
+    ),
+  });
 
   const showLabel = true;
 

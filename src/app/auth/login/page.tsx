@@ -272,7 +272,7 @@ function LoginContent() {
             <div className="mt-6 text-center">
               <button
                 onClick={handleBackToLogin}
-                className="text-sm text-[#9ca3af] hover:text-white hover:underline transition-colors"
+                className="text-sm text-[var(--light-text-secondary)] dark:text-[#9ca3af] hover:text-[#2490FD] dark:hover:text-white hover:underline transition-colors font-medium"
               >
                 ← Back to login
               </button>
@@ -301,7 +301,7 @@ function LoginContent() {
             </div>
 
             {/* Heading */}
-            <h1 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-white mb-3 text-center">
+            <h1 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-3 text-center">
               Sign in to your account
             </h1>
 
@@ -325,7 +325,7 @@ function LoginContent() {
               <div className="w-full">
                 <label
                   htmlFor="email-input"
-                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-white mb-2"
+                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-2"
                 >
                   Email or Public ID
                 </label>
@@ -338,14 +338,14 @@ function LoginContent() {
                     setFormData({ ...formData, emailOrPublicId: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-3 border-2 rounded-lg bg-white dark:bg-[#151a23] text-gray-900 dark:text-white placeholder-[#9ca3af] dark:placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
+                  className="w-full px-4 py-3 border-2 rounded-lg bg-white dark:bg-[#151a23] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
                 />
               </div>
 
               <div className="w-full">
                 <label
                   htmlFor="password-input"
-                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-white mb-2"
+                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-2"
                 >
                   Password
                 </label>
@@ -360,12 +360,12 @@ function LoginContent() {
                     }
                     required
                     minLength={8}
-                    className="w-full px-4 py-3 pr-10 border-2 rounded-lg bg-white dark:bg-[#151a23] text-gray-900 dark:text-white placeholder-[#9ca3af] dark:placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
+                    className="w-full px-4 py-3 pr-10 border-2 rounded-lg bg-white dark:bg-[#151a23] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[var(--light-text-primary)] dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#2490FD] rounded p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--light-text-muted)] hover:text-[var(--light-text-primary)] dark:hover:text-[var(--dark-text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[#2490FD] rounded p-1"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     tabIndex={-1}
                   >
@@ -395,11 +395,11 @@ function LoginContent() {
               <div className="text-center pt-2 space-y-3">
                 <Link
                   href="/auth/forgot-password"
-                  className="block text-sm text-[#9ca3af] hover:text-[#2490FD] hover:underline transition-colors"
+                  className="block text-sm text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:text-[#2490FD] hover:underline transition-colors font-medium"
                 >
                   Forgot your password?
                 </Link>
-                <div className="text-sm text-[#6b7280]">
+                <div className="text-sm text-[var(--light-text-muted)] dark:text-[var(--dark-text-muted)]">
                   Don't have an account?{' '}
                   <Link
                     href="/auth/register-school"

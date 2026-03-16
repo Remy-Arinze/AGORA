@@ -112,7 +112,7 @@ export default function StudentOverviewPage() {
       <div className="w-full space-y-8 pb-10">
         {/* Personalized Welcome Section */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.6}>
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-[2.5rem] overflow-hidden group shadow-2xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100/20 dark:border-blue-700/10">
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-[2.5rem] overflow-hidden group transition-all duration-500 border border-blue-100/20 dark:border-blue-700/10">
             {/* Inner Glass Layer */}
             <div className="absolute inset-0 bg-white/40 dark:bg-white/5 backdrop-blur-3xl z-0" />
 
@@ -135,10 +135,10 @@ export default function StudentOverviewPage() {
               </div>
 
               <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                <Badge className="bg-blue-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black border-none shadow-lg shadow-blue-500/20">
+                <Badge className="bg-blue-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black border-none">
                   {activeTerm?.name || 'Current Term'}
                 </Badge>
-                <Badge variant="outline" className="px-4 py-1.5 rounded-xl text-[10px] font-black border-blue-200/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-white/5 backdrop-blur-md">
+                <Badge className="px-4 py-1.5 rounded-xl text-[10px] font-black border-blue-200/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-white/5 backdrop-blur-md">
                   {school?.name || 'Your School'}
                 </Badge>
               </div>
@@ -151,10 +151,8 @@ export default function StudentOverviewPage() {
               </div>
               <div className="h-20 w-[1px] bg-gradient-to-b from-transparent via-blue-200 dark:via-blue-800 to-transparent" />
               <div className="relative">
-                <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
-                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/20 rotate-3 transform transition-transform group-hover:rotate-0">
-                  <GraduationCap className="h-12 w-12 text-white" />
-                </div>
+                <div className="absolute inset-0 bg-black dark:bg-white blur-2xl opacity-5 group-hover:opacity-10 transition-opacity" />
+                <GraduationCap className="h-16 w-16 text-black dark:text-white relative z-10 rotate-3 transform transition-transform group-hover:rotate-0" />
               </div>
             </div>
           </div>
@@ -171,7 +169,7 @@ export default function StudentOverviewPage() {
                   Your Daily Journey
                 </h2>
                 <Link href="/dashboard/student/timetables">
-                  <Button variant="link" className="text-blue-600">Full Schedule</Button>
+                  <Button variant="ghost" className="text-blue-600">Full Schedule</Button>
                 </Link>
               </div>
 
@@ -197,11 +195,11 @@ export default function StudentOverviewPage() {
                       <FadeInUp key={period.id || index} delay={index * 0.1}>
                         <div className="relative group">
                           {/* Dot on the timeline */}
-                          <div className={`absolute -left-[22px] top-6 w-3 h-3 rounded-full border-2 transition-all ${isOngoing ? 'bg-blue-600 border-white dark:border-blue-900 animate-ping shadow-lg shadow-blue-500/50' : 'bg-white dark:bg-blue-950 border-blue-200 dark:border-blue-900'
+                          <div className={`absolute -left-[22px] top-6 w-3 h-3 rounded-full border-2 transition-all ${isOngoing ? 'bg-blue-600 border-white dark:border-blue-900 animate-ping' : 'bg-white dark:bg-blue-950 border-blue-200 dark:border-blue-900'
                             }`} />
 
                           <Card className={`overflow-hidden transition-all duration-300 ${isOngoing
-                            ? 'border-blue-500 shadow-xl shadow-blue-500/10 scale-[1.02]'
+                            ? 'border-blue-500 scale-[1.02]'
                             : 'hover:border-blue-300 dark:hover:border-blue-800'
                             }`}>
                             <CardContent className="p-5">
@@ -221,10 +219,11 @@ export default function StudentOverviewPage() {
                                     {period.roomName || period.room?.name || 'Room to be assigned'}
                                   </p>
                                 </div>
-                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${isOngoing ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-dark-surface'
-                                  }`}>
-                                  {isFreePeriod ? <Clock className="h-6 w-6" /> : <BookOpen className="h-6 w-6" />}
-                                </div>
+                                {isFreePeriod ? (
+                                  <Clock className="h-8 w-8 transition-colors text-black dark:text-white" />
+                                ) : (
+                                  <BookOpen className="h-8 w-8 transition-colors text-black dark:text-white" />
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -261,10 +260,8 @@ export default function StudentOverviewPage() {
                   { label: 'Calendar', icon: Calendar, color: 'orange', link: '/dashboard/student/calendar' }
                 ].map((action, i) => (
                   <Link key={i} href={action.link}>
-                    <button className="w-full group p-4 rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border hover:border-blue-500 transition-all text-center space-y-3 shadow-sm hover:shadow-md">
-                      <div className={`h-10 w-10 mx-auto rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform bg-${action.color}-100 dark:bg-${action.color}-900/30 text-${action.color}-600 dark:text-${action.color}-400`}>
-                        <action.icon className="h-5 w-5" />
-                      </div>
+                    <button className="w-full group p-4 rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border hover:border-blue-500 transition-all text-center space-y-3">
+                      <action.icon className="h-6 w-6 mx-auto group-hover:scale-110 transition-transform text-black dark:text-white" />
                       <span className="text-sm font-bold text-light-text-primary dark:text-dark-text-primary group-hover:text-blue-600 transition-colors">
                         {action.label}
                       </span>
@@ -283,7 +280,7 @@ export default function StudentOverviewPage() {
                     <Button variant="ghost" size="sm" className="text-xs">View All</Button>
                   </Link>
                 </div>
-                <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 text-white border-none shadow-xl shadow-indigo-500/20 overflow-hidden">
+                <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 text-white border-none overflow-hidden">
                   <CardContent className="p-0">
                     <div className="p-5 space-y-5">
                       {upcomingEvents.slice(0, 3).map((event: any, i: number) => (
@@ -316,7 +313,7 @@ export default function StudentOverviewPage() {
                     <p className="text-xs font-bold text-light-text-muted uppercase tracking-widest mb-1">Knowledge Progress</p>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-2xl font-black text-light-text-primary dark:text-dark-text-primary">{stats.averageScore}%</span>
-                      <TrendingUp className="h-5 w-5 text-green-500" />
+                      <TrendingUp className="h-5 w-5 text-black dark:text-white" />
                     </div>
                     <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
@@ -333,7 +330,7 @@ export default function StudentOverviewPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold text-light-text-muted uppercase tracking-wider">New Grades</p>
-                      <p className="text-xl font-black text-green-600">+{stats.recentGradesCount}</p>
+                      <p className="text-xl font-black text-black dark:text-white">+{stats.recentGradesCount}</p>
                     </div>
                   </div>
                 </div>

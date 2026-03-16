@@ -61,7 +61,7 @@ function ClassmateCard({ classmate }: { classmate: any }) {
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold text-sm border-2 border-light-border dark:border-dark-border">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-black dark:text-white font-semibold text-sm border-2 border-black dark:border-white">
               {getInitials()}
             </div>
           )}
@@ -494,8 +494,8 @@ export default function StudentClassesPage() {
                         <Card key={teacher.id} className="border border-light-border dark:border-dark-border">
                           <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                                <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                              <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                                <User className="h-8 w-8 text-black dark:text-white" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-1">
@@ -564,8 +564,8 @@ export default function StudentClassesPage() {
                           className="pb-6 border-b border-light-border dark:border-dark-border last:border-0 last:pb-0"
                         >
                           <div className="flex items-start gap-4 mb-4">
-                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                              <span className="text-blue-600 dark:text-blue-400 font-bold text-sm text-center leading-tight">
+                            <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
+                              <span className="text-black dark:text-white font-bold text-sm text-center leading-tight">
                                 Week {item.week}
                               </span>
                             </div>
@@ -645,8 +645,8 @@ export default function StudentClassesPage() {
                           <CardContent className="pt-6">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                                  <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="h-6 w-6 text-black dark:text-white" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary truncate">

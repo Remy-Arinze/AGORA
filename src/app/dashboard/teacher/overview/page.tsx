@@ -133,16 +133,16 @@ export default function TeacherOverviewPage() {
               </p>
             </div>
             {activeTerm && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#2490FD] rounded-lg shadow-sm">
+                <Calendar className="h-4 w-4 text-white" />
                 <div style={{ fontSize: 'var(--text-body)' }}>
-                  <span className="font-medium text-blue-700 dark:text-blue-300">
+                  <span className="font-medium text-white">
                     {activeTerm.name}
                   </span>
                   {activeSession && (
                     <>
-                      <span className="text-blue-600 dark:text-blue-400 mx-1">•</span>
-                      <span className="text-blue-600 dark:text-blue-400">
+                      <span className="text-white/80 mx-1">•</span>
+                      <span className="text-white/90">
                         {activeSession.name}
                       </span>
                     </>
@@ -159,7 +159,7 @@ export default function TeacherOverviewPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
-                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <Calendar className="h-5 w-5 text-[#2490FD]" />
                   Today&apos;s Schedule
                 </CardTitle>
                 <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
@@ -251,33 +251,33 @@ export default function TeacherOverviewPage() {
                               <div
                                 key={period.id}
                                 className={`p-2 rounded text-xs ${isCurrent
-                                    ? 'bg-green-100 dark:bg-green-900/30'
-                                    : isPast
-                                      ? 'bg-gray-100 dark:bg-gray-800'
-                                      : 'bg-blue-50 dark:bg-blue-900/20'
+                                  ? 'bg-green-100 dark:bg-green-900/30'
+                                  : isPast
+                                    ? 'bg-gray-100 dark:bg-gray-800'
+                                    : 'bg-blue-50 dark:bg-blue-900/20'
                                   }`}
                               >
                                 <div className="flex items-center justify-between gap-1 mb-0.5">
                                   <span className={`font-medium truncate ${isCurrent
-                                      ? 'text-green-800 dark:text-green-200'
-                                      : isPast
-                                        ? 'text-gray-500 dark:text-gray-400 line-through'
-                                        : 'text-gray-900 dark:text-gray-100'
+                                    ? 'text-green-800 dark:text-green-200'
+                                    : isPast
+                                      ? 'text-gray-500 dark:text-gray-400 line-through'
+                                      : 'text-gray-900 dark:text-gray-100'
                                     }`}>{period.subjectName}</span>
                                   <span className={`text-[10px] font-medium flex-shrink-0 ${isCurrent
-                                      ? 'text-green-600 dark:text-green-400'
-                                      : isPast
-                                        ? 'text-gray-400 dark:text-gray-500'
-                                        : 'text-blue-600 dark:text-blue-400'
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : isPast
+                                      ? 'text-gray-400 dark:text-gray-500'
+                                      : 'text-blue-600 dark:text-blue-400'
                                     }`}>
                                     {period.startTime} - {period.endTime}
                                   </span>
                                 </div>
                                 <div className={`truncate font-medium ${isCurrent
-                                    ? 'text-green-700 dark:text-green-300'
-                                    : isPast
-                                      ? 'text-gray-400 dark:text-gray-500 line-through'
-                                      : 'text-purple-600 dark:text-purple-400'
+                                  ? 'text-green-700 dark:text-green-300'
+                                  : isPast
+                                    ? 'text-gray-400 dark:text-gray-500 line-through'
+                                    : 'text-purple-600 dark:text-purple-400'
                                   }`}>
                                   {period.classArmName || period.className}
                                 </div>
@@ -298,7 +298,7 @@ export default function TeacherOverviewPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
-                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <Clock className="h-5 w-5 text-[#2490FD]" />
                 Weekly Schedule
               </CardTitle>
             </CardHeader>
@@ -312,16 +312,16 @@ export default function TeacherOverviewPage() {
                       <div
                         key={day}
                         className={`rounded-lg p-3 ${isToday
-                            ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-400'
-                            : 'bg-[var(--light-surface)] dark:bg-[var(--dark-surface)] border border-light-border dark:border-dark-border'
+                          ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-400'
+                          : 'bg-[var(--light-surface)] dark:bg-[var(--dark-surface)] border border-light-border dark:border-dark-border'
                           }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <h3
                             style={{ fontSize: 'var(--text-body)' }}
                             className={`font-semibold ${isToday
-                                ? 'text-blue-700 dark:text-blue-300'
-                                : 'text-light-text-primary dark:text-dark-text-primary'
+                              ? 'text-blue-700 dark:text-blue-300'
+                              : 'text-light-text-primary dark:text-dark-text-primary'
                               }`}
                           >
                             {DAY_LABELS[day].slice(0, 3)}
@@ -376,18 +376,17 @@ export default function TeacherOverviewPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
-                  <BookOpen className="h-5 w-5 text-purple-600" />
+                  <BookOpen className="h-5 w-5 text-[var(--agora-blue)]" />
                   My Classes
                 </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => router.push('/dashboard/teacher/classes')}
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                  className="text-white hover:text-white/80 transition-colors flex items-center"
+                  style={{ fontSize: 'var(--text-body)' }}
                 >
                   View All
                   <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                </button>
               </div>
             </CardHeader>
             <CardContent>

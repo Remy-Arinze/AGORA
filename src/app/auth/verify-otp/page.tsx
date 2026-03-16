@@ -73,13 +73,13 @@ export default function VerifyOtpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+      <Card className="w-full max-w-md border-[var(--light-border)] dark:border-[#1a1f2e] dark:bg-[#0f141a]">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">
+          <CardTitle className="text-2xl text-center text-[var(--light-text-primary)] dark:text-white">
             Claim Your Account
           </CardTitle>
-          <p className="text-sm text-gray-600 text-center mt-2">
+          <p className="text-sm text-[var(--light-text-secondary)] dark:text-[#9ca3af] text-center mt-2">
             Enter the OTP code sent to your phone to activate your account
           </p>
         </CardHeader>
@@ -98,6 +98,7 @@ export default function VerifyOtpPage() {
                 setFormData({ ...formData, phone: e.target.value })
               }
               required
+              className="dark:bg-[#151a23] dark:border-[#1a1f2e] dark:text-white"
             />
 
             <Input
@@ -110,11 +111,12 @@ export default function VerifyOtpPage() {
                 setFormData({ ...formData, code: e.target.value.replace(/\D/g, '') })
               }
               required
+              className="dark:bg-[#151a23] dark:border-[#1a1f2e] dark:text-white"
             />
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full py-4"
               isLoading={isLoading}
               disabled={!formData.phone || !formData.code}
             >
