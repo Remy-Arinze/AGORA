@@ -17,6 +17,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SkewSection } from '@/components/ui/SkewSection';
 import { TransferVisual } from '@/components/ui/TransferVisual';
+import { useTheme } from '@/contexts/ThemeContext';
 
 // Helper to format large numbers
 const formatNumber = (num: number): string => {
@@ -30,6 +31,7 @@ const formatNumber = (num: number): string => {
 };
 
 export default function HomeContent() {
+  const { theme } = useTheme();
   const user = useSelector((state: RootState) => state.auth.user);
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
@@ -110,7 +112,7 @@ export default function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--dark-bg)] text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden relative">
+    <div className="min-h-screen bg-white dark:bg-[var(--dark-bg)] text-gray-900 dark:text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden relative">
       <LandingNavbar />
 
       {/* Global Background Grid */}
@@ -137,15 +139,21 @@ export default function HomeContent() {
             <Button
               size="md"
               variant="primary"
+              isFlat
               onClick={handleGetStarted}
               className="rounded hover:scale-105 font-bold bg-agora-blue text-white w-full sm:w-auto hover:bg-agora-blue/90"
             >
               {isLoggedIn ? 'Go to dashboard' : 'Get Started Free'}
             </Button>
             <Link href="/about" className="w-full sm:w-auto">
-              <span className="inline-flex items-center justify-center px-4 py-2 text-base rounded hover:scale-105 font-bold border border-[var(--dark-text-primary)] text-[var(--dark-text-primary)] hover:bg-[var(--dark-text-primary)] hover:text-[var(--dark-bg)] transition-colors duration-300 w-full cursor-pointer">
+              <Button
+                variant="outline"
+                size="md"
+                isFlat
+                className="w-full sm:w-auto rounded hover:scale-105 font-bold"
+              >
                 How it works
-              </span>
+              </Button>
             </Link>
           </FadeInUp>
         </div>
@@ -717,8 +725,9 @@ export default function HomeContent() {
               <Button
                 size="lg"
                 variant="primary"
+                isFlat
                 onClick={handleGetStarted}
-                className="rounded-full px-16 py-8 text-xl hover:scale-105 font-bold transition-all shadow-[0_0_30px_rgba(36,144,253,0.3)] bg-agora-blue hover:bg-agora-blue/90"
+                className="rounded-lg px-16 py-8 text-xl hover:scale-105 font-bold transition-all shadow-[0_0_30px_rgba(36,144,253,0.3)] bg-agora-blue hover:bg-agora-blue/90"
               >
                 {isLoggedIn ? 'Go to Dashboard' : 'Get Started Free'}
               </Button>
@@ -728,12 +737,12 @@ export default function HomeContent() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[var(--dark-bg)] text-[var(--dark-text-secondary)] py-20 relative z-10">
+      <footer className="bg-gray-50 dark:bg-[var(--dark-bg)] text-gray-600 dark:text-[var(--dark-text-secondary)] py-20 relative z-10 border-t border-gray-200 dark:border-[var(--dark-border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-8">
             <div className="col-span-1 md:col-span-1">
               <Image
-                src="/assets/logos/agora_worded_white.png"
+                src={theme === 'light' ? '/assets/logos/agora_word_blue.png' : '/assets/logos/agora_worded_white.png'}
                 alt="Agora - Verified Academic History Logo"
                 width={140}
                 height={38}
@@ -744,22 +753,22 @@ export default function HomeContent() {
               </p>
             </div>
             <div>
-              <h4 className="text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Product</h4>
-              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm font-light">
+              <h4 className="text-gray-900 dark:text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Product</h4>
+              <ul className="space-y-4 text-gray-600 dark:text-[var(--dark-text-secondary)] text-sm font-light">
                 <li><Link href="#features" className="hover:text-agora-blue transition-colors">Features</Link></li>
                 <li><Link href="/products" className="hover:text-agora-blue transition-colors">Solutions</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Company</h4>
-              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm font-light">
+              <h4 className="text-gray-900 dark:text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Company</h4>
+              <ul className="space-y-4 text-gray-600 dark:text-[var(--dark-text-secondary)] text-sm font-light">
                 <li><Link href="/about" className="hover:text-agora-blue transition-colors">About Us</Link></li>
                 <li><Link href="/contact" className="hover:text-agora-blue transition-colors">Contact</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Legal</h4>
-              <ul className="space-y-4 text-[var(--dark-text-secondary)] text-sm font-light">
+              <h4 className="text-gray-900 dark:text-[var(--dark-text-primary)] font-bold mb-8 text-sm font-heading uppercase tracking-widest">Legal</h4>
+              <ul className="space-y-4 text-gray-600 dark:text-[var(--dark-text-secondary)] text-sm font-light">
                 <li><Link href="/privacy" className="hover:text-agora-blue transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-agora-blue transition-colors">Terms of Service</Link></li>
               </ul>

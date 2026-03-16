@@ -168,12 +168,12 @@ export function LandingNavbar() {
                             {isMounted && !user && (
                                 <div className="flex items-center space-x-3">
                                     <Link href="/auth/login">
-                                        <Button variant="ghost" size="sm" className={cn("px-5 font-bold", textColor)}>
+                                        <Button variant="ghost" size="sm" isFlat className={cn("px-5 font-bold", textColor)}>
                                             Login
                                         </Button>
                                     </Link>
                                     <Link href="/auth/login">
-                                        <Button variant="primary" size="sm" className="rounded px-6 font-bold bg-agora-blue text-white">
+                                        <Button variant="primary" size="sm" isFlat className="rounded px-6 font-bold bg-agora-blue text-white">
                                             Get Started
                                         </Button>
                                     </Link>
@@ -181,7 +181,7 @@ export function LandingNavbar() {
                             )}
                             {isMounted && user && (
                                 <Link href={user.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/school'}>
-                                    <Button variant="primary" size="sm" className="rounded px-6 font-bold bg-agora-blue text-white">
+                                    <Button variant="primary" size="sm" isFlat className="rounded px-6 font-bold bg-agora-blue text-white">
                                         Go to dashboard
                                     </Button>
                                 </Link>
@@ -245,12 +245,12 @@ export function LandingNavbar() {
                         {isMounted && !user && (
                             <>
                                 <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="block w-full">
-                                    <Button variant="outline" size="lg" className="w-full text-lg font-bold">
+                                    <Button variant="outline" size="lg" isFlat className="w-full text-lg font-bold">
                                         Login
                                     </Button>
                                 </Link>
                                 <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="block w-full">
-                                    <Button variant="primary" size="lg" className="w-full text-lg font-bold bg-agora-blue text-white">
+                                    <Button variant="primary" size="lg" isFlat className="w-full text-lg font-bold bg-agora-blue text-white">
                                         Get Started Free
                                     </Button>
                                 </Link>
@@ -262,7 +262,7 @@ export function LandingNavbar() {
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="block w-full"
                             >
-                                <Button variant="primary" size="lg" className="w-full text-lg font-bold bg-agora-blue text-white">
+                                <Button variant="primary" size="lg" isFlat className="w-full text-lg font-bold bg-agora-blue text-white">
                                     Go to Dashboard
                                 </Button>
                             </Link>
