@@ -9,7 +9,9 @@ import { CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import Link from 'next/link';
 
-export default function PaymentCallbackPage() {
+import { Suspense } from 'react';
+
+function PaymentCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams?.get('reference') || searchParams?.get('trxref');
@@ -135,5 +137,17 @@ export default function PaymentCallbackPage() {
         </FadeInUp>
       </div>
     </div>
+  );
+}
+
+export default function PaymentCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
+        <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
+      </div>
+    }>
+      <PaymentCallbackContent />
+    </Suspense>
   );
 }
