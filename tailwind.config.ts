@@ -18,23 +18,24 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-montserrat)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-heading)', 'system-ui', 'sans-serif'],
       },
       colors: {
         // Agora Brand Colors
         'agora-blue': '#2490FD',
-        'agora-success': '#36FE96',
+        'agora-success': 'var(--agora-success)',
         'agora-text': '#02173D',
         'agora-accent': '#FF532A',
-        
-        // Light Mode - using CSS variables from globals.css (hex values)
-        'light-bg': '#e5e7eb',
+
+        // Light Mode - using CSS variables from globals.css
+        'light-bg': 'var(--light-bg)',
         'light-card': 'var(--light-card)',
         'light-text-primary': 'var(--light-text-primary)',
         'light-text-secondary': 'var(--light-text-secondary)',
         'light-text-muted': 'var(--light-text-muted)',
-        'light-border': '#f3f4f6', // Direct hex value - matches gray-100
-        
+        'light-border': 'var(--light-border)',
+
         // Dark Mode - using CSS variables from globals.css (hex values)
         'dark-bg': 'var(--dark-bg)',
         'dark-surface': 'var(--dark-surface)',
@@ -43,7 +44,7 @@ const config: Config = {
         'dark-text-primary': 'var(--dark-text-primary)',
         'dark-text-secondary': 'var(--dark-text-secondary)',
         'dark-text-muted': 'var(--dark-text-muted)',
-        
+
         // Override default Tailwind colors with Agora brand colors
         blue: {
           50: '#eff6ff',
@@ -63,8 +64,8 @@ const config: Config = {
           200: '#bbf7d0',
           300: '#86efac',
           400: '#4ade80',
-          500: '#36FE96', // Agora success
-          600: '#36FE96', // Agora success
+          500: 'var(--agora-success)', // Agora success
+          600: 'var(--agora-success)', // Agora success
           700: '#2ee67d',
           800: '#2bd164',
           900: '#28bc4b',
@@ -72,14 +73,6 @@ const config: Config = {
       },
     },
   },
-  safelist: [
-    // Ensure column span classes are always generated
-    'lg:col-span-3',
-    'lg:col-span-4',
-    'lg:col-span-5',
-    'lg:col-span-6',
-    'lg:col-span-7',
-  ],
   plugins: [],
 };
 export default config;

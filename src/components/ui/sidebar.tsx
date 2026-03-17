@@ -5,6 +5,7 @@ import Link, { LinkProps } from "next/link";
 import React, { useState, createContext, useContext, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { Menu, X } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface Links {
   label: string;
@@ -70,11 +71,11 @@ export const Sidebar = ({
   );
 };
 
-export const SidebarBody = (props: React.ComponentProps<"div">) => {
+export const SidebarBody = ({ hideMobileHeader, ...props }: React.ComponentProps<"div"> & { hideMobileHeader?: boolean }) => {
   return (
     <>
       <DesktopSidebar {...props} />
-      <MobileSidebar {...props} />
+      <MobileSidebar hideMobileHeader={hideMobileHeader} {...props} />
     </>
   );
 };
@@ -84,24 +85,23 @@ export const DesktopSidebar = ({
   children,
   ...props
 }: React.ComponentProps<"div">) => {
-  const { open, animate } = useSidebar();
+  const { animate } = useSidebar();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !animate) return;
-    const width = open ? 250 : 80;
-    gsap.to(el, { width, duration: 0.25, ease: "power2.inOut" });
-  }, [open, animate]);
+    gsap.to(el, { width: 250, duration: 0.25, ease: "power2.inOut" });
+  }, [animate]);
 
   return (
     <div
       ref={ref}
       className={cn(
-        "h-screen px-4 py-4 hidden md:flex md:flex-col bg-[var(--dark-bg)] border-r border-[var(--dark-border)] flex-shrink-0 fixed left-0 top-0 z-20",
+        "desktop-sidebar h-screen px-4 py-4 hidden md:flex md:flex-col bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-r border-[var(--light-border)] dark:border-[var(--dark-border)] flex-shrink-0 fixed left-0 top-0 z-20",
         className
       )}
-      style={{ width: animate ? (open ? 250 : 80) : 250 }}
+      style={{ width: 250 }}
       {...props}
     >
       {children}
@@ -112,8 +112,9 @@ export const DesktopSidebar = ({
 export const MobileSidebar = ({
   className,
   children,
+  hideMobileHeader = false,
   ...props
-}: React.ComponentProps<"div">) => {
+}: React.ComponentProps<"div"> & { hideMobileHeader?: boolean }) => {
   const { open, setOpen } = useSidebar();
   const ref = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(open);
@@ -149,39 +150,61 @@ export const MobileSidebar = ({
     }
   }, [open, shouldRender]);
 
+  const { theme } = useTheme();
+
   return (
     <>
-      <div
-        className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-[var(--dark-surface)] border-b border-[var(--dark-border)] w-full"
-        )}
-        {...props}
-      >
-        <div className="flex justify-end z-20 w-full">
-          <Menu
-            className="text-gray-700 dark:text-dark-text-primary cursor-pointer"
-            onClick={() => setOpen(!open)}
-          />
+      {!hideMobileHeader && (
+        <div
+          className={cn(
+            "mobile-navbar h-[64px] px-4 py-4 flex flex-row md:hidden items-center justify-between bg-white dark:bg-[#000000] border-b border-gray-100 dark:border-white/10 fixed top-0 w-full z-40 transition-all duration-300"
+          )}
+          {...props}
+        >
+          <div className="flex justify-start items-center">
+            <Link href="/" className="flex items-center">
+              <img
+                src="/assets/logos/agora_main.png"
+                alt="Agora"
+                className="h-8 w-auto flex-shrink-0"
+                style={{ height: '32px' }}
+              />
+            </Link>
+          </div>
+          <div className="flex justify-end z-20">
+            <Menu
+              className="text-gray-700 dark:text-dark-text-primary cursor-pointer h-6 w-6"
+              onClick={() => setOpen(!open)}
+            />
+          </div>
         </div>
-        {shouldRender && (
+      )}
+      {shouldRender && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 transition-opacity duration-300"
+            onClick={() => setOpen(false)}
+          />
+          {/* Drawer */}
           <div
             ref={ref}
             className={cn(
-              "fixed h-full w-full inset-0 bg-[var(--dark-bg)] p-10 z-[100] flex flex-col justify-between",
+              "mobile-sidebar-drawer absolute top-0 left-0 h-full w-[280px] bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto",
               className
             )}
             style={{ transform: 'translateX(-100%)', opacity: 0 }}
           >
             <div
-              className="absolute right-10 top-10 z-50 text-gray-700 dark:text-dark-text-primary cursor-pointer"
-              onClick={() => setOpen(!open)}
+              className="absolute right-4 top-4 z-50 text-gray-700 dark:text-dark-text-primary cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-dark-surface rounded-full transition-colors"
+              onClick={() => setOpen(false)}
             >
-              <X />
+              <X className="h-5 w-5" />
             </div>
             {children}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 };
@@ -197,44 +220,41 @@ export const SidebarLink = ({
   isActive?: boolean;
   props?: LinkProps;
 }) => {
-  const { open, animate } = useSidebar();
+  const { setOpen, animate } = useSidebar();
 
-  const iconWithColor = isActive
-    ? React.cloneElement(link.icon as React.ReactElement, {
-        className: cn(
-          (link.icon as React.ReactElement)?.props?.className,
-          "text-[#2490FD]"
-        ),
-      })
-    : React.cloneElement(link.icon as React.ReactElement, {
-        className: cn(
-          (link.icon as React.ReactElement)?.props?.className,
-          "text-[#9ca3af] group-hover/sidebar:text-white"
-        ),
-      });
+  const iconWithColor = React.cloneElement(link.icon as React.ReactElement, {
+    className: cn(
+      (link.icon as React.ReactElement)?.props?.className,
+      isActive
+        ? "text-black dark:text-white"
+        : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] group-hover/sidebar:text-black dark:group-hover/sidebar:text-white"
+    ),
+  });
 
-  const showLabel = animate ? open : true;
+  const showLabel = true;
 
   return (
     <Link
       href={link.href}
       className={cn(
-        "flex items-center justify-between gap-2 group/sidebar py-2 px-3 rounded-lg transition-colors relative",
+        "flex items-center justify-between gap-2 group/sidebar py-2 px-3 rounded-lg transition-all relative sidebar-link-item",
         isActive
-          ? "text-white dark:text-white"
-          : "text-[#9ca3af] dark:text-[#9ca3af] hover:bg-[#1f2937] dark:hover:bg-[#1f2937]",
+          ? "text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] bg-[var(--light-card)] dark:bg-[var(--dark-surface)] sidebar-link-active"
+          : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] hover:shadow-sm border border-transparent sidebar-link-inactive",
         className
       )}
+      onClick={() => setOpen(false)}
       {...props}
     >
       <div className="flex items-center gap-2">
         {iconWithColor}
         <span
           className={cn(
-            "text-[.85rem] group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre inline-block !p-0 !m-0",
-            isActive ? "text-white" : "text-[#9ca3af] group-hover/sidebar:text-white",
+            "group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
+            isActive ? " text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]" : " text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
+          style={{ fontSize: 'var(--text-body)' }}
         >
           {link.label}
         </span>
@@ -242,7 +262,7 @@ export const SidebarLink = ({
       {isActive && (
         <span
           className={cn(
-            "text-white inline-block transition-all duration-200",
+            "text-gray-900 dark:text-white inline-block transition-all duration-200",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
         >

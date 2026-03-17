@@ -35,6 +35,8 @@ export interface NavItem {
   badge?: string | number;
   /** Permission resource required to view this item (school admin only) */
   permission?: PermissionResource;
+  /** If true, only Principals (Owner, Head, etc.) can see this item, regardless of permissions */
+  principalOnly?: boolean;
 }
 
 export interface SidebarSection {
@@ -68,6 +70,7 @@ export function useSidebarConfig(): {
             { label: 'Overview', href: '/dashboard/super-admin/overview', icon: LayoutDashboard },
             { label: 'Schools', href: '/dashboard/super-admin/schools', icon: Building2 },
             { label: 'Analytics', href: '/dashboard/super-admin/analytics', icon: BarChart3 },
+            { label: 'Plans', href: '/dashboard/super-admin/plans', icon: CreditCard },
             { label: 'Plugins', href: '/dashboard/super-admin/plugins', icon: Puzzle },
             { label: 'Profile', href: '/dashboard/profile', icon: User },
           ],
@@ -80,7 +83,7 @@ export function useSidebarConfig(): {
       const baseItems: NavItem[] = [
         { label: 'Overview', href: '/dashboard/school/overview', icon: LayoutDashboard, permission: PermissionResource.OVERVIEW },
         { label: 'Students', href: '/dashboard/school/students', icon: GraduationCap, permission: PermissionResource.STUDENTS },
-        { label: 'Staff', href: '/dashboard/school/teachers', icon: Users, permission: PermissionResource.STAFF },
+        { label: 'Staff', href: '/dashboard/school/staff', icon: Users, permission: PermissionResource.STAFF },
       ];
 
       // Add Faculties for tertiary (before Departments/Classes)
@@ -108,7 +111,7 @@ export function useSidebarConfig(): {
         { label: 'Timetables', href: '/dashboard/school/timetables', icon: Clock, permission: PermissionResource.TIMETABLES },
         { label: 'Calendar', href: '/dashboard/school/calendar', icon: Calendar, permission: PermissionResource.CALENDAR },
         { label: 'Transfers', href: '/dashboard/school/transfers', icon: ArrowRightLeft, permission: PermissionResource.ADMISSIONS }, // Transfers use same permission as admissions
-        { label: 'Subscription', href: '/dashboard/school/subscription', icon: CreditCard, permission: PermissionResource.SUBSCRIPTIONS },
+        { label: 'Subscription', href: '/dashboard/school/subscription', icon: CreditCard, permission: PermissionResource.SUBSCRIPTIONS, principalOnly: true },
         { label: 'Profile', href: '/dashboard/profile', icon: User }
       );
 
@@ -178,27 +181,30 @@ export function usePermissionFilteredSidebar(): {
   const { sections, terminology, currentType } = useSidebarConfig();
   const user = useSelector((state: RootState) => state.auth.user);
   const { canView, isLoading: isLoadingPermissions, isPrincipal } = useCurrentAdminPermissions();
-  
+
   const filteredSections = useMemo(() => {
     // Only filter for school admins
     if (user?.role !== 'SCHOOL_ADMIN') {
       return sections;
     }
-    
+
     // Principals have permanent full access - see everything (no loading needed)
     if (isPrincipal) {
       return sections;
     }
-    
+
     // While loading permissions, show empty sidebar to prevent flash
     if (isLoadingPermissions) {
       return sections.map((section) => ({ ...section, items: [] }));
     }
-    
+
     // Filter items based on permissions
     return sections.map((section) => ({
       ...section,
       items: section.items.filter((item) => {
+        // If it's a principal-only feature and user is not principal, hide it
+        if (item.principalOnly && !isPrincipal) return false;
+
         // If no permission specified, show the item
         if (!item.permission) return true;
         // Check if user has READ access to this resource
@@ -206,7 +212,7 @@ export function usePermissionFilteredSidebar(): {
       }),
     }));
   }, [sections, user?.role, isLoadingPermissions, isPrincipal, canView]);
-  
+
   return {
     sections: filteredSections,
     terminology,

@@ -246,19 +246,19 @@ export function EditableTimetableTable({
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 text-left text-sm font-semibold text-light-text-primary dark:text-dark-text-primary min-w-[200px]">
+                  <th className="sticky left-0 z-20 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 text-left text-sm font-semibold text-light-text-primary dark:text-dark-text-primary min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                     Time
                   </th>
                   {DAYS.map((day) => (
                     <th
                       key={day}
-                      className="border border-light-border dark:border-dark-border px-4 py-3 text-center text-sm font-semibold text-light-text-primary dark:text-dark-text-primary"
+                      className="border border-light-border dark:border-dark-border px-4 py-3 text-center text-sm font-semibold text-light-text-primary dark:text-dark-text-primary min-w-[120px]"
                     >
                       {DAY_LABELS[day]}
                     </th>
                   ))}
-                  <th className="sticky right-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-4 py-3 text-center text-sm font-semibold text-light-text-primary dark:text-dark-text-primary">
-                    Insert
+                  <th className="sticky right-0 z-20 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-4 py-3 text-center text-sm font-semibold text-light-text-primary dark:text-dark-text-primary min-w-[80px] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                    Action
                   </th>
                 </tr>
               </thead>
@@ -274,8 +274,8 @@ export function EditableTimetableTable({
                   if (isBreakType && breakType) {
                     return (
                       <tr key={`${timePeriod.startTime}-${breakType}`}>
-                        <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 min-w-[200px]">
-                          <div className="flex items-center gap-1.5">
+                        <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                          <div className="flex flex-col gap-1.5">
                             <input
                               type="time"
                               value={timePeriod.startTime}
@@ -283,9 +283,9 @@ export function EditableTimetableTable({
                                 const newStartTime = e.target.value;
                                 updateTimeForAllDays(timePeriod.startTime, timePeriod.endTime, newStartTime, timePeriod.endTime);
                               }}
-                              className="w-[90px] px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
+                              className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                             />
-                            <span className="text-xs text-light-text-muted">-</span>
+                            <div className="text-center text-xs text-light-text-muted">to</div>
                             <input
                               type="time"
                               value={timePeriod.endTime}
@@ -293,7 +293,7 @@ export function EditableTimetableTable({
                                 const newEndTime = e.target.value;
                                 updateTimeForAllDays(timePeriod.startTime, timePeriod.endTime, timePeriod.startTime, newEndTime);
                               }}
-                              className="w-[90px] px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
+                              className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                             />
                           </div>
                         </td>
@@ -318,7 +318,7 @@ export function EditableTimetableTable({
                             </button>
                           </div>
                         </td>
-                        <td className="sticky right-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-4 py-3">
+                        <td className="sticky right-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-4 py-3 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           <InsertButton
                             onInsert={(type, startTime, endTime) => {
                               insertBreakPeriod(timePeriod.startTime, type, startTime, endTime);
@@ -333,8 +333,8 @@ export function EditableTimetableTable({
                   // Lesson periods
                   return (
                     <tr key={timePeriod.startTime}>
-                      <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 min-w-[200px]">
-                        <div className="flex items-center gap-1.5">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <div className="flex flex-col gap-1.5">
                           <input
                             type="time"
                             value={timePeriod.startTime}
@@ -349,9 +349,9 @@ export function EditableTimetableTable({
                                   });
                                 });
                             }}
-                            className="w-[90px] px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
+                            className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                           />
-                          <span className="text-xs text-light-text-muted">-</span>
+                          <div className="text-center text-xs text-light-text-muted">to</div>
                           <input
                             type="time"
                             value={timePeriod.endTime}
@@ -366,7 +366,7 @@ export function EditableTimetableTable({
                                   });
                                 });
                             }}
-                            className="w-[90px] px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
+                            className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                           />
                         </div>
                       </td>
@@ -439,7 +439,7 @@ export function EditableTimetableTable({
                           </td>
                         );
                       })}
-                      <td className="sticky right-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-4 py-3">
+                      <td className="sticky right-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-4 py-3 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                         <InsertButton
                           onInsert={(type, startTime, endTime) => {
                             insertBreakPeriod(timePeriod.startTime, type, startTime, endTime);
@@ -478,11 +478,7 @@ export function EditableTimetableTable({
         {/* Auto-Generate Confirmation Modal */}
         {showAutoGenerateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4"
-            >
+            <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
                   <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -533,7 +529,7 @@ export function EditableTimetableTable({
                   Cancel
                 </Button>
               </div>
-            </motion.div>
+            </FadeInUp>
           </div>
         )}
       </div>

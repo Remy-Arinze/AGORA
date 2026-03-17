@@ -70,12 +70,9 @@ export function SchoolsTable({ schools }: SchoolsTableProps) {
                 </tr>
               </thead>
               <tbody>
-                {schools.map((school, index) => (
-                <motion.tr
+                {schools.map((school) => (
+                <tr
                   key={school.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
                   className="border-b border-gray-100 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-surface/50 transition-colors cursor-pointer"
                   onClick={() => router.push(`/dashboard/super-admin/schools/${school.id}`)}
                 >
@@ -120,7 +117,7 @@ export function SchoolsTable({ schools }: SchoolsTableProps) {
                       </Button>
                     </div>
                   </td>
-                </motion.tr>
+                </tr>
                 ))}
               </tbody>
             </table>

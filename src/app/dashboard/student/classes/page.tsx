@@ -2,13 +2,14 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  BookOpen, 
-  Users, 
+import {
+  BookOpen,
+  Users,
   FileText,
   Clock,
   User,
@@ -18,7 +19,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import { 
+import {
   useGetMyStudentProfileQuery,
   useGetMyStudentClassesQuery,
   useGetMyStudentTimetableQuery,
@@ -26,12 +27,14 @@ import {
   useGetSessionsQuery,
   useGetCurriculumForClassQuery,
   useGetMyClassmatesQuery,
+  useGetClassAssessmentsQuery,
 } from '@/lib/store/api/schoolAdminApi';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import { useStudentSchoolType, getStudentTerminology } from '@/hooks/useStudentDashboard';
+import { safeDownload } from '@/lib/utils/download';
 import toast from 'react-hot-toast';
 
-type TabType = 'overview' | 'teachers' | 'resources' | 'curriculum' | 'timetable' | 'classmates';
+type TabType = 'assessments' | 'teachers' | 'resources' | 'curriculum' | 'timetable' | 'classmates';
 
 // Classmate Card Component
 function ClassmateCard({ classmate }: { classmate: any }) {
@@ -48,11 +51,7 @@ function ClassmateCard({ classmate }: { classmate: any }) {
 
   return (
     <Link href={`/dashboard/school/students/${classmate.id}`}>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-light-card dark:bg-dark-surface"
-      >
+      <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-light-card dark:bg-dark-surface">
         <div className="flex items-center gap-4">
           {shouldShowImage ? (
             <img
@@ -62,7 +61,7 @@ function ClassmateCard({ classmate }: { classmate: any }) {
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold text-sm border-2 border-light-border dark:border-dark-border">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-black dark:text-white font-semibold text-sm border-2 border-black dark:border-white">
               {getInitials()}
             </div>
           )}
@@ -82,13 +81,14 @@ function ClassmateCard({ classmate }: { classmate: any }) {
             )}
           </div>
         </div>
-      </motion.div>
+      </FadeInUp>
     </Link>
   );
 }
 
 export default function StudentClassesPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabType>('assessments');
   const [selectedTermId, setSelectedTermId] = useState<string>('');
 
   // Get school type from student's enrollment (not localStorage)
@@ -98,7 +98,7 @@ export default function StudentClassesPage() {
   // Get student's classes
   const { data: classesResponse, isLoading: isLoadingClasses } = useGetMyStudentClassesQuery();
   const classes = classesResponse?.data || [];
-  
+
   // Get the active/primary class (first one, or could filter by isActive enrollment)
   const classData = useMemo(() => {
     // If multiple classes, show the first one (most recent enrollment)
@@ -150,16 +150,35 @@ export default function StudentClassesPage() {
   );
   const timetable = timetableResponse?.data || [];
 
+  // Get class assessments
+  const { data: assessmentsResponse, isLoading: isLoadingAssessments } = useGetClassAssessmentsQuery(
+    {
+      schoolId: schoolId!,
+      classId: classData?.id!,
+      termId: activeSession?.term?.id || undefined,
+    },
+    { skip: !schoolId || !classData?.id }
+  );
+  const assessments = Array.isArray(assessmentsResponse) ? assessmentsResponse : assessmentsResponse?.data || [];
+
+  // Calculate unread assessments (published and not submitted)
+  const pendingAssessmentsCount = useMemo(() => {
+    return assessments.filter((a: any) =>
+      a.status === 'PUBLISHED' &&
+      (!a.submissions || a.submissions.length === 0)
+    ).length;
+  }, [assessments]);
+
   // Extract all terms from sessions for selector - filtered by school type and deduplicated
   const allTerms = useMemo(() => {
     if (!sessionsResponse?.data) return [];
-    
+
     // Filter sessions by current school type to avoid duplicates
     const filteredSessions = sessionsResponse.data.filter((session: any) => {
       if (!currentType) return !session.schoolType;
       return session.schoolType === currentType;
     });
-    
+
     // Deduplicate sessions by name (keep first/latest)
     const uniqueSessionsMap = new Map<string, any>();
     filteredSessions.forEach((session: any) => {
@@ -167,7 +186,7 @@ export default function StudentClassesPage() {
         uniqueSessionsMap.set(session.name, session);
       }
     });
-    
+
     const terms: Array<{ id: string; name: string; sessionName: string }> = [];
     Array.from(uniqueSessionsMap.values()).forEach((session: any) => {
       if (session.terms) {
@@ -180,7 +199,7 @@ export default function StudentClassesPage() {
         });
       }
     });
-    
+
     return terms.sort((a, b) => {
       if (a.sessionName !== b.sessionName) {
         return b.sessionName.localeCompare(a.sessionName);
@@ -204,27 +223,22 @@ export default function StudentClassesPage() {
 
       // Get auth token from localStorage
       const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || localStorage.getItem('token') : null;
-      
+
       // Fetch and create blob for download
       const response = await fetch(downloadUrl, {
         headers: token ? {
           'Authorization': `Bearer ${token}`,
         } : {},
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to download resource');
       }
-      
+
+
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = resource.name || resource.fileName || 'resource';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const fileName = resource.name || resource.fileName || 'resource';
+      safeDownload(blob, fileName);
     } catch (error: any) {
       toast.error(error?.message || 'Failed to download resource');
     }
@@ -232,10 +246,18 @@ export default function StudentClassesPage() {
 
   const tabs = [
     {
-      id: 'overview' as TabType,
-      label: 'Overview',
-      icon: <BookOpen className="h-4 w-4" />,
+      id: 'assessments' as TabType,
+      label: 'Assessments',
+      icon: (
+        <div className="relative">
+          <FileText className="h-4 w-4" />
+          {pendingAssessmentsCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-dark-bg" />
+          )}
+        </div>
+      ),
       available: true,
+      badge: pendingAssessmentsCount > 0 ? pendingAssessmentsCount : undefined,
     },
     {
       id: 'teachers' as TabType,
@@ -306,14 +328,10 @@ export default function StudentClassesPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-1" style={{ fontSize: 'var(--text-page-title)' }}>
                 {classData.name}
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary">
@@ -324,7 +342,7 @@ export default function StudentClassesPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -333,80 +351,130 @@ export default function StudentClassesPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                  ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
+                  }`}
+                style={{ fontSize: 'var(--text-tiny)' }}
               >
                 {tab.icon}
-                {tab.label}
+                <div className="flex items-center gap-1.5">
+                  {tab.label}
+                  {tab.badge && (
+                    <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                      {tab.badge}
+                    </span>
+                  )}
+                </div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
+          {/* Assessments Tab */}
+          {activeTab === 'assessments' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                    {terminology.courseSingular} Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {classData.description && (
-                      <div>
-                        <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                          Description
-                        </p>
-                        <p className="text-light-text-primary dark:text-dark-text-primary">
-                          {classData.description}
-                        </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {isLoadingAssessments ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-t-lg" />
+                      <div className="p-6 space-y-3">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 w-3/4 rounded" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 w-1/2 rounded" />
                       </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                          Academic Year
-                        </p>
-                        <p className="text-light-text-primary dark:text-dark-text-primary">
-                          {classData.academicYear}
-                        </p>
-                      </div>
-                      {classData.type && (
-                        <div>
-                          <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                            Type
-                          </p>
-                          <p className="text-light-text-primary dark:text-dark-text-primary capitalize">
-                            {classData.type.toLowerCase()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    {classData.enrollment && (
-                      <div>
-                        <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                          Enrollment Date
-                        </p>
-                        <p className="text-light-text-primary dark:text-dark-text-primary">
-                          {new Date(classData.enrollment.enrollmentDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
+                    </Card>
+                  ))
+                ) : assessments.length > 0 ? (
+                  assessments.map((assessment: any) => {
+                    const submission = assessment.submissions?.[0];
+                    const isSubmitted = !!submission;
+                    const isGraded = submission?.status === 'GRADED';
+
+                    return (
+                      <FadeInUp key={assessment.id} duration={0.4}>
+                        <Card className="h-full group hover:shadow-xl transition-all duration-300 border-t-4 border-t-blue-500 overflow-hidden bg-light-card dark:bg-dark-surface">
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-start mb-2">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
+                                assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                                }`}>
+                                {assessment.type}
+                              </span>
+                              {isSubmitted ? (
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isGraded ? 'text-green-500' : 'text-blue-500'}`}>
+                                  {isGraded ? 'GRADED' : 'SUBMITTED'}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                                  PENDING
+                                </span>
+                              )}
+                            </div>
+                            <CardTitle className="group-hover:text-blue-600 transition-colors uppercase tracking-tight font-black" style={{ fontSize: 'var(--text-card-title)' }}>
+                              {assessment.title}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4 h-10" style={{ fontSize: 'var(--text-small)' }}>
+                              {assessment.description || 'No description provided.'}
+                            </p>
+
+                            {isGraded && (
+                              <div className="mb-4 bg-green-50 dark:bg-green-900/10 p-3 rounded-lg flex items-center justify-between border border-green-200 dark:border-green-800">
+                                <span className="font-bold text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-tiny)' }}>YOUR SCORE</span>
+                                <span className="font-black text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-stat-value)' }}>
+                                  {submission.totalScore} / {assessment.maxScore}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="space-y-2 pt-4 border-t border-light-border dark:border-dark-border">
+                              <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
+                                <span>Subject</span>
+                                <span className="text-light-text-primary dark:text-dark-text-primary">{assessment.subjectName || 'General'}</span>
+                              </div>
+                              <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
+                                <span>Due Date</span>
+                                <span className="text-light-text-primary dark:text-dark-text-primary">
+                                  {assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-6">
+                              {isSubmitted ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-2"
+                                  onClick={() => router.push(`/dashboard/student/assessments/${assessment.id}`)}
+                                >
+                                  View Result
+                                </Button>
+                              ) : (
+                                <Button
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                                  onClick={() => router.push(`/dashboard/student/assessments/${assessment.id}`)}
+                                >
+                                  Take Assessment
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </FadeInUp>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full py-20 text-center">
+                    <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No assessments available.</p>
+                    <p className="text-sm text-light-text-muted mt-2">When your teacher publishes an assessment, it will appear here.</p>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             </div>
           )}
 
@@ -415,7 +483,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     {terminology.staff}
                   </CardTitle>
                 </CardHeader>
@@ -426,8 +494,8 @@ export default function StudentClassesPage() {
                         <Card key={teacher.id} className="border border-light-border dark:border-dark-border">
                           <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                                <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                              <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                                <User className="h-8 w-8 text-black dark:text-white" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-1">
@@ -483,7 +551,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Curriculum Overview
                   </CardTitle>
                 </CardHeader>
@@ -496,8 +564,8 @@ export default function StudentClassesPage() {
                           className="pb-6 border-b border-light-border dark:border-dark-border last:border-0 last:pb-0"
                         >
                           <div className="flex items-start gap-4 mb-4">
-                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                              <span className="text-blue-600 dark:text-blue-400 font-bold text-sm text-center leading-tight">
+                            <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
+                              <span className="text-black dark:text-white font-bold text-sm text-center leading-tight">
                                 Week {item.week}
                               </span>
                             </div>
@@ -565,7 +633,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Resources
                   </CardTitle>
                 </CardHeader>
@@ -577,8 +645,8 @@ export default function StudentClassesPage() {
                           <CardContent className="pt-6">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                                  <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="h-6 w-6 text-black dark:text-white" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary truncate">
@@ -594,8 +662,8 @@ export default function StudentClassesPage() {
                                   </p>
                                 </div>
                               </div>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => handleDownload(resource)}
                               >
@@ -624,7 +692,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Weekly Timetable
                   </CardTitle>
                 </CardHeader>
@@ -658,7 +726,7 @@ export default function StudentClassesPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                  <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                     Classmates
                   </CardTitle>
                 </CardHeader>
@@ -685,7 +753,7 @@ export default function StudentClassesPage() {
               </Card>
             </div>
           )}
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

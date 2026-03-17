@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
+import {
   Puzzle,
   Sparkles,
   Smartphone,
@@ -24,7 +24,7 @@ import {
 const schoolPlugins = [
   {
     id: '2',
-    name: 'Socrates AI',
+    name: 'Agora AI',
     subtitle: "The Teacher's Assistant",
     description: 'AI-powered lesson planning and grading assistant. Generate compliant lesson notes aligned with NERDC curriculum and perform OCR-based essay grading.',
     category: 'AI & Automation',
@@ -60,25 +60,6 @@ const schoolPlugins = [
       'Parent notifications',
     ],
   },
-  {
-    id: '5',
-    name: 'PrepMaster',
-    subtitle: 'CBT Engine',
-    description: 'Computer-Based Testing platform for exam preparation. Perfect for JAMB, WAEC, and other standardized test preparation.',
-    category: 'Assessment',
-    icon: BookOpen,
-    price: '₦500/student/month',
-    rating: 4.8,
-    reviews: 112,
-    isActive: true,
-    features: [
-      'CBT exam creation',
-      'Practice tests',
-      'Performance analytics',
-      'Question bank',
-      'Auto-grading',
-    ],
-  },
 ];
 
 export default function TeacherPluginsPage() {
@@ -95,18 +76,14 @@ export default function TeacherPluginsPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+          <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             Available Plugins
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Plugins paid for by your school. Access and use these tools to enhance your teaching.
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search */}
         <Card className="mb-6">
@@ -140,12 +117,7 @@ export default function TeacherPluginsPage() {
             {filteredPlugins.map((plugin, index) => {
               const Icon = plugin.icon;
               return (
-                <motion.div
-                  key={plugin.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
+                <FadeInUp delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                   <Card className="h-full hover:shadow-lg transition-shadow border-l-4 border-l-green-500 dark:border-l-green-400">
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-4 mb-4">
@@ -203,19 +175,14 @@ export default function TeacherPluginsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </FadeInUp>
               );
             })}
           </div>
         )}
 
         {/* Info Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mt-8">
           <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
@@ -225,15 +192,15 @@ export default function TeacherPluginsPage() {
                     About School-Paid Plugins
                   </h3>
                   <p className="text-sm text-blue-800 dark:text-blue-400">
-                    These plugins have been subscribed to by your school. You can access and use them 
-                    at no additional cost. If you need a plugin that&apos;s not listed here, contact your 
+                    These plugins have been subscribed to by your school. You can access and use them
+                    at no additional cost. If you need a plugin that&apos;s not listed here, contact your
                     school administrator to request a subscription.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );

@@ -2,21 +2,17 @@
 
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from './Button';
+import { cn } from '@/lib/utils';
 
-export function ThemeToggle() {
-  const { theme, toggleTheme, isDashboardRoute } = useTheme();
-
-  // Hide theme toggle on non-dashboard routes (landing, auth pages)
-  if (!isDashboardRoute) {
-    return null;
-  }
+export function ThemeToggle({ className }: { className?: string }) {
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <Button
       variant="ghost"
       size="sm"
       onClick={toggleTheme}
-      className="relative w-10 h-10 p-0"
+      className={cn("relative p-0 h-9 w-9", className)}
       aria-label="Toggle theme"
     >
       {theme === 'light' ? (

@@ -8,10 +8,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  BookOpen, 
-  Users, 
-  FileText, 
+import {
+  BookOpen,
+  Users,
+  FileText,
   Smartphone,
   ArrowLeft,
   Search,
@@ -24,13 +24,13 @@ import {
   Download,
   Upload,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  QrCode
 } from 'lucide-react';
-import { getActivePluginsForTeacher } from '@/lib/plugins';
-import { 
-  useGetClassByIdQuery, 
-  useGetMyTeacherSchoolQuery, 
-  useGetActiveSessionQuery, 
+import {
+  useGetClassByIdQuery,
+  useGetMyTeacherSchoolQuery,
+  useGetActiveSessionQuery,
   useGetClassStudentsQuery,
   useGetClassGradesQuery,
   useDeleteGradeMutation,
@@ -38,26 +38,39 @@ import {
   useGetCurriculumForClassQuery,
   useGetTimetableForClassQuery,
   useGetSessionsQuery,
+  useGetClassAssessmentsQuery,
+  useMarkAttendanceMutation,
+  useMarkBulkAttendanceMutation,
+  useGetClassAttendanceQuery,
   type StudentWithEnrollment,
   type Grade,
-  type GradeType
+  type GradeType,
+  type Assessment
 } from '@/lib/store/api/schoolAdminApi';
 import { useClassResources } from '@/hooks/useClassResources';
 import { BulkGradeEntryModal } from '@/components/modals/BulkGradeEntryModal';
 import { GradeEntryModal } from '@/components/modals/GradeEntryModal';
+import { CreateAssessmentModal } from '@/components/modals/CreateAssessmentModal';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import toast from 'react-hot-toast';
+import { StoreProvider } from '@/lib/store/StoreProvider';
+import { safeDownload } from '@/lib/utils/download';
+import { cn } from '@/lib/utils';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
+import { AgoraAiTools } from '@/components/ai/AgoraAiTools';
+import { FloatingAiCta } from '@/components/ai/FloatingAiCta';
+import { AiChatDrawer } from '@/components/ai/AiChatDrawer';
+import { Sparkles } from 'lucide-react';
 
-type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'rollcall' | 'resources';
+type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'rollcall';
 
 export default function ClassDetailPage() {
   const params = useParams();
   const router = useRouter();
   const classId = params.id as string;
-  const [activeTab, setActiveTab] = useState<TabType>('curriculum');
+  const [activeTab, setActiveTab] = useState<TabType>('timetable');
   const [searchQuery, setSearchQuery] = useState('');
   const [showBulkGradeModal, setShowBulkGradeModal] = useState(false);
   const [showGradeModal, setShowGradeModal] = useState(false);
@@ -69,6 +82,9 @@ export default function ClassDetailPage() {
   const [sequenceFilter, setSequenceFilter] = useState<number | ''>('');
   const [selectedTimetableTermId, setSelectedTimetableTermId] = useState<string>('');
   const [showUploadResourceModal, setShowUploadResourceModal] = useState(false);
+  const [assessmentTermFilter, setAssessmentTermFilter] = useState<string>('');
+  const [showCreateAssessmentModal, setShowCreateAssessmentModal] = useState(false);
+  const [showAiChat, setShowAiChat] = useState(false);
 
   const { currentType } = useSchoolType();
   const terminology = getTerminology(currentType) || {
@@ -91,9 +107,9 @@ export default function ClassDetailPage() {
     { schoolId: schoolId!, classId },
     { skip: !schoolId || !classId }
   );
-  
+
   const classData = classResponse?.data;
-  
+
   // Derive school type from the class being viewed (more accurate than localStorage)
   const classType = classData?.type as 'PRIMARY' | 'SECONDARY' | 'TERTIARY' | undefined;
 
@@ -118,8 +134,8 @@ export default function ClassDetailPage() {
 
   // Get grades for class
   const { data: gradesResponse, refetch: refetchGrades } = useGetClassGradesQuery(
-    { 
-      schoolId: schoolId!, 
+    {
+      schoolId: schoolId!,
       classId,
       gradeType: gradeTypeFilter || undefined,
       termId: termFilter || undefined,
@@ -127,12 +143,24 @@ export default function ClassDetailPage() {
     { skip: !schoolId || !classId || activeTab !== 'grades' }
   );
 
+  // Get assessments for class
+  const { data: assessmentsResponse, isLoading: isLoadingAssessments } = useGetClassAssessmentsQuery(
+    {
+      schoolId: schoolId!,
+      classId,
+      termId: assessmentTermFilter || activeSession?.term?.id || undefined,
+    },
+    { skip: !schoolId || !classId || activeTab !== 'assessments' }
+  );
+
+  const assessments = assessmentsResponse?.data || assessmentsResponse || []; // Handle both direct array and ResponseDto
+
   const [deleteGrade, { isLoading: isDeleting }] = useDeleteGradeMutation();
   const [updateGrade, { isLoading: isPublishing }] = useUpdateGradeMutation();
 
   const handlePublishGrade = async (gradeId: string) => {
     if (!schoolId) return;
-    
+
     try {
       await updateGrade({
         schoolId,
@@ -159,13 +187,13 @@ export default function ClassDetailPage() {
   );
   const students = studentsResponse?.data || [];
   const allGrades = gradesResponse?.data || [];
-  
+
   // Filter grades by sequence on frontend
   const grades = useMemo(() => {
     if (sequenceFilter === '') return allGrades;
     return allGrades.filter((grade: any) => grade.sequence === sequenceFilter);
   }, [allGrades, sequenceFilter]);
-  
+
   // Get unique sequence numbers from grades for filter dropdown
   const uniqueSequences = useMemo(() => {
     const sequences = allGrades
@@ -178,16 +206,16 @@ export default function ClassDetailPage() {
   // Extract all terms from sessions for timetable term selector - filtered by school type and deduplicated
   // Use classType (from the class being viewed) as primary, fallback to currentType (from localStorage)
   const effectiveSchoolType: 'PRIMARY' | 'SECONDARY' | 'TERTIARY' | null = classType || currentType || null;
-  
+
   const timetableTerms = useMemo(() => {
     if (!sessionsResponse?.data) return [];
-    
+
     // Filter sessions by the class's school type to show the correct terms
     const filteredSessions = sessionsResponse.data.filter((session: any) => {
       if (!effectiveSchoolType) return !session.schoolType;
       return session.schoolType === effectiveSchoolType;
     });
-    
+
     // Deduplicate sessions by name (keep first/latest)
     const uniqueSessionsMap = new Map<string, any>();
     filteredSessions.forEach((session: any) => {
@@ -195,7 +223,7 @@ export default function ClassDetailPage() {
         uniqueSessionsMap.set(session.name, session);
       }
     });
-    
+
     const terms: Array<{ id: string; name: string; sessionName: string }> = [];
     Array.from(uniqueSessionsMap.values()).forEach((session: any) => {
       if (session.terms && Array.isArray(session.terms)) {
@@ -216,7 +244,7 @@ export default function ClassDetailPage() {
 
   const filteredStudents = useMemo(() => {
     if (!searchQuery) return students;
-    
+
     const query = searchQuery.toLowerCase();
     return students.filter(
       (student: StudentWithEnrollment) =>
@@ -245,17 +273,15 @@ export default function ClassDetailPage() {
     classId,
     activeTab,
   });
-  const activePlugins = getActivePluginsForTeacher();
-  const hasRollCall = activePlugins.some(p => p.slug === 'rollcall');
-
   // Build tabs dynamically based on available plugins
   const tabs: { id: TabType; label: string; icon: React.ReactNode; available: boolean }[] = [
-    { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
     { id: 'timetable', label: 'Timetable', icon: <Clock className="h-4 w-4" />, available: true },
     { id: 'students', label: 'Students', icon: <Users className="h-4 w-4" />, available: true },
     { id: 'grades', label: 'Grades', icon: <Award className="h-4 w-4" />, available: true },
+    { id: 'assessments', label: 'Assessments', icon: <Award className="h-4 w-4" />, available: true },
+    { id: 'rollcall', label: 'Roll Call', icon: <Smartphone className="h-4 w-4" />, available: true },
     { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" />, available: true },
-    { id: 'rollcall', label: 'RollCall', icon: <Smartphone className="h-4 w-4" />, available: hasRollCall },
+    { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
   ];
 
   if (isLoading) {
@@ -298,11 +324,7 @@ export default function ClassDetailPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Link href="/dashboard/teacher/classes">
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -311,10 +333,10 @@ export default function ClassDetailPage() {
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
                 {classData.name}
               </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary">
+              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 {classData.code && `${classData.code} • `}
                 {classData.classLevel && `${classData.classLevel} • `}
                 {classData.academicYear}
@@ -322,7 +344,7 @@ export default function ClassDetailPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -331,11 +353,11 @@ export default function ClassDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === tab.id
+                  ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
+                  }`}
+                style={{ fontSize: 'var(--text-tiny)' }}
               >
                 {tab.icon}
                 {tab.label}
@@ -345,12 +367,7 @@ export default function ClassDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {/* Curriculum Tab */}
           {(activeTab as TabType) === 'curriculum' && (
             <div className="space-y-6">
@@ -375,12 +392,12 @@ export default function ClassDetailPage() {
                               </span>
                             </div>
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
+                              <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-card-title)' }}>
                                 {item.topic}
                               </h3>
                               {item.objectives && item.objectives.length > 0 && (
                                 <div className="space-y-2 mb-3">
-                                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
+                                  <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                                     Learning Objectives:
                                   </p>
                                   <ul className="list-disc list-inside space-y-1 ml-2">
@@ -473,96 +490,92 @@ export default function ClassDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                {filteredStudents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                      {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mb-4">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
-                        <Input
-                          placeholder="Search students by name or student ID..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
+                  {filteredStudents.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                        {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
+                      </p>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-light-border dark:border-dark-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Name
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Student ID
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Date of Birth
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Status
-                            </th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredStudents.map((student: StudentWithEnrollment, index: number) => (
-                            <motion.tr
-                              key={student.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                            >
-                              <td className="py-4 px-4">
-                                <div>
-                                  <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                    {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                {student.uid}
-                              </td>
-                              <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                {new Date(student.dateOfBirth).toLocaleDateString()}
-                              </td>
-                              <td className="py-4 px-4">
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    !student.profileLocked
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                          <Input
+                            placeholder="Search students by name or student ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-light-border dark:border-dark-border">
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Name
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Student ID
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Date of Birth
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Status
+                              </th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredStudents.map((student: StudentWithEnrollment, index: number) => (
+                              <tr
+                                key={student.id}
+                                className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
+                              >
+                                <td className="py-4 px-4">
+                                  <div>
+                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                      {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
+                                    </p>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                                  {student.uid}
+                                </td>
+                                <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                                  {new Date(student.dateOfBirth).toLocaleDateString()}
+                                </td>
+                                <td className="py-4 px-4">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${!student.profileLocked
                                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                       : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                                  }`}
-                                >
-                                  {student.profileLocked ? 'Locked' : 'Active'}
-                                </span>
-                              </td>
-                              <td className="py-4 px-4">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => router.push(`/dashboard/teacher/students/${student.id}`)}
-                                >
-                                  View
-                                </Button>
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
+                                      }`}
+                                  >
+                                    {student.profileLocked ? 'Locked' : 'Active'}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-4">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.push(`/dashboard/teacher/students/${student.id}`)}
+                                  >
+                                    View
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -716,13 +729,12 @@ export default function ClassDetailPage() {
                                     </div>
                                   </td>
                                   <td className="px-4 py-3">
-                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
-                                      grade.gradeType === 'CA'
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
-                                        : grade.gradeType === 'ASSIGNMENT'
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${grade.gradeType === 'CA'
+                                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
+                                      : grade.gradeType === 'ASSIGNMENT'
                                         ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                                         : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
-                                    }`}>
+                                      }`}>
                                       {grade.gradeType}
                                     </span>
                                   </td>
@@ -802,7 +814,92 @@ export default function ClassDetailPage() {
             </div>
           )}
 
+          {/* Assessments Tab */}
+          {(activeTab as TabType) === 'assessments' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                    Assessments
+                  </h2>
+                  <select
+                    value={assessmentTermFilter || activeSession?.term?.id || ''}
+                    onChange={(e) => setAssessmentTermFilter(e.target.value)}
+                    className="text-xs px-2 py-1.5 border border-light-border dark:border-dark-border rounded-md bg-transparent"
+                  >
+                    {timetableTerms.map((term: any) => (
+                      <option key={term.id} value={term.id}>{term.name} ({term.sessionName})</option>
+                    ))}
+                  </select>
+                </div>
+                <Button onClick={() => setShowCreateAssessmentModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Assessment
+                </Button>
+              </div>
+
+              {isLoadingAssessments ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+              ) : (assessments as Assessment[]).length === 0 ? (
+                <Card>
+                  <CardContent className="py-20 text-center">
+                    <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No assessments found for this term.</p>
+                    <p className="text-sm text-light-text-muted mt-2 mb-6">Create your first assessment or use AI to generate one.</p>
+                    <Button variant="outline" onClick={() => setShowCreateAssessmentModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" /> Create First Assessment
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(assessments as Assessment[]).map((assessment: Assessment) => (
+                    <Card key={assessment.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer" onClick={() => router.push(`/dashboard/teacher/assessments/${assessment.id}`)}>
+                      <div className="h-2 w-full bg-blue-500" />
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600' :
+                            assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                            }`}>
+                            {assessment.type}
+                          </span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${assessment.status === 'PUBLISHED' ? 'text-green-500' : 'text-amber-500'
+                            }`}>
+                            {assessment.status}
+                          </span>
+                        </div>
+                        <CardTitle className="mt-2 group-hover:text-blue-600 transition-colors">{assessment.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4">
+                          {assessment.description || 'No description provided.'}
+                        </p>
+                        <div className="space-y-2 pt-4 border-t border-light-border dark:border-dark-border">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-light-text-muted">Max Score:</span>
+                            <span className="font-bold">{assessment.maxScore}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-light-text-muted">Submissions:</span>
+                            <span className="font-bold">{assessment._count?.submissions || 0}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-light-text-muted">Due Date:</span>
+                            <span className="font-bold">{assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Resources Tab */}
+
           {(activeTab as TabType) === 'resources' && (
             <div className="space-y-6">
               <Card>
@@ -829,12 +926,7 @@ export default function ClassDetailPage() {
                   ) : resources.length > 0 ? (
                     <div className="space-y-4">
                       {resources.map((resource: any) => (
-                        <motion.div
-                          key={resource.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 transition-colors bg-light-card dark:bg-dark-surface"
-                        >
+                        <FadeInUp key={resource.id} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.4} className="p-4 border border-light-border dark:border-dark-border rounded-lg hover:border-blue-500 dark:hover:border-blue-500 transition-colors bg-light-card dark:bg-dark-surface">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                               <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -877,20 +969,13 @@ export default function ClassDetailPage() {
                                   if (!schoolId || !classId) return;
                                   const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/schools/${schoolId}/classes/${classId}/resources/${resource.id}/download`;
                                   const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('accessToken')) : null;
-                                  
+
                                   fetch(downloadUrl, {
                                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                                   })
                                     .then((response) => response.blob())
                                     .then((blob) => {
-                                      const url = window.URL.createObjectURL(blob);
-                                      const a = document.createElement('a');
-                                      a.href = url;
-                                      a.download = resource.name;
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      window.URL.revokeObjectURL(url);
-                                      document.body.removeChild(a);
+                                      safeDownload(blob, resource.name);
                                     })
                                     .catch((error) => {
                                       toast.error('Failed to download resource');
@@ -916,7 +1001,7 @@ export default function ClassDetailPage() {
                               </Button>
                             </div>
                           </div>
-                        </motion.div>
+                        </FadeInUp>
                       ))}
                     </div>
                   ) : (
@@ -942,125 +1027,18 @@ export default function ClassDetailPage() {
             </div>
           )}
 
-          {/* RollCall Tab */}
-          {(activeTab as TabType) === 'rollcall' && hasRollCall && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                      RollCall Attendance
-                    </CardTitle>
-                    <Button
-                      size="sm"
-                      onClick={() => router.push('/dashboard/teacher/plugins/rollcall')}
-                      className="flex items-center gap-2"
-                    >
-                      <Smartphone className="h-4 w-4" />
-                      Open RollCall
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <Card className="border border-light-border dark:border-dark-border">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                Today&apos;s Attendance
-                              </p>
-                              <p className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                                {/* TODO: Replace with real attendance data when API is ready */}
-                                0/{students.length}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border border-light-border dark:border-dark-border">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                              <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                Absent Today
-                              </p>
-                              <p className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                                {/* TODO: Replace with real attendance data when API is ready */}
-                                0
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border border-light-border dark:border-dark-border">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                              <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                Late Today
-                              </p>
-                              <p className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                                {/* TODO: Replace with real attendance data when API is ready */}
-                                0
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                        Recent Attendance Records
-                      </h3>
-                      {/* TODO: Replace with real attendance data when API is ready */}
-                      <div className="text-center py-8">
-                        <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                        <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                          Attendance records will be available here once you start taking attendance.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+          {/* Roll Call Tab */}
+          {(activeTab as TabType) === 'rollcall' && schoolId && (
+            <RollCallView
+              schoolId={schoolId}
+              classId={classId}
+              classType={classData?.type === 'TERTIARY' ? 'CLASS' : 'CLASS_ARM'}
+              students={students}
+            />
           )}
 
-          {/* RollCall Tab - Not Available */}
-          {(activeTab as TabType) === 'rollcall' && !hasRollCall && (
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="pt-12 pb-12 text-center">
-                  <Smartphone className="h-16 w-16 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
-                    RollCall Plugin Not Available
-                  </h3>
-                  <p className="text-light-text-secondary dark:text-dark-text-secondary mb-6">
-                    Your school needs to subscribe to the RollCall plugin to use this feature.
-                  </p>
-                  <Button
-                    size="sm"
-                    onClick={() => router.push('/dashboard/school/marketplace')}
-                  >
-                    View Marketplace
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </motion.div>
+        </FadeInUp>
       </div>
 
       {/* Modals */}
@@ -1133,14 +1111,10 @@ export default function ClassDetailPage() {
       {/* Upload Resource Modal */}
       {showUploadResourceModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-light-card dark:bg-dark-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-          >
+          <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-light-card dark:bg-dark-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                <h2 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-stat-value)' }}>
                   Upload Resource
                 </h2>
                 <button
@@ -1239,10 +1213,373 @@ export default function ClassDetailPage() {
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </FadeInUp>
         </div>
       )}
+
+      {/* Modals */}
+      <CreateAssessmentModal
+        isOpen={showCreateAssessmentModal}
+        onClose={() => setShowCreateAssessmentModal(false)}
+        schoolId={schoolId!}
+        classId={classId}
+        activeTermId={assessmentTermFilter || activeSession?.term?.id}
+      />
+
+      {/* Floating AI CTA */}
+      <FloatingAiCta onClick={() => setShowAiChat(true)} />
+
+      {/* AI Chat Drawer */}
+      {schoolId && (
+        <AiChatDrawer
+          schoolId={schoolId}
+          isOpen={showAiChat}
+          onClose={() => setShowAiChat(false)}
+        />
+      )}
     </ProtectedRoute>
+  );
+}
+
+// Roll Call View Component
+function RollCallView({
+  schoolId,
+  classId,
+  classType,
+  students,
+}: {
+  schoolId: string;
+  classId: string;
+  classType: 'CLASS' | 'CLASS_ARM';
+  students: StudentWithEnrollment[];
+}) {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [scanCode, setScanCode] = useState('');
+
+  const { data: attendanceResponse, isLoading: isLoadingAttendance } = useGetClassAttendanceQuery(
+    {
+      schoolId,
+      classId,
+      classType,
+      date: selectedDate,
+    },
+    { skip: !schoolId || !classId || !selectedDate }
+  );
+
+  const [markAttendance] = useMarkAttendanceMutation();
+  const [markBulkAttendance, { isLoading: isBulkMarking }] = useMarkBulkAttendanceMutation();
+
+  const attendanceRecords = attendanceResponse?.data || [];
+
+  // Map attendance records to students
+  const attendanceMap = useMemo(() => {
+    const map = new Map<string, string>();
+    attendanceRecords.forEach((record: any) => {
+      map.set(record.enrollment.id, record.status);
+    });
+    return map;
+  }, [attendanceRecords]);
+
+  const handleMarkAttendance = async (enrollmentId: string, status: string) => {
+    try {
+      await markAttendance({
+        schoolId,
+        attendanceData: {
+          enrollmentId,
+          status,
+          date: selectedDate,
+        },
+      }).unwrap();
+      toast.success(`Marked as ${status.toLowerCase()}`);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to mark attendance');
+    }
+  };
+
+  const handleBulkMark = async (status: string) => {
+    try {
+      const attendanceData = {
+        classId,
+        classType,
+        date: selectedDate,
+        students: students.map((s) => ({
+          enrollmentId: s.enrollment?.id,
+          status,
+        })),
+      };
+
+      await markBulkAttendance({
+        schoolId,
+        attendanceData,
+      }).unwrap();
+      toast.success(`All marked as ${status.toLowerCase()}`);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to mark bulk attendance');
+    }
+  };
+
+  const handleScan = async () => {
+    if (!scanCode) return;
+
+    // Find student by UID (scanCode)
+    const student = students.find((s) => s.uid === scanCode || s.publicId === scanCode);
+
+    if (student && student.enrollment?.id) {
+      await handleMarkAttendance(student.enrollment.id, 'PRESENT');
+      setScanCode('');
+    } else {
+      toast.error('Student not found in this class');
+    }
+  };
+
+  const presentCount = attendanceRecords.filter((a: any) => a.status === 'PRESENT').length;
+  const absentCount = attendanceRecords.filter((a: any) => a.status === 'ABSENT').length;
+  const lateCount = attendanceRecords.filter((a: any) => a.status === 'LATE').length;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Total Students</p>
+              <h3 className="text-2xl font-bold text-blue-700 dark:text-blue-300">{students.length}</h3>
+            </div>
+            <Users className="h-8 w-8 text-blue-300 dark:text-blue-800" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">Present</p>
+              <h3 className="text-2xl font-bold text-green-700 dark:text-green-300">{presentCount}</h3>
+            </div>
+            <CheckCircle2 className="h-8 w-8 text-green-300 dark:text-green-800" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Absent</p>
+              <h3 className="text-2xl font-bold text-red-700 dark:text-red-300">{absentCount}</h3>
+            </div>
+            <XCircle className="h-8 w-8 text-red-300 dark:text-red-800" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/10 shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-1">Late</p>
+              <h3 className="text-2xl font-bold text-amber-700 dark:text-amber-300">{lateCount}</h3>
+            </div>
+            <Clock className="h-8 w-8 text-amber-300 dark:text-amber-800" />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg font-bold">Attendance List</CardTitle>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-40 h-9"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkMark('PRESENT')}
+                  disabled={isBulkMarking || students.length === 0}
+                  className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/30 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Mark All Present
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkMark('ABSENT')}
+                  disabled={isBulkMarking || students.length === 0}
+                  className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Mark All Absent
+                </Button>
+              </div>
+
+              <div className="space-y-1">
+                {isLoadingAttendance ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4 animate-spin" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">Loading attendance...</p>
+                  </div>
+                ) : students.length > 0 ? (
+                  students.map((student) => {
+                    const status = attendanceMap.get(student.enrollment?.id || '');
+                    return (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-surface transition-colors border border-transparent hover:border-light-border dark:hover:border-dark-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden">
+                            {student.profileImage ? (
+                              <img src={student.profileImage} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              `${student.firstName[0]}${student.lastName[0]}`
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-light-text-primary dark:text-dark-text-primary">
+                              {student.firstName} {student.lastName}
+                            </p>
+                            <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                              {student.uid}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleMarkAttendance(student.enrollment!.id, 'PRESENT')}
+                            className={cn(
+                              "p-2 rounded-full transition-all",
+                              status === 'PRESENT'
+                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                : "text-light-text-muted dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-surface"
+                            )}
+                            title="Present"
+                          >
+                            <CheckCircle2 className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleMarkAttendance(student.enrollment!.id, 'LATE')}
+                            className={cn(
+                              "p-2 rounded-full transition-all",
+                              status === 'LATE'
+                                ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                                : "text-light-text-muted dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-surface"
+                            )}
+                            title="Late"
+                          >
+                            <Clock className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleMarkAttendance(student.enrollment!.id, 'ABSENT')}
+                            className={cn(
+                              "p-2 rounded-full transition-all",
+                              status === 'ABSENT'
+                                ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                                : "text-light-text-muted dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-surface"
+                            )}
+                            title="Absent"
+                          >
+                            <XCircle className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                      No students found in this class.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Smartphone className="h-5 w-5" />
+                Quick Scan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-6 bg-gray-50 dark:bg-dark-surface rounded-lg text-center border-2 border-dashed border-light-border dark:border-dark-border">
+                <QrCode className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                  Scan QR code or enter ID manually
+                </p>
+                <div className="space-y-3">
+                  <Input
+                    placeholder="Student ID / UID"
+                    value={scanCode}
+                    onChange={(e) => setScanCode(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleScan()}
+                  />
+                  <Button variant="primary" className="w-full" onClick={handleScan}>
+                    Mark Present
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-bold">Today&apos;s Insights</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="relative pt-1">
+                  <div className="flex mb-2 items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200 dark:bg-green-900/30 dark:text-green-400">
+                        Attendance Rate
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold inline-block text-green-600 dark:text-green-400">
+                        {students.length > 0 ? Math.round((presentCount / students.length) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-green-100 dark:bg-green-900/20">
+                    <div
+                      style={{ width: `${students.length > 0 ? (presentCount / students.length) * 100 : 0}%` }}
+                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500 transition-all duration-500"
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary">Expected Students</span>
+                    <span className="font-bold">{students.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary">Actual Present</span>
+                    <span className="font-bold text-green-600 dark:text-green-400">{presentCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-light-text-secondary dark:text-dark-text-secondary">Late Arrivals</span>
+                    <span className="font-bold text-amber-600 dark:text-amber-400">{lateCount}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }
 

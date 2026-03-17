@@ -5,7 +5,7 @@ import { setCredentials, logout } from '../slices/authSlice';
 // Get tenant ID from subdomain or localStorage
 const getTenantId = (): string | null => {
   if (typeof window === 'undefined') return null;
-  
+
   // Try to get from localStorage first (set after login)
   const stored = localStorage.getItem('tenantId');
   if (stored) return stored;
@@ -13,7 +13,7 @@ const getTenantId = (): string | null => {
   // Fallback: extract from subdomain
   const hostname = window.location.hostname;
   const subdomain = hostname.split('.')[0];
-  
+
   // Ignore common non-tenant subdomains
   if (['localhost', 'www', 'api', 'app'].includes(subdomain)) {
     return null;
@@ -53,16 +53,38 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+import * as Sentry from '@sentry/nextjs';
+
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
+  const state = api.getState() as { auth: { refreshToken?: string | null; user?: any; currentSchoolId?: string } };
+  const user = state.auth.user;
+  const schoolId = state.auth.currentSchoolId || getTenantId();
+
+  // Update Sentry context with current user and school
+  if (user) {
+    Sentry.setUser({ id: user.id, email: user.email });
+  }
+  if (schoolId) {
+    Sentry.setTag('schoolId', schoolId);
+  }
+
   let result = await baseQuery(args, api, extraOptions);
+
+  // If we get an error (except 401 which is handled below), report to Sentry
+  if (result.error && result.error.status !== 401 && result.error.status !== 404) {
+    Sentry.withScope((scope) => {
+      scope.setExtra('apiArgs', args);
+      scope.setExtra('apiError', result.error);
+      Sentry.captureException(new Error(`API Error ${result.error.status}: ${JSON.stringify(result.error.data)}`));
+    });
+  }
 
   // If we get a 401, try to refresh the token
   if (result.error && result.error.status === 401) {
-    const state = api.getState() as { auth: { refreshToken?: string | null; user?: any } };
     const refreshToken = state.auth.refreshToken;
 
     if (refreshToken) {
@@ -80,7 +102,7 @@ const baseQueryWithReauth: BaseQueryFn<
 
         if (refreshResult.data) {
           const data = refreshResult.data as { accessToken: string; refreshToken: string };
-          
+
           // Update the store with new tokens
           api.dispatch(
             setCredentials({
@@ -121,7 +143,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Transfer', 'Subscription', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats'],
+  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory'],
   endpoints: (builder) => ({
     changePassword: builder.mutation<
       { success: boolean; message: string },
@@ -142,32 +164,32 @@ export const apiSlice = createApi({
       queryFn: async ({ file }, _api, _extraOptions) => {
         const formData = new FormData();
         formData.append('image', file);
-        
+
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/auth/profile/upload-image`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
         }
-        
+
         try {
           const response = await fetch(url, {
             method: 'POST',
             headers,
             body: formData,
           });
-          
+
           const data = await response.json();
-          
+
           if (!response.ok) {
             return { error: { status: response.status, data } };
           }
-          
+
           return { data };
         } catch (error: any) {
           return { error: { status: 'FETCH_ERROR', error: error.message } };

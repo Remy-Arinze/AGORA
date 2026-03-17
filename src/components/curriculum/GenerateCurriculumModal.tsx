@@ -20,7 +20,7 @@ interface GenerateCurriculumModalProps {
   schoolId: string;
   classLevelId: string;
   termId: string;
-  teacherId: string;
+  teacherId?: string;
   subjects: CurriculumSummary[];
   onSuccess?: () => void;
 }
@@ -102,15 +102,14 @@ export function GenerateCurriculumModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Generate Curricula from NERDC"
+      title="Generate AI Curriculum"
       size="lg"
     >
       <div className="space-y-6">
         {/* Description */}
         <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-          Select subjects to generate curricula based on NERDC (Nigerian Educational Research 
-          and Development Council) templates. This will create a 13-week scheme of work for each 
-          selected subject.
+          Select subjects to auto-generate a starter curriculum based on AI recommendations.
+          This will create a structured 13-week scheme of work for each selected subject.
         </p>
 
         {!results ? (

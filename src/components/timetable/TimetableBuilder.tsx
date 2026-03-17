@@ -25,8 +25,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Clock, GripVertical, X, Loader2, Sparkles } from 'lucide-react';
+import { Clock, GripVertical, X, Loader2, Sparkles, Plus, BookOpen, Info } from 'lucide-react';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import Link from 'next/link';
 import {
   type TimetablePeriod,
   type DayOfWeek,
@@ -202,8 +203,8 @@ function TimetableCell({
           ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500 border-dashed'
           : periodData
             ? readOnly 
-              ? 'bg-blue-50 dark:bg-blue-900/30'
-              : 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+              ? ''
+              : ' hover:bg-blue-100 dark:hover:bg-blue-900/50'
             : readOnly
               ? 'bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border'
               : 'bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-dark-surface/80 border border-light-border dark:border-dark-border'
@@ -229,8 +230,8 @@ function TimetableCell({
                 </span>
               ) : (
                 <span className="text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
-                  + Assign teacher
-                </span>
+                + Assign
+              </span>
               )}
             </button>
           ) : periodData.teacherName ? (
@@ -476,13 +477,13 @@ export function TimetableBuilder({
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border">
+                      <th className="sticky left-0 z-20 bg-white dark:bg-dark-surface min-w-[100px] text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                         Time
                       </th>
                       {DAYS.map((day) => (
                         <th
                           key={day}
-                          className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border"
+                          className="text-center py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border min-w-[120px]"
                         >
                           {DAY_LABELS[day]}
                         </th>
@@ -517,7 +518,7 @@ export function TimetableBuilder({
                       if (dbBreakPeriods.length > 0 && !hasLessons) {
                         return (
                           <tr key={`${timePeriod.startTime}-${breakType || 'break'}`}>
-                            <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                            <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                               <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                             </td>
                             <td
@@ -533,7 +534,7 @@ export function TimetableBuilder({
                       // Handle lesson periods
                       return (
                         <tr key={timePeriod.startTime}>
-                          <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                          <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                             <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                           </td>
                           {DAYS.map((day) => {
@@ -578,9 +579,9 @@ export function TimetableBuilder({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Sidebar with draggable subjects/courses */}
-        <div className="col-span-3">
+        <div className="col-span-1 md:col-span-3">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -606,15 +607,25 @@ export function TimetableBuilder({
               
               <SortableContext items={draggableItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-hide">
-                  {draggableItems.length === 0 ? (
-                    <p className="text-sm text-light-text-muted dark:text-dark-text-muted text-center py-4">
-                      No {schoolType === 'TERTIARY' ? 'courses' : 'subjects'} available
-                    </p>
-                  ) : (
-                    draggableItems.map((item) => (
-                      <DraggableItem key={item.id} item={item} />
-                    ))
+                  {draggableItems.length <= 1 && (
+                    <div className="p-4 border border-light-border dark:border-dark-border rounded-lg bg-gray-50/50 dark:bg-gray-900/20 mb-4">
+                      <div className="flex items-start gap-2 mb-3">
+                        <Info className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                          You haven&apos;t created any {schoolType === 'TERTIARY' ? 'courses' : 'subjects'} yet.
+                        </p>
+                      </div>
+                      <Link href={schoolType === 'TERTIARY' ? "/dashboard/school/courses" : "/dashboard/school/subjects"}>
+                        <Button variant="ghost" size="sm" className="w-full text-light-text-primary dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-gray-800/50">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add {schoolType === 'TERTIARY' ? 'Courses' : 'Subjects'}
+                        </Button>
+                      </Link>
+                    </div>
                   )}
+                  {draggableItems.map((item) => (
+                    <DraggableItem key={item.id} item={item} />
+                  ))}
                 </div>
               </SortableContext>
             </CardContent>
@@ -622,7 +633,7 @@ export function TimetableBuilder({
         </div>
 
         {/* Timetable Grid */}
-        <div className="col-span-9">
+        <div className="col-span-1 md:col-span-9">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Timetable</CardTitle>
@@ -637,13 +648,13 @@ export function TimetableBuilder({
                   <table className="w-full">
                     <thead>
                       <tr>
-                        <th className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border">
+                        <th className="sticky left-0 z-20 bg-white dark:bg-dark-surface min-w-[100px] text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           Time
                         </th>
                         {DAYS.map((day) => (
                           <th
                             key={day}
-                            className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border"
+                            className="text-center py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border min-w-[120px]"
                           >
                             {DAY_LABELS[day]}
                           </th>
@@ -678,7 +689,7 @@ export function TimetableBuilder({
                         if (dbBreakPeriods.length > 0 && !hasLessons) {
                           return (
                             <tr key={`${timePeriod.startTime}-${breakType || 'break'}`}>
-                              <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                              <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                 <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                               </td>
                               <td
@@ -694,7 +705,7 @@ export function TimetableBuilder({
                         // Handle lesson periods
                         return (
                           <tr key={timePeriod.startTime}>
-                            <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                            <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                               <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                             </td>
                             {DAYS.map((day) => {
@@ -756,11 +767,7 @@ export function TimetableBuilder({
       {/* Auto-Generate Confirmation Modal */}
       {showAutoGenerateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4"
-          >
+          <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
                 <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -822,7 +829,7 @@ export function TimetableBuilder({
                 Cancel
               </Button>
             </div>
-          </motion.div>
+          </FadeInUp>
         </div>
       )}
     </DndContext>

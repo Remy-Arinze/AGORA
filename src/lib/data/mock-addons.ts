@@ -16,7 +16,7 @@ export const getAddonsData = (schoolId: string): Addon[] => {
   return [
     {
       id: '1',
-      name: 'Socrates AI',
+      name: 'Agora AI',
       subtitle: "The Teacher's Assistant",
       description: 'AI-powered lesson planning and grading assistant',
       features: [
@@ -53,20 +53,6 @@ export const getAddonsData = (schoolId: string): Addon[] => {
       monetization: 'Higher tier subscription',
       status: 'active' as const,
       icon: CreditCard,
-    },
-    {
-      id: '4',
-      name: 'PrepMaster',
-      subtitle: 'CBT Engine',
-      description: 'Computer-Based Testing platform for exam preparation',
-      features: [
-        'Practice Tests: Students can practice for JAMB/WAEC exams with realistic CBT simulations.',
-        'Performance Analytics: Detailed reports on student performance and areas for improvement.',
-        'Question Bank: Extensive database of past questions and answers.',
-      ],
-      monetization: 'Per-student subscription or school-wide license',
-      status: 'inactive' as const,
-      icon: BookOpen,
     },
   ];
 };

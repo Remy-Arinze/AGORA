@@ -23,6 +23,7 @@ import { AutoGenerateButton } from '@/components/ui/AutoGenerateButton';
 import { EntityAvatar } from '@/components/ui/EntityAvatar';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { useGetMySchoolQuery } from '@/lib/store/api/schoolAdminApi';
 import { useFaculties } from '@/hooks/useFaculties';
 import { useSchoolType } from '@/hooks/useSchoolType';
@@ -179,11 +180,7 @@ export default function FacultiesPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
@@ -214,7 +211,7 @@ export default function FacultiesPage() {
               </div>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search */}
         <div className="mb-6 flex justify-end">
@@ -231,7 +228,7 @@ export default function FacultiesPage() {
         {filteredFaculties.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Library className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+              <EmptyStateIcon type="location" />
               <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                 {searchQuery
                   ? 'No faculties found matching your search.'
@@ -268,12 +265,7 @@ export default function FacultiesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFaculties.map((faculty, index) => (
-              <motion.div
-                key={faculty.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
+              <FadeInUp delay={index * 0.05} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
                   <CardContent
                     className="pt-6 flex-1 cursor-pointer"
@@ -297,11 +289,10 @@ export default function FacultiesPage() {
                         </div>
                       </div>
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          faculty.isActive
+                        className={`px-2 py-1 rounded text-xs font-medium ${faculty.isActive
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                        }`}
+                          }`}
                       >
                         {faculty.isActive ? 'Active' : 'Inactive'}
                       </span>
@@ -332,29 +323,31 @@ export default function FacultiesPage() {
                   </CardContent>
 
                   <div className="px-6 pb-4 pt-2 border-t border-light-border dark:border-dark-border flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditModal({ isOpen: true, faculty });
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteModal({ isOpen: true, faculty });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditModal({ isOpen: true, faculty });
+                        }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteModal({ isOpen: true, faculty });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </PermissionGate>
                   </div>
                 </Card>
-              </motion.div>
+              </FadeInUp>
             ))}
           </div>
         )}

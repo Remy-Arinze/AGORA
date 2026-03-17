@@ -28,6 +28,13 @@ function LoginContent() {
     password: '',
   });
   const sessionExpired = searchParams?.get('expired') === 'true';
+  const intendedPlan = searchParams?.get('plan');
+
+  useEffect(() => {
+    if (intendedPlan) {
+      sessionStorage.setItem('intendedPlan', intendedPlan);
+    }
+  }, [intendedPlan]);
 
   useEffect(() => {
     if (sessionExpired) {
@@ -71,7 +78,7 @@ function LoginContent() {
 
       if (!response.ok) {
         // Handle validation errors from backend
-        const errorMessage = data.message || 
+        const errorMessage = data.message ||
           (data.error && typeof data.error === 'string' ? data.error : null) ||
           (data.error && Array.isArray(data.error) ? data.error.join(', ') : null) ||
           'Login failed';
@@ -112,7 +119,13 @@ function LoginContent() {
             STUDENT: '/dashboard/student',
           };
 
-          router.push(roleMap[data.data.user.role] || '/dashboard');
+          const storedPlan = sessionStorage.getItem('intendedPlan');
+          if (storedPlan && data.data.user.role === 'SCHOOL_ADMIN') {
+            sessionStorage.removeItem('intendedPlan');
+            router.push(`/?plan=${storedPlan}`);
+          } else {
+            router.push(roleMap[data.data.user.role] || '/dashboard');
+          }
         } else {
           console.error('Unexpected login response structure:', data);
           setError('Unexpected response from server. Please try again.');
@@ -153,7 +166,7 @@ function LoginContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data.message || 
+        const errorMessage = data.message ||
           (data.error && typeof data.error === 'string' ? data.error : null) ||
           (data.error && Array.isArray(data.error) ? data.error.join(', ') : null) ||
           'OTP verification failed';
@@ -180,7 +193,13 @@ function LoginContent() {
           STUDENT: '/dashboard/student',
         };
 
-        router.push(roleMap[data.data.user.role] || '/dashboard');
+        const storedPlan = sessionStorage.getItem('intendedPlan');
+        if (storedPlan && data.data.user.role === 'SCHOOL_ADMIN') {
+          sessionStorage.removeItem('intendedPlan');
+          router.push(`/?plan=${storedPlan}`);
+        } else {
+          router.push(roleMap[data.data.user.role] || '/dashboard');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'OTP verification failed');
@@ -238,7 +257,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="w-full max-w-md">
         {requiresOtp && otpSessionId && otpEmail ? (
           <>
@@ -253,7 +272,7 @@ function LoginContent() {
             <div className="mt-6 text-center">
               <button
                 onClick={handleBackToLogin}
-                className="text-sm text-[#9ca3af] hover:text-white hover:underline transition-colors"
+                className="text-sm text-[var(--light-text-secondary)] dark:text-[#9ca3af] hover:text-[#2490FD] dark:hover:text-white hover:underline transition-colors font-medium"
               >
                 ← Back to login
               </button>
@@ -263,18 +282,26 @@ function LoginContent() {
           <>
             {/* Logo */}
             <div className="flex items-center justify-center mb-8">
-                <Image
-                  src="/assets/logos/agora_worded_white.png"
-                  alt="Agora"
-                  width={100}
-                  height={24}
-                  className="h-6 w-auto"
-                  priority
-                />
+              <Image
+                src="/assets/logos/agora_word_blue.png"
+                alt="Agora"
+                width={100}
+                height={24}
+                className="h-6 w-auto block dark:hidden"
+                priority
+              />
+              <Image
+                src="/assets/logos/agora_worded_white.png"
+                alt="Agora"
+                width={100}
+                height={24}
+                className="h-6 w-auto hidden dark:block"
+                priority
+              />
             </div>
 
             {/* Heading */}
-            <h1 className="text-3xl font-bold text-white mb-3 text-center">
+            <h1 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-3 text-center">
               Sign in to your account
             </h1>
 
@@ -298,7 +325,7 @@ function LoginContent() {
               <div className="w-full">
                 <label
                   htmlFor="email-input"
-                  className="block text-sm font-medium text-white mb-2"
+                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-2"
                 >
                   Email or Public ID
                 </label>
@@ -311,14 +338,14 @@ function LoginContent() {
                     setFormData({ ...formData, emailOrPublicId: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-3 border-2 rounded-lg bg-[#151a23] text-white placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[#1a1f2e]"
+                  className="w-full px-4 py-3 border-2 rounded-lg bg-white dark:bg-[#151a23] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
                 />
               </div>
 
               <div className="w-full">
                 <label
                   htmlFor="password-input"
-                  className="block text-sm font-medium text-white mb-2"
+                  className="block text-sm font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-2"
                 >
                   Password
                 </label>
@@ -333,12 +360,12 @@ function LoginContent() {
                     }
                     required
                     minLength={8}
-                    className="w-full px-4 py-3 pr-10 border-2 rounded-lg bg-[#151a23] text-white placeholder-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-[#1a1f2e]"
+                    className="w-full px-4 py-3 pr-10 border-2 rounded-lg bg-white dark:bg-[#151a23] text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] placeholder-[var(--light-text-muted)] dark:placeholder-[var(--dark-text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2490FD] focus:border-[#2490FD] transition-all border-gray-200 dark:border-[#1a1f2e]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#2490FD] rounded p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--light-text-muted)] hover:text-[var(--light-text-primary)] dark:hover:text-[var(--dark-text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[#2490FD] rounded p-1"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     tabIndex={-1}
                   >
@@ -357,7 +384,7 @@ function LoginContent() {
                 className="w-full py-3.5"
                 isLoading={isLoading}
                 disabled={
-                  !formData.password || 
+                  !formData.password ||
                   formData.password.length < 8 ||
                   !formData.emailOrPublicId
                 }
@@ -365,13 +392,22 @@ function LoginContent() {
                 Sign In
               </Button>
 
-              <div className="text-center pt-2">
-                <Link 
-                  href="/auth/forgot-password" 
-                  className="text-sm text-[#9ca3af] hover:text-[#2490FD] hover:underline transition-colors"
+              <div className="text-center pt-2 space-y-3">
+                <Link
+                  href="/auth/forgot-password"
+                  className="block text-sm text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:text-[#2490FD] hover:underline transition-colors font-medium"
                 >
                   Forgot your password?
                 </Link>
+                <div className="text-sm text-[var(--light-text-muted)] dark:text-[var(--dark-text-muted)]">
+                  Don't have an account?{' '}
+                  <Link
+                    href="/auth/register-school"
+                    className="text-[var(--agora-blue)] hover:text-[#2490FD] hover:underline transition-colors"
+                  >
+                    Register your school
+                  </Link>
+                </div>
               </div>
             </form>
           </>
@@ -384,7 +420,7 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]">
         <LoadingSpinner />
       </div>
     }>

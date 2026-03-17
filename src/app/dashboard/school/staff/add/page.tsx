@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Alert } from '@/components/ui/Alert';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import { PhoneInput } from '@/components/ui/PhoneInput';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { UserPlus, Users } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
@@ -23,8 +27,15 @@ import { getTerminology } from '@/lib/utils/terminology';
 import { useUploadTeacherImageMutation, useUploadAdminImageMutation, AdminPermissionInput } from '@/lib/store/api/schoolsApi';
 import { SubjectMultiSelect } from '@/components/teachers/SubjectMultiSelect';
 import { PermissionSelector, getDefaultReadPermissions } from '@/components/permissions';
-import toast from 'react-hot-toast';
-import { isPrincipalRole } from '@/lib/constants/roles';
+import {
+  useGetMySchoolQuery,
+  useGetClassArmsQuery,
+  useGetClassLevelsQuery,
+  useGenerateDefaultClassesMutation
+} from '@/lib/store/api/schoolAdminApi';
+import { isPrincipalRole, isSchoolOwnerRole } from '@/lib/constants/roles';
+import { useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
 
 type StaffType = 'teacher' | 'admin';
 
@@ -51,29 +62,84 @@ export default function AddStaffPage() {
   const [schoolId, setSchoolId] = useState<string | null>(null);
   // Admin permissions - initialized with default READ permissions
   const [adminPermissions, setAdminPermissions] = useState<AdminPermissionInput[]>(getDefaultReadPermissions());
-  
+
   const { addTeacher, isLoading: isAddingTeacher } = useAddTeacher(schoolId);
   const { addAdmin, isLoading: isAddingAdmin } = useAddAdmin(schoolId);
-  
+
   // Get school type and terminology
   const { currentType } = useSchoolType();
   const terminology = getTerminology(currentType);
+
+  const { data: schoolResponse } = useGetMySchoolQuery();
+  const currentAdminRole = schoolResponse?.data?.currentAdmin?.role;
 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
+    dateOfBirth: '',
+    nationality: '',
+    state: '',
     subject: '',
     subjectIds: [] as string[], // For SECONDARY schools - multiple subjects
     employeeId: '',
     isTemporary: false,
     profileImage: null as string | null,
+    classArmId: '',
   });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [uploadTeacherImage] = useUploadTeacherImageMutation();
   const [uploadAdminImage] = useUploadAdminImageMutation();
+
+  // Get ClassArms for PRIMARY schools
+  const isPrimary = currentType === 'PRIMARY';
+  const {
+    data: classArmsResponse,
+    isLoading: isLoadingClassArms,
+    isFetching: isFetchingClassArms
+  } = useGetClassArmsQuery(
+    { schoolId: schoolId!, schoolType: 'PRIMARY' },
+    { skip: !schoolId || !isPrimary }
+  );
+  const classArms = classArmsResponse?.data || [];
+
+  const {
+    data: classLevelsResponse,
+    isLoading: isLoadingClassLevels,
+    isFetching: isFetchingClassLevels
+  } = useGetClassLevelsQuery(
+    { schoolId: schoolId! },
+    { skip: !schoolId || !isPrimary }
+  );
+  const classLevels = classLevelsResponse?.data || [];
+
+  // Group ClassArms by ClassLevel
+  const classArmsByLevel = useMemo(() => {
+    return classLevels.reduce((acc, level) => {
+      acc[level.id] = classArms.filter(arm => arm.classLevelId === level.id);
+      return acc;
+    }, {} as Record<string, typeof classArms>);
+  }, [classArms, classLevels]);
+
+  const classArmsLoaded = !isLoadingClassArms && !isFetchingClassArms && !isLoadingClassLevels && !isFetchingClassLevels;
+
+  // Generate default classes mutation
+  const [generateDefaultClasses, { isLoading: isGeneratingClasses }] = useGenerateDefaultClassesMutation();
+
+  const handleGenerateClasses = async () => {
+    if (!schoolId || !currentType) return;
+    try {
+      await generateDefaultClasses({
+        schoolId,
+        schoolType: currentType,
+      }).unwrap();
+      toast.success('Default classes generated successfully! You can now assign a class to the teacher.');
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to generate classes');
+    }
+  };
 
   // Get school ID from localStorage (stored during login) or fetch from API
   useEffect(() => {
@@ -81,10 +147,10 @@ export default function AddStaffPage() {
       if (!user?.id || user.role !== 'SCHOOL_ADMIN') return;
 
       // First, try to get from localStorage (stored during login)
-      const storedSchoolId = typeof window !== 'undefined' 
-        ? localStorage.getItem('currentSchoolId') 
+      const storedSchoolId = typeof window !== 'undefined'
+        ? localStorage.getItem('currentSchoolId')
         : null;
-      
+
       if (storedSchoolId) {
         setSchoolId(storedSchoolId);
         return;
@@ -133,7 +199,9 @@ export default function AddStaffPage() {
       if (staffType === 'teacher') {
         addTeacherFormSchema.parse({
           ...formData,
-          subject: formData.subject || undefined,
+          subject: currentType === 'PRIMARY'
+            ? (classArms.find(a => a.id === formData.classArmId) ? `${classArms.find(a => a.id === formData.classArmId)?.classLevelName} ${classArms.find(a => a.id === formData.classArmId)?.name}` : undefined)
+            : formData.subject || undefined,
           employeeId: formData.employeeId || undefined,
         });
       } else {
@@ -141,6 +209,16 @@ export default function AddStaffPage() {
           setErrors({ adminRole: 'Role is required' });
           return false;
         }
+
+        // Only school owners can add principal roles
+        if (isPrincipalRole(adminRole) && !isSchoolOwnerRole(currentAdminRole)) {
+          setErrors({
+            adminRole: 'Only a School Owner can add staff with principal roles (Principal, Head Teacher, etc.)'
+          });
+          toast.error('Unauthorized role assignment');
+          return false;
+        }
+
         addAdminFormSchema.parse({
           ...formData,
           role: adminRole,
@@ -149,9 +227,9 @@ export default function AddStaffPage() {
       }
       return true;
     } catch (error) {
-      if (error instanceof z.ZodError && error.errors) {
+      if (error instanceof z.ZodError) {
         const fieldErrors: FormErrors = {};
-        error.errors.forEach((err) => {
+        error.issues.forEach((err) => {
           if (err.path[0]) {
             fieldErrors[err.path[0] as string] = err.message;
           }
@@ -210,6 +288,8 @@ export default function AddStaffPage() {
           isTemporary: boolean;
           employeeId?: string;
           profileImage?: string;
+          schoolType?: string;
+          classArmId?: string;
         } = {
           firstName: capitalizeWords(formData.firstName),
           lastName: capitalizeWords(formData.lastName),
@@ -218,18 +298,35 @@ export default function AddStaffPage() {
           isTemporary: formData.isTemporary,
           employeeId: formData.employeeId.trim() || undefined,
           profileImage: profileImageUrl,
+          schoolType: currentType || undefined,
         };
 
         // For SECONDARY schools, use subjectIds for multi-subject support
         if (currentType === 'SECONDARY' && formData.subjectIds.length > 0) {
           teacherData.subjectIds = formData.subjectIds;
+        } else if (currentType === 'PRIMARY' && formData.classArmId) {
+          // For PRIMARY, send classArmId so the backend creates the ClassTeacher assignment
+          teacherData.classArmId = formData.classArmId;
+          // Also set subject for display purposes
+          const selectedArm = classArms.find(arm => arm.id === formData.classArmId);
+          if (selectedArm) {
+            teacherData.subject = `${selectedArm.classLevelName} ${selectedArm.name}`;
+          }
         } else if (formData.subject.trim()) {
-          // For PRIMARY/TERTIARY or if no subjectIds, use single subject
+          // For TERTIARY or if no classArmId/subjectIds, use single subject
           teacherData.subject = capitalizeWords(formData.subject);
         }
 
         const result = await addTeacher(teacherData);
-        
+
+        // Show warning if class assignment was skipped (class already has a teacher)
+        if (result?.classAssignmentSkipped) {
+          toast(result.classAssignmentReason || 'Class assignment was skipped — the class already has a teacher.', {
+            icon: '⚠️',
+            duration: 5000,
+          });
+        }
+
         // Upload image after creation if we have a file but no URL
         if (selectedImageFile && result?.data?.id && schoolId) {
           try {
@@ -244,7 +341,7 @@ export default function AddStaffPage() {
           }
         }
 
-        router.push('/dashboard/school/teachers');
+        router.push('/dashboard/school/staff');
       } else {
         // Check if the role is a Principal role - they don't need custom permissions
         const isPrincipalRoleCheck = isPrincipalRole(adminRole);
@@ -265,6 +362,8 @@ export default function AddStaffPage() {
           role: capitalizeWords(adminRole),
           employeeId: formData.employeeId.trim() || undefined,
           profileImage: profileImageUrl,
+          // Scope admin to current school type
+          schoolType: currentType || undefined,
           // Only include permissions for non-principal roles
           permissions: isPrincipalRoleCheck ? undefined : adminPermissions,
         };
@@ -275,7 +374,7 @@ export default function AddStaffPage() {
         });
 
         const result = await addAdmin(adminData);
-        
+
         // Upload image after creation if we have a file but no URL
         if (selectedImageFile && result?.data?.id && schoolId) {
           try {
@@ -290,7 +389,7 @@ export default function AddStaffPage() {
           }
         }
 
-        router.push('/dashboard/school/teachers');
+        router.push('/dashboard/school/staff');
       }
     } catch (error: any) {
       // Error handling is done in the hooks (toast notifications)
@@ -310,23 +409,19 @@ export default function AddStaffPage() {
   return (
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <BackButton fallbackUrl="/dashboard/school/teachers" className="mb-4" />
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
-            Add New {terminology.staffSingular}
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+          <BackButton fallbackUrl="/dashboard/school/staff" className="mb-4" />
+          <h1 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
+            Add New Staff
           </h1>
-          <p className="text-light-text-secondary dark:text-dark-text-secondary">
+          <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
             Register a new {terminology.staffSingular.toLowerCase()} in your school
           </p>
-        </motion.div>
+        </FadeInUp>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+            <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
               Staff Information
             </CardTitle>
           </CardHeader>
@@ -340,7 +435,7 @@ export default function AddStaffPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Staff Type Selection */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                <label className="block font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
                   Staff Type *
                 </label>
                 <div className="grid grid-cols-2 gap-4">
@@ -350,31 +445,28 @@ export default function AddStaffPage() {
                       setStaffType('teacher');
                       setErrors({});
                     }}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      staffType === 'teacher'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${staffType === 'teacher'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <Users
-                        className={`h-5 w-5 ${
-                          staffType === 'teacher'
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-light-text-secondary dark:text-dark-text-secondary'
-                        }`}
+                        className={`h-5 w-5 ${staffType === 'teacher'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-light-text-secondary dark:text-dark-text-secondary'
+                          }`}
                       />
                       <div className="text-left">
                         <p
-                          className={`font-semibold ${
-                            staffType === 'teacher'
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-light-text-primary dark:text-dark-text-primary'
-                          }`}
+                          className={`font-semibold ${staffType === 'teacher'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-light-text-primary dark:text-dark-text-primary'
+                            }`}
                         >
                           {terminology.staffSingular}
                         </p>
-                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                        <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
                           Teaching staff
                         </p>
                       </div>
@@ -388,31 +480,28 @@ export default function AddStaffPage() {
                       // Reset permissions to defaults when switching to admin
                       setAdminPermissions(getDefaultReadPermissions());
                     }}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      staffType === 'admin'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${staffType === 'admin'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-light-border dark:border-dark-border hover:border-blue-300 dark:hover:border-blue-700'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <UserPlus
-                        className={`h-5 w-5 ${
-                          staffType === 'admin'
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-light-text-secondary dark:text-dark-text-secondary'
-                        }`}
+                        className={`h-5 w-5 ${staffType === 'admin'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-light-text-secondary dark:text-dark-text-secondary'
+                          }`}
                       />
                       <div className="text-left">
                         <p
-                          className={`font-semibold ${
-                            staffType === 'admin'
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-light-text-primary dark:text-dark-text-primary'
-                          }`}
+                          className={`font-semibold ${staffType === 'admin'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-light-text-primary dark:text-dark-text-primary'
+                            }`}
                         >
                           Administrator
                         </p>
-                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                        <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
                           Admin staff (VP, Bursar, etc.)
                         </p>
                       </div>
@@ -421,58 +510,31 @@ export default function AddStaffPage() {
                 </div>
               </div>
 
-              {/* Profile Image - moved above role input */}
-              <div className="pt-4 border-t border-light-border dark:border-dark-border">
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                  Profile Image
-                </h3>
-                <ImageUpload
-                  value={formData.profileImage}
-                  onChange={(url) => {
-                    setFormData({ ...formData, profileImage: url });
-                  }}
-                  onUpload={async (file) => {
-                    setSelectedImageFile(file);
-                    // Return a temporary URL for preview
-                    return URL.createObjectURL(file);
-                  }}
-                  helperText="Upload a passport-sized profile image (optional). Image will be cropped to square format."
-                  maxSizeMB={5}
-                />
-              </div>
-
-              {/* Role Input for Admin */}
-              {staffType === 'admin' && (
-                <div className="space-y-3 pt-4 border-t border-light-border dark:border-dark-border">
-                  <Input
-                    label="Role *"
-                    name="adminRole"
-                    value={adminRole}
-                    onChange={(e) => {
-                      setAdminRole(e.target.value);
-                      if (errors.adminRole) {
-                        setErrors({ ...errors, adminRole: undefined });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const capitalized = capitalizeWords(e.target.value);
-                      if (capitalized !== e.target.value) {
-                        setAdminRole(capitalized);
-                      }
-                    }}
-                    placeholder="e.g., Administrator, Vice Principal, Bursar, Guidance Counselor"
-                    required
-                    helperText="Enter the administrative role (e.g., Vice Principal, Bursar, Administrator, etc.)"
-                    error={errors.adminRole}
-                  />
-                </div>
-              )}
-
               {/* Personal Information */}
               <div className="pt-4 border-t border-light-border dark:border-dark-border">
-                <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                  Personal Information
-                </h3>
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-section-title)' }}>
+                    Personal Information
+                  </h3>
+                  <div className="flex-shrink-0">
+                    <ImageUpload
+                      value={formData.profileImage}
+                      onChange={(url) => {
+                        setFormData({ ...formData, profileImage: url });
+                      }}
+                      onUpload={async (file) => {
+                        setSelectedImageFile(file);
+                        return URL.createObjectURL(file);
+                      }}
+                      disabled={isLoadingState}
+                      enableCrop={true}
+                      aspectRatio={1}
+                      cropShape="rect"
+                      compact
+                      maxSizeMB={5}
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     label="First Name *"
@@ -526,20 +588,35 @@ export default function AddStaffPage() {
                     required
                     error={errors.email}
                   />
-                  <Input
+                  <PhoneInput
                     label="Phone *"
-                    name="phone"
-                    type="tel"
                     value={formData.phone}
-                    onChange={(e) => {
-                      setFormData({ ...formData, phone: e.target.value });
-                      if (errors.phone) {
-                        setErrors({ ...errors, phone: undefined });
-                      }
+                    onChange={(e164) => {
+                      setFormData({ ...formData, phone: e164 });
+                      if (errors.phone) setErrors({ ...errors, phone: undefined });
                     }}
                     required
-                    placeholder="+234 801 234 5678"
                     error={errors.phone}
+                    disabled={isLoadingState}
+                    defaultCountryCode="NG"
+                  />
+                  <Input
+                    label="Nationality"
+                    name="nationality"
+                    value={formData.nationality}
+                    onChange={(e) => {
+                      setFormData({ ...formData, nationality: e.target.value });
+                    }}
+                    placeholder="e.g. Nigerian, Ghanaian"
+                  />
+                  <Input
+                    label="State"
+                    name="state"
+                    value={formData.state}
+                    onChange={(e) => {
+                      setFormData({ ...formData, state: e.target.value });
+                    }}
+                    placeholder="e.g. Lagos, Abuja"
                   />
                   <Input
                     label="Employee ID"
@@ -555,16 +632,66 @@ export default function AddStaffPage() {
                     helperText="Optional internal identifier for this staff member"
                     error={errors.employeeId}
                   />
+                  <DatePicker
+                    label="Date of Birth"
+                    value={formData.dateOfBirth}
+                    onChange={(value) => setFormData({ ...formData, dateOfBirth: value })}
+                    disabled={isLoadingState}
+                    placeholder="Select date of birth"
+                  />
                 </div>
               </div>
+
+              {/* Role Input for Admin */}
+              {staffType === 'admin' && (
+                <div className="space-y-3 pt-4 border-t border-light-border dark:border-dark-border">
+                  <Input
+                    label="Role *"
+                    name="adminRole"
+                    value={adminRole}
+                    onChange={(e) => {
+                      setAdminRole(e.target.value);
+                      if (errors.adminRole) {
+                        setErrors({ ...errors, adminRole: undefined });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const capitalized = capitalizeWords(e.target.value);
+                      if (capitalized !== e.target.value) {
+                        setAdminRole(capitalized);
+                      }
+                    }}
+                    placeholder={
+                      isSchoolOwnerRole(currentAdminRole)
+                        ? "e.g., Principal, Vice Principal, Bursar"
+                        : "e.g., Vice Principal, Bursar, Secretary"
+                    }
+                    required
+                    helperText={
+                      isSchoolOwnerRole(currentAdminRole)
+                        ? "Define the administrative role for this staff member."
+                        : "Note: You cannot add staff with principal-level privileges (Principal, Head Teacher, etc.)."
+                    }
+                    error={errors.adminRole}
+                  />
+                  {currentType && (
+                    <div className="mt-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <p className="text-blue-700 dark:text-blue-300" style={{ fontSize: 'var(--text-small)' }}>
+                        📍 This admin will be added to the <strong>{currentType.charAt(0) + currentType.slice(1).toLowerCase()}</strong> school section.
+                        They will only appear in the staff list when the {currentType.charAt(0) + currentType.slice(1).toLowerCase()} tab is selected.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Teacher-Specific Fields */}
               {isTeacher && (
                 <div className="pt-4 border-t border-light-border dark:border-dark-border">
-                  <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
+                  <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                     Teaching Information
                   </h3>
-                  
+
                   {/* For SECONDARY schools - Multi-subject selection */}
                   {currentType === 'SECONDARY' && schoolId && (
                     <div className="mb-4 relative">
@@ -573,16 +700,92 @@ export default function AddStaffPage() {
                         selectedSubjectIds={formData.subjectIds}
                         onChange={(ids) => setFormData({ ...formData, subjectIds: ids })}
                         schoolType="SECONDARY"
-                        label="Subjects Teacher Can Teach *"
-                        helperText="Select all subjects this teacher is qualified to teach. They can be assigned to different classes for these subjects."
+                        label="Subjects Teacher Can Teach"
+                        helperText="Optional: Select subjects this teacher is qualified to teach. They can be assigned to different classes later."
                         error={errors.subject}
                         disabled={isLoadingState}
                       />
                     </div>
                   )}
 
-                  {/* For PRIMARY/TERTIARY - Single subject input */}
-                  {currentType !== 'SECONDARY' && (
+                  {/* For PRIMARY - Class Arm selection */}
+                  {currentType === 'PRIMARY' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
+                          Assigned {terminology.classSingular}
+                        </label>
+                        {!classArmsLoaded ? (
+                          <div className="w-full px-4 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-card dark:bg-dark-surface">
+                            <div className="flex items-center gap-2 text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>Loading class arms...</span>
+                            </div>
+                          </div>
+                        ) : classArms.length === 0 ? (
+                          <div className="p-4 border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg space-y-3">
+                            <p className="text-yellow-700 dark:text-yellow-400 text-sm font-medium">
+                              ⚠️ No {terminology.classPlural.toLowerCase()} found for your {currentType?.toLowerCase()} school section.
+                            </p>
+                            <p className="text-yellow-600 dark:text-yellow-500 text-xs">
+                              You must have {terminology.classPlural.toLowerCase()} created before you can assign a {terminology.staffSingular.toLowerCase()} to one.
+                              {isSchoolOwnerRole(currentAdminRole)
+                                ? ` As a School Owner, you can generate default ${terminology.classPlural.toLowerCase()} now or create them manually in Settings.`
+                                : ` Please contact the School Owner to set up the school ${terminology.classPlural.toLowerCase()}.`}
+                            </p>
+                            {isSchoolOwnerRole(currentAdminRole) && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="border-yellow-300 hover:bg-yellow-100 dark:border-yellow-700 dark:hover:bg-yellow-900/30"
+                                onClick={handleGenerateClasses}
+                                isLoading={isGeneratingClasses}
+                              >
+                                Generate Default {terminology.classPlural}
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <Select
+                            name="classArmId"
+                            value={formData.classArmId}
+                            onChange={(e) => {
+                              setFormData({ ...formData, classArmId: e.target.value });
+                              if (errors.subject) setErrors({ ...errors, subject: undefined });
+                            }}
+                            error={errors.subject}
+                            placeholder="Select Class (Optional)"
+                          >
+                            <option value="">Select Class (Optional)</option>
+                            {classLevels.map((level) => {
+                              const armsForLevel = classArmsByLevel[level.id] || [];
+                              if (armsForLevel.length === 0) return null;
+                              return (
+                                <optgroup key={level.id} label={level.name}>
+                                  {armsForLevel.map((arm) => (
+                                    <option
+                                      key={arm.id}
+                                      value={arm.id}
+                                      disabled={!!arm.assignedTeacher}
+                                    >
+                                      {level.name} {arm.name}{arm.assignedTeacher ? ` — ${arm.assignedTeacher.name} (assigned)` : ''}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              );
+                            })}
+                          </Select>
+                        )}
+                        <p className="text-light-text-muted dark:text-dark-text-muted text-xs mt-1">
+                          Optional: You can assign the teacher to a class arm now, or do it later.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* For TERTIARY - Single subject input */}
+                  {currentType === 'TERTIARY' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Input
                         label="Subject"
@@ -619,7 +822,8 @@ export default function AddStaffPage() {
                     />
                     <label
                       htmlFor="isTemporary"
-                      className="text-sm text-light-text-primary dark:text-dark-text-primary cursor-pointer"
+                      className="text-light-text-primary dark:text-dark-text-primary cursor-pointer"
+                      style={{ fontSize: 'var(--text-body)' }}
                     >
                       Temporary Staff
                     </label>
@@ -635,7 +839,7 @@ export default function AddStaffPage() {
                     onChange={setAdminPermissions}
                     disabled={isLoadingState}
                   />
-                  <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-2">
+                  <p className="text-light-text-muted dark:text-dark-text-muted mt-2" style={{ fontSize: 'var(--text-small)' }}>
                     💡 Tip: Principals automatically have full access and their permissions cannot be modified.
                   </p>
                 </div>
@@ -643,7 +847,7 @@ export default function AddStaffPage() {
 
               {/* Form Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-light-border dark:border-dark-border">
-                <Link href="/dashboard/school/teachers">
+                <Link href="/dashboard/school/staff">
                   <Button type="button" variant="ghost" disabled={isLoadingState}>
                     Cancel
                   </Button>

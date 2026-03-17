@@ -6,10 +6,24 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Alert } from '@/components/ui/Alert';
-import { SessionWizardInfoModal } from '@/components/modals';
+import { SessionWizardInfoModal, EditTermDatesModal } from '@/components/modals';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { Calendar, ArrowRight, CheckCircle, Loader2, AlertCircle, XCircle, GraduationCap, AlertTriangle } from 'lucide-react';
+import {
+  Calendar,
+  ArrowRight,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+  XCircle,
+  GraduationCap,
+  AlertTriangle,
+  Info,
+  Pencil,
+  Clock,
+  Lock,
+} from 'lucide-react';
 import {
   useGetMySchoolQuery,
   useGetActiveSessionQuery,
@@ -19,12 +33,16 @@ import {
   useReactivateTermMutation,
   useGetSessionsQuery,
   type SessionType,
+  type TermDateInput,
 } from '@/lib/store/api/schoolAdminApi';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { PermissionGate } from '@/components/permissions/PermissionGate';
+import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 
-// Confirmation Modal Component
+// ─── Confirmation Modal ────────────────────────────────────────────────────────
+
 interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -49,67 +67,49 @@ function ConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
+    <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         />
-        
-        {/* Modal */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.2 }}
+        <FadeInUp
+          from={{ opacity: 0, scale: 0.95, y: 20 }}
+          to={{ opacity: 1, scale: 1, y: 0 }}
+          duration={0.2}
           className="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-dark-surface rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700"
         >
           <div className="p-6">
-            {/* Icon */}
-            <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
-              confirmVariant === 'danger' 
-                ? 'bg-red-100 dark:bg-red-900/30' 
+            <div
+              className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${confirmVariant === 'danger'
+                ? 'bg-red-100 dark:bg-red-900/30'
                 : 'bg-orange-100 dark:bg-orange-900/30'
-            }`}>
-              <AlertTriangle className={`h-6 w-6 ${
-                confirmVariant === 'danger' 
-                  ? 'text-red-600 dark:text-red-400' 
+                }`}
+            >
+              <AlertTriangle
+                className={`h-6 w-6 ${confirmVariant === 'danger'
+                  ? 'text-red-600 dark:text-red-400'
                   : 'text-orange-600 dark:text-orange-400'
-              }`} />
+                  }`}
+              />
             </div>
-
-            {/* Title */}
             <h3 className="text-lg font-semibold text-center text-light-text-primary dark:text-dark-text-primary mb-2">
               {title}
             </h3>
-
-            {/* Message */}
-            <p className="text-sm text-center text-light-text-secondary dark:text-dark-text-secondary mb-6">
+            <p className="text-sm text-center text-light-text-secondary dark:text-dark-text-secondary mb-6 whitespace-pre-line">
               {message}
             </p>
-
-            {/* Actions */}
             <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                onClick={onClose}
-                disabled={isLoading}
-                className="flex-1"
-              >
+              <Button variant="ghost" onClick={onClose} disabled={isLoading} className="flex-1">
                 Cancel
               </Button>
               <Button
                 onClick={onConfirm}
                 disabled={isLoading}
-                className={`flex-1 ${
-                  confirmVariant === 'danger'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-orange-600 hover:bg-orange-700 text-white'
-                }`}
+                className={`flex-1 ${confirmVariant === 'danger'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-orange-600 hover:bg-orange-700 text-white'
+                  }`}
               >
                 {isLoading ? (
                   <>
@@ -122,49 +122,68 @@ function ConfirmationModal({
               </Button>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
       </div>
-    </AnimatePresence>
+    </>
   );
 }
 
-type Step = 1 | 2 | 3;
+// ─── Helpers ────────────────────────────────────────────────────────────────────
 
-// Helper to get display label for school type
+type Step = 1 | 2 | 3 | 4;
+
 const getSchoolTypeLabel = (type: string) => {
   switch (type) {
-    case 'PRIMARY': return 'Primary School';
-    case 'SECONDARY': return 'Secondary School';
-    case 'TERTIARY': return 'University/Polytechnic';
-    default: return type;
+    case 'PRIMARY':
+      return 'Primary School';
+    case 'SECONDARY':
+      return 'Secondary School';
+    case 'TERTIARY':
+      return 'University/Polytechnic';
+    default:
+      return type;
   }
 };
 
-// Helper to get term/semester label based on school type
 const getTermLabel = (schoolType?: string) => {
   return schoolType === 'TERTIARY' ? 'Semester' : 'Term';
 };
+
+const getTermCount = (schoolType?: string) => {
+  return schoolType === 'TERTIARY' ? 2 : 3;
+};
+
+const getOrdinal = (n: number) => (n === 1 ? '1st' : n === 2 ? '2nd' : '3rd');
+
+// ─── Main Component ─────────────────────────────────────────────────────────────
 
 export default function SessionWizardPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [sessionType, setSessionType] = useState<SessionType>('NEW_TERM');
-  const [sessionName, setSessionName] = useState('');
+  const currentYear = new Date().getFullYear();
+  const [sessionName, setSessionName] = useState(`${currentYear}/`);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [halfTermStart, setHalfTermStart] = useState('');
-  const [halfTermEnd, setHalfTermEnd] = useState('');
-  const [carryOver, setCarryOver] = useState<boolean>(false); // Default to promote for new sessions
+  const [carryOver, setCarryOver] = useState<boolean>(false);
   const [selectedTermId, setSelectedTermId] = useState<string>('');
   const [showInfoModal, setShowInfoModal] = useState(false);
-  
+
+  // New: which term to start in & custom term dates
+  const [startingTermNumber, setStartingTermNumber] = useState<number>(1);
+  const [useCustomTermDates, setUseCustomTermDates] = useState(false);
+  const [customTermDates, setCustomTermDates] = useState<TermDateInput[]>([]);
+
+  // Validation errors
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   // Confirmation modal states
   const [showEndSessionModal, setShowEndSessionModal] = useState(false);
   const [showEndTermModal, setShowEndTermModal] = useState(false);
+  const [editingTerm, setEditingTerm] = useState<import('@/lib/store/api/schoolAdminApi').Term | null>(null);
 
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
-  // Use the current school type from the navbar selector
   const { currentType, isMixed } = useSchoolType();
 
   const { data: activeSessionResponse } = useGetActiveSessionQuery(
@@ -185,21 +204,24 @@ export default function SessionWizardPage() {
   const activeSession = activeSessionResponse?.data;
   const sessions = sessionsResponse?.data || [];
   const termLabel = getTermLabel(currentType);
-  
-  // Check if there's an active term
+  const termCount = getTermCount(currentType);
   const hasActiveTerm = !!activeSession?.term;
 
-  // Filter to show:
-  // 1. DRAFT terms (can be started)
-  // 2. COMPLETED terms whose endDate hasn't passed (can be continued)
+  // Filter available terms (DRAFT or continuable COMPLETED)
   const availableTerms = useMemo(() => {
-    const terms: { id: string; name: string; sessionName: string; status: string; endDate?: string; canContinue?: boolean }[] = [];
+    const terms: {
+      id: string;
+      name: string;
+      sessionName: string;
+      status: string;
+      endDate?: string;
+      canContinue?: boolean;
+    }[] = [];
     const now = new Date();
-    
+
     sessions.forEach((session) => {
       if (session.terms) {
         session.terms.forEach((term) => {
-          // Include DRAFT terms (not activated yet)
           if (term.status === 'DRAFT') {
             terms.push({
               id: term.id,
@@ -209,9 +231,7 @@ export default function SessionWizardPage() {
               endDate: term.endDate,
               canContinue: false,
             });
-          }
-          // Include COMPLETED terms whose endDate hasn't passed (can be continued)
-          else if (term.status === 'COMPLETED' && term.endDate) {
+          } else if (term.status === 'COMPLETED' && term.endDate) {
             const termEndDate = new Date(term.endDate);
             if (termEndDate > now) {
               terms.push({
@@ -227,8 +247,7 @@ export default function SessionWizardPage() {
         });
       }
     });
-    
-    // Sort: continuable terms first, then by term number
+
     return terms.sort((a, b) => {
       if (a.canContinue && !b.canContinue) return -1;
       if (!a.canContinue && b.canContinue) return 1;
@@ -245,38 +264,198 @@ export default function SessionWizardPage() {
     }
   }, [activeSessionResponse, activeSession]);
 
-  // Validate session dates (must be at least 10 months)
+  // Initialize custom term date slots when session dates change
+  useEffect(() => {
+    if (startDate && endDate && sessionType === 'NEW_SESSION') {
+      const sessionStart = new Date(startDate);
+      const sessionEnd = new Date(endDate);
+      if (sessionStart < sessionEnd) {
+        const durationMs = sessionEnd.getTime() - sessionStart.getTime();
+        const termDurationMs = durationMs / termCount;
+
+        const defaults: TermDateInput[] = [];
+        for (let i = 0; i < termCount; i++) {
+          const tStart =
+            i === 0
+              ? sessionStart
+              : new Date(sessionStart.getTime() + termDurationMs * i + 1);
+          const tEnd =
+            i === termCount - 1
+              ? sessionEnd
+              : new Date(sessionStart.getTime() + termDurationMs * (i + 1));
+
+          defaults.push({
+            number: i + 1,
+            startDate: tStart.toISOString().split('T')[0],
+            endDate: tEnd.toISOString().split('T')[0],
+          });
+        }
+        setCustomTermDates(defaults);
+      }
+    }
+  }, [startDate, endDate, sessionType, termCount]);
+
+  // ─── Validation Helpers ─────────────────────────────────────────────────────
+
   const validateSessionDates = (start: string, end: string): string | null => {
     if (!start || !end) return null;
-    
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                       (endDate.getMonth() - startDate.getMonth());
-    const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const s = new Date(start);
+    const e = new Date(end);
+    const monthsDiff =
+      (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
+    const daysDiff = Math.floor((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
 
     if (monthsDiff < 10 || daysDiff < 300) {
       return 'An academic session must span at least 10 months (approximately one year).';
     }
+    if (monthsDiff > 12 || daysDiff > 370) {
+      return 'An academic session cannot exceed 12 months.';
+    }
     return null;
   };
 
-  const sessionDateError = sessionType === 'NEW_SESSION' 
-    ? validateSessionDates(startDate, endDate) 
-    : null;
+  const validateSessionName = (name: string): string | null => {
+    if (!name) return 'Session name is required';
+    const pattern = /^\d{4}\/\d{4}$/;
+    if (!pattern.test(name)) {
+      return 'Session name must follow the format YYYY/YYYY (e.g., 2025/2026)';
+    }
+    const parts = name.split('/');
+    const year1 = parseInt(parts[0]);
+    const year2 = parseInt(parts[1]);
+    if (year2 !== year1 + 1) {
+      return 'The academic session years must be consecutive (e.g., 2025/2026)';
+    }
+    return null;
+  };
+
+  const validateCustomTermDates = (): string | null => {
+    if (!useCustomTermDates) return null;
+    for (const td of customTermDates) {
+      if (!td.startDate || !td.endDate) {
+        return `${getOrdinal(td.number)} ${termLabel}: Please set both start and end dates.`;
+      }
+      const s = new Date(td.startDate);
+      const e = new Date(td.endDate);
+      if (s >= e) {
+        return `${getOrdinal(td.number)} ${termLabel}: Start date must be before end date.`;
+      }
+      if (startDate && s < new Date(startDate)) {
+        return `${getOrdinal(td.number)} ${termLabel}: Start date cannot be before session start.`;
+      }
+      if (endDate && e > new Date(endDate)) {
+        return `${getOrdinal(td.number)} ${termLabel}: End date cannot be after session end.`;
+      }
+    }
+    return null;
+  };
+
+  // ─── Step Navigation ────────────────────────────────────────────────────────
+
+  // Check if selected term is a "continue" (reactivation) scenario
+  const selectedTermData = availableTerms.find((t) => t.id === selectedTermId);
+  const isReactivation = selectedTermData?.canContinue === true;
+
+  // For NEW_TERM on PRIMARY/SECONDARY, skip student migration step
+  const shouldShowMigrationStep =
+    sessionType === 'NEW_SESSION' || currentType === 'TERTIARY';
+
+  // When continuing a term (reactivation), skip the dates step
+  const shouldShowDatesStep = !isReactivation;
+
+  // Determine steps based on session type
+  const getStepLabels = (): { step: number; label: string }[] => {
+    if (sessionType === 'NEW_TERM') {
+      if (isReactivation) {
+        return [{ step: 1, label: `Continue ${termLabel}` }];
+      }
+      return [
+        { step: 1, label: `Session & ${termLabel}` },
+        { step: 2, label: 'Dates' },
+      ];
+    }
+    // NEW_SESSION
+    if (shouldShowMigrationStep) {
+      return [
+        { step: 1, label: `Session & ${termLabel}` },
+        { step: 2, label: 'Dates & Terms' },
+        { step: 3, label: 'Migration' },
+      ];
+    }
+    return [
+      { step: 1, label: `Session & ${termLabel}` },
+      { step: 2, label: 'Dates & Terms' },
+    ];
+  };
+
+  const stepLabels = getStepLabels();
+  const totalSteps = stepLabels.length;
+
+  // Derived validation states
+  const sessionNameError = validateSessionName(sessionName);
+  const sessionDateError = validateSessionDates(startDate, endDate);
+  const customTermDateError = validateCustomTermDates();
+
+  const canProceedStep1 =
+    sessionType &&
+    (sessionType === 'NEW_SESSION'
+      ? sessionName.trim().length > 0 && !sessionNameError && !activeSession?.session
+      : selectedTermId.trim().length > 0 && availableTerms.length > 0 && !hasActiveTerm);
+
+  const canProceedStep2 =
+    startDate && endDate && !sessionDateError && !customTermDateError;
 
   const handleNext = () => {
-    // If continuing a term (reactivation), skip dates step - go directly to submit from step 1
-    if (currentStep === 1 && isReactivation) {
-      handleSubmit();
-      return;
+    setValidationError(null);
+
+    if (currentStep === 1) {
+      if (sessionType === 'NEW_SESSION') {
+        const nameError = validateSessionName(sessionName);
+        if (nameError) {
+          setValidationError(nameError);
+          return;
+        }
+      } else if (sessionType === 'NEW_TERM') {
+        if (!selectedTermId) {
+          setValidationError('Please select a term to start.');
+          return;
+        }
+      }
+      // If continuing a term (reactivation), submit directly
+      if (isReactivation) {
+        handleSubmit();
+        return;
+      }
     }
-    if (currentStep === 2 && !shouldShowMigrationStep) {
-      // Skip step 3 for NEW_TERM on PRIMARY/SECONDARY - go directly to submit
-      handleSubmit();
-      return;
+
+    if (currentStep === 2) {
+      const dateError = validateSessionDates(startDate, endDate);
+      if (dateError) {
+        setValidationError(dateError);
+        return;
+      }
+      if (useCustomTermDates) {
+        const termError = validateCustomTermDates();
+        if (termError) {
+          setValidationError(termError);
+          return;
+        }
+      }
+
+      // For NEW_TERM without migration step, submit directly
+      if (sessionType === 'NEW_TERM') {
+        handleSubmit();
+        return;
+      }
+
+      // For NEW_SESSION without migration step, submit directly
+      if (!shouldShowMigrationStep) {
+        handleSubmit();
+        return;
+      }
     }
-    if (currentStep < 3) {
+
+    if (currentStep < (totalSteps as Step)) {
       setCurrentStep((prev) => (prev + 1) as Step);
     }
   };
@@ -287,16 +466,19 @@ export default function SessionWizardPage() {
     }
   };
 
+  // ─── Actions ─────────────────────────────────────────────────────────────────
+
   const handleEndSession = async () => {
     if (!schoolId) {
       toast.error('School not found');
       return;
     }
-
     try {
       await endSession({ schoolId, schoolType: currentType }).unwrap();
       setShowEndSessionModal(false);
-      toast.success(`Session ended successfully for ${getSchoolTypeLabel(currentType)}! You can now start a new session.`);
+      toast.success(
+        `Session ended successfully for ${getSchoolTypeLabel(currentType)}! You can now start a new session.`
+      );
     } catch (error: any) {
       toast.error(error?.data?.message || 'Failed to end session');
     }
@@ -307,19 +489,16 @@ export default function SessionWizardPage() {
       toast.error('School not found');
       return;
     }
-
     try {
       await endTerm({ schoolId, schoolType: currentType }).unwrap();
       setShowEndTermModal(false);
-      toast.success(`${termLabel} ended successfully for ${getSchoolTypeLabel(currentType)}! You can now start a new ${termLabel.toLowerCase()}.`);
+      toast.success(
+        `${termLabel} ended successfully for ${getSchoolTypeLabel(currentType)}! You can now start a new ${termLabel.toLowerCase()}.`
+      );
     } catch (error: any) {
       toast.error(error?.data?.message || `Failed to end ${termLabel.toLowerCase()}`);
     }
   };
-
-  // Check if selected term is a "continue" (reactivation) scenario
-  const selectedTermData = availableTerms.find(t => t.id === selectedTermId);
-  const isReactivation = selectedTermData?.canContinue === true;
 
   const handleSubmit = async () => {
     if (!schoolId) {
@@ -328,7 +507,7 @@ export default function SessionWizardPage() {
     }
 
     try {
-      // If continuing a completed term, use reactivateTerm
+      // Reactivation: continue a completed term
       if (sessionType === 'NEW_TERM' && isReactivation && selectedTermId) {
         await reactivateTerm({
           schoolId,
@@ -343,7 +522,7 @@ export default function SessionWizardPage() {
         return;
       }
 
-      // Otherwise, start a new term normally
+      // Normal start
       const result = await startNewTerm({
         schoolId,
         data: {
@@ -353,6 +532,11 @@ export default function SessionWizardPage() {
           type: sessionType,
           schoolType: currentType,
           ...(sessionType === 'NEW_TERM' && selectedTermId && { termId: selectedTermId }),
+          ...(sessionType === 'NEW_SESSION' && {
+            startingTermNumber,
+            ...(useCustomTermDates &&
+              customTermDates.length > 0 && { termDates: customTermDates }),
+          }),
         },
       }).unwrap();
 
@@ -361,24 +545,25 @@ export default function SessionWizardPage() {
       );
       router.push('/dashboard/school/overview');
     } catch (error: any) {
-      toast.error(error?.data?.message || `Failed to ${isReactivation ? 'continue' : 'start'} ${termLabel.toLowerCase()}`);
+      toast.error(
+        error?.data?.message ||
+        `Failed to ${isReactivation ? 'continue' : 'start'} ${termLabel.toLowerCase()}`
+      );
     }
   };
 
-  // For Step 1: NEW_SESSION only needs sessionName (and no active session), NEW_TERM needs selectedTermId (and no active term)
-  const canProceedStep1 = sessionType && 
-    (sessionType === 'NEW_SESSION' 
-      ? sessionName.trim().length > 0 && !activeSession?.session 
-      : selectedTermId.trim().length > 0 && availableTerms.length > 0 && !hasActiveTerm);
-  const canProceedStep2 = startDate && endDate && !sessionDateError;
-  const canProceedStep3 = true; // Logic gate is just a question
+  // Helper to update a single custom term date field
+  const updateTermDate = (
+    termNumber: number,
+    field: 'startDate' | 'endDate',
+    value: string
+  ) => {
+    setCustomTermDates((prev) =>
+      prev.map((td) => (td.number === termNumber ? { ...td, [field]: value } : td))
+    );
+  };
 
-  // For NEW_TERM on PRIMARY/SECONDARY, skip step 3 (migration options)
-  // because student promotion only happens per session, not per term
-  const shouldShowMigrationStep = sessionType === 'NEW_SESSION' || currentType === 'TERTIARY';
-
-  // When continuing a term (reactivation), skip the dates step - term already has dates
-  const shouldShowDatesStep = !isReactivation;
+  // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
@@ -390,85 +575,78 @@ export default function SessionWizardPage() {
 
       <div className="w-full max-w-4xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+        <FadeInUp
+          from={{ opacity: 0, y: -20 }}
+          to={{ opacity: 1, y: 0 }}
+          duration={0.5}
           className="mb-8"
         >
           <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
             Start New {termLabel}
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
-            Transition your school from &quot;Holiday&quot; to &quot;Active {termLabel}&quot;
+            Transition your school from &quot;Holiday&quot; to &quot;Active{' '}
+            {termLabel}&quot;
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-between mb-8">
-          {(() => {
-            // Determine which steps to show
-            let steps: number[];
-            if (isReactivation) {
-              // Continuing a term: only 1 step (select term)
-              steps = [1];
-            } else if (shouldShowMigrationStep) {
-              // New session or tertiary: 3 steps
-              steps = [1, 2, 3];
-            } else {
-              // New term for primary/secondary: 2 steps
-              steps = [1, 2];
-            }
-            
-            return steps.map((step, idx, arr) => (
-              <div key={step} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                      currentStep >= step
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+          {stepLabels.map(({ step, label }, idx) => (
+            <div key={step} className="flex items-center flex-1">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= step
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}
-                  >
-                    {currentStep > step ? <CheckCircle className="h-5 w-5" /> : idx + 1}
-                  </div>
-                  <p className="text-xs mt-2 text-center text-light-text-secondary dark:text-dark-text-secondary">
-                    {step === 1 
-                      ? (isReactivation ? 'Continue Term' : 'Session & Term') 
-                      : step === 2 ? 'Dates' : 'Migration'}
-                  </p>
+                >
+                  {currentStep > step ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    idx + 1
+                  )}
                 </div>
-                {idx < arr.length - 1 && (
-                  <div
-                    className={`flex-1 h-1 mx-2 ${
-                      currentStep > step ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                    }`}
-                  />
-                )}
+                <p className="text-xs mt-2 text-center text-light-text-secondary dark:text-dark-text-secondary">
+                  {label}
+                </p>
               </div>
-            ));
-          })()}
+              {idx < stepLabels.length - 1 && (
+                <div
+                  className={`flex-1 h-1 mx-2 ${currentStep > step
+                    ? 'bg-blue-600'
+                    : 'bg-gray-200 dark:bg-gray-700'
+                    }`}
+                />
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Step 1: Select Session & Term */}
+        {/* ═══════════════════ Step 1: Session & Term Selection ═══════════════════ */}
         {currentStep === 1 && (
-          <Card>
+          <Card className="overflow-visible">
             <CardHeader>
-              <CardTitle>Step 1: Select Session & {termLabel}</CardTitle>
+              <CardTitle>
+                Step 1: Select Session &amp; {termLabel}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Show current school type for mixed schools */}
+              {/* Mixed school type indicator */}
               {isMixed && (
                 <Alert>
                   <GraduationCap className="h-4 w-4" />
                   <div>
                     <strong>Managing:</strong> {getSchoolTypeLabel(currentType)}
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                      Each school type has independent sessions and {termLabel.toLowerCase()}s.
+                      Each school type has independent sessions and{' '}
+                      {termLabel.toLowerCase()}s.
                     </p>
                   </div>
                 </Alert>
               )}
-              
+
+              {/* Session type selector */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
                   Type
@@ -476,35 +654,34 @@ export default function SessionWizardPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setSessionType('NEW_SESSION')}
-                    className={`p-4 rounded-lg border-2 transition-colors ${
-                      sessionType === 'NEW_SESSION'
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-colors ${sessionType === 'NEW_SESSION'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     <h3 className="font-semibold mb-1">New Session</h3>
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                      September - Start new academic year (Promotes students)
+                      Start new academic year (Promotes students)
                     </p>
                   </button>
                   <button
                     onClick={() => setSessionType('NEW_TERM')}
-                    className={`p-4 rounded-lg border-2 transition-colors ${
-                      sessionType === 'NEW_TERM'
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-colors ${sessionType === 'NEW_TERM'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     <h3 className="font-semibold mb-1">New {termLabel}</h3>
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                      {currentType === 'TERTIARY' 
+                      {currentType === 'TERTIARY'
                         ? 'Start new semester (Carries over students)'
-                        : 'January/April - Start new term (Carries over students)'}
+                        : 'Start new term (Carries over students)'}
                     </p>
                   </button>
                 </div>
               </div>
 
+              {/* NEW SESSION - session name */}
               {sessionType === 'NEW_SESSION' && (
                 <div className="space-y-4">
                   <div>
@@ -516,8 +693,23 @@ export default function SessionWizardPage() {
                       onChange={(e) => setSessionName(e.target.value)}
                       placeholder="2025/2026"
                       disabled={!!activeSession?.session}
+                      className={
+                        validationError ||
+                          (sessionNameError && sessionName.length > 5)
+                          ? 'border-red-500'
+                          : ''
+                      }
                     />
+                    {(validationError ||
+                      (sessionNameError && sessionName.length > 5)) && (
+                        <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {validationError || sessionNameError}
+                        </p>
+                      )}
                   </div>
+
+                  {/* Active session blocker */}
                   {activeSession?.session && (
                     <div className="p-4 border-2 border-orange-300 dark:border-orange-700 rounded-lg bg-orange-50 dark:bg-orange-900/20">
                       <div className="flex items-start gap-3">
@@ -525,20 +717,24 @@ export default function SessionWizardPage() {
                         <div className="flex-1">
                           <p className="font-semibold text-orange-800 dark:text-orange-200 mb-1">
                             Active Session: {activeSession.session.name}
-                            {activeSession.term && ` - ${activeSession.term.name}`}
+                            {activeSession.term &&
+                              ` - ${activeSession.term.name}`}
                           </p>
                           <p className="text-sm text-orange-700 dark:text-orange-300 mb-3">
-                            You must end the current session before creating a new one. 
-                            This will mark all {termLabel.toLowerCase()}s as completed.
+                            You must end the current session before creating a
+                            new one. This will mark all{' '}
+                            {termLabel.toLowerCase()}s as completed.
                           </p>
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowEndSessionModal(true)}
-                            className="border-orange-500 text-orange-700 hover:bg-orange-100 dark:border-orange-400 dark:text-orange-300 dark:hover:bg-orange-900/40"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            End Current Session
-                          </Button>
+                          <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowEndSessionModal(true)}
+                              className="border-orange-500 text-orange-700 hover:bg-orange-100 dark:border-orange-400 dark:text-orange-300 dark:hover:bg-orange-900/40"
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              End Current Session
+                            </Button>
+                          </PermissionGate>
                         </div>
                       </div>
                     </div>
@@ -546,9 +742,10 @@ export default function SessionWizardPage() {
                 </div>
               )}
 
+              {/* NEW TERM - select from existing */}
               {sessionType === 'NEW_TERM' && (
                 <div className="space-y-4">
-                  {/* Show active term warning with End Term button */}
+                  {/* Active term warning */}
                   {hasActiveTerm && (
                     <div className="p-4 border-2 border-blue-300 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                       <div className="flex items-start gap-3">
@@ -558,16 +755,19 @@ export default function SessionWizardPage() {
                             Active {termLabel}: {activeSession?.term?.name}
                           </p>
                           <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                            You must end the current {termLabel.toLowerCase()} before starting a new one.
+                            You must end the current {termLabel.toLowerCase()}{' '}
+                            before starting a new one.
                           </p>
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowEndTermModal(true)}
-                            className="border-blue-500 text-blue-700 hover:bg-blue-100 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-900/40"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            End Current {termLabel}
-                          </Button>
+                          <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowEndTermModal(true)}
+                              className="border-blue-500 text-blue-700 hover:bg-blue-100 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              End Current {termLabel}
+                            </Button>
+                          </PermissionGate>
                         </div>
                       </div>
                     </div>
@@ -587,14 +787,26 @@ export default function SessionWizardPage() {
                     ) : sessions.length === 0 ? (
                       <div className="p-4 border border-yellow-300 dark:border-yellow-700 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
                         <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                          <strong>No sessions found{isMixed ? ` for ${getSchoolTypeLabel(currentType)}` : ''}.</strong> Please select &quot;New Session&quot; to start a new academic year first.
+                          <strong>
+                            No sessions found
+                            {isMixed
+                              ? ` for ${getSchoolTypeLabel(currentType)}`
+                              : ''}
+                            .
+                          </strong>{' '}
+                          Please select &quot;New Session&quot; to start a new
+                          academic year first.
                         </p>
                       </div>
                     ) : availableTerms.length === 0 ? (
                       <div className="p-4 border border-yellow-300 dark:border-yellow-700 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
                         <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                          <strong>No available {termLabel.toLowerCase()}s.</strong> All {termLabel.toLowerCase()}s in the current session have been activated or completed. 
-                          You may need to start a new academic session.
+                          <strong>
+                            No available {termLabel.toLowerCase()}s.
+                          </strong>{' '}
+                          All {termLabel.toLowerCase()}s in the current session
+                          have been activated or completed. You may need to start
+                          a new academic session.
                         </p>
                       </div>
                     ) : (
@@ -603,27 +815,37 @@ export default function SessionWizardPage() {
                           value={selectedTermId}
                           onChange={(e) => setSelectedTermId(e.target.value)}
                           disabled={hasActiveTerm}
-                          className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary ${
-                            hasActiveTerm ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
+                          className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary ${hasActiveTerm
+                            ? 'opacity-50 cursor-not-allowed'
+                            : ''
+                            }`}
                         >
-                          <option value="">Select a {termLabel.toLowerCase()}...</option>
+                          <option value="">
+                            Select a {termLabel.toLowerCase()}...
+                          </option>
                           {availableTerms.map((term) => {
-                            const daysRemaining = term.endDate 
-                              ? Math.ceil((new Date(term.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                            const daysRemaining = term.endDate
+                              ? Math.ceil(
+                                (new Date(term.endDate).getTime() -
+                                  Date.now()) /
+                                (1000 * 60 * 60 * 24)
+                              )
                               : 0;
                             return (
                               <option key={term.id} value={term.id}>
-                                {term.canContinue ? '↩ Continue' : '▶ Start'} {term.sessionName} - {term.name}
-                                {term.canContinue && daysRemaining > 0 ? ` (${daysRemaining} days left)` : ''}
+                                {term.canContinue ? '↩ Continue' : '▶ Start'}{' '}
+                                {term.sessionName} - {term.name}
+                                {term.canContinue && daysRemaining > 0
+                                  ? ` (${daysRemaining} days left)`
+                                  : ''}
                               </option>
                             );
                           })}
                         </select>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                          {hasActiveTerm 
+                          {hasActiveTerm
                             ? `End the current ${termLabel.toLowerCase()} to select a new one.`
-                            : availableTerms.some(t => t.canContinue)
+                            : availableTerms.some((t) => t.canContinue)
                               ? `You can continue a ${termLabel.toLowerCase()} that was ended early, or start a new one.`
                               : `Only ${termLabel.toLowerCase()}s that haven't been activated yet are shown.`}
                         </p>
@@ -638,127 +860,298 @@ export default function SessionWizardPage() {
                   <Calendar className="h-4 w-4" />
                   <div>
                     <strong>Current:</strong> {activeSession.session.name}
-                    {activeSession.term && ` - ${activeSession.term.name} (Active)`}
+                    {activeSession.term &&
+                      ` - ${activeSession.term.name} (Active)`}
+                    {activeSession.term?.currentWeek && (
+                      <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
+                        — Week {activeSession.term.currentWeek}
+                        {activeSession.term.totalWeeks
+                          ? ` of ${activeSession.term.totalWeeks}`
+                          : ''}
+                      </span>
+                    )}
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-1">
-                      Starting a new {termLabel.toLowerCase()} will carry over students and clone timetables from the current {termLabel.toLowerCase()}.
+                      Starting a new {termLabel.toLowerCase()} will carry over
+                      students and clone timetables.
                     </p>
                   </div>
                 </Alert>
               )}
 
               <div className="flex justify-end">
-                <Button onClick={handleNext} disabled={!canProceedStep1 || isReactivating}>
-                  {isReactivation ? (
-                    isReactivating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Continuing {termLabel}...
-                      </>
+                <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canProceedStep1 || isReactivating}
+                  >
+                    {isReactivation ? (
+                      isReactivating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Continuing {termLabel}...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Continue {termLabel}
+                        </>
+                      )
                     ) : (
                       <>
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Continue {termLabel}
+                        Next <ArrowRight className="h-4 w-4 ml-2" />
                       </>
-                    )
-                  ) : (
-                    <>Next <ArrowRight className="h-4 w-4 ml-2" /></>
-                  )}
-                </Button>
+                    )}
+                  </Button>
+                </PermissionGate>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Step 2: Date Pickers */}
+        {/* ═══════════════════ Step 2: Dates & Term Configuration ═══════════════════ */}
         {currentStep === 2 && (
-          <Card>
+          <Card className="overflow-visible">
             <CardHeader>
-              <CardTitle>Step 2: Set Dates</CardTitle>
+              <CardTitle>Step 2: Set Dates{sessionType === 'NEW_SESSION' ? ` & ${termLabel}s` : ''}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    Start Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
+              {/* Session dates */}
+              <div>
+                <h3 className="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary mb-3">
+                  Session Period
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <DatePicker
+                      label="Start Date"
+                      value={startDate}
+                      onChange={setStartDate}
+                      placeholder="Select start date"
+                    />
+                  </div>
+                  <div>
+                    <DatePicker
+                      label="End Date"
+                      value={endDate}
+                      onChange={setEndDate}
+                      min={startDate || undefined}
+                      placeholder="Select end date"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    End Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate || undefined}
-                  />
-                  {sessionDateError && (
-                    <Alert variant="error" className="mt-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <p className="text-sm">{sessionDateError}</p>
-                    </Alert>
-                  )}
-                  {startDate && endDate && !sessionDateError && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      ✓ Session duration is valid (at least 10 months)
+                {(validationError || sessionDateError) && (
+                  <Alert variant="error" className="mt-3">
+                    <AlertCircle className="h-4 w-4" />
+                    <p className="text-sm">
+                      {validationError || sessionDateError}
+                    </p>
+                  </Alert>
+                )}
+                {startDate &&
+                  endDate &&
+                  !validationError &&
+                  !sessionDateError && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                      ✓ Session duration is valid (10-12 months)
                     </p>
                   )}
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    Half-Term Start (Optional)
-                  </label>
-                  <Input
-                    type="date"
-                    value={halfTermStart}
-                    onChange={(e) => setHalfTermStart(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-light-text-primary dark:text-dark-text-primary">
-                    Half-Term End (Optional)
-                  </label>
-                  <Input
-                    type="date"
-                    value={halfTermEnd}
-                    onChange={(e) => setHalfTermEnd(e.target.value)}
-                  />
-                </div>
-              </div>
+              {/* NEW SESSION: which term to start in & custom dates */}
+              {sessionType === 'NEW_SESSION' && startDate && endDate && !sessionDateError && (
+                <>
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 dark:border-gray-700" />
 
+                  {/* Which term are you in? */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary mb-1">
+                      Which {termLabel.toLowerCase()} are you currently in?
+                    </h3>
+                    <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary mb-3">
+                      If your school already started this session, select the{' '}
+                      {termLabel.toLowerCase()} you&apos;re currently in. Earlier{' '}
+                      {termLabel.toLowerCase()}s will be marked as completed.
+                    </p>
+                    <div className={`grid gap-3 ${termCount === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                      {Array.from({ length: termCount }, (_, i) => i + 1).map(
+                        (num) => (
+                          <button
+                            key={num}
+                            onClick={() => setStartingTermNumber(num)}
+                            className={`p-3 rounded-lg border-2 transition-all text-center ${startingTermNumber === num
+                              ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 shadow-sm'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                              }`}
+                          >
+                            <p className="font-semibold text-sm">
+                              {getOrdinal(num)} {termLabel}
+                            </p>
+                            <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-0.5">
+                              {num < startingTermNumber
+                                ? 'Will be marked completed'
+                                : num === startingTermNumber
+                                  ? 'Will be activated'
+                                  : 'Will remain as draft'}
+                            </p>
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    {startingTermNumber > 1 && (
+                      <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                        <div className="flex items-start gap-2">
+                          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            <strong>Late onboarding mode:</strong>{' '}
+                            {getOrdinal(startingTermNumber)} {termLabel} will be
+                            activated, and earlier {termLabel.toLowerCase()}s
+                            will be marked as completed since your school has
+                            already gone through them.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 dark:border-gray-700" />
+
+                  {/* Custom term dates toggle */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary">
+                          Custom {termLabel} Dates
+                        </h3>
+                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                          Set specific start/end dates for each{' '}
+                          {termLabel.toLowerCase()} instead of equal splits.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setUseCustomTermDates(!useCustomTermDates)
+                        }
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useCustomTermDates
+                          ? 'bg-blue-600'
+                          : 'bg-gray-300 dark:bg-gray-600'
+                          }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${useCustomTermDates
+                            ? 'translate-x-6'
+                            : 'translate-x-1'
+                            }`}
+                        />
+                      </button>
+                    </div>
+
+                    {useCustomTermDates && customTermDates.length > 0 && (
+                      <div className="space-y-4">
+                        {customTermDates.map((td) => (
+                          <div
+                            key={td.number}
+                            className={`p-4 rounded-lg border transition-colors ${td.number === startingTermNumber
+                              ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/10'
+                              : 'border-gray-200 dark:border-gray-700'
+                              }`}
+                          >
+                            <div className="flex items-center gap-2 mb-3">
+                              <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                                {getOrdinal(td.number)} {termLabel}
+                              </p>
+                              {td.number === startingTermNumber && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
+                                  Starting here
+                                </span>
+                              )}
+                              {td.number < startingTermNumber && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                                  Completed
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <DatePicker
+                                label="Start"
+                                value={td.startDate}
+                                onChange={(val) =>
+                                  updateTermDate(td.number, 'startDate', val)
+                                }
+                                min={startDate || undefined}
+                                max={endDate || undefined}
+                                placeholder="Start date"
+                              />
+                              <DatePicker
+                                label="End"
+                                value={td.endDate}
+                                onChange={(val) =>
+                                  updateTermDate(td.number, 'endDate', val)
+                                }
+                                min={td.startDate || startDate || undefined}
+                                max={endDate || undefined}
+                                placeholder="End date"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        {customTermDateError && (
+                          <Alert variant="error">
+                            <AlertCircle className="h-4 w-4" />
+                            <p className="text-sm">{customTermDateError}</p>
+                          </Alert>
+                        )}
+                      </div>
+                    )}
+
+                    {!useCustomTermDates && (
+                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted italic">
+                        {termLabel}s will be automatically split equally across
+                        the session period.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Navigation */}
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={handleBack}>
                   Back
                 </Button>
-                <Button onClick={handleNext} disabled={!canProceedStep2 || isStarting || isReactivating}>
-                  {shouldShowMigrationStep ? (
-                    <>Next <ArrowRight className="h-4 w-4 ml-2" /></>
-                  ) : (isStarting || isReactivating) ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {isReactivation ? 'Continuing' : 'Starting'} {termLabel}...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {isReactivation ? 'Continue' : 'Start'} {termLabel}
-                    </>
-                  )}
-                </Button>
+                <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                  <Button
+                    onClick={handleNext}
+                    disabled={
+                      !canProceedStep2 || isStarting || isReactivating
+                    }
+                  >
+                    {totalSteps > 2 && currentStep < totalSteps ? (
+                      <>
+                        Next <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
+                    ) : isStarting || isReactivating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {isReactivation ? 'Continuing' : 'Starting'}{' '}
+                        {termLabel}...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {isReactivation ? 'Continue' : 'Start'} {termLabel}
+                      </>
+                    )}
+                  </Button>
+                </PermissionGate>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Step 3: Logic Gate - Only shown for NEW_SESSION or TERTIARY schools */}
+        {/* ═══════════════════ Step 3: Student Migration ═══════════════════ */}
         {currentStep === 3 && shouldShowMigrationStep && (
           <Card>
             <CardHeader>
@@ -767,16 +1160,16 @@ export default function SessionWizardPage() {
             <CardContent className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-4 text-light-text-primary dark:text-dark-text-primary">
-                  Do you want to carry over students from the last {termLabel.toLowerCase()}?
+                  Do you want to carry over students from the last{' '}
+                  {termLabel.toLowerCase()}?
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setCarryOver(true)}
-                    className={`p-4 rounded-lg border-2 transition-colors ${
-                      carryOver
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-colors ${carryOver
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     <h3 className="font-semibold mb-1">Yes - Carry Over</h3>
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
@@ -785,15 +1178,14 @@ export default function SessionWizardPage() {
                   </button>
                   <button
                     onClick={() => setCarryOver(false)}
-                    className={`p-4 rounded-lg border-2 transition-colors ${
-                      !carryOver
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-colors ${!carryOver
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     <h3 className="font-semibold mb-1">No - Promote</h3>
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                      {currentType === 'TERTIARY' 
+                      {currentType === 'TERTIARY'
                         ? 'Move students to next level (100L → 200L)'
                         : 'Move students to next level (JSS1 → JSS2)'}
                     </p>
@@ -817,30 +1209,152 @@ export default function SessionWizardPage() {
                 <Button variant="ghost" onClick={handleBack}>
                   Back
                 </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isStarting}
-                  className="flex items-center gap-2"
-                >
-                  {isStarting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Starting {termLabel}...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Start {termLabel}
-                    </>
-                  )}
-                </Button>
+                <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isStarting}
+                    className="flex items-center gap-2"
+                  >
+                    {isStarting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Starting {termLabel}...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Start {termLabel}
+                      </>
+                    )}
+                  </Button>
+                </PermissionGate>
               </div>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* End Session Confirmation Modal */}
+      {/* ═══════════════════ Manage Term Dates ═══════════════════ */}
+      {activeSession?.session && activeSession.session.terms && activeSession.session.terms.length > 0 && (
+        <FadeInUp
+          from={{ opacity: 0, y: 20 }}
+          to={{ opacity: 1, y: 0 }}
+          duration={0.4}
+          delay={0.2}
+          className="mt-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                Manage {termLabel} Dates
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                Adjust start and end dates for your {termLabel.toLowerCase()}s. Start dates can only be modified before the {termLabel.toLowerCase()} begins or within the first week.
+              </p>
+              <div className="space-y-3">
+                {[...activeSession.session.terms]
+                  .sort((a, b) => a.number - b.number)
+                  .map((term) => {
+                    const isActive = term.status === 'ACTIVE';
+                    const isDraft = term.status === 'DRAFT';
+                    const isCompleted = term.status === 'COMPLETED' || term.status === 'ARCHIVED';
+                    const termStart = new Date(term.startDate);
+                    const termEnd = new Date(term.endDate);
+                    const now = new Date();
+                    const isUpcoming = now < termStart;
+
+                    // Determine editability for visual cues
+                    let editableStatus: 'editable' | 'partial' | 'locked' = 'locked';
+                    if (isDraft || isUpcoming) {
+                      editableStatus = 'editable';
+                    } else if (isActive) {
+                      const gracePeriodEnd = new Date(termStart);
+                      gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
+                      editableStatus = now <= gracePeriodEnd ? 'partial' : 'partial'; // end date still editable
+                    }
+                    if (isCompleted) editableStatus = 'locked';
+
+                    return (
+                      <div
+                        key={term.id}
+                        className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${isActive
+                            ? 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10'
+                            : isDraft
+                              ? 'border-[var(--light-border)] dark:border-gray-700 bg-[var(--light-card)] dark:bg-dark-surface'
+                              : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30'
+                          }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                              {term.name}
+                            </span>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive
+                                  ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                                  : isDraft
+                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                    : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                                }`}
+                            >
+                              {term.status}
+                            </span>
+                            {isActive && term.currentWeek && (
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                Week {term.currentWeek}{term.totalWeeks ? ` of ${term.totalWeeks}` : ''}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                            <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>
+                              {termStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              {' — '}
+                              {termEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            {term.halfTermStart && term.halfTermEnd && (
+                              <span className="ml-2 text-xs text-light-text-muted dark:text-dark-text-muted">
+                                (Break: {new Date(term.halfTermStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {' – '}
+                                {new Date(term.halfTermEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 ml-4">
+                          {isCompleted ? (
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                              <Lock className="h-3.5 w-3.5" />
+                              Locked
+                            </div>
+                          ) : (
+                            <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
+                              <Button
+                                variant="ghost"
+                                onClick={() => setEditingTerm(term)}
+                                className="text-sm flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                Edit Dates
+                              </Button>
+                            </PermissionGate>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        </FadeInUp>
+      )}
+
+      {/* ═══════════════════ Modals ═══════════════════ */}
+
+      {/* End Session Confirmation */}
       <ConfirmationModal
         isOpen={showEndSessionModal}
         onClose={() => setShowEndSessionModal(false)}
@@ -852,7 +1366,7 @@ export default function SessionWizardPage() {
         isLoading={isEndingSession}
       />
 
-      {/* End Term Confirmation Modal */}
+      {/* End Term Confirmation */}
       <ConfirmationModal
         isOpen={showEndTermModal}
         onClose={() => setShowEndTermModal(false)}
@@ -860,28 +1374,35 @@ export default function SessionWizardPage() {
         title={(() => {
           const termEndDate = activeSession?.term?.endDate;
           const isEarly = termEndDate && new Date(termEndDate) > new Date();
-          return isEarly ? `End ${termLabel} Early?` : `End Current ${termLabel}?`;
+          return isEarly
+            ? `End ${termLabel} Early?`
+            : `End Current ${termLabel}?`;
         })()}
         message={(() => {
           const termEndDate = activeSession?.term?.endDate;
           const isEarly = termEndDate && new Date(termEndDate) > new Date();
-          const daysRemaining = termEndDate 
-            ? Math.ceil((new Date(termEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          const daysRemaining = termEndDate
+            ? Math.ceil(
+              (new Date(termEndDate).getTime() - Date.now()) /
+              (1000 * 60 * 60 * 24)
+            )
             : 0;
-          
+
           let msg = `Are you sure you want to end "${activeSession?.term?.name}" for ${getSchoolTypeLabel(currentType)}?`;
-          
+
           if (isEarly) {
             msg += `\n\n⚠️ WARNING: You are ending this ${termLabel.toLowerCase()} ${daysRemaining} days before its scheduled end date. You can continue it later from this wizard.`;
           }
-          
+
           msg += `\n\nYou will then be able to start a new ${termLabel.toLowerCase()}.`;
           return msg;
         })()}
         confirmText={(() => {
           const termEndDate = activeSession?.term?.endDate;
           const isEarly = termEndDate && new Date(termEndDate) > new Date();
-          return isEarly ? `End ${termLabel} Early` : `End ${termLabel}`;
+          return isEarly
+            ? `End ${termLabel} Early`
+            : `End ${termLabel}`;
         })()}
         confirmVariant={(() => {
           const termEndDate = activeSession?.term?.endDate;
@@ -890,7 +1411,18 @@ export default function SessionWizardPage() {
         })()}
         isLoading={isEndingTerm}
       />
+
+      {/* Edit Term Dates Modal */}
+      {editingTerm && activeSession?.session && schoolId && (
+        <EditTermDatesModal
+          isOpen={!!editingTerm}
+          onClose={() => setEditingTerm(null)}
+          term={editingTerm}
+          session={activeSession.session}
+          schoolId={schoolId}
+          termLabel={termLabel}
+        />
+      )}
     </ProtectedRoute>
   );
 }
-

@@ -27,6 +27,7 @@ import {
 import { AutoGenerateButton } from '@/components/ui/AutoGenerateButton';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   useGetMySchoolQuery,
   useGetSubjectsQuery,
@@ -63,7 +64,7 @@ export default function SubjectsPage() {
   const schoolId = schoolResponse?.data?.id;
   const { currentType } = useSchoolType();
   const terminology = getTerminology(currentType);
-  
+
   // Auto-generate subjects hook
   const {
     isGenerating,
@@ -279,40 +280,49 @@ export default function SubjectsPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-                {currentType === 'TERTIARY' ? 'Courses' : 'Subjects'}
-              </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col w-full md:w-auto">
+              <div className="flex items-center justify-between w-full">
+                <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                  {currentType === 'TERTIARY' ? 'Courses' : 'Subjects'}
+                </h1>
+                {/* Compact Search bar for Mobile */}
+                <div className="md:hidden flex-1 max-w-[200px] ml-4">
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Search..."
+                    size="sm"
+                    containerClassName="w-full"
+                  />
+                </div>
+              </div>
+              <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 Manage {currentType === 'TERTIARY' ? 'courses' : 'subjects'} for {currentType || 'your school'}
               </p>
             </div>
             <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-row items-center gap-3 w-full md:w-auto">
                 {canAutoGenerate && (
                   <AutoGenerateButton
                     onClick={openConfirmModal}
                     isLoading={isGenerating}
                     label="Auto-Generate"
+                    className="flex-1 sm:w-auto text-[10px] sm:text-xs h-9"
                   />
                 )}
-                <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button variant="primary" onClick={() => setShowCreateModal(true)} className="flex-1 sm:w-auto h-9 text-[10px] sm:text-xs">
+                  <Plus className="h-4 w-4 mr-1 sm:mr-2" />
                   Add {currentType === 'TERTIARY' ? 'Course' : 'Subject'}
                 </Button>
               </div>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search and View Toggle */}
-        <div className="flex items-center justify-between mb-6 gap-4">
+        <div className="hidden md:flex items-center justify-between mb-6 gap-4">
           <div className="w-full max-w-md">
             <SearchInput
               value={searchQuery}
@@ -442,18 +452,18 @@ export default function SubjectsPage() {
               'gap-4',
               viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col'
             )}>
-            {filteredSubjects.map((subject) => (
-              <SubjectCard
-                key={subject.id}
-                subject={subject}
-                onEdit={() => setEditingSubject(subject)}
-                onDelete={() => handleDeleteSubject(subject.id, subject.name)}
-                onAssignTeacher={() => setShowTeacherModal(subject)}
-                onRemoveTeacher={handleRemoveTeacher}
-                isDeleting={isDeleting}
-                currentType={currentType}
-              />
-            ))}
+              {filteredSubjects.map((subject) => (
+                <SubjectCard
+                  key={subject.id}
+                  subject={subject}
+                  onEdit={() => setEditingSubject(subject)}
+                  onDelete={() => handleDeleteSubject(subject.id, subject.name)}
+                  onAssignTeacher={() => setShowTeacherModal(subject)}
+                  onRemoveTeacher={handleRemoveTeacher}
+                  isDeleting={isDeleting}
+                  currentType={currentType}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -461,9 +471,9 @@ export default function SubjectsPage() {
         {filteredSubjects.length === 0 && (
           <Card>
             <CardContent className="py-12 text-center">
-              <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+              <EmptyStateIcon type="document" />
               <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                {searchQuery 
+                {searchQuery
                   ? `No ${currentType === 'TERTIARY' ? 'courses' : 'subjects'} found matching your search.`
                   : `No ${currentType === 'TERTIARY' ? 'courses' : 'subjects'} added yet.`}
               </p>
@@ -572,20 +582,22 @@ function SubjectCard({
               </p>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={onEdit}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              disabled={isDeleting}
-              className="text-red-600 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={onEdit}>
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDelete}
+                disabled={isDeleting}
+                className="text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </PermissionGate>
         </div>
       </CardHeader>
       <CardContent>
@@ -596,68 +608,74 @@ function SubjectCard({
         )}
         <div className="space-y-3">
           {/* Competent Teachers Section - All school types */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
                 {currentType === 'SECONDARY' ? 'Competent Teachers:' : 'Teachers:'}
-              {currentType === 'PRIMARY' && (
-                <span className="text-light-text-muted dark:text-dark-text-muted block mt-0.5" style={{ fontSize: '0.65rem' }}>
-                  (One teacher only)
-                </span>
-              )}
-            </span>
-            {currentType !== 'PRIMARY' && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onAssignTeacher}
-              >
-                <Users className="h-4 w-4 mr-1" />
-                  {currentType === 'SECONDARY' ? 'Add' : 'Assign'}
-              </Button>
-            )}
-          </div>
-          {subject.teachers && subject.teachers.length > 0 ? (
-            <div className="space-y-1">
-              {subject.teachers.map((teacher) => (
-                <div
-                  key={teacher.id}
-                  className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded"
-                  style={{ fontSize: 'var(--text-small)' }}
-                >
-                  <span>
-                    {teacher.firstName} {teacher.lastName}
+                {currentType === 'PRIMARY' && (
+                  <span className="text-light-text-muted dark:text-dark-text-secondary block mt-0.5" style={{ fontSize: '0.65rem' }}>
+                    (One teacher only)
                   </span>
+                )}
+              </span>
+              {currentType !== 'PRIMARY' && (
+                <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onRemoveTeacher(subject.id, teacher.id)}
-                    className="text-red-600 hover:text-red-700 h-6 px-2"
+                    onClick={onAssignTeacher}
                   >
-                    <X className="h-3 w-3" />
+                    <Users className="h-4 w-4 mr-1" />
+                    {currentType === 'SECONDARY' ? 'Add' : 'Assign'}
                   </Button>
-                </div>
-              ))}
+                </PermissionGate>
+              )}
             </div>
-          ) : (
-            <p className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
-              No teachers assigned
-            </p>
+            {subject.teachers && subject.teachers.length > 0 ? (
+              <div className="space-y-1">
+                {subject.teachers.map((teacher) => (
+                  <div
+                    key={teacher.id}
+                    className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded"
+                    style={{ fontSize: 'var(--text-small)' }}
+                  >
+                    <span className="text-light-text-primary dark:text-dark-text-primary">
+                      {teacher.firstName} {teacher.lastName}
+                    </span>
+                    <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemoveTeacher(subject.id, teacher.id)}
+                        className="text-red-600 hover:text-red-700 h-6 px-2"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </PermissionGate>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                No teachers assigned
+              </p>
             )}
           </div>
 
           {/* Class Assignments Section - SECONDARY only */}
           {currentType === 'SECONDARY' && onClassAssignment && (
             <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClassAssignment}
-                className="w-full justify-center bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-              >
-                <GraduationCap className="h-4 w-4 mr-2" />
-                Assign to Classes
-              </Button>
+              <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClassAssignment}
+                  className="w-full justify-center bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                >
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Assign to Classes
+                </Button>
+              </PermissionGate>
               {(!subject.teachers || subject.teachers.length === 0) && (
                 <p className="text-xs text-yellow-600 dark:text-yellow-400 text-center mt-2">
                   Add competent teachers first before assigning to classes
@@ -715,9 +733,7 @@ function SubjectModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-4">
@@ -816,7 +832,7 @@ function SubjectModal({
             </Button>
           </div>
         </form>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }
@@ -854,18 +870,18 @@ function AssignTeacherModal({
   // For SECONDARY schools, filter teachers by subject name match
   // For other school types, show all teachers
   // Use flexible matching: check if teacher's subject contains subject name or vice versa
-  const filteredTeachers = currentType === 'SECONDARY' 
+  const filteredTeachers = currentType === 'SECONDARY'
     ? teachers.filter((t) => {
-        if (!t.subject) return false;
-        const teacherSubject = t.subject.trim().toLowerCase();
-        const subjectName = subject.name.trim().toLowerCase();
-        // Match if teacher's subject contains subject name or subject name contains teacher's subject
-        return teacherSubject === subjectName || 
-               teacherSubject.includes(subjectName) || 
-               subjectName.includes(teacherSubject);
-      })
+      if (!t.subject) return false;
+      const teacherSubject = t.subject.trim().toLowerCase();
+      const subjectName = subject.name.trim().toLowerCase();
+      // Match if teacher's subject contains subject name or subject name contains teacher's subject
+      return teacherSubject === subjectName ||
+        teacherSubject.includes(subjectName) ||
+        subjectName.includes(teacherSubject);
+    })
     : teachers;
-  
+
   const availableTeachers = filteredTeachers.filter(
     (t) => !assignedTeachers.some((at) => at.id === t.id)
   );
@@ -891,9 +907,7 @@ function AssignTeacherModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-4">
@@ -953,12 +967,12 @@ function AssignTeacherModal({
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
                   Available Teachers ({availableTeachers.length})
-                {currentType === 'PRIMARY' && assignedTeachers.length > 0 && (
-                  <span className="text-xs text-yellow-600 dark:text-yellow-400 block mt-1">
-                    Remove the existing teacher first to assign a new one
-                  </span>
-                )}
-              </label>
+                  {currentType === 'PRIMARY' && assignedTeachers.length > 0 && (
+                    <span className="text-xs text-yellow-600 dark:text-yellow-400 block mt-1">
+                      Remove the existing teacher first to assign a new one
+                    </span>
+                  )}
+                </label>
                 {useMultiSelect && availableTeachers.length > 1 && (
                   <button
                     type="button"
@@ -976,11 +990,10 @@ function AssignTeacherModal({
                   {availableTeachers.map((teacher) => (
                     <label
                       key={teacher.id}
-                      className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
-                        selectedTeacherIds.includes(teacher.id)
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
+                      className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${selectedTeacherIds.includes(teacher.id)
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}
                     >
                       <input
                         type="checkbox"
@@ -996,19 +1009,19 @@ function AssignTeacherModal({
                 </div>
               ) : (
                 /* Single select dropdown for PRIMARY */
-              <select
-                value={selectedTeacherId}
-                onChange={(e) => onSelectTeacher(e.target.value)}
-                disabled={currentType === 'PRIMARY' && assignedTeachers.length > 0}
+                <select
+                  value={selectedTeacherId}
+                  onChange={(e) => onSelectTeacher(e.target.value)}
+                  disabled={currentType === 'PRIMARY' && assignedTeachers.length > 0}
                   className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--light-input)] dark:bg-[var(--dark-input)] text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="">Select a teacher...</option>
-                {availableTeachers.map((teacher) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.firstName} {teacher.lastName}
-                  </option>
-                ))}
-              </select>
+                >
+                  <option value="">Select a teacher...</option>
+                  {availableTeachers.map((teacher) => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.firstName} {teacher.lastName}
+                    </option>
+                  ))}
+                </select>
               )}
 
               {/* Action button */}
@@ -1033,24 +1046,24 @@ function AssignTeacherModal({
                     )}
                   </Button>
                 ) : (
-              <Button
-                variant="primary"
-                onClick={onAssign}
-                disabled={!selectedTeacherId || isLoading || (currentType === 'PRIMARY' && assignedTeachers.length > 0)}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Assigning...
-                  </>
-                ) : (
-                  <>
-                    <Users className="h-4 w-4 mr-2" />
-                    Assign Teacher
-                  </>
-                )}
-              </Button>
+                  <Button
+                    variant="primary"
+                    onClick={onAssign}
+                    disabled={!selectedTeacherId || isLoading || (currentType === 'PRIMARY' && assignedTeachers.length > 0)}
+                    className="w-full"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Assigning...
+                      </>
+                    ) : (
+                      <>
+                        <Users className="h-4 w-4 mr-2" />
+                        Assign Teacher
+                      </>
+                    )}
+                  </Button>
                 )}
               </div>
             </div>
@@ -1070,7 +1083,7 @@ function AssignTeacherModal({
             Close
           </Button>
         </div>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }
@@ -1089,9 +1102,7 @@ function AutoGenerateModal({
 }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4"
       >
         <div className="flex items-center justify-between mb-4">
@@ -1114,7 +1125,7 @@ function AutoGenerateModal({
 
         <div className="space-y-4">
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
-            This will add standard {schoolTypeLabel} subjects to your school. 
+            This will add standard {schoolTypeLabel} subjects to your school.
             Existing subjects with the same name or code will be skipped.
           </p>
 
@@ -1146,8 +1157,8 @@ function AutoGenerateModal({
                 </>
               )}
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={onClose}
               disabled={isGenerating}
             >
@@ -1155,7 +1166,7 @@ function AutoGenerateModal({
             </Button>
           </div>
         </div>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }
@@ -1233,7 +1244,7 @@ function ClassAssignmentModal({
   // Group class arms by class level
   const groupedClassArms = useMemo(() => {
     if (!assignmentsData?.classArms) return {};
-    
+
     const grouped: Record<string, typeof assignmentsData.classArms> = {};
     assignmentsData.classArms.forEach(arm => {
       if (!grouped[arm.classLevelName]) {
@@ -1247,9 +1258,7 @@ function ClassAssignmentModal({
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+        <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
           className="bg-white dark:bg-dark-surface rounded-lg p-6 w-full max-w-2xl mx-4"
         >
           <div className="flex items-center justify-center py-12">
@@ -1258,7 +1267,7 @@ function ClassAssignmentModal({
               Loading class assignments...
             </span>
           </div>
-        </motion.div>
+        </FadeInUp>
       </div>
     );
   }
@@ -1267,9 +1276,7 @@ function ClassAssignmentModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25}
         className="bg-white dark:bg-dark-surface rounded-lg p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-6">
@@ -1383,7 +1390,7 @@ function ClassAssignmentModal({
             </Button>
           )}
         </div>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }

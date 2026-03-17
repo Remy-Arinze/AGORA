@@ -3,9 +3,9 @@ import { apiSlice } from './apiSlice';
 // Enums
 export enum SubscriptionTier {
   FREE = 'FREE',
-  STARTER = 'STARTER',
-  PROFESSIONAL = 'PROFESSIONAL',
-  ENTERPRISE = 'ENTERPRISE',
+  PRO = 'PRO',
+  PRO_PLUS = 'PRO_PLUS',
+  CUSTOM = 'CUSTOM',
 }
 
 export enum ToolStatus {
@@ -83,6 +83,19 @@ export interface ToolAccessResultDto {
   trialDaysRemaining?: number;
 }
 
+export interface AiUsageLogDto {
+  id: string;
+  action: string;
+  creditsUsed: number;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+  };
+}
+
 export interface AiCreditsResultDto {
   success: boolean;
   creditsUsed: number;
@@ -99,6 +112,32 @@ export interface UseAiCreditsRequest {
 export interface ResponseDto<T> {
   success: boolean;
   data: T;
+}
+
+export interface FeatureDto {
+  text: string;
+  included: boolean;
+  isGlowing?: boolean;
+}
+
+export interface SubscriptionPlanDto {
+  id: string;
+  tierCode: SubscriptionTier;
+  name: string;
+  description: string | null;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  features: FeatureDto[];
+  highlight: boolean;
+  cta: string;
+  accent: string;
+  isPublic: boolean;
+  customSchoolId: string | null;
+  customSchool?: { name: string; subdomain: string } | null;
+  maxStudents: number;
+  maxTeachers: number;
+  maxAdmins: number;
+  aiCredits: number;
 }
 
 // API Slice
@@ -143,6 +182,54 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Subscription'],
     }),
+
+    // AI Usage History
+    getAiUsageHistory: builder.query<ResponseDto<AiUsageLogDto[]>, void>({
+      query: () => '/subscriptions/ai-usage',
+      providesTags: ['Subscription'],
+    }),
+
+    // Plans
+    getPublicPlans: builder.query<ResponseDto<SubscriptionPlanDto[]>, void>({
+      query: () => '/subscription-plans/public',
+      providesTags: ['SubscriptionPlan'],
+    }),
+
+    getPlansForSchool: builder.query<ResponseDto<SubscriptionPlanDto[]>, void>({
+      query: () => '/subscription-plans/school',
+      providesTags: ['SubscriptionPlan'],
+    }),
+
+    getAllPlansAdmin: builder.query<ResponseDto<SubscriptionPlanDto[]>, void>({
+      query: () => '/subscription-plans/admin',
+      providesTags: ['SubscriptionPlan'],
+    }),
+
+    createPlanAdmin: builder.mutation<ResponseDto<SubscriptionPlanDto>, Partial<SubscriptionPlanDto>>({
+      query: (body) => ({
+        url: '/subscription-plans/admin',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['SubscriptionPlan'],
+    }),
+
+    updatePlanAdmin: builder.mutation<ResponseDto<SubscriptionPlanDto>, { id: string; data: Partial<SubscriptionPlanDto> }>({
+      query: ({ id, data }) => ({
+        url: `/subscription-plans/admin/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['SubscriptionPlan'],
+    }),
+
+    deletePlanAdmin: builder.mutation<ResponseDto<void>, string>({
+      query: (id) => ({
+        url: `/subscription-plans/admin/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['SubscriptionPlan'],
+    }),
   }),
 });
 
@@ -154,5 +241,12 @@ export const {
   useGetAllToolsQuery,
   useGetMyToolsQuery,
   useUseAiCreditsMutation,
+  useGetPublicPlansQuery,
+  useGetPlansForSchoolQuery,
+  useGetAllPlansAdminQuery,
+  useCreatePlanAdminMutation,
+  useUpdatePlanAdminMutation,
+  useDeletePlanAdminMutation,
+  useGetAiUsageHistoryQuery,
 } = subscriptionsApi;
 

@@ -28,30 +28,30 @@ export function SubscriptionCard({ className = '' }: SubscriptionCardProps) {
   }
 
   const tier = summary?.tier || SubscriptionTier.FREE;
-  const tierColors: Record<SubscriptionTier, { bg: string; text: string; badge: string }> = {
+  const tierColors: Record<string, { bg: string; text: string; badge: string }> = {
     [SubscriptionTier.FREE]: {
       bg: 'bg-gray-50 dark:bg-gray-900',
       text: 'text-gray-600 dark:text-gray-400',
       badge: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
     },
-    [SubscriptionTier.STARTER]: {
+    [SubscriptionTier.PRO]: {
       bg: 'bg-blue-50 dark:bg-blue-950/30',
       text: 'text-blue-600 dark:text-blue-400',
       badge: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
     },
-    [SubscriptionTier.PROFESSIONAL]: {
-      bg: 'bg-purple-50 dark:bg-purple-950/30',
-      text: 'text-purple-600 dark:text-purple-400',
-      badge: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
-    },
-    [SubscriptionTier.ENTERPRISE]: {
+    [SubscriptionTier.PRO_PLUS]: {
       bg: 'bg-amber-50 dark:bg-amber-950/30',
       text: 'text-amber-600 dark:text-amber-400',
       badge: 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400',
     },
+    [SubscriptionTier.CUSTOM]: {
+      bg: 'bg-purple-50 dark:bg-purple-950/30',
+      text: 'text-purple-600 dark:text-purple-400',
+      badge: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
+    },
   };
 
-  const colors = tierColors[tier];
+  const colors = tierColors[tier] || tierColors[SubscriptionTier.FREE];
 
   return (
     <div className={`${colors.bg} rounded-xl border border-gray-200 dark:border-gray-700 p-6 ${className}`}>
@@ -107,7 +107,7 @@ export function SubscriptionCard({ className = '' }: SubscriptionCardProps) {
       </div>
 
       {/* Upgrade Link */}
-      {tier !== SubscriptionTier.ENTERPRISE && (
+      {tier !== SubscriptionTier.PRO_PLUS && tier !== SubscriptionTier.CUSTOM && (
         <a
           href="/dashboard/school/subscription"
           className={`mt-4 block text-center text-sm font-medium ${colors.text} hover:underline`}

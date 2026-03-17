@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
-import { 
+import {
   useGetMySubscriptionQuery,
   useGetSubscriptionSummaryQuery,
   SubscriptionTier,
@@ -21,14 +21,14 @@ export interface SubscriptionManagement {
   subscription: SubscriptionDto | null;
   summary: SubscriptionSummaryDto | null;
   isLoading: boolean;
-  
+
   // Pricing
   pricing: PricingResponse | null;
-  
+
   // Upgrade flow
   upgrade: (tier: SubscriptionTier, isYearly: boolean) => Promise<{ success: boolean; url?: string; error?: string }>;
   isUpgrading: boolean;
-  
+
   // Helper functions
   canUpgradeTo: (tier: SubscriptionTier) => boolean;
   getPriceForTier: (tier: SubscriptionTier, isYearly: boolean) => number | null;
@@ -38,9 +38,8 @@ export interface SubscriptionManagement {
 export interface FeatureComparison {
   feature: string;
   free: boolean | string;
-  starter: boolean | string;
-  professional: boolean | string;
-  enterprise: boolean | string;
+  pro: boolean | string;
+  proPlus: boolean | string;
 }
 
 /**
@@ -90,12 +89,11 @@ export function useSubscription(): SubscriptionManagement {
    */
   const canUpgradeTo = useCallback((tier: SubscriptionTier): boolean => {
     if (!subscription) return true;
-    
+
     const tierOrder = {
       [SubscriptionTier.FREE]: 0,
-      [SubscriptionTier.STARTER]: 1,
-      [SubscriptionTier.PROFESSIONAL]: 2,
-      [SubscriptionTier.ENTERPRISE]: 3,
+      [SubscriptionTier.PRO]: 1,
+      [SubscriptionTier.PRO_PLUS]: 2,
     };
 
     return tierOrder[tier] > tierOrder[subscription.tier];
@@ -114,21 +112,22 @@ export function useSubscription(): SubscriptionManagement {
    * Start upgrade flow
    */
   const upgrade = useCallback(async (
-    tier: SubscriptionTier, 
-    isYearly: boolean
+    tier: SubscriptionTier,
+    isYearly: boolean,
+    callbackUrl?: string
   ): Promise<{ success: boolean; url?: string; error?: string }> => {
     if (tier === SubscriptionTier.FREE) {
       return { success: false, error: 'Cannot upgrade to free tier' };
     }
 
-    if (tier === SubscriptionTier.ENTERPRISE) {
-      // Enterprise requires custom handling
-      return { success: false, error: 'Please contact sales for Enterprise pricing' };
+    if (tier === SubscriptionTier.CUSTOM) {
+      // Custom requires custom handling
+      return { success: false, error: 'Please contact sales for custom pricing' };
     }
 
     try {
-      const result = await initializePayment({ tier, isYearly }).unwrap();
-      
+      const result = await initializePayment({ tier, isYearly, callbackUrl }).unwrap();
+
       if (result.success && result.data?.authorizationUrl) {
         return { success: true, url: result.data.authorizationUrl };
       }
@@ -144,16 +143,15 @@ export function useSubscription(): SubscriptionManagement {
    */
   const getFeatureComparison = useCallback((): FeatureComparison[] => {
     return [
-      { feature: 'Students', free: '♾️ Unlimited', starter: '♾️ Unlimited', professional: '♾️ Unlimited', enterprise: '♾️ Unlimited' },
-      { feature: 'Teachers', free: '♾️ Unlimited', starter: '♾️ Unlimited', professional: '♾️ Unlimited', enterprise: '♾️ Unlimited' },
-      { feature: 'Admins', free: '10', starter: '50', professional: '50', enterprise: '♾️ Unlimited' },
-      { feature: 'Core Platform', free: true, starter: true, professional: true, enterprise: true },
-      { feature: 'PrepMaster', free: false, starter: true, professional: true, enterprise: true },
-      { feature: 'Socrates', free: false, starter: true, professional: true, enterprise: true },
-      { feature: 'RollCall', free: false, starter: false, professional: false, enterprise: true },
-      { feature: 'Bursary Pro', free: 'Basic', starter: 'Full', professional: 'Full', enterprise: 'Full' },
-      { feature: 'AI Credits/Month', free: '0', starter: '500', professional: '500', enterprise: '♾️ Unlimited' },
-      { feature: 'Support', free: 'Community', starter: 'Email', professional: 'Email', enterprise: 'Dedicated' },
+      { feature: 'Students', free: '100', pro: '500', proPlus: '2,000' },
+      { feature: 'Teachers', free: '10', pro: '50', proPlus: '200' },
+      { feature: 'Admins', free: '2', pro: '10', proPlus: '25' },
+      { feature: 'Core Platform', free: true, pro: true, proPlus: true },
+      { feature: 'Agora AI Generation', free: false, pro: true, proPlus: true },
+      { feature: 'RollCall', free: false, pro: false, proPlus: true },
+      { feature: 'Bursary Pro', free: 'Basic', pro: 'Full', proPlus: 'Full' },
+      { feature: 'AI Credits/Month', free: '0', pro: '5,000', proPlus: '20,000' },
+      { feature: 'Support', free: 'Community', pro: 'Email', proPlus: 'Priority' },
     ];
   }, []);
 

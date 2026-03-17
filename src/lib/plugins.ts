@@ -19,27 +19,11 @@ export const getActivePluginsForTeacher = (): Plugin[] => {
   return [
     {
       id: '2',
-      name: 'Socrates AI',
-      slug: 'socrates-ai',
+      name: 'Agora AI',
+      slug: 'agora-ai',
       icon: Sparkles,
       description: "The Teacher's Assistant",
       category: 'AI & Automation',
-    },
-    {
-      id: '3',
-      name: 'RollCall',
-      slug: 'rollcall',
-      icon: Smartphone,
-      description: 'Attendance System',
-      category: 'Attendance',
-    },
-    {
-      id: '5',
-      name: 'PrepMaster',
-      slug: 'prepmaster',
-      icon: BookOpen,
-      description: 'CBT Engine',
-      category: 'Assessment',
     },
   ];
 };

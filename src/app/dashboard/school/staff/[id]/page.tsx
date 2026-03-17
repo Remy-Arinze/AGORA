@@ -7,11 +7,11 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  Users, 
-  Mail, 
-  Phone, 
-  BookOpen, 
+import {
+  Users,
+  Mail,
+  Phone,
+  BookOpen,
   GraduationCap,
   Edit,
   Clock,
@@ -41,6 +41,7 @@ import { EditTeacherProfileModal } from '@/components/modals/EditTeacherProfileM
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { BackButton } from '@/components/ui/BackButton';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import toast from 'react-hot-toast';
 import { isPrincipalRole } from '@/lib/constants/roles';
 
@@ -78,7 +79,7 @@ const PassportPhoto = ({
   lastName?: string;
 }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
@@ -96,8 +97,8 @@ const PassportPhoto = ({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
-            <span className="text-white font-bold text-4xl">
+          <div className="w-full h-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center">
+            <span className="text-[var(--avatar-placeholder-text)] font-bold text-4xl">
               {getInitials(firstName, lastName)}
             </span>
           </div>
@@ -168,16 +169,16 @@ export default function StaffDetailPage() {
     teacherId: staffId,
     skip: !isTeacher || !schoolId,
   });
-  
+
   // Resend password reset mutation
   const [resendPasswordReset, { isLoading: isResendingPasswordReset }] = useResendPasswordResetForStaffMutation();
-  
+
   // Check if user hasn't set their password yet
   const hasNotSetPassword = staff?.user?.accountStatus === 'SHADOW';
-  
+
   const handleResendPasswordReset = async () => {
     if (!schoolId || !staffId) return;
-    
+
     try {
       await resendPasswordReset({ schoolId, staffId }).unwrap();
       toast.success('Password reset email sent successfully');
@@ -210,9 +211,9 @@ export default function StaffDetailPage() {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
         <div className="w-full">
-          <BackButton fallbackUrl="/dashboard/school/teachers" className="mb-4" />
+          <BackButton fallbackUrl="/dashboard/school/staff" className="mb-4" />
           <div className="text-center py-12">
-            <AlertCircle className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+            <EmptyStateIcon type="document_not_found" className="text-light-text-muted dark:text-dark-text-muted" />
             <p className="text-light-text-secondary dark:text-dark-text-secondary">
               Staff member not found or error loading details.
             </p>
@@ -226,12 +227,8 @@ export default function StaffDetailPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <BackButton fallbackUrl="/dashboard/school/teachers" className="mb-4" />
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+          <BackButton fallbackUrl="/dashboard/school/staff" className="mb-4" />
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -243,15 +240,17 @@ export default function StaffDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               {hasNotSetPassword && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleResendPasswordReset}
-                  disabled={isResendingPasswordReset}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isResendingPasswordReset ? 'Sending...' : 'Resend Password Setup Email'}
-                </Button>
+                <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.WRITE}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleResendPasswordReset}
+                    disabled={isResendingPasswordReset}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {isResendingPasswordReset ? 'Sending...' : 'Resend Password Setup Email'}
+                  </Button>
+                </PermissionGate>
               )}
               {isAdmin && !isPrincipal && (
                 <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.ADMIN}>
@@ -269,7 +268,7 @@ export default function StaffDetailPage() {
               </PermissionGate>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -278,11 +277,10 @@ export default function StaffDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                     : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -292,12 +290,7 @@ export default function StaffDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {activeTab === 'profile' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Info */}
@@ -343,13 +336,12 @@ export default function StaffDetailPage() {
                           Role
                         </p>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            isPrincipal
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isPrincipal
                               ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
                               : staff.role === 'Teacher'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                          }`}
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                            }`}
                         >
                           {staff.role || (isAdmin ? 'Administrator' : 'Teacher')}
                         </span>
@@ -369,11 +361,10 @@ export default function StaffDetailPage() {
                           Status
                         </p>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            staff.status === 'active'
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${staff.status === 'active'
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                               : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                          }`}
+                            }`}
                         >
                           {staff.status}
                         </span>
@@ -432,19 +423,19 @@ export default function StaffDetailPage() {
                       )}
 
                       {/* Empty State - No classes at all */}
-                      {!isLoadingClasses && !isLoadingTimetableClasses && 
-                       teacherClasses.length === 0 && 
-                       (!timetableClasses || timetableClasses.classes.length === 0) && (
-                        <div className="text-center py-8">
-                          <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                          <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                            This teacher is not assigned to any classes yet.
-                          </p>
-                          <p className="text-sm text-light-text-muted dark:text-dark-text-muted mt-2">
-                            Assign them as a form teacher, or add them to class timetables.
-                          </p>
-                        </div>
-                      )}
+                      {!isLoadingClasses && !isLoadingTimetableClasses &&
+                        teacherClasses.length === 0 &&
+                        (!timetableClasses || timetableClasses.classes.length === 0) && (
+                          <div className="text-center py-8">
+                            <EmptyStateIcon type="document" />
+                            <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                              This teacher is not assigned to any classes yet.
+                            </p>
+                            <p className="text-sm text-light-text-muted dark:text-dark-text-muted mt-2">
+                              Assign them as a form teacher, or add them to class timetables.
+                            </p>
+                          </div>
+                        )}
 
                       <div className="space-y-6">
                         {/* PRIMARY/TERTIARY Classes - Form Teacher/Assistant Roles */}
@@ -471,11 +462,10 @@ export default function StaffDetailPage() {
                                           <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
                                             {classItem.name}
                                           </h3>
-                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            classItem.type === 'TERTIARY'
+                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${classItem.type === 'TERTIARY'
                                               ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400'
                                               : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                                          }`}>
+                                            }`}>
                                             {classItem.type === 'TERTIARY' ? 'Course' : classItem.type}
                                           </span>
                                           {assignment?.isPrimary && (
@@ -579,7 +569,7 @@ export default function StaffDetailPage() {
                         </div>
                       ) : !teacherSubjects || teacherSubjects.length === 0 ? (
                         <div className="text-center py-8">
-                          <GraduationCap className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                          <EmptyStateIcon type="document_not_found" />
                           <p className="text-light-text-secondary dark:text-dark-text-secondary">
                             No subject competencies assigned yet.
                           </p>
@@ -610,12 +600,11 @@ export default function StaffDetailPage() {
                                         {subject.classLevelName}
                                       </span>
                                     )}
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      subject.assignedClassCount > 0
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${subject.assignedClassCount > 0
                                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                                         : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                    }`}>
-                                      {subject.assignedClassCount > 0 
+                                      }`}>
+                                      {subject.assignedClassCount > 0
                                         ? `Teaching ${subject.assignedClassCount} class${subject.assignedClassCount !== 1 ? 'es' : ''}`
                                         : 'Not assigned'}
                                     </span>
@@ -689,27 +678,17 @@ export default function StaffDetailPage() {
           {activeTab === 'permissions' && isAdmin && (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                      Assigned Permissions
-                    </CardTitle>
-                  </div>
-                  {!isPrincipal && (
-                    <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.ADMIN}>
-                      <Button variant="primary" size="sm" onClick={() => setShowPermissionModal(true)}>
-                        <Shield className="h-4 w-4 mr-2" />
-                        Manage Permissions
-                      </Button>
-                    </PermissionGate>
-                  )}
+                <div className="flex items-center gap-3">
+                  <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                    Assigned Permissions
+                  </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 {isPrincipal ? (
                   <div className="text-center py-12">
-                    <Shield className="h-12 w-12 text-purple-600 dark:text-purple-400 mx-auto mb-4" />
+                    <EmptyStateIcon type="statistics" className="text-purple-600 dark:text-purple-400" />
                     <p className="text-light-text-primary dark:text-dark-text-primary font-semibold mb-2">
                       Principal - Full Access
                     </p>
@@ -719,16 +698,10 @@ export default function StaffDetailPage() {
                   </div>
                 ) : permissions.length === 0 ? (
                   <div className="text-center py-12">
-                    <Shield className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                    <EmptyStateIcon type="document_not_found" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No permissions assigned yet.
                     </p>
-                    <PermissionGate resource={PermissionResourceHook.STAFF} type={PermissionTypeHook.ADMIN}>
-                      <Button variant="primary" size="sm" onClick={() => setShowPermissionModal(true)}>
-                        <Shield className="h-4 w-4 mr-2" />
-                        Assign Permissions
-                      </Button>
-                    </PermissionGate>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -769,7 +742,7 @@ export default function StaffDetailPage() {
               </CardContent>
             </Card>
           )}
-        </motion.div>
+        </FadeInUp>
 
         {/* Permission Assignment Modal */}
         {showPermissionModal && isAdmin && (

@@ -40,7 +40,7 @@ export default function TeacherClassesPage() {
       teacherId: teacher?.id || '',
       type: currentType,
     },
-    { 
+    {
       skip: !school?.id || !teacher?.id,
       // Refetch when school or teacher data changes
       refetchOnMountOrArgChange: true,
@@ -78,14 +78,14 @@ export default function TeacherClassesPage() {
 
   const filteredClasses = useMemo(() => {
     if (!searchQuery) return classes;
-    
+
     const query = searchQuery.toLowerCase();
     return classes.filter(
       (classItem) =>
         classItem.name?.toLowerCase().includes(query) ||
         classItem.code?.toLowerCase().includes(query) ||
         classItem.classLevel?.toLowerCase().includes(query) ||
-        classItem.teachers?.some((t: any) => 
+        classItem.teachers?.some((t: any) =>
           t.subject?.toLowerCase().includes(query)
         )
     );
@@ -135,18 +135,14 @@ export default function TeacherClassesPage() {
     <ProtectedRoute roles={['TEACHER']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+          <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
             My {terminology.courses}
           </h1>
-          <p className="text-light-text-secondary dark:text-dark-text-secondary">
+          <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
             Manage your {terminology.courses.toLowerCase()} and view student information
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search */}
         <Card className="mb-6">
@@ -174,21 +170,16 @@ export default function TeacherClassesPage() {
             </div>
           ) : (
             filteredClasses.map((classItem, index) => (
-              <motion.div
-                key={classItem.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
+              <FadeInUp key={classItem.id} delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(`/dashboard/teacher/classes/${classItem.id}`)}>
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <CardTitle className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">
+                        <CardTitle className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
                           {classItem.name}
                         </CardTitle>
                         {classItem.code && (
-                          <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-1">
+                          <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-body)' }}>
                             {classItem.code}
                           </p>
                         )}
@@ -205,7 +196,7 @@ export default function TeacherClassesPage() {
                       <div className="flex items-start gap-2">
                         <Users className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                          <p className="font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-body)' }}>
                             {classItem.studentsCount || 0} Students
                           </p>
                         </div>
@@ -217,7 +208,7 @@ export default function TeacherClassesPage() {
                             {classItem.teachers
                               .filter((t: any) => t.teacherId === classItem.teachers?.[0]?.teacherId)
                               .map((teacher: any, idx: number) => (
-                                <div key={idx} className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                                <div key={idx} className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                                   {teacher.subject && (
                                     <span className="font-medium">{teacher.subject}</span>
                                   )}
@@ -233,7 +224,7 @@ export default function TeacherClassesPage() {
                       )}
                       <div className="flex items-start gap-2">
                         <Clock className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                        <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
                           Academic Year: {classItem.academicYear}
                         </p>
                       </div>
@@ -258,7 +249,7 @@ export default function TeacherClassesPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </FadeInUp>
             ))
           )}
         </div>

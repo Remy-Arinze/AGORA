@@ -375,12 +375,7 @@ export function TertiaryDepartments({ schoolId }: TertiaryDepartmentsProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDepartments.map((dept, index) => (
-            <motion.div
-              key={dept.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
-            >
+            <FadeInUp key={dept.id} delay={index * 0.03} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }}>
               <Card
                 className="hover:shadow-lg transition-all cursor-pointer group h-full"
                 onClick={() => handleDepartmentClick(dept.id)}
@@ -457,7 +452,7 @@ export function TertiaryDepartments({ schoolId }: TertiaryDepartmentsProps) {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </FadeInUp>
           ))}
         </div>
       )}

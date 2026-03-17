@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Alert } from '@/components/ui/Alert';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
+import {
   Puzzle,
   Sparkles,
   Smartphone,
@@ -22,12 +23,14 @@ import {
   Settings,
   Eye
 } from 'lucide-react';
+import { PermissionGate } from '@/components/permissions/PermissionGate';
+import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 
 // Mock data - will be replaced with API calls later
 const allPlugins = [
   {
     id: '2',
-    name: 'Socrates AI',
+    name: 'Agora AI',
     subtitle: "The Teacher's Assistant",
     description: 'AI-powered lesson planning and grading assistant. Generate compliant lesson notes aligned with NERDC curriculum and perform OCR-based essay grading.',
     category: 'AI & Automation',
@@ -88,27 +91,6 @@ const allPlugins = [
     reviews: 45,
     installed: 123,
   },
-  {
-    id: '5',
-    name: 'PrepMaster',
-    subtitle: 'CBT Engine',
-    description: 'Computer-Based Testing platform for exam preparation. Perfect for JAMB, WAEC, and other standardized test preparation.',
-    category: 'Assessment',
-    icon: BookOpen,
-    price: '₦500/student/month',
-    pricingModel: 'Per student or school-wide license',
-    features: [
-      'CBT exam creation',
-      'Practice tests',
-      'Performance analytics',
-      'Question bank',
-      'Auto-grading',
-    ],
-    isSubscribed: false,
-    rating: 4.8,
-    reviews: 112,
-    installed: 267,
-  },
 ];
 
 type FilterCategory = 'all' | 'AI & Automation' | 'Attendance' | 'Finance' | 'Assessment';
@@ -125,9 +107,9 @@ export default function MarketplacePage() {
       plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       plugin.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       plugin.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesCategory = filterCategory === 'all' || plugin.category === filterCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -155,11 +137,7 @@ export default function MarketplacePage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -170,7 +148,7 @@ export default function MarketplacePage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Search and Filters */}
         <Card className="mb-6">
@@ -217,12 +195,7 @@ export default function MarketplacePage() {
                 .map((plugin, index) => {
                   const Icon = plugin.icon;
                   return (
-                    <motion.div
-                      key={plugin.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
+                    <FadeInUp delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                       <Card className="h-full border-2 border-green-500 dark:border-green-400">
                         <CardHeader>
                           <div className="flex items-start justify-between mb-2">
@@ -258,14 +231,16 @@ export default function MarketplacePage() {
                                 ({plugin.reviews})
                               </span>
                             </div>
-                            <Button variant="ghost" size="sm">
-                              <Settings className="h-4 w-4 mr-1" />
-                              Manage
-                            </Button>
+                            <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                              <Button variant="ghost" size="sm">
+                                <Settings className="h-4 w-4 mr-1" />
+                                Manage
+                              </Button>
+                            </PermissionGate>
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </FadeInUp>
                   );
                 })}
             </div>
@@ -281,7 +256,7 @@ export default function MarketplacePage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center py-12">
-                  <Puzzle className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="statistics" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary">
                     No plugins found matching your search.
                   </p>
@@ -295,12 +270,7 @@ export default function MarketplacePage() {
                 .map((plugin, index) => {
                   const Icon = plugin.icon;
                   return (
-                    <motion.div
-                      key={plugin.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
+                    <FadeInUp delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                       <Card className="h-full hover:shadow-lg transition-shadow">
                         <CardHeader>
                           <div className="flex items-start justify-between mb-2">
@@ -350,17 +320,19 @@ export default function MarketplacePage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button
-                              variant="primary"
-                              className="flex-1"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedPlugin(plugin.id);
-                                setShowSubscribeModal(true);
-                              }}
-                            >
-                              Subscribe
-                            </Button>
+                            <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                              <Button
+                                variant="primary"
+                                className="flex-1"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPlugin(plugin.id);
+                                  setShowSubscribeModal(true);
+                                }}
+                              >
+                                Subscribe
+                              </Button>
+                            </PermissionGate>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -371,7 +343,7 @@ export default function MarketplacePage() {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </FadeInUp>
                   );
                 })}
             </div>
@@ -436,14 +408,16 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <Button
-                      variant="primary"
-                      className="flex-1"
-                      onClick={() => handleSubscribe(plugin.id)}
-                      isLoading={isSubscribing}
-                    >
-                      Confirm Subscription
-                    </Button>
+                    <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                      <Button
+                        variant="primary"
+                        className="flex-1"
+                        onClick={() => handleSubscribe(plugin.id)}
+                        isLoading={isSubscribing}
+                      >
+                        Confirm Subscription
+                      </Button>
+                    </PermissionGate>
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -541,15 +515,17 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button
-                      variant="primary"
-                      className="flex-1"
-                      onClick={() => {
-                        setShowSubscribeModal(true);
-                      }}
-                    >
-                      Subscribe Now
-                    </Button>
+                    <PermissionGate resource={PermissionResource.INTEGRATIONS} type={PermissionType.WRITE}>
+                      <Button
+                        variant="primary"
+                        className="flex-1"
+                        onClick={() => {
+                          setShowSubscribeModal(true);
+                        }}
+                      >
+                        Subscribe Now
+                      </Button>
+                    </PermissionGate>
                     <Button
                       variant="ghost"
                       onClick={() => setSelectedPlugin(null)}

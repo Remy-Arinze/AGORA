@@ -10,6 +10,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   BookOpen,
   Users,
@@ -40,7 +41,7 @@ export default function DepartmentDetailPage() {
   const router = useRouter();
   const departmentId = params.id as string;
   const [activeTab, setActiveTab] = useState<TabType>('levels');
-  
+
   const { currentType } = useSchoolType();
 
   // Get school data
@@ -129,15 +130,11 @@ export default function DepartmentDetailPage() {
           <BackButton fallbackUrl="/dashboard/school/courses" />
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <BookOpen className="h-8 w-8 text-white" />
+              <div className="w-16 h-16 rounded-xl bg-[var(--avatar-placeholder-bg)] flex items-center justify-center shadow-lg text-[var(--avatar-placeholder-text)]">
+                <BookOpen className="h-8 w-8" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -172,7 +169,7 @@ export default function DepartmentDetailPage() {
               </Button>
             </PermissionGate>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="border-b border-light-border dark:border-dark-border mb-6">
@@ -181,11 +178,10 @@ export default function DepartmentDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-1 py-3 border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                className={`flex items-center gap-2 px-1 py-3 border-b-2 transition-colors ${activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -195,36 +191,35 @@ export default function DepartmentDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {activeTab === 'levels' && (
             <Card className='bg-[transparent] border-none'>
               <CardHeader >
                 <div className="flex items-center justify-between">
                   <CardTitle>Levels</CardTitle>
                   {department.levelsCount === 0 ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleGenerateLevels}
-                      disabled={isGeneratingLevels}
-                    >
-                      {isGeneratingLevels ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-4 w-4 mr-2" />
-                      )}
-                      Generate Levels
-                    </Button>
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateLevels}
+                        disabled={isGeneratingLevels}
+                      >
+                        {isGeneratingLevels ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4 mr-2" />
+                        )}
+                        Generate Levels
+                      </Button>
+                    </PermissionGate>
                   ) : (
-                    <Button variant="secondary" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Level
-                    </Button>
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <Button variant="secondary" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Level
+                      </Button>
+                    </PermissionGate>
                   )}
                 </div>
               </CardHeader>
@@ -235,22 +230,24 @@ export default function DepartmentDetailPage() {
                   </div>
                 ) : levels.length === 0 ? (
                   <div className="text-center py-12">
-                    <Layers className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="location" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                       No levels created yet
                     </p>
-                    <AutoGenerateButton
-                      onClick={handleGenerateLevels}
-                      isLoading={isGeneratingLevels}
-                      label="Generate Default Levels (100L-400L)"
-                      variant="primary"
-                    />
+                    <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                      <AutoGenerateButton
+                        onClick={handleGenerateLevels}
+                        isLoading={isGeneratingLevels}
+                        label="Generate Default Levels (100L-400L)"
+                        variant="primary"
+                      />
+                    </PermissionGate>
                     <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-3">
                       Creates 100 Level, 200 Level, 300 Level, and 400 Level
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                     {levels.map((level) => (
                       <LevelCard key={level.id} level={level} />
                     ))}
@@ -265,22 +262,26 @@ export default function DepartmentDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Courses</CardTitle>
-                  <Button variant="primary" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Course
-                  </Button>
+                  <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                    <Button variant="primary" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Course
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <BookMarked className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="document" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                     No courses added yet
                   </p>
-                  <Button variant="primary">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add First Course
-                  </Button>
+                  <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                    <Button variant="primary">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Course
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardContent>
             </Card>
@@ -291,28 +292,32 @@ export default function DepartmentDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Lecturers</CardTitle>
-                  <Button variant="primary" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Assign Lecturer
-                  </Button>
+                  <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
+                    <Button variant="primary" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign Lecturer
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="person_outline" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                     No lecturers assigned yet
                   </p>
-                  <Button variant="primary">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Assign First Lecturer
-                  </Button>
+                  <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
+                    <Button variant="primary">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign First Lecturer
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardContent>
             </Card>
           )}
 
-        </motion.div>
+        </FadeInUp>
       </div>
     </ProtectedRoute>
   );
@@ -321,9 +326,9 @@ export default function DepartmentDetailPage() {
 // Level Card Component
 function LevelCard({ level }: { level: DepartmentLevel }) {
   const router = useRouter();
-  
+
   return (
-    <Card 
+    <Card
       className="hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => router.push(`/dashboard/school/levels/${level.id}`)}
     >

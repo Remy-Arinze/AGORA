@@ -30,6 +30,7 @@ interface CurriculumDetailModalProps {
   onClose: () => void;
   schoolId: string;
   curriculumId: string;
+  classId?: string;
   canEdit?: boolean;
   onUpdate?: () => void;
   onDelete?: (curriculumId: string) => void;
@@ -40,6 +41,7 @@ export function CurriculumDetailModal({
   onClose,
   schoolId,
   curriculumId,
+  classId,
   canEdit = false,
   onUpdate,
   onDelete,
@@ -64,7 +66,7 @@ export function CurriculumDetailModal({
 
   const handleMarkComplete = async (weekNumber: number) => {
     setMarkingWeek(weekNumber);
-    await handleMarkWeekComplete(curriculumId, weekNumber, notes || undefined);
+    await handleMarkWeekComplete(curriculumId, weekNumber, notes || undefined, classId);
     setMarkingWeek(null);
     setNotes('');
     refetch();
@@ -73,7 +75,7 @@ export function CurriculumDetailModal({
 
   const handleStartWeek = async (weekNumber: number) => {
     setMarkingWeek(weekNumber);
-    await handleMarkWeekInProgress(curriculumId, weekNumber);
+    await handleMarkWeekInProgress(curriculumId, weekNumber, classId);
     setMarkingWeek(null);
     refetch();
     onUpdate?.();

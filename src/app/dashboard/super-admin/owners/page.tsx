@@ -46,18 +46,14 @@ export default function OwnersPage() {
   return (
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
             School Owners
           </h1>
           <p className="text-gray-600 dark:text-dark-text-secondary">
             Manage school administrator accounts
           </p>
-        </motion.div>
+        </FadeInUp>
 
         <Card>
           <CardHeader>

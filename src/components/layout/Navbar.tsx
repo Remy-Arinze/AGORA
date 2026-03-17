@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/Button';
 import { SchoolTypeSelector } from './SchoolTypeSelector';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -9,7 +10,7 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/lib/store/store';
 import { useGetMySchoolQuery, useGetMyTeacherSchoolQuery, useGetMyStudentSchoolQuery } from '@/lib/store/api/schoolAdminApi';
-import { User } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export function Navbar() {
@@ -28,7 +29,7 @@ export function Navbar() {
   const { data: studentSchoolResponse } = useGetMyStudentSchoolQuery(undefined, {
     skip: userRole !== 'STUDENT',
   });
-  
+
   // Combine school data from all sources
   const school = schoolResponse?.data || teacherSchoolResponse?.data || studentSchoolResponse?.data;
   const schoolName = school?.name;
@@ -37,19 +38,27 @@ export function Navbar() {
 
   // Show school type selector only for school admins
   const showSchoolTypeSelector = userRole === 'SCHOOL_ADMIN';
-  
+
   // Determine which logo to show - show school logo if available and no error, otherwise show Agora logo
-  const shouldShowSchoolLogo = 
+  const shouldShowSchoolLogo =
     (userRole === 'SCHOOL_ADMIN' || userRole === 'TEACHER' || userRole === 'STUDENT') &&
-    schoolLogo && 
+    schoolLogo &&
     !logoError;
 
+  const { theme } = useTheme();
+
   return (
-    <nav className={`bg-[var(--dark-bg)] transition-all duration-300 fixed top-0 right-0 left-0 z-30 ${open ? 'md:left-[250px]' : 'md:left-[80px]'
-      }`}>
+    <nav className={`bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-b border-[var(--light-border)] dark:border-transparent transition-all duration-300 fixed top-0 right-0 left-0 z-30 md:left-[250px]`}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {/* Mobile Sidebar Toggle - Only visible when Navbar is present on mobile */}
+            <button
+              onClick={() => setOpen(!open)}
+              className="p-2 -ml-2 rounded-md md:hidden text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-surface"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
             {/* Hide logo and name for SUPER_ADMIN */}
             {userRole !== 'SUPER_ADMIN' && (
               <Link href="/" className="flex items-center space-x-2">
@@ -62,9 +71,23 @@ export function Navbar() {
                   />
                 ) : (
                   // Agora default logo fallback
-                  <div className="h-8 w-9 bg-[#2490FD] dark:bg-[#2490FD] rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+                  theme === 'light' ? (
+                    <img
+                      src="/assets/logos/agora_main.png"
+                      alt="Agora"
+                      className="h-8 w-auto flex-shrink-0 grayscale brightness-0"
+                      style={{ height: '32px' }}
+                    />
+                  ) : (
+                    <img
+                      src="/assets/logos/agora_worded_white.png"
+                      alt="Agora"
+                      className="h-8 w-auto flex-shrink-0"
+                      style={{ height: '32px' }}
+                    />
+                  )
                 )}
-                <span className="text-2xl font-bold text-[#2490FD] dark:text-[#2490FD]">
+                <span className="text-2xl font-bold text-light-text-primary dark:text-white transition-colors duration-300">
                   {(userRole === 'SCHOOL_ADMIN' || userRole === 'TEACHER' || userRole === 'STUDENT') && schoolName ? schoolName : 'Agora'}
                 </span>
               </Link>
@@ -75,8 +98,8 @@ export function Navbar() {
                   href={getDashboardPath()}
                   className="text-gray-700 dark:text-[#9ca3af] hover:text-[#2490FD] dark:hover:text-[#2490FD] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-             
-             
+
+
                 </Link>
               </div>
             )}
@@ -87,11 +110,10 @@ export function Navbar() {
             {user && (
               <Link
                 href="/dashboard/profile"
-                className={`p-2 rounded-lg transition-colors ${
-                  pathname === '/dashboard/profile'
-                    ? 'bg-blue-600 dark:bg-blue-500 text-white dark:text-white'
-                    : 'text-[#9ca3af] dark:text-[#9ca3af] hover:bg-[#1f2937] dark:hover:bg-[#1f2937]'
-                }`}
+                className={`p-2 rounded-lg transition-colors ${pathname === '/dashboard/profile'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white dark:text-white'
+                  : 'text-gray-500 dark:text-[#9ca3af] hover:bg-gray-100 dark:hover:bg-[#1f2937]'
+                  }`}
                 title="Profile"
               >
                 <User className="h-5 w-5" />

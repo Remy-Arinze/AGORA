@@ -5,7 +5,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { FileText, Download, X, Loader2, AlertCircle, Upload } from 'lucide-react';
+import { FileText, Download, X, Loader2, AlertCircle, Upload, File, Image as ImageIcon, FileSpreadsheet, Presentation } from 'lucide-react';
 import {
   useGetMyStudentResourcesQuery,
   useGetMyStudentPersonalResourcesQuery,
@@ -15,6 +15,7 @@ import {
   useGetMyStudentSchoolQuery,
 } from '@/lib/store/api/schoolAdminApi';
 import { FileUploadModal } from '@/components/modals/FileUploadModal';
+import { safeDownload } from '@/lib/utils/download';
 import toast from 'react-hot-toast';
 
 type ResourceType = 'class' | 'personal';
@@ -70,7 +71,7 @@ export default function StudentResourcesPage() {
     try {
       const baseUrl = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000/api';
       let downloadUrl: string;
-      
+
       if (isPersonal) {
         downloadUrl = `${baseUrl}/students/me/personal-resources/${resource.id}/download`;
       } else {
@@ -82,12 +83,10 @@ export default function StudentResourcesPage() {
         }
       }
 
+
       // Get auth token from localStorage
       const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || localStorage.getItem('token') : null;
-      
-      // Create a temporary link and trigger download
-      const link = document.createElement('a');
-      link.href = downloadUrl;
+
       if (token) {
         // For authenticated downloads, we need to fetch and create a blob
         const response = await fetch(downloadUrl, {
@@ -95,25 +94,17 @@ export default function StudentResourcesPage() {
             'Authorization': `Bearer ${token}`,
           },
         });
-        
+
         if (!response.ok) {
           throw new Error('Failed to download resource');
         }
-        
+
         const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        link.download = resource.name || resource.fileName || 'resource';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        const fileName = resource.name || resource.fileName || 'resource';
+        safeDownload(blob, fileName);
       } else {
-        // Fallback to direct link (may not work if auth is required)
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Fallback to direct link in new tab if no token (less secure but keeps functionality)
+        window.open(downloadUrl, '_blank');
       }
     } catch (error: any) {
       toast.error(error?.message || 'Failed to download resource');
@@ -144,17 +135,17 @@ export default function StudentResourcesPage() {
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
       case 'PDF':
-        return '📄';
+        return <FileText className="h-8 w-8 text-black dark:text-white" />;
       case 'IMAGE':
-        return '🖼️';
+        return <ImageIcon className="h-8 w-8 text-black dark:text-white" />;
       case 'DOCX':
-        return '📝';
+        return <File className="h-8 w-8 text-black dark:text-white" />;
       case 'XLSX':
-        return '📊';
+        return <FileSpreadsheet className="h-8 w-8 text-black dark:text-white" />;
       case 'PPTX':
-        return '📽️';
+        return <Presentation className="h-8 w-8 text-black dark:text-white" />;
       default:
-        return '📎';
+        return <FileText className="h-8 w-8 text-black dark:text-white" />;
     }
   };
 
@@ -162,20 +153,16 @@ export default function StudentResourcesPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-            <div>
-              <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
-                Resources
-              </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                Access class resources and manage your personal study materials
-              </p>
-            </div>
-        </motion.div>
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
+              Resources
+            </h1>
+            <p className="text-light-text-secondary dark:text-dark-text-secondary">
+              Access class resources and manage your personal study materials
+            </p>
+          </div>
+        </FadeInUp>
 
         {/* Resources List */}
         <Card>
@@ -221,12 +208,7 @@ export default function StudentResourcesPage() {
               classResources.length > 0 ? (
                 <div className="space-y-3">
                   {classResources.map((resource: any) => (
-                    <motion.div
-                      key={resource.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                    >
+                    <FadeInUp key={resource.id} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.4} className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1 min-w-0">
                           <div className="text-2xl flex-shrink-0">
@@ -272,7 +254,7 @@ export default function StudentResourcesPage() {
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>
-                    </motion.div>
+                    </FadeInUp>
                   ))}
                 </div>
               ) : (
@@ -286,12 +268,7 @@ export default function StudentResourcesPage() {
             ) : personalResources.length > 0 ? (
               <div className="space-y-3">
                 {personalResources.map((resource: any) => (
-                  <motion.div
-                    key={resource.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                  >
+                  <FadeInUp key={resource.id} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.4} className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className="text-2xl flex-shrink-0">
@@ -332,7 +309,7 @@ export default function StudentResourcesPage() {
                         </Button>
                       </div>
                     </div>
-                  </motion.div>
+                  </FadeInUp>
                 ))}
               </div>
             ) : (

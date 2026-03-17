@@ -1,24 +1,26 @@
 'use client';
 
+import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
 import { SidebarBody, SidebarLink, useSidebar } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
-import { LogOut } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getActivePluginsForTeacher } from '@/lib/plugins';
 import { usePermissionFilteredSidebar, type NavItem } from '@/hooks/useSidebarConfig';
 import { cn } from '@/lib/utils';
 import { SchoolTypeSwitcher } from '@/components/dashboard/SchoolTypeSwitcher';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 function LogoSection() {
-  const { open } = useSidebar();
-  
+  const { open, setOpen } = useSidebar();
+
   return (
-    <div className="mb-4">
+    <div className="mb-4 flex items-center justify-between group">
       <Link
         href="/"
         className="font-normal flex items-center justify-center md:justify-start py-1 px-3 relative z-20"
@@ -28,7 +30,7 @@ function LogoSection() {
           alt="Agora"
           width={40}
           height={40}
-          className="h-8 w-8 object-contain"
+          className="h-8 w-8 object-contain teacher-logo"
           priority
         />
       </Link>
@@ -45,67 +47,77 @@ function LogoutButton() {
       variant="ghost"
       size="sm"
       onClick={logout}
-      className="w-full justify-start gap-2 text-gray-700 dark:text-[#9ca3af] hover:bg-gray-100 dark:hover:bg-[#1f2937]"
+      className="flex-1 justify-start gap-2 text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] h-9 px-2 overflow-hidden"
     >
-      <span
-        className={cn(
-          "text-[13px] transition-opacity duration-200",
-          !open && "opacity-0 w-0 overflow-hidden inline-block"
-        )}
-      >
+      <LogOut className="h-4 w-4 flex-shrink-0" />
+      <span className="font-semibold transition-opacity duration-200" style={{ fontSize: 'var(--text-body)' }}>
         Logout
       </span>
     </Button>
   );
 }
 
-export function SidebarNew() {
+
+
+export function SidebarNew({ hideMobileHeader }: { hideMobileHeader?: boolean }) {
   const user = useSelector((state: RootState) => state.auth.user);
   const pathname = usePathname();
-  
+
   // Use permission-filtered sidebar config
   const { sections, isLoadingPermissions } = usePermissionFilteredSidebar();
 
   if (!user) return null;
 
-  // Flatten sections into links
-  let links = sections.flatMap((section) =>
-    section.items.map((item: NavItem) => ({
-      label: item.label,
-      href: item.href,
-      icon: <item.icon className="h-5 w-5 flex-shrink-0" />,
-    }))
-  );
-  
+  // Process sections and items into a flat-mapped version compatible with SidebarLink
+  const processedSections = useMemo(() => {
+    return sections.map(section => {
+      // Filter out History for teachers
+      let items = section.items.filter(item => item.href !== '/dashboard/teacher/history');
+      
+      return {
+        ...section,
+        items: items.map(item => {
+          const Icon = item.icon;
+          return {
+            label: item.label,
+            href: item.href,
+            icon: <Icon className="h-5 w-5 flex-shrink-0" />
+          };
+        })
+      };
+    });
+  }, [sections]);
+
+  // Handle teacher plugins separately and merge them into the first section
+  const finalSections = useMemo(() => {
+    const base = [...processedSections];
+    if (user.role === 'TEACHER') {
+      const activePlugins = getActivePluginsForTeacher();
+      if (activePlugins.length > 0 && base.length > 0) {
+        const pluginItems = activePlugins.map((plugin) => {
+          const Icon = plugin.icon;
+          return {
+            label: plugin.name,
+            href: `/dashboard/teacher/plugins/${plugin.slug}`,
+            icon: <Icon className="h-5 w-5 flex-shrink-0" />,
+          };
+        });
+        
+        // Merge into the first section
+        base[0] = {
+          ...base[0],
+          items: [...base[0].items, ...pluginItems]
+        };
+      }
+    }
+    return base;
+  }, [processedSections, user.role]);
+ 
   // Show loading state for school admins while permissions load
   const showLoadingSkeleton = user.role === 'SCHOOL_ADMIN' && isLoadingPermissions;
 
-  // If user is a teacher, add active plugins as tools
-  if (user.role === 'TEACHER') {
-    // Remove History from links if it exists (it's now in profile)
-    links = links.filter(link => link.href !== '/dashboard/teacher/history');
-    
-    const activePlugins = getActivePluginsForTeacher();
-    const pluginLinks = activePlugins.map((plugin) => {
-      const Icon = plugin.icon;
-      return {
-        label: plugin.name,
-        href: `/dashboard/teacher/plugins/${plugin.slug}`,
-        icon: <Icon className="h-5 w-5 flex-shrink-0" />,
-      };
-    });
-    
-    // Add plugins
-    if (pluginLinks.length > 0) {
-      links = [
-        ...links,
-        ...pluginLinks,
-      ];
-    }
-  }
-
   return (
-    <SidebarBody className="justify-between gap-10">
+    <SidebarBody className="justify-between gap-10" hideMobileHeader={hideMobileHeader}>
       <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         <LogoSection />
 
@@ -122,42 +134,53 @@ export function SidebarNew() {
               ))}
             </>
           ) : (
-            links.map((link, idx) => {
-            const isActive =
-              pathname === link.href ||
-              pathname.startsWith(link.href + '/') ||
-              (link.href === '/dashboard/super-admin/overview' &&
-                pathname === '/dashboard/super-admin') ||
-              (link.href === '/dashboard/school/overview' &&
-                (pathname === '/dashboard/school' || pathname === '/dashboard')) ||
-              (link.href === '/dashboard/student/overview' &&
-                (pathname === '/dashboard/student' || pathname === '/dashboard')) ||
-              (link.href === '/dashboard/teacher/timetables' &&
-                (pathname === '/dashboard/teacher' || pathname === '/dashboard')) ||
-              (link.href === '/dashboard/teacher/overview' &&
-                (pathname === '/dashboard/teacher' || pathname === '/dashboard'));
-            return (
-              <SidebarLink
-                key={idx}
-                link={link}
-                isActive={isActive}
-              />
-            );
-            })
+            finalSections.map((section, sectionIdx) => (
+              <div key={sectionIdx} className="flex flex-col gap-1">
+                {section.title && (
+                  <p className="sidebar-section-title px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 mb-2 mt-4">
+                    {section.title}
+                  </p>
+                )}
+                {section.items.map((link, idx) => {
+                  const isActive =
+                    pathname === link.href ||
+                    pathname.startsWith(link.href + '/') ||
+                    (link.href === '/dashboard/super-admin/overview' &&
+                      pathname === '/dashboard/super-admin') ||
+                    (link.href === '/dashboard/school/overview' &&
+                      (pathname === '/dashboard/school' || pathname === '/dashboard')) ||
+                    (link.href === '/dashboard/student/overview' &&
+                      (pathname === '/dashboard/student' || pathname === '/dashboard')) ||
+                    (link.href === '/dashboard/teacher/timetables' &&
+                      (pathname === '/dashboard/teacher' || pathname === '/dashboard')) ||
+                    (link.href === '/dashboard/teacher/overview' &&
+                      (pathname === '/dashboard/teacher' || pathname === '/dashboard'));
+                  
+                  return (
+                    <SidebarLink
+                      key={idx}
+                      link={link}
+                      isActive={isActive}
+                    />
+                  );
+                })}
+              </div>
+            ))
           )}
         </div>
       </div>
 
-      {/* Logout Button at Bottom */}
-      <div className="pt-4">
-        {/* School Type Switcher - Only for SCHOOL_ADMIN with mixed schools */}
+      {/* Bottom Section */}
+      <div className="pt-4 px-2 pb-3">
+        {/* School Type Switcher - Handles ADMIN mixed schools */}
         {user.role === 'SCHOOL_ADMIN' && (
-          <div className="px-2 mb-3">
+          <div className="mb-3 px-1">
             <SchoolTypeSwitcher />
           </div>
         )}
-        <div className="border-t border-[var(--dark-border)] pt-4">
+        <div className="border-t border-gray-200 dark:border-[var(--dark-border)] pt-4 flex items-center gap-2">
           <LogoutButton />
+          <ThemeToggle className="h-7 w-7 min-w-[28px] focus-visible:ring-0 active:scale-95 transition-all" />
         </div>
       </div>
     </SidebarBody>

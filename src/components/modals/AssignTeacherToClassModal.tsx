@@ -254,7 +254,7 @@ export function AssignTeacherToClassModal({
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-medium overflow-hidden">
                             {teacher.profileImage ? (
                               <img
                                 src={teacher.profileImage}
@@ -262,7 +262,7 @@ export function AssignTeacherToClassModal({
                                 className="w-10 h-10 rounded-full object-cover"
                               />
                             ) : (
-                              <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                              <span className="text-sm">
                                 {teacher.firstName[0]}{teacher.lastName[0]}
                               </span>
                             )}
@@ -303,7 +303,7 @@ export function AssignTeacherToClassModal({
             {/* Selected Teacher Summary */}
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-medium overflow-hidden">
                   {selectedTeacher.profileImage ? (
                     <img
                       src={selectedTeacher.profileImage}
@@ -311,7 +311,7 @@ export function AssignTeacherToClassModal({
                       className="w-12 h-12 rounded-full object-cover"
                     />
                   ) : (
-                    <span className="text-lg font-medium text-blue-600 dark:text-blue-400">
+                    <span className="text-lg">
                       {selectedTeacher.firstName[0]}{selectedTeacher.lastName[0]}
                     </span>
                   )}

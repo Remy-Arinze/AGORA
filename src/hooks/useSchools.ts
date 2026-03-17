@@ -15,6 +15,11 @@ import {
   useUpdatePrincipalMutation,
   useDeletePrincipalMutation,
   useMakePrincipalMutation,
+  useVerifySchoolMutation,
+  useRejectSchoolMutation,
+  useActivateSchoolMutation,
+  useDeactivateSchoolMutation,
+  useDeleteSchoolMutation,
   useConvertTeacherToAdminMutation,
   CreateSchoolDto,
   AddAdminDto,
@@ -45,13 +50,13 @@ export function useSchools(params?: {
     schools: data?.data?.data || [],
     pagination: data?.data
       ? {
-          total: data.data.total,
-          page: data.data.page,
-          limit: data.data.limit,
-          totalPages: data.data.totalPages,
-          hasNext: data.data.hasNext,
-          hasPrev: data.data.hasPrev,
-        }
+        total: data.data.total,
+        page: data.data.page,
+        limit: data.data.limit,
+        totalPages: data.data.totalPages,
+        hasNext: data.data.hasNext,
+        hasPrev: data.data.hasPrev,
+      }
       : null,
     isLoading,
     error,
@@ -178,39 +183,31 @@ export function useAddAdmin(schoolId: string | null) {
         throw new Error('School ID is required');
       }
 
-      // TEMPORARY LOG: Log what we're sending to backend
-      console.log('🔍 [FRONTEND] Sending admin data to backend:', {
-        schoolId,
-        adminData: {
-          ...adminData,
-          role: adminData.role,
-          roleType: typeof adminData.role,
-          permissionsCount: adminData.permissions?.length || 0,
-          permissions: adminData.permissions,
-        },
-      });
-
       try {
         const result = await addAdminMutation({
           schoolId,
           admin: adminData,
         }).unwrap();
 
-        // TEMPORARY LOG: Log the response from backend
-        console.log('🔍 [FRONTEND] Response from backend:', {
-          success: result.success,
-          message: result.message,
-          adminData: result.data ? {
-            id: result.data.id,
-            name: `${result.data.firstName} ${result.data.lastName}`,
-            role: result.data.role,
-            roleType: typeof result.data.role,
-          } : null,
-        });
-
         if (result.success) {
           toast.success(result.message || 'Administrator added successfully');
-          return result.data;
+
+          // Show warning toast if email failed
+          if (result.warnings && result.warnings.length > 0) {
+            result.warnings.forEach((warning) => {
+              toast(warning, {
+                icon: '⚠️',
+                duration: 8000,
+                style: {
+                  background: '#FEF3C7',
+                  color: '#92400E',
+                  border: '1px solid #F59E0B',
+                },
+              });
+            });
+          }
+
+          return result;
         } else {
           throw new Error(result.message || 'Failed to add administrator');
         }
@@ -291,7 +288,23 @@ export function useAddTeacher(schoolId: string | null) {
 
         if (result.success) {
           toast.success(result.message || 'Teacher added successfully');
-          return result.data;
+
+          // Show warning toast if email failed
+          if (result.warnings && result.warnings.length > 0) {
+            result.warnings.forEach((warning) => {
+              toast(warning, {
+                icon: '⚠️',
+                duration: 8000,
+                style: {
+                  background: '#FEF3C7',
+                  color: '#92400E',
+                  border: '1px solid #F59E0B',
+                },
+              });
+            });
+          }
+
+          return result;
         } else {
           throw new Error(result.message || 'Failed to add teacher');
         }
@@ -460,7 +473,7 @@ export function useDeletePrincipal(schoolId: string | null) {
       } catch (error: any) {
         const errorMessage =
           error?.data?.message || error?.message || 'Failed to delete principal';
-        
+
         // Provide more specific error messages for principal deletion
         if (errorMessage.includes('active principal')) {
           toast.error(
@@ -612,3 +625,162 @@ export function useConvertTeacherToAdmin(schoolId: string | null) {
   };
 }
 
+/**
+ * Hook for verifying a school
+ */
+export function useVerifySchool() {
+  const [verifySchoolMutation, { isLoading }] = useVerifySchoolMutation();
+
+  const verifySchool = useCallback(
+    async (schoolId: string) => {
+      try {
+        const result = await verifySchoolMutation(schoolId).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School verified successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to verify school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to verify school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [verifySchoolMutation]
+  );
+
+  return {
+    verifySchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for rejecting a school
+ */
+export function useRejectSchool() {
+  const [rejectSchoolMutation, { isLoading }] = useRejectSchoolMutation();
+
+  const rejectSchool = useCallback(
+    async (schoolId: string, reason: string) => {
+      try {
+        const result = await rejectSchoolMutation({ id: schoolId, reason }).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School rejected');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to reject school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to reject school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [rejectSchoolMutation]
+  );
+
+  return {
+    rejectSchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for activating a school
+ */
+export function useActivateSchool() {
+  const [activateSchoolMutation, { isLoading }] = useActivateSchoolMutation();
+
+  const activateSchool = useCallback(
+    async (schoolId: string) => {
+      try {
+        const result = await activateSchoolMutation(schoolId).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School activated successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to activate school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to activate school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [activateSchoolMutation]
+  );
+
+  return {
+    activateSchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for deactivating a school
+ */
+export function useDeactivateSchool() {
+  const [deactivateSchoolMutation, { isLoading }] = useDeactivateSchoolMutation();
+
+  const deactivateSchool = useCallback(
+    async (schoolId: string) => {
+      try {
+        const result = await deactivateSchoolMutation(schoolId).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School deactivated successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to deactivate school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to deactivate school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [deactivateSchoolMutation]
+  );
+
+  return {
+    deactivateSchool,
+    isLoading,
+  };
+}
+
+/**
+ * Hook for deleting a school
+ */
+export function useDeleteSchool() {
+  const [deleteSchoolMutation, { isLoading }] = useDeleteSchoolMutation();
+
+  const deleteSchool = useCallback(
+    async (id: string) => {
+      try {
+        const result = await deleteSchoolMutation(id).unwrap();
+        if (result.success) {
+          toast.success(result.message || 'School deleted successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to delete school');
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to delete school';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [deleteSchoolMutation]
+  );
+
+  return {
+    deleteSchool,
+    isLoading,
+  };
+}

@@ -189,11 +189,7 @@ function SiteBuilderEditorContent() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full max-w-7xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <Button
               variant="ghost"
@@ -223,7 +219,7 @@ function SiteBuilderEditorContent() {
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Customize your website by editing the fields below. Changes are saved automatically.
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {showPreview ? (
           /* Preview Mode */

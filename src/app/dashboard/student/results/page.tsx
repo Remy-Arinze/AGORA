@@ -5,12 +5,12 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  FileText, 
-  Download, 
-  TrendingUp, 
-  Award, 
-  Loader2, 
+import {
+  FileText,
+  Download,
+  TrendingUp,
+  Award,
+  Loader2,
   AlertCircle,
   BookOpen,
   ChevronDown,
@@ -98,28 +98,28 @@ const getLetterGrade = (percentage: number): string => {
 const getGradeColor = (grade: string) => {
   switch (grade) {
     case 'A':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+      return 'border border-blue-500 text-blue-600 dark:text-blue-400';
     case 'B':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      return 'border border-blue-400 text-blue-500 dark:text-blue-300';
     case 'C':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+      return 'border border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400';
     case 'D':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+      return 'border border-orange-200 text-orange-600 dark:text-orange-400';
     default:
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      return 'border border-red-200 text-red-600 dark:text-red-400';
   }
 };
 
 const getTypeColor = (type: string) => {
   switch (type) {
     case 'CA':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+      return 'text-black dark:text-white font-black';
     case 'ASSIGNMENT':
-      return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400';
+      return 'text-black dark:text-white font-black';
     case 'EXAM':
-      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400';
+      return 'text-black dark:text-white font-black';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+      return 'text-light-text-muted dark:text-dark-text-muted';
   }
 };
 
@@ -127,7 +127,7 @@ export default function StudentResultsPage() {
   const [selectedTermId, setSelectedTermId] = useState<string>('');
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set());
   const [gradeTypeFilter, setGradeTypeFilter] = useState<GradeTypeFilter>('ALL');
-  
+
   // Get school type and school ID from student's enrollment (not localStorage)
   const { schoolType: currentType, schoolId, isLoading: isLoadingSchoolType } = useStudentSchoolType();
   const terminology = getStudentTerminology(currentType);
@@ -146,10 +146,10 @@ export default function StudentResultsPage() {
   );
 
   // Get all grades (published only from backend)
-  const { 
-    data: gradesResponse, 
+  const {
+    data: gradesResponse,
     isLoading: isLoadingGrades,
-    error: gradesError 
+    error: gradesError
   } = useGetMyStudentGradesQuery({});
   const grades = gradesResponse?.data || [];
 
@@ -174,7 +174,7 @@ export default function StudentResultsPage() {
 
     filteredGrades.forEach((grade: Grade) => {
       const termKey = grade.termId || grade.term || 'Unknown';
-      
+
       if (!termMap.has(termKey)) {
         termMap.set(termKey, {
           termId: grade.termId || '',
@@ -188,7 +188,7 @@ export default function StudentResultsPage() {
       }
 
       const termResult = termMap.get(termKey)!;
-      
+
       // Find or create subject entry
       let subjectEntry = termResult.subjects.find(s => s.name === grade.subject);
       if (!subjectEntry) {
@@ -270,7 +270,7 @@ export default function StudentResultsPage() {
 
   // Set default selected term
   const effectiveTermId = selectedTermId || activeSession?.term?.id || termResults[0]?.termId || '';
-  
+
   // Get current results for selected term
   const currentResults = useMemo(() => {
     if (!effectiveTermId) return termResults[0];
@@ -325,11 +325,7 @@ export default function StudentResultsPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
@@ -346,7 +342,7 @@ export default function StudentResultsPage() {
               </Button>
             )}
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {grades.length === 0 ? (
           <Card>
@@ -451,7 +447,7 @@ export default function StudentResultsPage() {
                             {currentResults.averagePercentage.toFixed(1)}%
                           </p>
                         </div>
-                        <TrendingUp className="h-8 w-8 text-green-600 dark:text-green-400" />
+                        <TrendingUp className="h-8 w-8 text-black dark:text-white" />
                       </div>
                     </CardContent>
                   </Card>
@@ -466,7 +462,7 @@ export default function StudentResultsPage() {
                             {getLetterGrade(currentResults.averagePercentage)}
                           </p>
                         </div>
-                        <Award className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                        <Award className="h-8 w-8 text-black dark:text-white" />
                       </div>
                     </CardContent>
                   </Card>
@@ -484,7 +480,7 @@ export default function StudentResultsPage() {
                             </span>
                           </p>
                         </div>
-                        <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                        <FileText className="h-8 w-8 text-black dark:text-white" />
                       </div>
                     </CardContent>
                   </Card>
@@ -513,13 +509,7 @@ export default function StudentResultsPage() {
                     ) : (
                       <div className="space-y-4">
                         {currentResults.subjects.map((subject, index) => (
-                          <motion.div
-                            key={subject.name}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="border border-light-border dark:border-dark-border rounded-lg overflow-hidden"
-                          >
+                          <FadeInUp delay={index * 0.05} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="border border-light-border dark:border-dark-border rounded-lg overflow-hidden">
                             {/* Subject Header - Clickable */}
                             <button
                               onClick={() => toggleSubjectExpanded(subject.name)}
@@ -540,7 +530,7 @@ export default function StudentResultsPage() {
                                   {subject.assessments.length} assessment{subject.assessments.length !== 1 ? 's' : ''}
                                 </span>
                               </div>
-                              
+
                               <div className="flex items-center gap-6">
                                 {/* Type breakdown badges - show only when filter is ALL */}
                                 {gradeTypeFilter === 'ALL' && (
@@ -562,7 +552,7 @@ export default function StudentResultsPage() {
                                     )}
                                   </div>
                                 )}
-                                
+
                                 {/* Total Score */}
                                 <div className="text-right">
                                   <p className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -572,7 +562,7 @@ export default function StudentResultsPage() {
                                     {subject.percentage.toFixed(1)}%
                                   </p>
                                 </div>
-                                
+
                                 {/* Grade Badge */}
                                 <span className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(subject.grade)}`}>
                                   {subject.grade}
@@ -581,15 +571,9 @@ export default function StudentResultsPage() {
                             </button>
 
                             {/* Expanded Assessment Details */}
-                            <AnimatePresence>
+                            <>
                               {expandedSubjects.has(subject.name) && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                  className="overflow-hidden"
-                                >
+                                <div className="overflow-hidden">
                                   <div className="border-t border-light-border dark:border-dark-border bg-[var(--light-surface)] dark:bg-[var(--dark-bg)]">
                                     {/* Mobile type breakdown */}
                                     {gradeTypeFilter === 'ALL' && (
@@ -611,7 +595,7 @@ export default function StudentResultsPage() {
                                         )}
                                       </div>
                                     )}
-                                    
+
                                     {/* Assessment List */}
                                     <div className="divide-y divide-light-border dark:divide-dark-border">
                                       {subject.assessments.map((assessment) => (
@@ -629,7 +613,7 @@ export default function StudentResultsPage() {
                                                   {assessment.assessmentName || gradeTypeLabels[assessment.gradeType]}
                                                 </h4>
                                               </div>
-                                              
+
                                               <div className="flex items-center gap-4 mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
                                                 {assessment.assessmentDate && (
                                                   <span className="flex items-center gap-1">
@@ -644,7 +628,7 @@ export default function StudentResultsPage() {
                                                   </span>
                                                 )}
                                               </div>
-                                              
+
                                               {assessment.remarks && (
                                                 <div className="mt-2 flex items-start gap-1 text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                                   <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -652,7 +636,7 @@ export default function StudentResultsPage() {
                                                 </div>
                                               )}
                                             </div>
-                                            
+
                                             <div className="flex items-center gap-4 md:text-right">
                                               <div>
                                                 <p className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -671,10 +655,10 @@ export default function StudentResultsPage() {
                                       ))}
                                     </div>
                                   </div>
-                                </motion.div>
+                                </div>
                               )}
-                            </AnimatePresence>
-                          </motion.div>
+                            </>
+                          </FadeInUp>
                         ))}
                       </div>
                     )}

@@ -7,11 +7,11 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  GraduationCap, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  GraduationCap,
+  Mail,
+  Phone,
+  MapPin,
   User,
   Edit,
   FileText,
@@ -27,8 +27,8 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
-import { 
-  useGetStudentByIdQuery, 
+import {
+  useGetStudentByIdQuery,
   useGetMySchoolQuery,
   useResendPasswordResetForStudentMutation,
   useGetStudentGradesQuery,
@@ -37,6 +37,7 @@ import {
 } from '@/lib/store/api/schoolAdminApi';
 import { EditStudentProfileModal } from '@/components/modals/EditStudentProfileModal';
 import { BackButton } from '@/components/ui/BackButton';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import toast from 'react-hot-toast';
@@ -56,7 +57,7 @@ const StudentAvatar = ({
   size?: 'sm' | 'md' | 'lg';
 }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
@@ -85,7 +86,7 @@ const StudentAvatar = ({
   }
 
   return (
-    <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-light-border dark:border-dark-border shadow-sm flex-shrink-0`}>
+    <div className={`${sizeClasses[size]} rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center text-[var(--avatar-placeholder-text)] font-semibold border-2 border-light-border dark:border-dark-border shadow-sm flex-shrink-0`}>
       {getInitials(firstName, lastName)}
     </div>
   );
@@ -102,7 +103,7 @@ const PassportPhoto = ({
   lastName?: string;
 }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
@@ -123,8 +124,8 @@ const PassportPhoto = ({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
-            <span className="text-white font-bold text-4xl">
+          <div className="w-full h-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center">
+            <span className="text-[var(--avatar-placeholder-text)] font-bold text-4xl">
               {getInitials(firstName, lastName)}
             </span>
           </div>
@@ -150,16 +151,16 @@ export default function StudentDetailPage() {
     { skip: !schoolId || !studentId }
   );
   const student = studentResponse?.data;
-  
+
   // Resend password reset mutation
   const [resendPasswordReset, { isLoading: isResendingPasswordReset }] = useResendPasswordResetForStudentMutation();
-  
+
   // Check if user hasn't set their password yet
   const hasNotSetPassword = student?.user?.accountStatus === 'SHADOW';
-  
+
   const handleResendPasswordReset = async () => {
     if (!schoolId || !studentId) return;
-    
+
     try {
       await resendPasswordReset({ schoolId, studentId }).unwrap();
       toast.success('Password reset email sent successfully');
@@ -190,10 +191,10 @@ export default function StudentDetailPage() {
   const sessions = sessionsResponse?.data || [];
 
   // Get student grades
-  const { 
-    data: gradesResponse, 
+  const {
+    data: gradesResponse,
     isLoading: isLoadingGrades,
-    error: gradesError 
+    error: gradesError
   } = useGetStudentGradesQuery(
     { schoolId: schoolId!, studentId },
     { skip: !schoolId || !studentId }
@@ -487,7 +488,7 @@ export default function StudentDetailPage() {
         <div className="w-full">
           <BackButton fallbackUrl="/dashboard/school/students" className="mb-4" />
           <div className="text-center py-12">
-            <GraduationCap className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+            <EmptyStateIcon type="document_not_found" />
             <p className="text-light-text-secondary dark:text-dark-text-secondary">
               Student not found or error loading student details.
             </p>
@@ -501,11 +502,7 @@ export default function StudentDetailPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <BackButton fallbackUrl="/dashboard/school/students" className="mb-4" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -527,15 +524,17 @@ export default function StudentDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               {hasNotSetPassword && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleResendPasswordReset}
-                  disabled={isResendingPasswordReset}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isResendingPasswordReset ? 'Sending...' : 'Resend Password Setup Email'}
-                </Button>
+                <PermissionGate resource={PermissionResource.STUDENTS} type={PermissionType.WRITE}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResendPasswordReset}
+                    disabled={isResendingPasswordReset}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {isResendingPasswordReset ? 'Sending...' : 'Resend Password Setup Email'}
+                  </Button>
+                </PermissionGate>
               )}
               <PermissionGate resource={PermissionResource.STUDENTS} type={PermissionType.WRITE}>
                 <Button variant="ghost" size="sm" onClick={() => setShowEditProfileModal(true)}>
@@ -545,7 +544,7 @@ export default function StudentDetailPage() {
               </PermissionGate>
             </div>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
@@ -554,11 +553,10 @@ export default function StudentDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                     : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -568,12 +566,7 @@ export default function StudentDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
           {activeTab === 'profile' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Info */}
@@ -654,11 +647,10 @@ export default function StudentDetailPage() {
                               Status
                             </p>
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                !student.profileLocked
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${!student.profileLocked
                                   ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                   : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                              }`}
+                                }`}
                             >
                               {student.profileLocked ? 'Locked' : 'Active'}
                             </span>
@@ -875,7 +867,7 @@ export default function StudentDetailPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Heart className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <EmptyStateIcon type="person_outline" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary">
                       No health information available for this student.
                     </p>
@@ -888,7 +880,7 @@ export default function StudentDetailPage() {
           {activeTab === 'grades' && (
             <div className="space-y-6">
               {isLoadingGrades ? (
-            <Card>
+                <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted animate-spin" />
@@ -899,7 +891,7 @@ export default function StudentDetailPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                      <EmptyStateIcon type="document_not_found" />
                       <p className="text-light-text-secondary dark:text-dark-text-secondary">
                         Unable to load grades
                       </p>
@@ -910,7 +902,7 @@ export default function StudentDetailPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <EmptyStateIcon type="document" />
                       <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
                         No Grades Available
                       </h3>
@@ -961,7 +953,7 @@ export default function StudentDetailPage() {
                       const isSessionExpanded = expandedSessions.has(sessionData.sessionId);
                       return (
                         <Card key={sessionData.sessionId}>
-              <CardHeader>
+                          <CardHeader>
                             <button
                               onClick={() => toggleSession(sessionData.sessionId)}
                               className="w-full flex items-center justify-between text-left hover:opacity-80 transition-opacity"
@@ -974,7 +966,7 @@ export default function StudentDetailPage() {
                                 )}
                                 <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
                                   {sessionData.sessionName}
-                </CardTitle>
+                                </CardTitle>
                               </div>
                               {sessionData.averagePercentage > 0 && (
                                 <div className="flex items-center gap-2">
@@ -985,9 +977,9 @@ export default function StudentDetailPage() {
                                 </div>
                               )}
                             </button>
-              </CardHeader>
+                          </CardHeader>
                           {isSessionExpanded && (
-              <CardContent>
+                            <CardContent>
                               <div className="space-y-4 pl-8">
                                 {sessionData.terms.map((termData) => {
                                   const termKey = termData.termId;
@@ -1046,12 +1038,11 @@ export default function StudentDetailPage() {
                                                           <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                                             {subject.percentage.toFixed(1)}%
                                                           </span>
-                                                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                            subject.grade === 'A' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                            subject.grade === 'B' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                            subject.grade === 'C' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                                          }`}>
+                                                          <span className={`px-2 py-1 rounded text-xs font-medium ${subject.grade === 'A' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                                              subject.grade === 'B' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                                subject.grade === 'C' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                                  'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                            }`}>
                                                             {subject.grade}
                                                           </span>
                                                         </>
@@ -1107,10 +1098,10 @@ export default function StudentDetailPage() {
                                     </div>
                                   );
                                 })}
-                </div>
-              </CardContent>
+                              </div>
+                            </CardContent>
                           )}
-            </Card>
+                        </Card>
                       );
                     })}
                   </div>
@@ -1133,7 +1124,7 @@ export default function StudentDetailPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center py-12">
-                      <FileText className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <EmptyStateIcon type="document_not_found" />
                       <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
                         No Transcript Available
                       </h3>
@@ -1145,16 +1136,16 @@ export default function StudentDetailPage() {
                 </Card>
               ) : (
                 <>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Academic Transcript
-                </CardTitle>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Academic Transcript
+                      </CardTitle>
                       <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-2">
                         Complete academic history for {student?.firstName} {student?.lastName}
                       </p>
-              </CardHeader>
+                    </CardHeader>
                   </Card>
 
                   {/* Hierarchical Transcript Display */}
@@ -1199,7 +1190,7 @@ export default function StudentDetailPage() {
                             </button>
                           </CardHeader>
                           {isSessionExpanded && (
-              <CardContent>
+                            <CardContent>
                               <div className="space-y-4 pl-8">
                                 {sessionData.terms.map((termData) => {
                                   const termKey = termData.termId;
@@ -1262,12 +1253,11 @@ export default function StudentDetailPage() {
                                                       <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                                         {subject.percentage.toFixed(1)}%
                                                       </span>
-                                                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                        subject.grade === 'A' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                        subject.grade === 'B' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                        subject.grade === 'C' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                        'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                                      }`}>
+                                                      <span className={`px-2 py-1 rounded text-xs font-medium ${subject.grade === 'A' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                                          subject.grade === 'B' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                            subject.grade === 'C' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                              'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                        }`}>
                                                         {subject.grade}
                                                       </span>
                                                     </>
@@ -1295,10 +1285,10 @@ export default function StudentDetailPage() {
                                     </div>
                                   );
                                 })}
-                </div>
-              </CardContent>
+                              </div>
+                            </CardContent>
                           )}
-            </Card>
+                        </Card>
                       );
                     })}
                   </div>
@@ -1306,7 +1296,7 @@ export default function StudentDetailPage() {
               )}
             </div>
           )}
-        </motion.div>
+        </FadeInUp>
 
         {/* Edit Profile Modal */}
         {showEditProfileModal && student && (

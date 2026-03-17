@@ -6,25 +6,27 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  BookOpen, 
-  Clock, 
-  FileText, 
-  GraduationCap, 
-  Award, 
+import {
+  BookOpen,
+  Clock,
+  FileText,
+  GraduationCap,
+  Award,
   TrendingUp,
   Calendar,
   Loader2,
   AlertCircle,
+  MapPin,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
 import {
   useGetUpcomingEventsQuery,
   useGetMyStudentCalendarQuery,
 } from '@/lib/store/api/schoolAdminApi';
-import { 
-  useStudentDashboard, 
-  getStudentTodaySchedule, 
-  getStudentTerminology 
+import {
+  useStudentDashboard,
+  getStudentTodaySchedule,
+  getStudentTerminology
 } from '@/hooks/useStudentDashboard';
 import { format, parseISO } from 'date-fns';
 
@@ -43,11 +45,11 @@ export default function StudentOverviewPage() {
     hasError,
     errorMessage,
   } = useStudentDashboard();
-  
+
   const terminology = getStudentTerminology(schoolType);
   const schoolId = school?.id;
   const activeTermId = activeTerm?.id;
-  
+
   // Get today's schedule
   const todaySchedule = useMemo(() => {
     return getStudentTodaySchedule(timetable);
@@ -107,286 +109,235 @@ export default function StudentOverviewPage() {
 
   return (
     <ProtectedRoute roles={['STUDENT']}>
-      <div className="w-full">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
-            Welcome back, {studentName}!
-          </h1>
-          <p className="text-light-text-secondary dark:text-dark-text-secondary">
-            {activeEnrollment?.classLevel ? (
-              <>Currently enrolled in <span className="font-semibold">{activeEnrollment.classLevel}</span></>
-            ) : (
-              'View your academic progress, classes, and results'
-            )}
-          </p>
-        </motion.div>
+      <div className="w-full space-y-8 pb-10">
+        {/* Personalized Welcome Section */}
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.6}>
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-[2.5rem] overflow-hidden group transition-all duration-500 border border-blue-100/20 dark:border-blue-700/10">
+            {/* Inner Glass Layer */}
+            <div className="absolute inset-0 bg-white/40 dark:bg-white/5 backdrop-blur-3xl z-0" />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
-                    Average Score
-                  </p>
-                  <p className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mt-2">
-                    {stats.averageScore}%
-                  </p>
+            {/* Animated accent gradient */}
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/10 to-transparent dark:from-blue-500/5 z-0" />
+
+            <div className="relative flex-1 space-y-5 text-center md:text-left z-10 w-full">
+              <div className="space-y-2">
+                <div className="flex items-center justify-center md:justify-start gap-2">
+                  <div className="h-1 w-8 bg-blue-600 rounded-full" />
+                  <p className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-[0.1em]" style={{ fontSize: 'var(--text-body)' }}>Dashboard Overview</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
+                <h1 className="font-black text-light-text-primary dark:text-dark-text-primary tracking-tight" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', lineHeight: '1' }}>
+                  Hey, {student.firstName}! 👋
+                </h1>
+                <p className="text-light-text-secondary dark:text-dark-text-secondary max-w-lg" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+                  You&apos;re currently enrolled in <span className="font-bold text-blue-600 dark:text-blue-400">{activeEnrollment?.classLevel || 'your classes'}</span>.
+                  Ready for today&apos;s journey?
+                </p>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
-                    Current {terminology.classLabel}
-                  </p>
-                  <p className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary mt-2">
-                    {activeClass?.name || activeEnrollment?.classLevel || 'N/A'}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <GraduationCap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
+              <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                <Badge className="px-4 py-1.5 rounded-xl font-semibold border-blue-200/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-white/5 backdrop-blur-md" style={{ fontSize: 'var(--text-body)' }}>
+                  {activeTerm?.name || 'Current Term'}
+                </Badge>
+                <Badge className="px-4 py-1.5 rounded-xl font-semibold border-blue-200/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-white/5 backdrop-blur-md" style={{ fontSize: 'var(--text-body)' }}>
+                  {school?.name || 'Your School'}
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
-                    Grades Published
-                  </p>
-                  <p className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mt-2">
-                    {stats.totalGrades}
-                  </p>
-                  {stats.recentGradesCount > 0 && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      {stats.recentGradesCount} new this week
-                    </p>
-                  )}
-                </div>
-                <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <Award className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
+            <div className="relative hidden md:flex items-center gap-8 z-10">
+              <div className="text-right">
+                <p className="font-semibold text-light-text-muted uppercase tracking-[0.1em] mb-1" style={{ fontSize: 'var(--text-body)' }}>Academic Pulse</p>
+                <p className="font-semibold text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-page-title)' }}>{stats.averageScore}%</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
-                    Today&apos;s Classes
-                  </p>
-                  <p className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mt-2">
-                    {todaySchedule.length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                </div>
+              <div className="h-20 w-[1px] bg-gradient-to-b from-transparent via-blue-200 dark:via-blue-800 to-transparent" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-black dark:bg-white blur-2xl opacity-5 group-hover:opacity-10 transition-opacity" />
+                <GraduationCap className="h-16 w-16 text-black dark:text-white relative z-10 rotate-3 transform transition-transform group-hover:rotate-0" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        </FadeInUp>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Today's Schedule */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                  Today&apos;s Schedule
-                </CardTitle>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Main Column */}
+          <div className="xl:col-span-2 space-y-8">
+
+            {/* The "Daily Pulse" - Schedule & Events Combined */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <h2 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
+                  Your Daily Journey
+                </h2>
                 <Link href="/dashboard/student/timetables">
-                  <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400">
-                    View Timetable →
-                  </Button>
+                  <Button variant="ghost" className="text-blue-600">Full Schedule</Button>
                 </Link>
               </div>
-            </CardHeader>
-            <CardContent>
+
               {todaySchedule.length > 0 ? (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-hide pr-2">
+                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-blue-100 dark:before:bg-blue-900/40">
                   {todaySchedule.map((period: any, index: number) => {
-                    // Check if class is currently ongoing
-                    const now = new Date();
+                    const nowTime = new Date();
                     const [startHour, startMin] = period.startTime.split(':').map(Number);
                     const [endHour, endMin] = period.endTime.split(':').map(Number);
                     const startTime = new Date();
                     startTime.setHours(startHour, startMin, 0, 0);
                     const endTime = new Date();
                     endTime.setHours(endHour, endMin, 0, 0);
-                    const isOngoing = now >= startTime && now <= endTime;
-                    const isUpcoming = now < startTime;
-                    
-                    // Check if it's a free period (no subject/course or type is not LESSON)
-                    const isFreePeriod = period.type !== 'LESSON' || 
+                    const isOngoing = nowTime >= startTime && nowTime <= endTime;
+                    const isUpcoming = nowTime < startTime;
+
+                    const isFreePeriod = period.type !== 'LESSON' ||
                       (!period.subjectName && !period.subject?.name && !period.courseName && !period.course?.name);
-                    
-                    const periodTitle = isFreePeriod 
-                      ? 'Free Period'
-                      : (period.subjectName || period.subject?.name || period.courseName || period.course?.name || 'Class');
-                    
+
+                    const periodTitle = isFreePeriod ? 'Study Break ☕' : (period.subjectName || period.subject?.name || period.courseName || period.course?.name);
+
                     return (
-                      <motion.div
-                        key={period.id || index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          isOngoing 
-                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-500' 
-                            : isUpcoming
-                            ? 'bg-gray-50 dark:bg-dark-surface border-gray-200 dark:border-dark-border'
-                            : 'bg-gray-50 dark:bg-dark-surface border-gray-200 dark:border-dark-border opacity-60'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
-                                {periodTitle}
-                              </h4>
-                              {isOngoing && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full">
-                                  Now
-                                </span>
-                              )}
-                              {period.isFromCourseRegistration && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-purple-500 text-white rounded-full">
-                                  CO
-                                </span>
-                              )}
-                            </div>
-                            {period.roomName || period.room?.name ? (
-                              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-1">
-                                {period.roomName || period.room.name}
-                              </p>
-                            ) : null}
-                          </div>
-                          <div className="text-right ml-4">
-                            <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
-                              {period.startTime} - {period.endTime}
-                            </p>
-                            {period.hasConflict && (
-                              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                                Conflict
-                              </p>
-                            )}
-                          </div>
+                      <FadeInUp key={period.id || index} delay={index * 0.1}>
+                        <div className="relative group">
+                          {/* Dot on the timeline */}
+                          <div className={`absolute -left-[22px] top-6 w-3 h-3 rounded-full border-2 transition-all ${isOngoing ? 'bg-blue-600 border-white dark:border-blue-900 animate-ping' : 'bg-white dark:bg-blue-950 border-blue-200 dark:border-blue-900'
+                            }`} />
+
+                          <Card className={`overflow-hidden transition-all duration-300 ${isOngoing
+                            ? 'border-blue-500 scale-[1.02]'
+                            : 'hover:border-blue-300 dark:hover:border-blue-800'
+                            }`}>
+                            <CardContent className="p-5">
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                      {period.startTime} — {period.endTime}
+                                    </p>
+                                    {isOngoing && <Badge className="bg-blue-600 text-[10px] h-4">ACTIVE NOW</Badge>}
+                                  </div>
+                                  <h3 className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">
+                                    {periodTitle}
+                                  </h3>
+                                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary flex items-center gap-2">
+                                    <MapPin className="h-3 w-3" />
+                                    {period.roomName || period.room?.name || 'Room to be assigned'}
+                                  </p>
+                                </div>
+                                {isFreePeriod ? (
+                                  <Clock className="h-8 w-8 transition-colors text-black dark:text-white" />
+                                ) : (
+                                  <BookOpen className="h-8 w-8 transition-colors text-black dark:text-white" />
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
                         </div>
-                      </motion.div>
+                      </FadeInUp>
                     );
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                  <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                    No classes scheduled for today
+                <Card className="border-dashed py-12 text-center">
+                  <div className="bg-slate-100 dark:bg-dark-surface h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-8 w-8 text-light-text-muted" />
+                  </div>
+                  <h3 className="text-lg font-bold">A Clean Slate!</h3>
+                  <p className="text-light-text-secondary max-w-[200px] mx-auto text-sm">
+                    No classes scheduled for today. Take some time for self-study and rest.
                   </p>
-                </div>
+                </Card>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </section>
+          </div>
 
-        {/* Upcoming Events */}
-        {upcomingEvents.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                  Upcoming Events
-                </CardTitle>
-                <Link href="/dashboard/student/calendar">
-                  <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400">
-                    View Calendar →
-                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upcomingEvents.slice(0, 5).map((event: any) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="p-3 bg-gray-50 dark:bg-dark-surface rounded-lg flex items-center gap-4"
-                  >
-                    <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                      <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-light-text-primary dark:text-dark-text-primary truncate">
-                        {event.title}
-                      </h4>
-                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                        {format(parseISO(event.startDate), 'MMM d, yyyy • h:mm a')}
-                        {event.location && ` • ${event.location}`}
-                      </p>
-                    </div>
-                  </motion.div>
+          {/* Side Column */}
+          <div className="space-y-8">
+
+            {/* Quick Shortcuts - More Visual */}
+            <section className="space-y-4">
+              <h2 className="font-bold px-2" style={{ fontSize: 'var(--text-card-title)' }}>Shortcuts</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Classes', icon: BookOpen, color: 'blue', link: '/dashboard/student/classes' },
+                  { label: 'Results', icon: FileText, color: 'green', link: '/dashboard/student/results' },
+                  { label: 'Resources', icon: GraduationCap, color: 'purple', link: '/dashboard/student/resources' },
+                  { label: 'Calendar', icon: Calendar, color: 'orange', link: '/dashboard/student/calendar' }
+                ].map((action, i) => (
+                  <Link key={i} href={action.link}>
+                    <button className="w-full group p-4 rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border hover:border-blue-500 transition-all text-center space-y-3">
+                      <action.icon className="h-6 w-6 mx-auto group-hover:scale-110 transition-transform text-black dark:text-white" />
+                      <span className="text-sm font-bold text-light-text-primary dark:text-dark-text-primary group-hover:text-blue-600 transition-colors">
+                        {action.label}
+                      </span>
+                    </button>
+                  </Link>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </section>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-              Quick Access
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Link href="/dashboard/student/classes">
-                <Button className="w-full" variant="primary">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  My Classes
-                </Button>
-              </Link>
-              <Link href="/dashboard/student/results">
-                <Button className="w-full" variant="secondary">
-                  <FileText className="h-4 w-4 mr-2" />
-                  View Results
-                </Button>
-              </Link>
-              <Link href="/dashboard/student/resources">
-                <Button className="w-full" variant="secondary">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Resources
-                </Button>
-              </Link>
-              <Link href="/dashboard/student/calendar">
-                <Button className="w-full" variant="secondary">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Calendar
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Upcoming Events - Card Style */}
+            {upcomingEvents.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <h2 className="font-bold" style={{ fontSize: 'var(--text-card-title)' }}>Events</h2>
+                  <Link href="/dashboard/student/calendar">
+                    <Button variant="ghost" size="sm" className="text-xs">View All</Button>
+                  </Link>
+                </div>
+                <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 text-white border-none overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="p-5 space-y-5">
+                      {upcomingEvents.slice(0, 3).map((event: any, i: number) => (
+                        <div key={i} className="flex gap-4 group cursor-pointer">
+                          <div className="h-10 w-10 rounded-lg bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-[10px] font-bold uppercase overflow-hidden shrink-0">
+                            <span className="bg-white/40 w-full text-center py-0.5">{format(parseISO(event.startDate), 'MMM')}</span>
+                            <span className="text-sm leading-none pt-1">{format(parseISO(event.startDate), 'd')}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-bold truncate group-hover:underline underline-offset-2">{event.title}</h4>
+                            <p className="text-[11px] opacity-80">{format(parseISO(event.startDate), 'h:mm a')} • {event.location || 'Online'}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-black/10 p-4 flex items-center justify-between text-xs font-bold border-t border-white/10 uppercase tracking-widest">
+                      <span>3 Events Upcoming</span>
+                      <TrendingUp className="h-4 w-4" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+
+            {/* Quick Stats Summary */}
+            <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/40">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-bold text-light-text-muted uppercase tracking-widest mb-1">Knowledge Progress</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-2xl font-black text-light-text-primary dark:text-dark-text-primary">{stats.averageScore}%</span>
+                      <TrendingUp className="h-5 w-5 text-black dark:text-white" />
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-600 rounded-full transition-all duration-1000"
+                        style={{ width: `${stats.averageScore}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-light-text-muted uppercase tracking-wider">Reports In</p>
+                      <p className="text-xl font-black">{stats.totalGrades}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-light-text-muted uppercase tracking-wider">New Grades</p>
+                      <p className="text-xl font-black text-black dark:text-white">+{stats.recentGradesCount}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </ProtectedRoute>
   );

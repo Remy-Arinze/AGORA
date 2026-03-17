@@ -17,7 +17,7 @@ export default function OverviewPage() {
   const { schools, isLoading: schoolsLoading } = useSchools();
   const { analytics, isLoading: analyticsLoading } = useAnalytics();
   const { user } = useAuth();
-  
+
   // Get user's first name for welcome message
   const userName = user?.firstName || user?.name?.split(' ')[0] || 'there';
 
@@ -37,21 +37,23 @@ export default function OverviewPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="font-bold text-light-text-primary dark:text-white mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+          <h1
+            className="font-bold text-light-text-primary dark:text-white mb-2"
+            style={{ fontSize: 'var(--text-page-title)', fontFamily: 'var(--font-outfit), sans-serif', letterSpacing: '-0.02em' }}
+          >
             Welcome back, {userName}
           </h1>
-          <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+          <p
+            className="text-light-text-secondary dark:text-[#9ca3af]"
+            style={{ fontSize: 'var(--text-page-subtitle)', fontFamily: 'var(--font-outfit), sans-serif' }}
+          >
             Here&apos;s your platform&apos;s performance
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
           <StatCard
             title="Total Schools"
             value={analytics?.totalSchools ?? schools.length}
@@ -126,90 +128,88 @@ export default function OverviewPage() {
         {/* Recent Schools */}
         <div className="mb-6">
           <Card>
-          <CardHeader>
-            <CardTitle className="font-bold text-light-text-primary dark:text-white" style={{ fontSize: 'var(--text-section-title)' }}>
-              Recent Schools
-            </CardTitle>
-            <p className="text-light-text-secondary dark:text-[#9ca3af] mt-1" style={{ fontSize: 'var(--text-body)' }}>
-              Latest schools added to the platform
-            </p>
-          </CardHeader>
-          <CardContent>
-            {schools.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
-                  No schools found. Click &quot;Add School&quot; to create one.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {schools.slice(0, 3).map((school) => {
-                  // Get school levels
-                  const levels = [];
-                  if (school.hasPrimary) levels.push('Primary');
-                  if (school.hasSecondary) levels.push('Secondary');
-                  if (school.hasTertiary) levels.push('Tertiary');
+            <CardHeader>
+              <CardTitle className="font-bold text-light-text-primary dark:text-white" style={{ fontSize: 'var(--text-section-title)' }}>
+                Recent Schools
+              </CardTitle>
+              <p className="text-light-text-secondary dark:text-[#9ca3af] mt-1" style={{ fontSize: 'var(--text-body)' }}>
+                Latest schools added to the platform
+              </p>
+            </CardHeader>
+            <CardContent>
+              {schools.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
+                    No schools found. Click &quot;Add School&quot; to create one.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {schools.slice(0, 3).map((school) => {
+                    // Get school levels
+                    const levels = [];
+                    if (school.hasPrimary) levels.push('Primary');
+                    if (school.hasSecondary) levels.push('Secondary');
+                    if (school.hasTertiary) levels.push('Tertiary');
 
-                  return (
-                    <Link
-                      key={school.id}
-                      href={`/dashboard/super-admin/schools/${school.id}`}
-                      className="block"
-                    >
-                      <motion.div
-                        className="flex items-center gap-4 p-4 border border-light-border dark:border-[#1a1f2e] rounded-lg hover:bg-light-hover dark:hover:bg-[#1f2937] transition-all duration-200 cursor-pointer"
-                        whileHover={{ x: 4 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                    return (
+                      <Link
+                        key={school.id}
+                        href={`/dashboard/super-admin/schools/${school.id}`}
+                        className="block"
                       >
-                        {/* School Avatar */}
-                        <EntityAvatar
-                          name={school.name}
-                          imageUrl={school.logo || undefined}
-                          size="md"
-                          variant="rounded"
-                        />
-                        
-                        {/* School Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-light-text-primary dark:text-white truncate mb-1" style={{ fontSize: 'var(--text-card-title)' }}>
-                            {school.name}
-                          </p>
-                          <p className="text-light-text-secondary dark:text-[#9ca3af] mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                            {school.city || 'N/A'}, {school.state || 'N/A'}
-                          </p>
-                          {/* School Levels */}
-                          {levels.length > 0 && (
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {levels.map((level) => (
-                                <span
-                                  key={level}
-                                  className="px-2 py-0.5 rounded font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                  style={{ fontSize: 'var(--text-small)' }}
-                                >
-                                  {level}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                        <div
+                          className="flex items-center gap-4 p-4 border border-light-border dark:border-[#1a1f2e] rounded-lg hover:bg-light-hover dark:hover:bg-[#1f2937] transition-all duration-200 cursor-pointer"
+                        >
+                          {/* School Avatar */}
+                          <EntityAvatar
+                            name={school.name}
+                            imageUrl={school.logo || undefined}
+                            size="md"
+                            variant="rounded"
+                          />
+
+                          {/* School Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-light-text-primary dark:text-white truncate mb-1" style={{ fontSize: 'var(--text-card-title)' }}>
+                              {school.name}
+                            </p>
+                            <p className="text-light-text-secondary dark:text-[#9ca3af] mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                              {school.city || 'N/A'}, {school.state || 'N/A'}
+                            </p>
+                            {/* School Levels */}
+                            {levels.length > 0 && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {levels.map((level) => (
+                                  <span
+                                    key={level}
+                                    className="px-2 py-0.5 rounded font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                    style={{ fontSize: 'var(--text-small)' }}
+                                  >
+                                    {level}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* School Stats */}
+                          <div className="text-right flex-shrink-0">
+                            <p className="font-medium text-light-text-primary dark:text-white" style={{ fontSize: 'var(--text-body)' }}>
+                              {school.teachersCount || 0} teachers
+                            </p>
+                            <p className="text-light-text-muted dark:text-[#6b7280]" style={{ fontSize: 'var(--text-small)' }}>
+                              {school.subdomain}.agora.com
+                            </p>
+                          </div>
                         </div>
-                        
-                        {/* School Stats */}
-                        <div className="text-right flex-shrink-0">
-                          <p className="font-medium text-light-text-primary dark:text-white" style={{ fontSize: 'var(--text-body)' }}>
-                            {school.teachersCount || 0} teachers
-                          </p>
-                          <p className="text-light-text-muted dark:text-[#6b7280]" style={{ fontSize: 'var(--text-small)' }}>
-                            {school.subdomain}.agora.com
-                          </p>
-                        </div>
-                      </motion.div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

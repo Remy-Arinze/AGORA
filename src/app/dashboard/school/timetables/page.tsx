@@ -20,9 +20,11 @@ import {
   ChevronDown,
   GraduationCap,
   Info,
+  CheckCircle,
 } from 'lucide-react';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
+import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   useGetMySchoolQuery,
   useGetActiveSessionQuery,
@@ -69,6 +71,7 @@ export default function TimetablesPage() {
   const router = useRouter();
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedTermId, setSelectedTermId] = useState<string>('');
+  const [showHistory, setShowHistory] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTimetableClassId, setNewTimetableClassId] = useState<string>('');
   const [newTimetableTermId, setNewTimetableTermId] = useState<string>('');
@@ -81,6 +84,20 @@ export default function TimetablesPage() {
     { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId }
   );
+
+  const activeTermId = activeSessionResponse?.data?.term?.id;
+
+  // Set selected term to active term by default when not in history mode
+  useEffect(() => {
+    if (activeTermId) {
+      if (!showHistory) {
+        setSelectedTermId(activeTermId);
+      }
+      if (!newTimetableTermId) {
+        setNewTimetableTermId(activeTermId);
+      }
+    }
+  }, [activeTermId, showHistory, newTimetableTermId]);
 
   const { data: sessionsResponse } = useGetSessionsQuery(
     { schoolId: schoolId!, schoolType: currentType || undefined },
@@ -144,10 +161,10 @@ export default function TimetablesPage() {
   const [deletePeriod, { isLoading: isDeleting }] = useDeleteTimetablePeriodMutation();
   const [deleteTimetable, { isLoading: isDeletingTimetable }] = useDeleteTimetableForClassMutation();
   const [createMasterSchedule, { isLoading: isCreatingMaster }] = useCreateMasterScheduleMutation();
-  
+
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ classId: string; className: string; termId: string } | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  
+
   // SECONDARY-specific state for teacher assignment
   const [teacherSelectionState, setTeacherSelectionState] = useState<TeacherSelectionState | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -165,16 +182,13 @@ export default function TimetablesPage() {
   // Get all terms from sessions - filtered by current school type and deduplicated
   const allTerms = useMemo(() => {
     if (!sessionsResponse?.data) return [];
-    
+
     // IMPORTANT: Only show sessions that match the current school type
     // Each school type (PRIMARY, SECONDARY, TERTIARY) has its own independent sessions
     const filteredSessions = sessionsResponse.data.filter((session) => {
-      // If no current type selected, show sessions without a school type (legacy)
-      if (!currentType) return !session.schoolType;
-      // Otherwise, only show sessions for the current school type
-      return session.schoolType === currentType;
+      return session.schoolType === (currentType || null);
     });
-    
+
     // Deduplicate sessions by name (keep first/latest)
     const uniqueSessionsMap = new Map<string, typeof filteredSessions[0]>();
     filteredSessions.forEach((session) => {
@@ -184,7 +198,7 @@ export default function TimetablesPage() {
       }
     });
     const uniqueSessions = Array.from(uniqueSessionsMap.values());
-    
+
     // Map terms with session info
     return uniqueSessions.flatMap((session) =>
       session.terms.map((term) => ({
@@ -200,16 +214,10 @@ export default function TimetablesPage() {
     });
   }, [sessionsResponse, currentType]);
 
-  // Auto-select active term if available, reset when school type changes
+  // Reset selected class when school type changes
   useEffect(() => {
-    if (activeSessionResponse?.data?.term?.id) {
-      setSelectedTermId(activeSessionResponse.data.term.id);
-    } else {
-      setSelectedTermId('');
-    }
-    // Also reset selected class when school type changes
     setSelectedClassId('');
-  }, [activeSessionResponse, currentType]);
+  }, [currentType]);
 
   const handleCreateTimetable = async () => {
     if (!schoolId || !newTimetableClassId || !newTimetableTermId) {
@@ -241,23 +249,24 @@ export default function TimetablesPage() {
     const hasClassArmId = selectedClass?.classArmId;
 
     try {
-      // Create master schedule for the selected class
-      // Note: We'll need to update createMasterSchedule to support classId
-      // For now, we'll create periods directly
-      for (const periodDef of periods) {
-        await createPeriod({
-          schoolId,
-          data: {
-            ...periodDef,
-            // Use classArmId if the class has one (ClassArm-based), otherwise use classId
-            ...(hasClassArmId 
-              ? { classArmId: newTimetableClassId }
-              : { classId: newTimetableClassId }
-            ),
-            termId: newTimetableTermId,
-          },
-        }).unwrap();
-      }
+      // Create master schedule for the selected class in a single request
+      await createMasterSchedule({
+        schoolId,
+        data: {
+          termId: newTimetableTermId,
+          // Use classArmId if the class has one (ClassArm-based), otherwise use classId
+          ...(hasClassArmId
+            ? { classArmId: newTimetableClassId }
+            : { classId: newTimetableClassId }
+          ),
+          periods: periods.map(p => ({
+            dayOfWeek: p.dayOfWeek,
+            startTime: p.startTime,
+            endTime: p.endTime,
+            type: p.type as any,
+          })),
+        },
+      }).unwrap();
 
       toast.success('Timetable created successfully');
       setShowCreateModal(false);
@@ -282,20 +291,20 @@ export default function TimetablesPage() {
         // For Free Period, explicitly pass null to clear the subject/course
         // undefined means "don't change", null means "clear it"
         const isFreeperiod = subjectId === undefined && courseId === undefined;
-        
+
         await updatePeriod({
           schoolId,
           periodId: slot.periodData.id,
           data: {
-            subjectId: currentType !== 'TERTIARY' 
-              ? (isFreeperiod ? null : subjectId) 
+            subjectId: currentType !== 'TERTIARY'
+              ? (isFreeperiod ? null : subjectId)
               : undefined,
-            courseId: currentType === 'TERTIARY' 
-              ? (isFreeperiod ? null : courseId) 
+            courseId: currentType === 'TERTIARY'
+              ? (isFreeperiod ? null : courseId)
               : undefined,
             // For SECONDARY, use the provided teacherId; otherwise keep existing
-            teacherId: currentType === 'SECONDARY' 
-              ? (teacherId || undefined) 
+            teacherId: currentType === 'SECONDARY'
+              ? (teacherId || undefined)
               : (slot.periodData.teacherId || undefined),
             roomId: slot.periodData.roomId || undefined,
             startTime: slot.periodData.startTime,
@@ -306,7 +315,7 @@ export default function TimetablesPage() {
       } else {
         // Check if the selected class has a classArmId (ClassArm-based class)
         const hasClassArmId = selectedClass?.classArmId;
-        
+
         await createPeriod({
           schoolId,
           data: {
@@ -319,7 +328,7 @@ export default function TimetablesPage() {
             // Include teacherId for SECONDARY schools
             teacherId: currentType === 'SECONDARY' ? teacherId : undefined,
             // Use classArmId if the class has one, otherwise use classId
-            ...(hasClassArmId 
+            ...(hasClassArmId
               ? { classArmId: selectedClassId }
               : { classId: selectedClassId }
             ),
@@ -373,16 +382,16 @@ export default function TimetablesPage() {
 
       let createdCount = 0;
       let updatedCount = 0;
-      
+
       for (const period of generatedPeriods) {
         const key = `${period.dayOfWeek}-${period.startTime}-${period.endTime}`;
         const existingPeriod = existingMap.get(key);
-        
+
         if (existingPeriod) {
           // Period exists - check if we need to update it
           const existingHasSubject = existingPeriod.subjectId || existingPeriod.courseId;
           const newHasSubject = period.subjectId || period.courseId;
-          
+
           // Only update if:
           // 1. Existing period has no subject (is a free period) AND new period has a subject
           // 2. Or it's a break/lunch/assembly type update
@@ -402,7 +411,7 @@ export default function TimetablesPage() {
           // Period doesn't exist - create new one
           // Check if the selected class has a classArmId (ClassArm-based class)
           const hasClassArmId = selectedClass?.classArmId;
-          
+
           await createPeriod({
             schoolId,
             data: {
@@ -413,7 +422,7 @@ export default function TimetablesPage() {
               subjectId: currentType !== 'TERTIARY' ? period.subjectId : undefined,
               courseId: currentType === 'TERTIARY' ? period.courseId : undefined,
               // Use classArmId if the class has one, otherwise use classId
-              ...(hasClassArmId 
+              ...(hasClassArmId
                 ? { classArmId: selectedClassId }
                 : { classId: selectedClassId }
               ),
@@ -466,18 +475,18 @@ export default function TimetablesPage() {
    */
   const handleTeacherSelect = useCallback(async (teacherId: string, applyToAllSubjectPeriods: boolean) => {
     if (!teacherSelectionState || !schoolId) return;
-    
+
     const { slot, subject } = teacherSelectionState;
-    
+
     // Close popup first
     setTeacherSelectionState(null);
-    
+
     if (applyToAllSubjectPeriods) {
       // Apply teacher to ALL periods of this subject in the timetable
       const periodsToUpdate = timetable.filter(
         (period) => period.subjectId === subject.id && period.teacherId !== teacherId
       );
-      
+
       if (periodsToUpdate.length === 0) {
         // Only the current period needs updating
         await handlePeriodUpdate(slot, subject.id, undefined, teacherId);
@@ -496,12 +505,12 @@ export default function TimetablesPage() {
             console.error(`Failed to update period ${period.id}:`, error);
           }
         }
-        
+
         // Also update the current slot if it's new (no periodId)
         if (!slot.periodData?.id) {
           await handlePeriodUpdate(slot, subject.id, undefined, teacherId);
         }
-        
+
         toast.success(`Assigned teacher to ${updatedCount + 1} ${subject.name} periods`);
         await refetchTimetable();
       }
@@ -509,7 +518,7 @@ export default function TimetablesPage() {
       // Apply only to this period
       await handlePeriodUpdate(slot, subject.id, undefined, teacherId);
     }
-    
+
     // Refetch subjects to update teacher workload counts
     if (currentType === 'SECONDARY') {
       refetchSubjects();
@@ -521,7 +530,7 @@ export default function TimetablesPage() {
    */
   const handleEditPeriodTeacher = useCallback((period: TimetablePeriod, teachers: TeacherWithWorkload[]) => {
     if (!period.subjectId || !period.subjectName) return;
-    
+
     // Create a "slot" from the period for reusing the teacher selection popup
     const slot: TimetableSlot = {
       dayOfWeek: period.dayOfWeek,
@@ -532,7 +541,7 @@ export default function TimetablesPage() {
       },
       periodData: period,
     };
-    
+
     setTeacherSelectionState({
       slot,
       subject: { id: period.subjectId, name: period.subjectName },
@@ -559,9 +568,9 @@ export default function TimetablesPage() {
    */
   const handleApplyPreview = useCallback(async (periods: GeneratedPeriodWithTeacher[]) => {
     if (!schoolId || !selectedClassId || !selectedTermId) return;
-    
+
     setIsApplyingPreview(true);
-    
+
     try {
       const existingMap = new Map<string, TimetablePeriod>();
       timetable.forEach((period) => {
@@ -571,21 +580,21 @@ export default function TimetablesPage() {
 
       let createdCount = 0;
       let updatedCount = 0;
-      
+
       // Get selected class to check if it has classArmId
       const currentSelectedClass = classes.find((c) => c.id === selectedClassId);
       const hasClassArmId = currentSelectedClass?.classArmId;
-      
+
       for (const period of periods) {
         if (period.type !== 'LESSON') continue;
-        
+
         const key = `${period.dayOfWeek}-${period.startTime}-${period.endTime}`;
         const existingPeriod = existingMap.get(key);
-        
+
         if (existingPeriod) {
           const existingHasSubject = existingPeriod.subjectId || existingPeriod.courseId;
           const newHasSubject = period.subjectId || period.courseId;
-          
+
           // Only update if existing is empty or we have new data
           if (!existingHasSubject && newHasSubject) {
             await updatePeriod({
@@ -609,7 +618,7 @@ export default function TimetablesPage() {
               type: period.type as PeriodType,
               subjectId: period.subjectId,
               teacherId: period.teacherId,
-              ...(hasClassArmId 
+              ...(hasClassArmId
                 ? { classArmId: selectedClassId }
                 : { classId: selectedClassId }
               ),
@@ -626,7 +635,7 @@ export default function TimetablesPage() {
       } else {
         toast.success('Timetable is already up to date!');
       }
-      
+
       await refetchTimetable();
       refetchTimetables();
       setShowPreviewModal(false);
@@ -646,8 +655,8 @@ export default function TimetablesPage() {
   ]);
 
   // Use enhanced auto-generate hook for SECONDARY
-  const { 
-    generateTimetable: generateWithTeachers, 
+  const {
+    generateTimetable: generateWithTeachers,
     analyzeGeneration,
     subjectsWithoutTeachers,
     requiresTeacherAssignment,
@@ -722,7 +731,7 @@ export default function TimetablesPage() {
           // Create new period
           // Check if the selected class has a classArmId (ClassArm-based class)
           const hasClassArmId = selectedClass?.classArmId;
-          
+
           await createPeriod({
             schoolId,
             data: {
@@ -733,7 +742,7 @@ export default function TimetablesPage() {
               subjectId: currentType !== 'TERTIARY' ? period.subjectId : undefined,
               courseId: currentType === 'TERTIARY' ? period.courseId : undefined,
               // Use classArmId if the class has one, otherwise use classId
-              ...(hasClassArmId 
+              ...(hasClassArmId
                 ? { classArmId: selectedClassId }
                 : { classId: selectedClassId }
               ),
@@ -771,123 +780,143 @@ export default function TimetablesPage() {
     <ProtectedRoute roles={['SCHOOL_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-                Timetables
-              </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
-                Manage class schedules and timetables for {currentType || 'all school types'}
-              </p>
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col w-full md:w-auto">
+                <div className="flex items-center justify-between w-full">
+                  <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                    Timetables
+                  </h1>
+                </div>
+                <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+                  Manage class schedules and timetables for {currentType || 'your school'}
+                </p>
+              </div>
+              <div className="flex flex-row items-center gap-3 w-full md:w-auto md:justify-end">
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className={`flex-1 sm:w-auto h-9 text-[10px] sm:text-xs ${showHistory ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : ''}`}
+                >
+                  <Clock className="h-4 w-4 mr-1 sm:mr-2" />
+                  {showHistory ? 'Current Term' : 'History'}
+                </Button>
+                <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                  <Button
+                    variant="primary"
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex-1 sm:w-auto h-9 text-[10px] sm:text-xs"
+                  >
+                    <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Create Timetable</span>
+                    <span className="sm:hidden">Create</span>
+                  </Button>
+                </PermissionGate>
+              </div>
             </div>
-            <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
-              <Button
-                variant="primary"
-                onClick={() => setShowCreateModal(true)}
-                size="sm"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Timetable
-              </Button>
-            </PermissionGate>
-          </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Timetables List */}
         {selectedTermId ? (
           <>
-            <div className="flex justify-end mb-4">
-              <Select
-                value={selectedTermId}
-                onChange={(e) => setSelectedTermId(e.target.value)}
-                inline
-                wrapperClassName="w-auto min-w-[300px]"
-                leftIcon={<Calendar className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />}
-              >
-                <option value="">Select Term...</option>
-                {allTerms.map((term) => (
-                  <option key={term.id} value={term.id}>
-                    {term.sessionName} - {term.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {classesWithTimetables.map((cls) => {
-              const classTimetable = timetablesByClass[cls.id] || [];
-              return (
-                <Card
-                  key={cls.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => {
-                    // Toggle: if already selected, deselect it
-                    if (selectedClassId === cls.id) {
-                      setSelectedClassId('');
-                    } else {
-                      setSelectedClassId(cls.id);
-                      if (!selectedTermId && activeSessionResponse?.data?.term?.id) {
-                        setSelectedTermId(activeSessionResponse.data.term.id);
-                      }
-                    }
-                  }}
+            {showHistory && (
+              <div className="flex justify-end mb-4">
+                <Select
+                  value={selectedTermId}
+                  onChange={(e) => setSelectedTermId(e.target.value)}
+                  inline
+                  wrapperClassName="w-auto min-w-[300px]"
+                  leftIcon={<Calendar className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />}
                 >
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>{cls.name}</CardTitle>
-                      <BookOpen className="h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
-                        <Clock className="h-4 w-4 mr-2" />
-                        {classTimetable.length} periods
+                  <option value="">Select Term...</option>
+                  {allTerms.map((term) => (
+                    <option key={term.id} value={term.id}>
+                      {term.sessionName} - {term.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {classesWithTimetables.map((cls) => {
+                const classTimetable = timetablesByClass[cls.id] || [];
+                return (
+                  <Card
+                    key={cls.id}
+                    className={`cursor-pointer transition-all duration-200 ${selectedClassId === cls.id
+                        ? 'ring-2 ring-blue-600 shadow-md bg-blue-50/30 dark:bg-blue-900/10'
+                        : 'hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800'
+                      }`}
+                    onClick={() => {
+                      // Toggle: if already selected, deselect it
+                      if (selectedClassId === cls.id) {
+                        setSelectedClassId('');
+                      } else {
+                        setSelectedClassId(cls.id);
+                        if (!selectedTermId && activeSessionResponse?.data?.term?.id) {
+                          setSelectedTermId(activeSessionResponse.data.term.id);
+                        }
+                      }
+                    }}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>{cls.name}</CardTitle>
+                        {selectedClassId === cls.id ? (
+                          <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        ) : (
+                          <BookOpen className="h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-small)' }}>
-                        <MousePointerClick className="h-3.5 w-3.5" />
-                        <span>Click to expand timetable</span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
+                          <Clock className="h-4 w-4 mr-2" />
+                          {classTimetable.length} periods
+                        </div>
+                        <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-small)' }}>
+                          <MousePointerClick className="h-3.5 w-3.5" />
+                          <span>Click to expand timetable</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedClassId(cls.id);
+                              if (!selectedTermId && activeSessionResponse?.data?.term?.id) {
+                                setSelectedTermId(activeSessionResponse.data.term.id);
+                              }
+                            }}
+                          >
+                            View Timetable
+                          </Button>
+                          <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteConfirmModal({
+                                  classId: cls.id,
+                                  className: cls.name,
+                                  termId: selectedTermId,
+                                });
+                              }}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGate>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedClassId(cls.id);
-                            if (!selectedTermId && activeSessionResponse?.data?.term?.id) {
-                              setSelectedTermId(activeSessionResponse.data.term.id);
-                            }
-                          }}
-                        >
-                          View Timetable
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteConfirmModal({
-                              classId: cls.id,
-                              className: cls.name,
-                              termId: selectedTermId,
-                            });
-                          }}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </>
         ) : (
           <Card>
@@ -908,7 +937,7 @@ export default function TimetablesPage() {
               </Select>
             </div>
             <CardContent className="py-12 text-center pt-4">
-              <Calendar className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+              <EmptyStateIcon type="statistics" />
               <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4" style={{ fontSize: 'var(--text-body)' }}>
                 Please select a term from the top right to view timetables
               </p>
@@ -925,29 +954,31 @@ export default function TimetablesPage() {
                   Timetable for {selectedClass?.name}
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setIsEditMode(true)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Timetable
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setDeleteConfirmModal({
-                        classId: selectedClassId,
-                        className: selectedClass?.name || '',
-                        termId: selectedTermId,
-                      });
-                    }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Timetable
-                  </Button>
+                  <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => setIsEditMode(true)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Timetable
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDeleteConfirmModal({
+                          classId: selectedClassId,
+                          className: selectedClass?.name || '',
+                          termId: selectedTermId,
+                        });
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Timetable
+                    </Button>
+                  </PermissionGate>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -968,7 +999,7 @@ export default function TimetablesPage() {
                 </div>
               ) : timetable.length === 0 ? (
                 <div className="py-12 text-center">
-                  <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                  <EmptyStateIcon type="statistics" />
                   <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4" style={{ fontSize: 'var(--text-body)' }}>
                     No timetable periods found for {selectedClass?.name}.
                   </p>
@@ -1000,8 +1031,8 @@ export default function TimetablesPage() {
                           <p className="text-amber-700 dark:text-amber-400 mt-1" style={{ fontSize: 'var(--text-small)' }}>
                             {subjectsWithoutTeachers.map(s => s.name).join(', ')}
                           </p>
-                          <Link 
-                            href="/dashboard/school/subjects" 
+                          <Link
+                            href="/dashboard/school/subjects"
                             className="text-amber-700 dark:text-amber-400 underline hover:no-underline mt-1 inline-block"
                             style={{ fontSize: 'var(--text-small)' }}
                           >
@@ -1011,7 +1042,7 @@ export default function TimetablesPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   <TimetableBuilder
                     schoolType={currentType}
                     subjects={subjects.map((s) => ({ id: s.id, name: s.name, code: s.code, type: 'subject' as const }))}
@@ -1054,11 +1085,7 @@ export default function TimetablesPage() {
         {/* Create Timetable Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4"
-            >
+            <FadeInUp from={{ opacity: 0, scale: 0.95 }} to={{ opacity: 1, scale: 1 }} duration={0.25} className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-md w-full mx-4">
               <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-4" style={{ fontSize: 'var(--text-section-title)' }}>
                 Create New Timetable
               </p>
@@ -1106,14 +1133,14 @@ export default function TimetablesPage() {
                   </div>
                 )}
 
-                {/* Terms Selection */}
-                {allTerms.length === 0 ? (
+                {/* Terms Selection - Now auto-selected and hidden */}
+                {allTerms.length === 0 || !activeTermId ? (
                   <div className="p-4 border border-blue-500/30 dark:border-blue-500/30 rounded-lg bg-blue-50/50 dark:bg-blue-900/10">
                     <div className="flex items-start gap-3">
                       <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="font-medium text-blue-800 dark:text-blue-300 mb-1" style={{ fontSize: 'var(--text-body)' }}>
-                          No Terms Available
+                          No Active Term Available
                         </p>
                         <p className="text-blue-700 dark:text-blue-400 mb-3" style={{ fontSize: 'var(--text-small)' }}>
                           You need to start a session and term before creating a timetable. Please go to your school overview to manage sessions.
@@ -1132,20 +1159,20 @@ export default function TimetablesPage() {
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <Select
-                      label="Select Term"
-                      value={newTimetableTermId}
-                      onChange={(e) => setNewTimetableTermId(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a term...</option>
-                      {allTerms.map((term) => (
-                        <option key={term.id} value={term.id}>
-                          {term.sessionName} - {term.name}
-                        </option>
-                      ))}
-                    </Select>
+                  <div className="p-4 border border-blue-100 dark:border-blue-900/30 rounded-lg bg-blue-50/30 dark:bg-blue-900/5">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                        <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary font-medium uppercase tracking-wider">
+                          Current Term
+                        </p>
+                        <p className="font-semibold text-blue-700 dark:text-blue-300">
+                          {allTerms.find(t => t.id === activeTermId)?.sessionName} - {allTerms.find(t => t.id === activeTermId)?.name}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1173,7 +1200,7 @@ export default function TimetablesPage() {
                   </Button>
                 </div>
               </div>
-            </motion.div>
+            </FadeInUp>
           </div>
         )}
 

@@ -93,11 +93,7 @@ export default function StudentTransfersPage() {
     <ProtectedRoute roles={['STUDENT']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <div>
             <h1 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
               Transfer History
@@ -106,7 +102,7 @@ export default function StudentTransfersPage() {
               View your transfer requests and history across all schools
             </p>
           </div>
-        </motion.div>
+        </FadeInUp>
 
         {/* Status Filter */}
         <Card className="mb-6">
@@ -175,12 +171,7 @@ export default function StudentTransfersPage() {
               const isTacUsed = !!transfer.tacUsedAt;
 
               return (
-                <motion.div
-                  key={transfer.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
+                <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                   <Card>
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -202,7 +193,7 @@ export default function StudentTransfersPage() {
                           {/* School Transfer Path */}
                           <div className="flex items-center gap-4 mb-4">
                             <div className="flex items-center gap-2">
-                              <School className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              <School className="h-5 w-5 text-black dark:text-white" />
                               <div>
                                 <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                   From
@@ -214,7 +205,7 @@ export default function StudentTransfersPage() {
                             </div>
                             <ArrowRight className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary" />
                             <div className="flex items-center gap-2">
-                              <School className="h-5 w-5 text-green-600 dark:text-green-400" />
+                              <School className="h-5 w-5 text-black dark:text-white" />
                               <div>
                                 <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                   To
@@ -228,7 +219,7 @@ export default function StudentTransfersPage() {
 
                           {/* TAC Section */}
                           {transfer.tac && (
-                            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <div className="mb-4 p-3 bg-white dark:bg-dark-surface rounded-lg border border-light-border dark:border-dark-border">
                               <div className="flex items-center justify-between">
                                 <div>
                                   <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary mb-1">
@@ -334,7 +325,7 @@ export default function StudentTransfersPage() {
                       </div>
                     </CardHeader>
                   </Card>
-                </motion.div>
+                </FadeInUp>
               );
             })}
           </div>

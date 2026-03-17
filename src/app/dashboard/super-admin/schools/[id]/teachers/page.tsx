@@ -73,11 +73,7 @@ export default function AllTeachersPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
         {/* Header with Back Button */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -93,7 +89,7 @@ export default function AllTeachersPage() {
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Complete list of all teachers in this school
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Teachers List */}
         <Card>
@@ -113,13 +109,7 @@ export default function AllTeachersPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {teachers.map((teacher, index) => (
-                <motion.div
-                  key={teacher.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface/80 transition-colors"
-                >
+                <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface/80 transition-colors">
                   <h4 className="font-semibold text-light-text-primary dark:text-dark-text-primary">
                     {teacher.firstName} {teacher.lastName}
                     {teacher.isTemporary && (
@@ -164,7 +154,7 @@ export default function AllTeachersPage() {
                       </span>
                     </div>
                   )}
-                </motion.div>
+                </FadeInUp>
                 ))}
               </div>
             )}

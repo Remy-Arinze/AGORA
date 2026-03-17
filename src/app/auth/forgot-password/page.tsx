@@ -72,12 +72,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
+    <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+      <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="w-full max-w-md">
         {/* Agora Logo */}
         <div className="flex items-center justify-center mb-8">
           <Link href="/" className="flex items-center">
@@ -86,7 +82,15 @@ export default function ForgotPasswordPage() {
               alt="Agora"
               width={180}
               height={48}
-              className="h-12 w-auto"
+              className="h-12 w-auto block dark:hidden"
+              priority
+            />
+            <Image
+              src="/assets/logos/agora_worded_white.png"
+              alt="Agora"
+              width={180}
+              height={48}
+              className="h-12 w-auto hidden dark:block"
               priority
             />
           </Link>
@@ -113,11 +117,11 @@ export default function ForgotPasswordPage() {
                   <div>
                     <p className="font-semibold mb-2">Password reset email sent!</p>
                     <p className="text-sm">
-                      If an account exists with this email, a password reset link has been sent. 
+                      If an account exists with this email, a password reset link has been sent.
                       Please check your inbox (and spam folder) and follow the instructions.
                     </p>
                     <p className="text-sm mt-2 text-light-text-secondary dark:text-dark-text-secondary">
-                      <strong>Note:</strong> If you have accounts at multiple schools, the email will 
+                      <strong>Note:</strong> If you have accounts at multiple schools, the email will
                       include all your schools and Public IDs. You can log in with your email or any Public ID.
                     </p>
                   </div>
@@ -188,7 +192,7 @@ export default function ForgotPasswordPage() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </FadeInUp>
     </div>
   );
 }

@@ -9,6 +9,7 @@ export interface SchoolAdmin {
   email: string | null;
   phone: string;
   role: string;
+  schoolType?: string | null;
   accountStatus?: 'SHADOW' | 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
   userId?: string;
   createdAt: string;
@@ -57,6 +58,9 @@ export interface School {
   admins: SchoolAdmin[];
   teachers: Teacher[];
   teachersCount: number;
+  registrationStatus?: 'UNAPPROVED' | 'VERIFIED' | 'REJECTED' | 'PENDING';
+  registrationNote?: string;
+  rejectionReason?: string;
   studentsCount?: number;
   schoolType?: SchoolTypeContext;
   // Current admin info for permission checks (set on getMySchool)
@@ -81,7 +85,7 @@ export interface CreateSchoolDto {
     secondary?: boolean;
     tertiary?: boolean;
   };
-  principal?: {
+  owner: {
     firstName: string;
     lastName: string;
     email: string;
@@ -112,6 +116,7 @@ export interface AddAdminDto {
   role: string;
   employeeId?: string;
   profileImage?: string;
+  schoolType?: string;
   /**
    * Optional custom permissions to assign during creation.
    * If not provided, default READ permissions for all resources will be assigned.
@@ -155,6 +160,7 @@ export interface ResponseDto<T> {
   message: string;
   data: T;
   timestamp?: string;
+  warnings?: string[];
 }
 
 // Pagination types
@@ -177,6 +183,7 @@ export interface PaginatedResponse<T> {
 
 // RTK Query endpoints for schools
 export const schoolsApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     // Get all schools with pagination
     getSchools: builder.query<ResponseDto<PaginatedResponse<School>>, PaginationParams | void>({
@@ -198,6 +205,70 @@ export const schoolsApi = apiSlice.injectEndpoints({
     getSchool: builder.query<ResponseDto<School>, string>({
       query: (id) => `/schools/${id}`,
       providesTags: (result, error, id) => [{ type: 'School', id }],
+    }),
+
+    // Get pending schools
+    getPendingSchools: builder.query<ResponseDto<School[]>, void>({
+      query: () => '/schools/pending',
+      providesTags: ['School'],
+    }),
+
+    // Verify school
+    verifySchool: builder.mutation<ResponseDto<School>, string>({
+      query: (id) => ({
+        url: `/schools/${id}/verify`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Reject school
+    rejectSchool: builder.mutation<ResponseDto<School>, { id: string; reason: string }>({
+      query: ({ id, reason }) => ({
+        url: `/schools/${id}/reject`,
+        method: 'PATCH',
+        body: { reason },
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Activate school
+    activateSchool: builder.mutation<ResponseDto<School>, string>({
+      query: (id) => ({
+        url: `/schools/${id}/activate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Deactivate school
+    deactivateSchool: builder.mutation<ResponseDto<School>, string>({
+      query: (id) => ({
+        url: `/schools/${id}/deactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'School', id },
+        'School',
+      ],
+    }),
+
+    // Delete school
+    deleteSchool: builder.mutation<ResponseDto<void>, string>({
+      query: (id) => ({
+        url: `/schools/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['School'],
     }),
 
     // Create school
@@ -357,16 +428,16 @@ export const schoolsApi = apiSlice.injectEndpoints({
       queryFn: async ({ schoolId, teacherId, file }, _api, _extraOptions) => {
         const formData = new FormData();
         formData.append('image', file);
-        
+
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/schools/${schoolId}/teachers/${teacherId}/image`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
@@ -374,18 +445,18 @@ export const schoolsApi = apiSlice.injectEndpoints({
         if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
           headers['x-tenant-id'] = tenantId;
         }
-        
+
         const response = await fetch(url, {
           method: 'POST',
           headers,
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ message: 'Upload failed' }));
           return { error: { status: response.status, data: error } };
         }
-        
+
         const data = await response.json();
         return { data };
       },
@@ -400,16 +471,16 @@ export const schoolsApi = apiSlice.injectEndpoints({
       queryFn: async ({ schoolId, adminId, file }, _api, _extraOptions) => {
         const formData = new FormData();
         formData.append('image', file);
-        
+
         const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
         const token = state?.auth?.accessToken || state?.auth?.token;
-        
+
         const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
-        
+
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
         const url = `${baseUrl}/schools/${schoolId}/admins/${adminId}/image`;
-        
+
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
@@ -417,18 +488,18 @@ export const schoolsApi = apiSlice.injectEndpoints({
         if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
           headers['x-tenant-id'] = tenantId;
         }
-        
+
         const response = await fetch(url, {
           method: 'POST',
           headers,
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ message: 'Upload failed' }));
           return { error: { status: response.status, data: error } };
         }
-        
+
         const data = await response.json();
         return { data };
       },
@@ -443,6 +514,12 @@ export const schoolsApi = apiSlice.injectEndpoints({
 export const {
   useGetSchoolsQuery,
   useGetSchoolQuery,
+  useGetPendingSchoolsQuery,
+  useVerifySchoolMutation,
+  useRejectSchoolMutation,
+  useActivateSchoolMutation,
+  useDeactivateSchoolMutation,
+  useDeleteSchoolMutation,
   useCreateSchoolMutation,
   useUpdateSchoolMutation,
   useAddAdminMutation,

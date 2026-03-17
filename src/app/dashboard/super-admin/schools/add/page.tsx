@@ -12,6 +12,7 @@ import { FadeInUp } from '@/components/ui/FadeInUp';
 import { ArrowLeft, Building2, UserPlus, X, User, GraduationCap } from 'lucide-react';
 import { useCreateSchool, useUpdateSchool, useSchool } from '@/hooks/useSchools';
 import { createSchoolFormSchema } from '@/lib/validations/school-forms';
+import { CountrySelector } from '@/components/ui';
 
 type AdminRole = 'PRINCIPAL' | 'BURSAR' | 'GUIDANCE_COUNSELOR' | 'VICE_PRINCIPAL' | 'ADMINISTRATOR';
 
@@ -26,7 +27,7 @@ interface AdminForm {
 export default function AddSchoolPage() {
   const router = useRouter();
   const params = useParams();
-  
+
   // Extract schoolId from params - this should be the database ID, not subdomain
   const schoolId = params?.id as string | undefined;
   const isEditMode = !!schoolId;
@@ -34,7 +35,7 @@ export default function AddSchoolPage() {
   const { createSchool, isLoading: isCreating } = useCreateSchool();
   const { updateSchool, isLoading: isUpdating } = useUpdateSchool();
   const { school, isLoading: isLoadingSchool } = useSchool(isEditMode ? schoolId : null);
-  
+
   // Debug log to verify params
   useEffect(() => {
     if (isEditMode && typeof window !== 'undefined') {
@@ -66,8 +67,8 @@ export default function AddSchoolPage() {
     secondary: false,
     tertiary: false,
   });
-  
-  const [principal, setPrincipal] = useState({
+
+  const [owner, setOwner] = useState({
     firstName: '',
     lastName: '',
     email: '',
@@ -90,9 +91,9 @@ export default function AddSchoolPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePrincipalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOwnerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPrincipal((prev) => ({ ...prev, [name]: value }));
+    setOwner((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleNewAdminChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -106,8 +107,8 @@ export default function AddSchoolPage() {
       return;
     }
 
-    // Check if email already exists in admins or principal
-    if (admins.some(a => a.email === newAdmin.email) || principal.email === newAdmin.email) {
+    // Check if email already exists in admins or owner
+    if (admins.some(a => a.email === newAdmin.email) || owner.email === newAdmin.email) {
       toast.error('This email is already added');
       return;
     }
@@ -158,7 +159,7 @@ export default function AddSchoolPage() {
       const formDataForValidation = {
         ...formData,
         levels: schoolLevels,
-        principal: principal.firstName && principal.lastName && principal.email && principal.phone ? principal : undefined,
+        owner: owner.firstName && owner.lastName && owner.email && owner.phone ? owner : undefined,
         admins: admins.length > 0 ? admins : undefined,
       };
 
@@ -184,8 +185,8 @@ export default function AddSchoolPage() {
           return;
         }
         console.log('Updating school with ID:', school.id, 'URL param was:', schoolId);
-        // Remove principal and admins for update
-        const { principal: _, admins: __, ...updateData } = requestBody;
+        // Remove owner and admins for update
+        const { owner: _, admins: __, ...updateData } = requestBody;
         await updateSchool(school.id, updateData);
       } else {
         // Use the hook - it handles navigation and toast notifications
@@ -237,11 +238,7 @@ export default function AddSchoolPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -255,12 +252,12 @@ export default function AddSchoolPage() {
             {isEditMode ? 'Edit School' : 'Add New School'}
           </h1>
           <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
-            {isEditMode 
+            {isEditMode
               ? 'Update school information and institution levels'
-              : 'Create a new school and optionally assign a principal and administrators'
+              : 'Create a new school and assign a school owner'
             }
           </p>
-        </motion.div>
+        </FadeInUp>
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
@@ -339,15 +336,12 @@ export default function AddSchoolPage() {
                       placeholder="Enter state"
                     />
                   </div>
-                  <div>
-                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                      Country
-                    </label>
-                    <Input
-                      name="country"
+                  <div className="md:col-span-1">
+                    <CountrySelector
+                      label="Country"
                       value={formData.country}
-                      onChange={handleChange}
-                      placeholder="Enter country"
+                      onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                      placeholder="Select country"
                     />
                   </div>
                   <div>
@@ -374,7 +368,7 @@ export default function AddSchoolPage() {
                       placeholder="info@school.com"
                     />
                     <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-1.5">
-                      The school contact email will receive a &quot;School Owner&quot; account with full administrative access and a password setup email
+                      The school contact email is for official correspondence.
                     </p>
                   </div>
                 </div>
@@ -452,226 +446,230 @@ export default function AddSchoolPage() {
               </CardContent>
             </Card>
 
-            {/* Principal Information - Only show when creating */}
+            {/* Owner Information - Only show when creating */}
             {!isEditMode && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                    Principal Information (Optional)
+                    School Owner Information *
                   </CardTitle>
                   <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-1">
-                    You can add a principal now or add one later from the school detail page
+                    This account will have full administrative access for the school
                   </p>
                 </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                      First Name
-                    </label>
-                    <Input
-                      name="firstName"
-                      value={principal.firstName}
-                      onChange={handlePrincipalChange}
-                      placeholder="Enter first name"
-                    />
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                        First Name *
+                      </label>
+                      <Input
+                        name="firstName"
+                        value={owner.firstName}
+                        onChange={handleOwnerChange}
+                        required
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                        Last Name *
+                      </label>
+                      <Input
+                        name="lastName"
+                        value={owner.lastName}
+                        onChange={handleOwnerChange}
+                        required
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                        Email *
+                      </label>
+                      <Input
+                        name="email"
+                        type="email"
+                        value={owner.email}
+                        onChange={handleOwnerChange}
+                        required
+                        placeholder="owner@school.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                        Phone *
+                      </label>
+                      <Input
+                        name="phone"
+                        type="tel"
+                        value={owner.phone}
+                        onChange={handleOwnerChange}
+                        required
+                        placeholder="+234 801 234 5678"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                      Last Name
-                    </label>
-                    <Input
-                      name="lastName"
-                      value={principal.lastName}
-                      onChange={handlePrincipalChange}
-                      placeholder="Enter last name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                      Email
-                    </label>
-                    <Input
-                      name="email"
-                      type="email"
-                      value={principal.email}
-                      onChange={handlePrincipalChange}
-                      placeholder="principal@school.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                      Phone
-                    </label>
-                    <Input
-                      name="phone"
-                      type="tel"
-                      value={principal.phone}
-                      onChange={handlePrincipalChange}
-                      placeholder="+234 801 234 5678"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             )}
 
             {/* Additional Admins - Only show when creating */}
             {!isEditMode && (
               <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                      Additional Administrators (Optional)
-                    </CardTitle>
-                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-1">
-                      Add administrators with specific roles (Bursar, Guidance Counselor, etc.)
-                    </p>
-                  </div>
-                  {!showAddAdmin && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="primary"
-                      onClick={() => setShowAddAdmin(true)}
-                    >
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Add Admin
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Existing Admins */}
-                {admins.length > 0 && (
-                  <div className="space-y-3 mb-4">
-                    {admins.map((admin, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-light-bg dark:bg-dark-surface rounded-lg border border-light-border dark:border-dark-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                          <div>
-                            <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                              {admin.firstName} {admin.lastName}
-                            </p>
-                            <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
-                              {admin.email} • {admin.role.replace('_', ' ')}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeAdmin(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Add Admin Form */}
-                {showAddAdmin && (
-                  <div className="p-4 bg-light-bg dark:bg-dark-surface rounded-lg border border-light-border dark:border-dark-border space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                          First Name *
-                        </label>
-                        <Input
-                          name="firstName"
-                          value={newAdmin.firstName}
-                          onChange={handleNewAdminChange}
-                          placeholder="Enter first name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                          Last Name *
-                        </label>
-                        <Input
-                          name="lastName"
-                          value={newAdmin.lastName}
-                          onChange={handleNewAdminChange}
-                          placeholder="Enter last name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                          Email *
-                        </label>
-                        <Input
-                          name="email"
-                          type="email"
-                          value={newAdmin.email}
-                          onChange={handleNewAdminChange}
-                          placeholder="admin@school.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                          Phone *
-                        </label>
-                        <Input
-                          name="phone"
-                          type="tel"
-                          value={newAdmin.phone}
-                          onChange={handleNewAdminChange}
-                          placeholder="+234 801 234 5678"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                          Role *
-                        </label>
-                        <select
-                          name="role"
-                          value={newAdmin.role}
-                          onChange={handleNewAdminChange}
-                          className="w-full px-3 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                        >
-                          <option value="BURSAR">Bursar</option>
-                          <option value="GUIDANCE_COUNSELOR">Guidance Counselor</option>
-                          <option value="VICE_PRINCIPAL">Vice Principal</option>
-                          <option value="ADMINISTRATOR">Administrator</option>
-                        </select>
-                      </div>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                        Additional Administrators (Optional)
+                      </CardTitle>
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-1">
+                        Add administrators with specific roles (Bursar, Guidance Counselor, etc.)
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {!showAddAdmin && (
                       <Button
                         type="button"
                         size="sm"
-                        onClick={addAdmin}
+                        variant="primary"
+                        onClick={() => setShowAddAdmin(true)}
                       >
+                        <UserPlus className="h-4 w-4 mr-2" />
                         Add Admin
                       </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setShowAddAdmin(false);
-                          setNewAdmin({
-                            firstName: '',
-                            lastName: '',
-                            email: '',
-                            phone: '',
-                            role: 'ADMINISTRATOR',
-                          });
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  {/* Existing Admins */}
+                  {admins.length > 0 && (
+                    <div className="space-y-3 mb-4">
+                      {admins.map((admin, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-light-bg dark:bg-dark-surface rounded-lg border border-light-border dark:border-dark-border"
+                        >
+                          <div className="flex items-center gap-3">
+                            <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <div>
+                              <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                {admin.firstName} {admin.lastName}
+                              </p>
+                              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
+                                {admin.email} • {admin.role.replace('_', ' ')}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAdmin(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Admin Form */}
+                  {showAddAdmin && (
+                    <div className="p-4 bg-light-bg dark:bg-dark-surface rounded-lg border border-light-border dark:border-dark-border space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                            First Name *
+                          </label>
+                          <Input
+                            name="firstName"
+                            value={newAdmin.firstName}
+                            onChange={handleNewAdminChange}
+                            placeholder="Enter first name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                            Last Name *
+                          </label>
+                          <Input
+                            name="lastName"
+                            value={newAdmin.lastName}
+                            onChange={handleNewAdminChange}
+                            placeholder="Enter last name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                            Email *
+                          </label>
+                          <Input
+                            name="email"
+                            type="email"
+                            value={newAdmin.email}
+                            onChange={handleNewAdminChange}
+                            placeholder="admin@school.com"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                            Phone *
+                          </label>
+                          <Input
+                            name="phone"
+                            type="tel"
+                            value={newAdmin.phone}
+                            onChange={handleNewAdminChange}
+                            placeholder="+234 801 234 5678"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
+                            Role *
+                          </label>
+                          <select
+                            name="role"
+                            value={newAdmin.role}
+                            onChange={handleNewAdminChange}
+                            className="w-full px-3 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          >
+                            <option value="BURSAR">Bursar</option>
+                            <option value="GUIDANCE_COUNSELOR">Guidance Counselor</option>
+                            <option value="VICE_PRINCIPAL">Vice Principal</option>
+                            <option value="ADMINISTRATOR">Administrator</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={addAdmin}
+                        >
+                          Add Admin
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setShowAddAdmin(false);
+                            setNewAdmin({
+                              firstName: '',
+                              lastName: '',
+                              email: '',
+                              phone: '',
+                              role: 'ADMINISTRATOR',
+                            });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
 
             {/* Actions */}

@@ -1,67 +1,655 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Montserrat Font Family - Loaded via Google Fonts in layout.tsx */
-/* Using Next.js font optimization, no need for @font-face declarations */
+/* Bricolage Grotesque = headings | Poppins = body & UI */
 
 @layer base {
+
+  /* Hide number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  html {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
   :root {
+    --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+    --font-sans: 'Poppins', system-ui, sans-serif;
     /* Agora Brand Colors */
-    --agora-blue: #2490FD; /* Main accent blue */
-    --agora-success: #36FE96; /* Success/green color */
-    --agora-text: #02173D; /* Primary text color */
-    --agora-accent: #FF532A; /* High-impact orange accent */
-    
+    --agora-blue: #2490FD;
+    /* Main accent blue */
+    --agora-success: #059669;
+    /* emerald-600 for better contrast in light mode */
+    /* Success/green color */
+    --agora-text: #02173D;
+    /* Primary text color */
+    --agora-accent: #FF532A;
+    /* High-impact orange accent */
+
     /* Typography Sizes - Consistent across app */
-    --text-page-title: 1.5rem; /* 24px - Page titles (h1) */
-    --text-page-subtitle: .9rem; /* 16px - Page subtitles */
-    --text-section-title: .9rem; /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
-    --text-card-title: 1rem; /* 18px - Card titles */
-    --text-body: 0.875rem; /* 14px - Body text */
-    --text-small: 0.75rem; /* 12px - Small text */
-    --text-stat-value: 1.5rem; /* 28px - Stat card values */
-    --text-stat-label: 0.875rem; /* 14px - Stat card labels */
-    
+    --text-page-title: 1.2rem;
+    /* 24px - Page titles (h1) */
+    --text-page-subtitle: .8rem;
+    /* 16px - Page subtitles */
+    --text-section-title: .9rem;
+    /* 16px - Section titles (p tags) - smaller than page title, bigger than body */
+    --text-card-title: 1rem;
+    /* 18px - Card titles */
+    --text-body: 0.8rem;
+    /* 12px - Body text */
+    --text-small: 0.75rem;
+    /* 12px - Small text */
+    --text-tiny: 0.7rem;
+    /* 11.2px - Tiny text for tabs/badges */
+    --text-placeholder: var(--text-small);
+    /* Placeholder text - consistent with small */
+    --text-stat-value: 1.2rem;
+    /* 28px - Stat card values */
+    --text-stat-label: 0.785rem;
+    /* 14px - Stat card labels */
+
     /* Component Sizes */
-    --stat-card-padding: .1rem; /* 16px - Reduced Stat card padding */
-    --stat-icon-size: 1rem; /* 20px - Stat card icon size */
-    --card-padding: .1rem; /* 20px - Standard card padding */
-    --card-padding-large: 1.5rem; /* 24px - Large card padding */
-    
+    --stat-card-padding: .1rem;
+    /* 16px - Reduced Stat card padding */
+    --stat-icon-size: 1rem;
+    /* 20px - Stat card icon size */
+    --card-padding: .1rem;
+    /* 20px - Standard card padding */
+    --card-padding-large: 1.2rem;
+    /* 24px - Large card padding */
+
+    /* Light Mode Colors */
+    --light-bg: #ebebeb;
+    --light-card: #dadde2;
+    --light-text-primary: #111827;
+    --light-text-secondary: #4b5563;
+    --light-text-muted: #9ca3af;
+    --light-border: #e5e7eb;
+    --light-hover: #f9fafb;
+
+    /* Map dark variables strictly to light colors by default for light mode scale */
+    --dark-bg: var(--light-bg);
+    --dark-surface: var(--light-card);
+    --dark-border: var(--light-border);
+    --light-input: #ffffff;
+    --dark-input: var(--light-input);
+    --dark-text-primary: var(--light-text-primary);
+    --dark-text-secondary: var(--light-text-secondary);
+    --dark-text-muted: var(--light-text-muted);
+    --dark-hover: var(--light-hover);
+
+    --input-field-bg: var(--light-input);
+    /* Empty avatar/profile image placeholder */
+    --avatar-placeholder-bg: #4b5563;
+    --avatar-placeholder-text: #e5e7eb;
+  }
+
+  .dark {
     /* Dark Mode Colors - PRAX IQ inspired dark theme */
-    --dark-bg: #0B0E11; /* Darker bg */
-    --dark-surface: #11141d; /* Darker card surface */
-    --dark-border: #161b26; /* Darker border */
-    --dark-input: #1a202e; /* Dark bluish grey for inputs */
-    --dark-text-primary: #ffffff; /* White text for better contrast */
-    --dark-text-secondary: #9ca3af; /* Secondary text - grey */
-    --dark-text-muted: #6b7280; /* Muted text */
-    --dark-hover: #1a202e; /* Hover background - subtle grey */
+    --agora-success: #36FE96;
+    /* Neon green for dark mode */
+    --dark-bg: #101011;
+    --dark-surface: #1f1f22;
+    --dark-border: #232327;
+    --dark-input: #2f2f34;
+    --dark-text-primary: #ffffff;
+    --dark-text-secondary: #9ca3af;
+    --dark-text-muted: #6b7280;
+    --dark-hover: #1a202e;
+
+    --input-field-bg: var(--dark-input);
+    --avatar-placeholder-bg: #374151;
+    --avatar-placeholder-text: #d1d5db;
   }
 
   /* Border colors are applied via Tailwind classes, not globally */
 
   body {
-    /* Background is handled by layout.tsx div, not body */
-    color: var(--dark-text-primary);
-    transition: color 200ms;
-    font-family: var(--font-montserrat), system-ui, sans-serif;
+    background-color: var(--light-bg);
+    color: var(--light-text-primary);
+    transition: color 200ms, background-color 200ms;
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading), system-ui, sans-serif;
   }
 
   .dark body {
-    /* Background is handled by layout.tsx div, not body */
+    background-color: var(--dark-bg);
     color: var(--dark-text-primary);
+  }
+
+  /* --- Glassmorphism Overrides for Teacher Dashboard --- */
+  body.teacher-dashboard-active {
+    background-color: #f4f7fa;
+    /* Slightly cleaner light grey-blue */
+  }
+
+  body.teacher-dashboard-active .desktop-sidebar {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+    box-shadow: none !important;
+  }
+
+  /* Solid Mobile Drawer for Teacher & School Admin Light Mode */
+  body.teacher-dashboard-active .mobile-sidebar-drawer,
+  body.school-dashboard-active .mobile-sidebar-drawer {
+    background-color: #f4f7fa !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
+    opacity: 1 !important;
+  }
+
+  /* Sidebar Link Styling for Light Theme Teacher Dashboard */
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-item {
+    font-size: var(--text-body) !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-active {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-active span {
+    color: #0f172a !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-inactive {
+    color: #64748b !important;
+    background-color: transparent !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-inactive:hover {
+    color: #0f172a !important;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  /* Logout & Theme Toggle matching for light mode */
+  body.teacher-dashboard-active:not(.dark) .desktop-sidebar button,
+  body.teacher-dashboard-active:not(.dark) .mobile-sidebar-drawer button {
+    color: #64748b !important;
+    font-size: var(--text-body) !important;
+    font-weight: 500 !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .desktop-sidebar button:hover,
+  body.teacher-dashboard-active:not(.dark) .mobile-sidebar-drawer button:hover {
+    color: #0f172a !important;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  /* Card styling for light mode teacher dashboard - Solid white with soft shadow */
+  body.teacher-dashboard-active:not(.dark) .bg-white\/80 {
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(0, 0, 0, 0.02) !important;
+  }
+
+  .dark body.teacher-dashboard-active {
+    background-color: #000000 !important;
+  }
+
+  .dark body.teacher-dashboard-active .desktop-sidebar,
+  .dark body.teacher-dashboard-active .mobile-sidebar-drawer,
+  .dark body.school-dashboard-active .mobile-sidebar-drawer {
+    background-color: #000000 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid #111111 !important;
+    box-shadow: none !important;
+  }
+
+  /* --- Sidebar Link Overrides for Teacher Dashboard --- */
+  .dark body.teacher-dashboard-active .sidebar-link-item {
+    transition: all 0.2s ease;
+    font-size: var(--text-body) !important;
+    font-weight: normal !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-active {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-inactive,
+  .dark body.teacher-dashboard-active .sidebar-link-inactive svg {
+    color: #6b7280 !important;
+    /* Muted grey for inactive state */
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-inactive:hover {
+    color: #ffffff !important;
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-item span {
+    color: inherit !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-section-title {
+    color: #6b7280 !important;
+    /* var(--dark-text-muted) equivalent for titles */
+    font-size: var(--text-body) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: none !important;
+    margin-bottom: 0.75rem !important;
+    margin-top: 1.5rem !important;
+  }
+
+
+  /* Logout button matching */
+  .dark body.teacher-dashboard-active .desktop-sidebar button,
+  .dark body.teacher-dashboard-active .mobile-sidebar-drawer button {
+    color: #6b7280 !important;
+    font-size: var(--text-body) !important;
+    font-weight: normal !important;
+  }
+
+  .dark body.teacher-dashboard-active .desktop-sidebar button:hover,
+  .dark body.teacher-dashboard-active .mobile-sidebar-drawer button:hover {
+    color: #ffffff !important;
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  /* Mobile Navbar Solid Backgrounds */
+  body.teacher-dashboard-active:not(.dark) .mobile-navbar,
+  body.student-dashboard-active:not(.dark) .mobile-navbar,
+  body.school-dashboard-active:not(.dark) .mobile-navbar {
+    background-color: #f4f7fa !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .dark body.teacher-dashboard-active .mobile-navbar,
+  .dark body.school-dashboard-active .mobile-navbar {
+    background-color: #000000 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .dark body.student-dashboard-active .mobile-navbar {
+    background-color: #0b0b0e !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  /* Make sure background is totally transparent so blobs show through */
+  .teacher-dashboard-active main,
+  .teacher-dashboard-active .relative.z-10 {
+    background-color: transparent !important;
+  }
+
+  /* Target cards dynamically */
+  /* Target cards dynamically for Teacher - Solid & Deep */
+  .dark body.teacher-dashboard-active .teacher-glass-content .rounded-lg,
+  .dark body.teacher-dashboard-active .teacher-glass-content .border,
+  .dark body.teacher-dashboard-active .teacher-glass-content [class*="bg-"] {
+    background-color: #0a0a0b !important;
+    border-color: #1a1a1c !important;
+    backdrop-filter: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .dark body.teacher-dashboard-active .teacher-glass-content h1,
+  .dark body.teacher-dashboard-active .teacher-glass-content h2,
+  .dark body.teacher-dashboard-active .teacher-glass-content h3 {
+    color: #ffffff !important;
+  }
+
+  .dark body.teacher-dashboard-active .teacher-glass-content p {
+    color: #9ca3af !important;
+  }
+
+  /* --- Student Dashboard Theme Sync --- */
+  body.student-dashboard-active {
+    background-color: #f4f7fa;
+  }
+
+  body.student-dashboard-active .desktop-sidebar {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+    box-shadow: none !important;
+  }
+
+  /* Solid Mobile Drawer for Student */
+  body.student-dashboard-active .mobile-sidebar-drawer {
+    background-color: #f4f7fa !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .dark body.student-dashboard-active .desktop-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .dark body.student-dashboard-active .mobile-sidebar-drawer {
+    background-color: #0b0b0e !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  /* --- Glassmorphism Overrides for Student Dashboard --- */
+
+  /* --- Student Dashboard Light Mode Card & Link Sync --- */
+  body.student-dashboard-active:not(.dark) .bg-white\/80 {
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(0, 0, 0, 0.02) !important;
+  }
+
+  body.student-dashboard-active:not(.dark) .sidebar-link-item {
+    font-size: var(--text-body) !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+  }
+
+  body.student-dashboard-active:not(.dark) .sidebar-link-active {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  body.student-dashboard-active:not(.dark) .sidebar-link-inactive {
+    color: #64748b !important;
+  }
+
+  .dark body.student-dashboard-active {
+    background-color: #0b0b0e !important;
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-active span,
+  .dark body.student-dashboard-active .sidebar-link-active svg {
+    color: #ffffff !important;
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-inactive {
+    color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-inactive:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  /* Make background transparent */
+  .student-dashboard-active main,
+  .student-dashboard-active .relative.z-10,
+  .student-dashboard-active .md\:ml-\[250px\] {
+    background-color: transparent !important;
+  }
+
+  /* Student Dark Glass Content - Matching Teacher Depth but with Vibrancy */
+  .dark .student-glass-content .rounded-lg,
+  .dark .student-glass-content .border-b,
+  .dark .student-glass-content .border,
+  .dark .student-glass-content [class*="bg-"] {
+    background-color: rgba(20, 20, 25, 0.6) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .dark .student-glass-content {
+    background-color: transparent !important;
+  }
+
+  /* --------------------------------------------------- */
+
+  /* Lenis Smooth Scroll CSS */
+  html.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  .lenis.lenis-scrolling iframe {
+    pointer-events: none;
+  }
+
+  .will-change-transform {
+    will-change: transform;
   }
 
   /* Hide scrollbar but allow scrolling */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+    display: none;
+    /* Chrome, Safari and Opera */
+  }
+
+  /* All select dropdowns: use text variable and hide scrollbar (light + dark) */
+  select {
+    font-size: var(--text-body);
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  select::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Placeholder font size - consistent across app */
+  input::placeholder,
+  textarea::placeholder {
+    font-size: var(--text-placeholder);
+  }
+
+  /* react-international-phone: theme to match app (light) */
+  .phone-input-wrapper {
+    --react-international-phone-height: 40px;
+    --react-international-phone-font-size: var(--text-body);
+    --react-international-phone-background-color: var(--light-input);
+    --react-international-phone-text-color: var(--agora-text);
+    --react-international-phone-border-color: #d1d5db;
+    --react-international-phone-border-radius: 0.5rem;
+    --react-international-phone-disabled-background-color: #e5e7eb;
+    --react-international-phone-disabled-text-color: #6b7280;
+    --react-international-phone-country-selector-background-color: var(--light-input);
+    --react-international-phone-country-selector-border-color: #d1d5db;
+    --react-international-phone-dropdown-item-background-color: #fff;
+    --react-international-phone-dropdown-item-text-color: var(--agora-text);
+    --react-international-phone-dropdown-item-font-size: var(--text-body);
+  }
+
+  .dark .phone-input-wrapper {
+    --react-international-phone-background-color: var(--dark-input);
+    --react-international-phone-text-color: var(--dark-text-primary);
+    --react-international-phone-border-color: var(--dark-border);
+    --react-international-phone-disabled-background-color: #1f2937;
+    --react-international-phone-disabled-text-color: var(--dark-text-muted);
+    --react-international-phone-country-selector-background-color: var(--dark-input);
+    --react-international-phone-country-selector-border-color: var(--dark-border);
+    --react-international-phone-dropdown-item-background-color: var(--dark-surface);
+    --react-international-phone-dropdown-item-text-color: var(--dark-text-primary);
+  }
+
+  .phone-input-wrapper .react-international-phone-country-selector-dropdown {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .phone-input-wrapper .react-international-phone-country-selector-dropdown::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Phone input: full width in grid (same as other inputs, half row when in 2-col layout) */
+  .phone-input-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .phone-input-wrapper .react-international-phone-theme {
+    width: 100%;
+    display: flex;
+    min-width: 0;
+  }
+
+  .phone-input-wrapper .react-international-phone-theme input,
+  .phone-input-wrapper input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* react-day-picker: theme to match app (light + dark) */
+  .date-picker-dropdown .rdp {
+    --rdp-cell-size: 36px;
+    --rdp-caption-font-size: var(--text-body);
+    --rdp-accent-color: var(--agora-blue);
+    --rdp-background-color: #e0e7ff;
+    --rdp-selected-color: #fff;
+    margin: 0;
+  }
+
+  .dark .date-picker-dropdown .rdp {
+    --rdp-accent-color: var(--agora-blue);
+    --rdp-accent-color-dark: var(--agora-blue);
+    --rdp-background-color: var(--dark-hover);
+    --rdp-background-color-dark: var(--dark-hover);
+    color: var(--dark-text-primary);
+  }
+
+  .date-picker-dropdown .rdp-caption_label,
+  .date-picker-dropdown .rdp-head_cell,
+  .date-picker-dropdown .rdp-day {
+    font-size: var(--text-body);
+  }
+
+  .date-picker-dropdown .rdp-caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .date-picker-dropdown .rdp-caption select {
+    background-color: var(--light-input);
+    color: var(--agora-text);
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .dark .date-picker-dropdown .rdp-caption select {
+    background-color: var(--dark-input);
+    color: var(--dark-text-primary);
+    border: 1px solid var(--dark-border);
+  }
+
+  .date-picker-dropdown .rdp-head_cell {
+    color: var(--dark-text-muted);
+    font-weight: 600;
+  }
+
+  .dark .date-picker-dropdown .rdp-head_cell {
+    color: var(--dark-text-secondary);
+  }
+
+  .date-picker-dropdown .rdp-day {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 150ms, color 150ms;
+  }
+
+  .date-picker-dropdown .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+    background-color: rgba(36, 144, 253, 0.12);
+    color: var(--agora-text);
+  }
+
+  .dark .date-picker-dropdown .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+    background-color: rgba(36, 144, 253, 0.18);
+    color: var(--dark-text-primary);
+  }
+
+  .date-picker-dropdown .rdp-day_selected {
+    background-color: var(--agora-blue);
+    color: #ffffff;
+  }
+
+  .date-picker-dropdown .rdp-day_today {
+    box-shadow: inset 0 0 0 2px var(--agora-blue);
+  }
+
+  .date-picker-dropdown .rdp-day_outside {
+    opacity: 0.5;
+  }
+
+  .date-picker-dropdown .rdp-day_disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 
   /* Continuous horizontal scroll animation (right to left) */
@@ -69,6 +657,7 @@
     0% {
       transform: translateX(0);
     }
+
     100% {
       transform: translateX(-50%);
     }
@@ -79,6 +668,7 @@
     0% {
       transform: translateX(-50%);
     }
+
     100% {
       transform: translateX(0);
     }
@@ -104,7 +694,7 @@
   /* ========================================
      Form Elements Styles (Dark Mode Only)
      ======================================== */
-  
+
   /* Force dark color scheme for native browser elements */
   .dark {
     color-scheme: dark;
@@ -114,6 +704,7 @@
   input,
   select,
   textarea {
+    font-size: var(--text-body);
     background-color: var(--dark-input) !important;
     color: var(--dark-text-primary) !important;
     border-color: var(--dark-border) !important;
@@ -122,13 +713,15 @@
   input::placeholder,
   textarea::placeholder {
     color: var(--dark-text-muted) !important;
+    font-size: var(--text-placeholder) !important;
   }
 
   input:focus,
   select:focus,
   textarea:focus {
-    border-color: var(--agora-blue) !important;
+    border-color: var(--dark-border) !important;
     outline: none;
+    box-shadow: none !important;
   }
 
   input:disabled,
@@ -139,13 +732,14 @@
     opacity: 0.7;
   }
 
-  /* Date/Time picker icons */
+  /* Date/Time picker icons – lighter so they show on input field background */
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator,
   input[type="datetime-local"]::-webkit-calendar-picker-indicator,
   input[type="month"]::-webkit-calendar-picker-indicator,
   input[type="week"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.8);
+    filter: invert(1);
+    opacity: 0.85;
     cursor: pointer;
   }
 
@@ -159,6 +753,10 @@
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+  }
+
+  select::-webkit-scrollbar {
+    display: none;
   }
 
   /* Autofill background override */
@@ -197,5 +795,14 @@
   input[type="file"]::file-selector-button:hover {
     background-color: #334155;
   }
-}
 
+  .mockup-perspective {
+    transform: perspective(1200px) rotateX(12deg) scale(1.05);
+  }
+
+  @media (max-width: 767px) {
+    .mockup-perspective {
+      transform: none !important;
+    }
+  }
+}

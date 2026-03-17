@@ -85,11 +85,7 @@ export default function AllAdminsPage() {
     <ProtectedRoute roles={['SUPER_ADMIN']}>
       <div className="w-full">
         {/* Header with Back Button */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -105,7 +101,7 @@ export default function AllAdminsPage() {
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Complete list of principal and administrators in this school
           </p>
-        </motion.div>
+        </FadeInUp>
 
         {/* Principal Section */}
         <Card className="mb-6">
@@ -192,11 +188,12 @@ export default function AllAdminsPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {admins.map((admin, index) => (
-                <motion.div
+                <FadeInUp
                   key={admin.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  delay={index * 0.05}
+                  from={{ opacity: 0, y: 20 }}
+                  to={{ opacity: 1, y: 0 }}
+                  duration={0.5}
                   onClick={() => setShowAdminDetailModal(admin.id)}
                   className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface/80 transition-colors cursor-pointer relative group"
                 >
@@ -238,7 +235,7 @@ export default function AllAdminsPage() {
                   <span className="inline-block mt-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded text-xs font-medium">
                     {admin.role.replace('_', ' ')}
                   </span>
-                </motion.div>
+                </FadeInUp>
                 ))}
               </div>
             )}

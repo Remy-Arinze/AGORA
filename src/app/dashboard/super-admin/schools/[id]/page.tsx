@@ -20,6 +20,11 @@ import {
   useUpdatePrincipal,
   useDeletePrincipal,
   useMakePrincipal,
+  useVerifySchool,
+  useRejectSchool,
+  useActivateSchool,
+  useDeactivateSchool,
+  useDeleteSchool,
   useConvertTeacherToAdmin,
   SchoolAdmin,
   Teacher,
@@ -33,6 +38,7 @@ import {
 import { getAddonsData } from '@/lib/data/mock-addons';
 import { SchoolHeader } from '@/components/schools/SchoolHeader';
 import { SchoolDetailsCard } from '@/components/schools/SchoolDetailsCard';
+import { BackButton } from '@/components/ui/BackButton';
 import { SchoolStatsCard } from '@/components/schools/SchoolStatsCard';
 import { PersonCard } from '@/components/schools/PersonCard';
 import { PersonDetailModal } from '@/components/schools/PersonDetailModal';
@@ -63,6 +69,10 @@ export default function SchoolDetailPage() {
   const [showAdminDetailModal, setShowAdminDetailModal] = useState<string | null>(null);
   const [showMakePrincipalModal, setShowMakePrincipalModal] = useState<string | null>(null);
   const [showTeacherEditModal, setShowTeacherEditModal] = useState<string | null>(null);
+  const [showRejectSchoolModal, setShowRejectSchoolModal] = useState(false);
+  const [showActivateSchoolModal, setShowActivateSchoolModal] = useState(false);
+  const [showDeactivateSchoolModal, setShowDeactivateSchoolModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   // Track which item is being edited (null means adding new)
   const [editingPrincipalId, setEditingPrincipalId] = useState<string | null>(null);
@@ -110,6 +120,11 @@ export default function SchoolDetailPage() {
   const { updatePrincipal, isLoading: isUpdatingPrincipal } = useUpdatePrincipal(schoolId);
   const { deletePrincipal, isLoading: isDeletingPrincipal } = useDeletePrincipal(schoolId);
   const { makePrincipal, isLoading: isMakingPrincipal } = useMakePrincipal(schoolId);
+  const { verifySchool, isLoading: isVerifying } = useVerifySchool();
+  const { rejectSchool, isLoading: isRejecting } = useRejectSchool();
+  const { activateSchool, isLoading: isActivating } = useActivateSchool();
+  const { deactivateSchool, isLoading: isDeactivating } = useDeactivateSchool();
+  const { deleteSchool, isLoading: isDeletingSchool } = useDeleteSchool();
   const { convertTeacherToAdmin, isLoading: isConvertingTeacher } = useConvertTeacherToAdmin(schoolId);
 
   // Get principal (admin with exact "Principal" role - case-insensitive)
@@ -131,8 +146,58 @@ export default function SchoolDetailPage() {
   const addons = getAddonsData(schoolId);
 
   // Handlers
-  const handleDeleteSchool = () => {
-    router.push('/dashboard/super-admin/schools');
+  const handleDeleteSchool = async () => {
+    if (!school) return;
+    try {
+      await deleteSchool(school.id);
+      router.push('/dashboard/super-admin/schools');
+    } catch (err) {
+      // Error handled in hook
+    }
+  };
+
+  const handleVerifySchool = async () => {
+    if (!school) return;
+    try {
+      await verifySchool(school.id);
+      refetch();
+    } catch (err) {
+      // Error handled in hook
+    }
+  };
+
+  const handleRejectSchool = async () => {
+    if (!school || !rejectionReason.trim()) return;
+    try {
+      await rejectSchool(school.id, rejectionReason);
+      setShowRejectSchoolModal(false);
+      setRejectionReason('');
+      refetch();
+    } catch (err) {
+      // Error handled in hook
+    }
+  };
+
+  const handleActivateSchool = async () => {
+    if (!school) return;
+    try {
+      await activateSchool(school.id);
+      setShowActivateSchoolModal(false);
+      refetch();
+    } catch (err) {
+      // Error handled in hook
+    }
+  };
+
+  const handleDeactivateSchool = async () => {
+    if (!school) return;
+    try {
+      await deactivateSchool(school.id);
+      setShowDeactivateSchoolModal(false);
+      refetch();
+    } catch (err) {
+      // Error handled in hook
+    }
   };
 
   const handleAddPrincipal = async () => {
@@ -140,9 +205,9 @@ export default function SchoolDetailPage() {
       const validationResult = editingPrincipalId
         ? updatePrincipalFormSchema.safeParse(principalForm)
         : adminFormSchema.safeParse({
-            ...principalForm,
-            role: 'PRINCIPAL',
-          });
+          ...principalForm,
+          role: 'PRINCIPAL',
+        });
 
       if (!validationResult.success) {
         const issues = validationResult.error.issues;
@@ -222,12 +287,12 @@ export default function SchoolDetailPage() {
       const validationResult = editingTeacherId
         ? updateTeacherFormSchema.safeParse(teacherForm)
         : adminFormSchema.safeParse({
-            firstName: teacherForm.firstName,
-            lastName: teacherForm.lastName,
-            email: teacherForm.email,
-            phone: teacherForm.phone,
-            role: 'TEACHER',
-          });
+          firstName: teacherForm.firstName,
+          lastName: teacherForm.lastName,
+          email: teacherForm.email,
+          phone: teacherForm.phone,
+          role: 'TEACHER',
+        });
 
       if (!validationResult.success) {
         const issues = validationResult.error.issues;
@@ -413,14 +478,7 @@ export default function SchoolDetailPage() {
     return (
       <ProtectedRoute roles={['SUPER_ADMIN']}>
         <div className="w-full">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/dashboard/super-admin/schools')}
-            className="mb-4"
-          >
-            Back to Schools
-          </Button>
+          <BackButton className="mb-4" />
           <div className="text-center py-12">
             <p className="text-red-600 dark:text-red-400">{errorMessage}</p>
           </div>
@@ -433,14 +491,7 @@ export default function SchoolDetailPage() {
     return (
       <ProtectedRoute roles={['SUPER_ADMIN']}>
         <div className="w-full">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/dashboard/super-admin/schools')}
-            className="mb-4"
-          >
-            Back to Schools
-          </Button>
+          <BackButton className="mb-4" />
           <div className="text-center py-12">
             <p className="text-red-600 dark:text-red-400">School not found</p>
           </div>
@@ -459,6 +510,10 @@ export default function SchoolDetailPage() {
           school={school}
           onEdit={() => router.push(`/dashboard/super-admin/schools/${schoolId}/edit`)}
           onDelete={() => setShowDeleteSchoolModal(true)}
+          onVerify={handleVerifySchool}
+          onReject={() => setShowRejectSchoolModal(true)}
+          onActivate={() => setShowActivateSchoolModal(true)}
+          onDeactivate={() => setShowDeactivateSchoolModal(true)}
         />
 
         {/* School Details */}
@@ -479,10 +534,10 @@ export default function SchoolDetailPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowDeletePrincipalModal(true)}
-                  className="text-red-600 dark:text-red-400"
+                  className="text-gray-400 hover:text-red-600 p-2 transition-colors"
+                  title="Remove Principal"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button
@@ -634,11 +689,10 @@ export default function SchoolDetailPage() {
                   return (
                     <div
                       key={addon.id}
-                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${
-                        addon.status === 'active'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
-                      }`}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${addon.status === 'active'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="font-medium" style={{ fontSize: 'var(--text-body)' }}>{addon.name}</span>
@@ -788,6 +842,53 @@ export default function SchoolDetailPage() {
           message={`Are you sure you want to delete "${school.name}"? This action cannot be undone and will delete all associated data including students, teachers, and administrators.`}
           confirmText="Delete School"
           variant="danger"
+          isLoading={isDeletingSchool}
+        />
+
+        <ConfirmModal
+          isOpen={showRejectSchoolModal}
+          onClose={() => setShowRejectSchoolModal(false)}
+          onConfirm={handleRejectSchool}
+          title="Reject Registration"
+          message={`Are you sure you want to reject the registration for "${school.name}"?`}
+          confirmText="Reject School"
+          variant="danger"
+          isLoading={isRejecting}
+        >
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Reason for rejection *
+            </label>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 h-24 resize-none"
+              placeholder="Enter reason for rejection..."
+              required
+            />
+          </div>
+        </ConfirmModal>
+
+        <ConfirmModal
+          isOpen={showActivateSchoolModal}
+          onClose={() => setShowActivateSchoolModal(false)}
+          onConfirm={handleActivateSchool}
+          title="Activate School"
+          message={`Are you sure you want to activate "${school.name}"? This will allow users from this school to log in and perform actions.`}
+          confirmText="Activate"
+          variant="primary"
+          isLoading={isActivating}
+        />
+
+        <ConfirmModal
+          isOpen={showDeactivateSchoolModal}
+          onClose={() => setShowDeactivateSchoolModal(false)}
+          onConfirm={handleDeactivateSchool}
+          title="Deactivate School"
+          message={`Are you sure you want to deactivate "${school.name}"? This will prevent users from this school from performing actions like starting sessions or creating classes.`}
+          confirmText="Deactivate"
+          variant="danger"
+          isLoading={isDeactivating}
         />
 
         {principal && (
@@ -796,11 +897,10 @@ export default function SchoolDetailPage() {
             onClose={() => setShowDeletePrincipalModal(false)}
             onConfirm={handleDeletePrincipal}
             title="Delete Principal"
-            message={`Are you sure you want to remove ${principal.firstName} ${principal.lastName} as the principal of this school? ${
-              admins.length > 0
-                ? 'There are other administrators who can be assigned the principal role.'
-                : 'Warning: There must be at least one other administrator to assign the principal role to before deletion.'
-            } ${school?.isActive ? 'Note: If this is an active principal, you must first transfer the role to another administrator.' : ''}`}
+            message={`Are you sure you want to remove ${principal.firstName} ${principal.lastName} as the principal of this school? ${admins.length > 0
+              ? 'There are other administrators who can be assigned the principal role.'
+              : 'Warning: There must be at least one other administrator to assign the principal role to before deletion.'
+              } ${school?.isActive ? 'Note: If this is an active principal, you must first transfer the role to another administrator.' : ''}`}
             confirmText="Delete"
             variant="danger"
             isLoading={isDeletingPrincipal}

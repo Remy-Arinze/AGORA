@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Calendar, 
-  Sparkles, 
+import {
+  Calendar,
+  Sparkles,
   BookOpen,
   CheckCircle,
   Clock,
@@ -16,16 +16,18 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SubjectCurriculumCard } from './SubjectCurriculumCard';
-import { NoTimetableMessage } from './NoTimetableMessage';
 import { GenerateCurriculumModal } from './GenerateCurriculumModal';
 import { CurriculumDetailModal } from './CurriculumDetailModal';
+import { CreateCurriculumModal } from '@/components/modals/CreateCurriculumModal';
 import { ConfirmModal } from '@/components/ui/Modal';
+import { NoTimetableMessage } from './NoTimetableMessage';
 import Link from 'next/link';
 import { useCurriculum } from '@/hooks/useCurriculum';
 
 interface SubjectCurriculumListProps {
   schoolId: string;
   classLevelId: string;
+  classId?: string;
   termId: string;
   schoolType: string;
   teacherId?: string;
@@ -35,12 +37,14 @@ interface SubjectCurriculumListProps {
 export function SubjectCurriculumList({
   schoolId,
   classLevelId,
+  classId,
   termId,
   schoolType,
   teacherId,
   canEdit = false,
 }: SubjectCurriculumListProps) {
   const [showGenerateModal, setShowGenerateModal] = useState<string | null>(null);
+  const [showCreateManualModal, setShowCreateManualModal] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState<string | null>(null);
   const [generatingSubjectId, setGeneratingSubjectId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{
@@ -48,7 +52,7 @@ export function SubjectCurriculumList({
     subjectName: string;
   } | null>(null);
   const [deletingCurriculumId, setDeletingCurriculumId] = useState<string | null>(null);
-  
+
   // Multi-select state
   const [selectedCurricula, setSelectedCurricula] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -71,14 +75,12 @@ export function SubjectCurriculumList({
   });
 
   // Get curricula that can be selected (ones with curriculumId)
-  const selectableCurricula = useMemo(() => 
+  const selectableCurricula = useMemo(() =>
     curriculaSummary.filter(s => s.curriculumId),
     [curriculaSummary]
   );
 
   const handleGenerateCurriculum = async (subjectId: string) => {
-    if (!teacherId) return;
-    
     setGeneratingSubjectId(subjectId);
     const result = await handleGenerate({
       classLevelId,
@@ -87,7 +89,7 @@ export function SubjectCurriculumList({
       teacherId,
     });
     setGeneratingSubjectId(null);
-    
+
     if (result) {
       setShowDetailModal(result.id);
     }
@@ -98,19 +100,19 @@ export function SubjectCurriculumList({
     const subjectsToGenerate = curriculaSummary
       .filter(s => !s.curriculumId)
       .map(s => s.subjectId);
-    
+
     // Open bulk generate modal or call bulk generate
     setShowGenerateModal('bulk');
   };
 
   const handleDeleteCurriculum = async () => {
     if (!showDeleteConfirm) return;
-    
+
     setDeletingCurriculumId(showDeleteConfirm.curriculumId);
     const success = await handleDelete(showDeleteConfirm.curriculumId);
     setDeletingCurriculumId(null);
     setShowDeleteConfirm(null);
-    
+
     if (success) {
       refetchCurriculaSummary();
     }
@@ -135,7 +137,7 @@ export function SubjectCurriculumList({
       newSelected.add(curriculumId);
     }
     setSelectedCurricula(newSelected);
-    
+
     // Exit selection mode if nothing selected
     if (newSelected.size === 0) {
       setIsSelectionMode(false);
@@ -160,15 +162,15 @@ export function SubjectCurriculumList({
 
   const handleBulkDelete = async () => {
     if (selectedCurricula.size === 0) return;
-    
+
     setIsBulkDeleting(true);
     let successCount = 0;
-    
+
     for (const curriculumId of selectedCurricula) {
       const success = await handleDelete(curriculumId);
       if (success) successCount++;
     }
-    
+
     setIsBulkDeleting(false);
     setShowBulkDeleteConfirm(false);
     setSelectedCurricula(new Set());
@@ -265,7 +267,7 @@ export function SubjectCurriculumList({
             <span className="text-light-text-muted dark:text-dark-text-muted"> not started</span>
           </span>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="ml-auto flex items-center gap-2">
           {/* Select Mode Toggle */}
@@ -280,17 +282,16 @@ export function SubjectCurriculumList({
               Select
             </Button>
           )}
-          
+
           {/* Bulk Generate Button */}
           {canEdit && emptyCount > 0 && !isSelectionMode && (
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
               onClick={handleBulkGenerate}
               disabled={isMutating}
             >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate All from NERDC ({emptyCount})
+              Auto Generate All ({emptyCount})
             </Button>
           )}
         </div>
@@ -301,8 +302,8 @@ export function SubjectCurriculumList({
         <Calendar className="h-4 w-4 flex-shrink-0" />
         <span>
           Showing {curriculaSummary.length} subjects from the class timetable.{' '}
-          <Link 
-            href="/dashboard/school/timetables" 
+          <Link
+            href="/dashboard/school/timetables"
             className="underline hover:text-blue-800 dark:hover:text-blue-200"
           >
             Edit timetable
@@ -317,6 +318,7 @@ export function SubjectCurriculumList({
             key={subject.subjectId}
             subject={subject}
             onGenerate={handleGenerateCurriculum}
+            onCreateManual={(subjectId) => setShowCreateManualModal(subjectId)}
             onView={(curriculumId) => setShowDetailModal(curriculumId)}
             onEdit={(curriculumId) => setShowDetailModal(curriculumId)}
             onDelete={openDeleteConfirm}
@@ -340,10 +342,27 @@ export function SubjectCurriculumList({
           schoolId={schoolId}
           classLevelId={classLevelId}
           termId={termId}
-          teacherId={teacherId!}
+          teacherId={teacherId}
           subjects={curriculaSummary.filter(s => !s.curriculumId)}
           onSuccess={() => {
             setShowGenerateModal(null);
+            refetchCurriculaSummary();
+          }}
+        />
+      )}
+
+      {/* Create Manual Modal */}
+      {showCreateManualModal && (
+        <CreateCurriculumModal
+          isOpen={!!showCreateManualModal}
+          onClose={() => setShowCreateManualModal(null)}
+          schoolId={schoolId}
+          classId={classLevelId} // Reusing classLevelId as classId because the backend uses targetClassId or classLevelId
+          subject={curriculaSummary.find(s => s.subjectId === showCreateManualModal)?.subjectName}
+          academicYear={new Date().getFullYear().toString() + '/' + (new Date().getFullYear() + 1).toString()} // Default to current year logic or pass it down
+          termId={termId}
+          onSuccess={() => {
+            setShowCreateManualModal(null);
             refetchCurriculaSummary();
           }}
         />
@@ -356,6 +375,7 @@ export function SubjectCurriculumList({
           onClose={() => setShowDetailModal(null)}
           schoolId={schoolId}
           curriculumId={showDetailModal}
+          classId={classId}
           canEdit={canEdit}
           onUpdate={refetchCurriculaSummary}
           onDelete={openDeleteConfirm}
@@ -375,7 +395,7 @@ export function SubjectCurriculumList({
               <strong>{showDeleteConfirm?.subjectName}</strong>?
             </p>
             <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-              This will permanently delete all weekly topics, objectives, and progress tracking. 
+              This will permanently delete all weekly topics, objectives, and progress tracking.
               You can generate a new curriculum after deletion.
             </p>
           </div>

@@ -49,3 +49,15 @@ export function isPrincipalRole(role: string | null | undefined): boolean {
     normalizedRole === principalRole || normalizedRole.includes(principalRole)
   );
 }
+
+/**
+ * Check if the role is the registered school account (school owner).
+ * Use this when you need to distinguish the school owner from other principal-level roles.
+ *
+ * @param role - The role string to check (can be null/undefined)
+ * @returns true if the role is exactly 'school_owner' (case-insensitive)
+ */
+export function isSchoolOwnerRole(role: string | null | undefined): boolean {
+  if (!role) return false;
+  return role.toLowerCase().trim() === 'school_owner';
+}

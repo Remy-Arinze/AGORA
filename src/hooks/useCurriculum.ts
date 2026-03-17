@@ -34,14 +34,14 @@ interface UseCurriculumOptions {
 
 export function useCurriculum(options: UseCurriculumOptions = {}) {
   const { schoolId, classLevelId, termId, schoolType } = options;
-  
+
   // State
   const [selectedCurriculumId, setSelectedCurriculumId] = useState<string | null>(null);
-  
+
   // ============================================
   // Queries
   // ============================================
-  
+
   // Get NERDC subjects for the school type
   const {
     data: nerdcSubjectsResponse,
@@ -51,7 +51,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     { schoolId: schoolId || '', schoolType },
     { skip: !schoolId }
   );
-  
+
   // Get subjects from timetable for the class level
   const {
     data: timetableSubjectsResponse,
@@ -61,7 +61,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     { schoolId: schoolId || '', classLevelId: classLevelId || '', termId: termId || '' },
     { skip: !schoolId || !classLevelId || !termId }
   );
-  
+
   // Get curriculum summary for all subjects
   const {
     data: curriculaSummaryResponse,
@@ -71,7 +71,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     { schoolId: schoolId || '', classLevelId: classLevelId || '', termId: termId || '' },
     { skip: !schoolId || !classLevelId || !termId }
   );
-  
+
   // Get selected curriculum details
   const {
     data: selectedCurriculumResponse,
@@ -81,11 +81,11 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     { schoolId: schoolId || '', curriculumId: selectedCurriculumId || '' },
     { skip: !schoolId || !selectedCurriculumId }
   );
-  
+
   // ============================================
   // Mutations
   // ============================================
-  
+
   const [createCurriculum, { isLoading: isCreating }] = useCreateCurriculumMutation();
   const [generateCurriculum, { isLoading: isGenerating }] = useGenerateCurriculumMutation();
   const [bulkGenerateCurriculum, { isLoading: isBulkGenerating }] = useBulkGenerateCurriculumMutation();
@@ -98,31 +98,31 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
   const [markWeekComplete, { isLoading: isMarkingComplete }] = useMarkWeekCompleteMutation();
   const [markWeekInProgress, { isLoading: isMarkingInProgress }] = useMarkWeekInProgressMutation();
   const [skipWeek, { isLoading: isSkipping }] = useSkipWeekMutation();
-  
+
   // ============================================
   // Computed Values
   // ============================================
-  
-  const nerdcSubjects = useMemo(() => 
+
+  const nerdcSubjects = useMemo(() =>
     nerdcSubjectsResponse?.data || [],
     [nerdcSubjectsResponse]
   );
-  
-  const timetableSubjects = useMemo(() => 
+
+  const timetableSubjects = useMemo(() =>
     timetableSubjectsResponse?.data || [],
     [timetableSubjectsResponse]
   );
-  
-  const curriculaSummary = useMemo(() => 
+
+  const curriculaSummary = useMemo(() =>
     curriculaSummaryResponse?.data || [],
     [curriculaSummaryResponse]
   );
-  
-  const selectedCurriculum = useMemo(() => 
+
+  const selectedCurriculum = useMemo(() =>
     selectedCurriculumResponse?.data || null,
     [selectedCurriculumResponse]
   );
-  
+
   // Stats
   const stats = useMemo(() => {
     const total = curriculaSummary.length;
@@ -131,17 +131,17 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     const pending = curriculaSummary.filter(s => s.status === 'SUBMITTED').length;
     const draft = curriculaSummary.filter(s => s.status === 'DRAFT').length;
     const nerdcBased = curriculaSummary.filter(s => s.isNerdcBased).length;
-    
+
     return { total, created, approved, pending, draft, nerdcBased };
   }, [curriculaSummary]);
-  
+
   // ============================================
   // Actions
   // ============================================
-  
+
   const handleCreate = useCallback(async (data: CreateCurriculumDto) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await createCurriculum({ schoolId, curriculumData: data }).unwrap();
       toast.success('Curriculum created successfully');
@@ -151,10 +151,10 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, createCurriculum]);
-  
+
   const handleGenerate = useCallback(async (data: GenerateCurriculumDto) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await generateCurriculum({ schoolId, data }).unwrap();
       toast.success('Curriculum generated from NERDC template');
@@ -164,31 +164,31 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, generateCurriculum]);
-  
+
   const handleBulkGenerate = useCallback(async (data: BulkGenerateCurriculumDto) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await bulkGenerateCurriculum({ schoolId, data }).unwrap();
       const { created, failed } = result.data;
-      
+
       if (created.length > 0) {
         toast.success(`Generated ${created.length} curricula from NERDC templates`);
       }
       if (failed.length > 0) {
         toast.warning(`${failed.length} curricula failed to generate`);
       }
-      
+
       return result.data;
     } catch (error: any) {
       toast.error(error?.data?.message || 'Failed to bulk generate curricula');
       return null;
     }
   }, [schoolId, bulkGenerateCurriculum]);
-  
+
   const handleUpdate = useCallback(async (curriculumId: string, data: UpdateCurriculumDto) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await updateCurriculum({ schoolId, curriculumId, data }).unwrap();
       toast.success('Curriculum updated successfully');
@@ -198,10 +198,10 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, updateCurriculum]);
-  
+
   const handleDelete = useCallback(async (curriculumId: string) => {
     if (!schoolId) return false;
-    
+
     try {
       await deleteCurriculum({ schoolId, curriculumId }).unwrap();
       toast.success('Curriculum deleted successfully');
@@ -211,10 +211,10 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return false;
     }
   }, [schoolId, deleteCurriculum]);
-  
+
   const handleSubmit = useCallback(async (curriculumId: string) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await submitForApproval({ schoolId, curriculumId }).unwrap();
       toast.success('Curriculum submitted for approval');
@@ -224,10 +224,10 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, submitForApproval]);
-  
+
   const handleApprove = useCallback(async (curriculumId: string) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await approveCurriculum({ schoolId, curriculumId }).unwrap();
       toast.success('Curriculum approved');
@@ -237,10 +237,10 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, approveCurriculum]);
-  
+
   const handleReject = useCallback(async (curriculumId: string, reason: string) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await rejectCurriculum({ schoolId, curriculumId, reason }).unwrap();
       toast.success('Curriculum rejected');
@@ -250,10 +250,10 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, rejectCurriculum]);
-  
+
   const handleActivate = useCallback(async (curriculumId: string) => {
     if (!schoolId) return null;
-    
+
     try {
       const result = await activateCurriculum({ schoolId, curriculumId }).unwrap();
       toast.success('Curriculum activated');
@@ -263,12 +263,12 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, activateCurriculum]);
-  
-  const handleMarkWeekComplete = useCallback(async (curriculumId: string, weekNumber: number, notes?: string) => {
+
+  const handleMarkWeekComplete = useCallback(async (curriculumId: string, weekNumber: number, notes?: string, classId?: string) => {
     if (!schoolId) return null;
-    
+
     try {
-      const result = await markWeekComplete({ schoolId, curriculumId, weekNumber, notes }).unwrap();
+      const result = await markWeekComplete({ schoolId, curriculumId, weekNumber, notes, classId }).unwrap();
       toast.success(`Week ${weekNumber} marked as complete`);
       return result.data;
     } catch (error: any) {
@@ -276,12 +276,12 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, markWeekComplete]);
-  
-  const handleMarkWeekInProgress = useCallback(async (curriculumId: string, weekNumber: number) => {
+
+  const handleMarkWeekInProgress = useCallback(async (curriculumId: string, weekNumber: number, classId?: string) => {
     if (!schoolId) return null;
-    
+
     try {
-      const result = await markWeekInProgress({ schoolId, curriculumId, weekNumber }).unwrap();
+      const result = await markWeekInProgress({ schoolId, curriculumId, weekNumber, classId }).unwrap();
       toast.success(`Week ${weekNumber} marked as in progress`);
       return result.data;
     } catch (error: any) {
@@ -289,12 +289,12 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, markWeekInProgress]);
-  
-  const handleSkipWeek = useCallback(async (curriculumId: string, weekNumber: number, reason: string) => {
+
+  const handleSkipWeek = useCallback(async (curriculumId: string, weekNumber: number, reason: string, classId?: string) => {
     if (!schoolId) return null;
-    
+
     try {
-      const result = await skipWeek({ schoolId, curriculumId, weekNumber, reason }).unwrap();
+      const result = await skipWeek({ schoolId, curriculumId, weekNumber, reason, classId }).unwrap();
       toast.success(`Week ${weekNumber} skipped`);
       return result.data;
     } catch (error: any) {
@@ -302,11 +302,11 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       return null;
     }
   }, [schoolId, skipWeek]);
-  
+
   // ============================================
   // Helper Functions
   // ============================================
-  
+
   const getStatusColor = useCallback((status: string | null): string => {
     switch (status) {
       case 'DRAFT': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
@@ -318,7 +318,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   }, []);
-  
+
   const getWeekStatusColor = useCallback((status: string): string => {
     switch (status) {
       case 'PENDING': return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
@@ -328,7 +328,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       default: return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
     }
   }, []);
-  
+
   const getStatusLabel = useCallback((status: string | null): string => {
     switch (status) {
       case 'DRAFT': return 'Draft';
@@ -340,7 +340,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       default: return 'Not Created';
     }
   }, []);
-  
+
   return {
     // Data
     nerdcSubjects,
@@ -348,42 +348,42 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     curriculaSummary,
     selectedCurriculum,
     stats,
-    
+
     // Selection
     selectedCurriculumId,
     setSelectedCurriculumId,
-    
+
     // Loading states
     isLoading: isLoadingNerdcSubjects || isLoadingTimetableSubjects || isLoadingCurriculaSummary,
     isLoadingCurriculum: isLoadingSelectedCurriculum,
     isMutating: isCreating || isGenerating || isBulkGenerating || isUpdating || isDeleting ||
-                isSubmitting || isApproving || isRejecting || isActivating ||
-                isMarkingComplete || isMarkingInProgress || isSkipping,
-    
+      isSubmitting || isApproving || isRejecting || isActivating ||
+      isMarkingComplete || isMarkingInProgress || isSkipping,
+
     // Refetch functions
     refetchNerdcSubjects,
     refetchTimetableSubjects,
     refetchCurriculaSummary,
     refetchSelectedCurriculum,
-    
+
     // CRUD actions
     handleCreate,
     handleGenerate,
     handleBulkGenerate,
     handleUpdate,
     handleDelete,
-    
+
     // Status actions
     handleSubmit,
     handleApprove,
     handleReject,
     handleActivate,
-    
+
     // Progress actions
     handleMarkWeekComplete,
     handleMarkWeekInProgress,
     handleSkipWeek,
-    
+
     // Helpers
     getStatusColor,
     getWeekStatusColor,

@@ -4,6 +4,7 @@ import './globals.css';
 import StoreProvider from '@/lib/store/StoreProvider';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
+import * as Sentry from "@sentry/nextjs";
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -21,12 +22,12 @@ export const metadata: Metadata = {
   },
   description: 'Agora creates a borderless academic identity for every student, turning static paper trails into a living, portable digital profile secured by a global student ledger.',
   keywords: [
-    'Digital Student Identity', 
-    'Global Student Ledger', 
-    'School Management System', 
-    'Digital Transcripts', 
-    'Academic Identity', 
-    'Verified Education Records', 
+    'Digital Student Identity',
+    'Global Student Ledger',
+    'School Management System',
+    'Digital Transcripts',
+    'Academic Identity',
+    'Verified Education Records',
     'EdTech Africa',
     'Student Data Portability',
     'Immutable Academic Records',
@@ -78,8 +79,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Initial Theme Script to avoid FOUC */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('agora-theme') === 'dark' || (!('agora-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else if (localStorage.getItem('agora-theme') === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                } else {
+                  // Default to dark mode natively if preferred, otherwise dark
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
         {/* Organization Schema */}
         <script
           type="application/ld+json"
@@ -117,36 +136,27 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={montserrat.variable}>
+      <body className={montserrat.className}>
         <ThemeProvider>
           <StoreProvider>
-            {children}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'var(--dark-surface)',
-                  color: 'var(--dark-text-primary)',
-                },
-                success: {
-                  iconTheme: {
-                    primary: '#2490FD', // Agora blue
-                    secondary: '#fff',
-                  },
-                },
-                error: {
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
-                  },
-                },
-              }}
-            />
+            <Sentry.ErrorBoundary fallback={<div className="min-h-screen flex items-center justify-center p-4 bg-[var(--dark-bg)] text-white text-center">
+              <div>
+                <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+                <p className="opacity-70 mb-6">Our team has been notified. Please try refreshing the page.</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-2 bg-agora-blue rounded-lg hover:bg-agora-blue-dark transition-colors"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>}>
+              {children}
+            </Sentry.ErrorBoundary>
+            <Toaster position="top-right" />
           </StoreProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-
