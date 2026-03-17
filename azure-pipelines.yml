@@ -1,19 +1,36 @@
 trigger:
-  - main
+  branches:
+    include:
+      - master
+      - staging
 
 pool:
   vmImage: 'ubuntu-latest'
 
+# ──────────────────────────────────────────────
+# Conditional variables: set targets based on branch
+# ──────────────────────────────────────────────
 variables:
   azureSubscription: 'agora-current-sc'
-  webAppName: 'agora-web-dev'
-  NEXT_PUBLIC_API_URL: 'https://agora-api-dev.azurewebsites.net'  
+
+  # Dev environment (master branch)
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    webAppName: 'agora-web-dev'
+    NEXT_PUBLIC_API_URL: 'https://agora-api-dev.azurewebsites.net'
+    environmentName: 'Dev'
+
+  # Staging environment (staging branch)
+  ${{ if eq(variables['Build.SourceBranchName'], 'staging') }}:
+    webAppName: 'agora-web-stg'
+    NEXT_PUBLIC_API_URL: 'https://agora-api-stg.azurewebsites.net'
+    environmentName: 'Staging'
 
 stages:
 - stage: Frontend
-  displayName: 'Deploy Frontend'
+  displayName: 'Deploy Frontend to $(environmentName)'
   jobs:
   - job: BuildAndDeployWeb
+    displayName: 'Build & Deploy to $(environmentName)'
     steps:
     - task: NodeTool@0
       inputs:
@@ -23,31 +40,33 @@ stages:
       displayName: 'Install Dependencies'
 
     - script: |
-        echo "=== DEBUGGING API URL ==="
-        echo "The URL Azure sees is: $(NEXT_PUBLIC_API_URL)"
-        echo "========================="
+        echo "=== DEPLOYMENT INFO ==="
+        echo "Environment: $(environmentName)"
+        echo "Target App:  $(webAppName)"
+        echo "API URL:     $(NEXT_PUBLIC_API_URL)"
+        echo "Branch:      $(Build.SourceBranchName)"
+        echo "========================"
         npm run build
       displayName: 'Build Next.js App'
       env:
         NEXT_PUBLIC_API_URL: $(NEXT_PUBLIC_API_URL)
-        
+
     - bash: |
         echo "Copying static assets..."
-        # In a standalone repo, Next.js creates files directly inside .next/standalone
         mkdir -p .next/standalone/.next
-        
+
         # Copy public folder (if it exists)
         if [ -d "public" ]; then
           cp -r public .next/standalone/
         fi
-        
+
         # Copy static content
         cp -r .next/static .next/standalone/.next/
       displayName: 'Copy Static Assets'
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/.next/standalone' 
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/.next/standalone'
         includeRootFolder: false
         archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/web.zip'
