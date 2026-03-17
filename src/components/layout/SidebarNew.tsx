@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
@@ -29,7 +30,7 @@ function LogoSection() {
           alt="Agora"
           width={40}
           height={40}
-          className="h-8 w-8 object-contain"
+          className="h-8 w-8 object-contain teacher-logo"
           priority
         />
       </Link>
@@ -67,41 +68,53 @@ export function SidebarNew({ hideMobileHeader }: { hideMobileHeader?: boolean })
 
   if (!user) return null;
 
-  // Flatten sections into links
-  let links = sections.flatMap((section) =>
-    section.items.map((item: NavItem) => ({
-      label: item.label,
-      href: item.href,
-      icon: <item.icon className="h-5 w-5 flex-shrink-0" />,
-    }))
-  );
-
-  // Show loading state for school admins while permissions load
-  const showLoadingSkeleton = user.role === 'SCHOOL_ADMIN' && isLoadingPermissions;
-
-  // If user is a teacher, add active plugins as tools
-  if (user.role === 'TEACHER') {
-    // Remove History from links if it exists (it's now in profile)
-    links = links.filter(link => link.href !== '/dashboard/teacher/history');
-
-    const activePlugins = getActivePluginsForTeacher();
-    const pluginLinks = activePlugins.map((plugin) => {
-      const Icon = plugin.icon;
+  // Process sections and items into a flat-mapped version compatible with SidebarLink
+  const processedSections = useMemo(() => {
+    return sections.map(section => {
+      // Filter out History for teachers
+      let items = section.items.filter(item => item.href !== '/dashboard/teacher/history');
+      
       return {
-        label: plugin.name,
-        href: `/dashboard/teacher/plugins/${plugin.slug}`,
-        icon: <Icon className="h-5 w-5 flex-shrink-0" />,
+        ...section,
+        items: items.map(item => {
+          const Icon = item.icon;
+          return {
+            label: item.label,
+            href: item.href,
+            icon: <Icon className="h-5 w-5 flex-shrink-0" />
+          };
+        })
       };
     });
+  }, [sections]);
 
-    // Add plugins
-    if (pluginLinks.length > 0) {
-      links = [
-        ...links,
-        ...pluginLinks,
-      ];
+  // Handle teacher plugins separately and merge them into the first section
+  const finalSections = useMemo(() => {
+    const base = [...processedSections];
+    if (user.role === 'TEACHER') {
+      const activePlugins = getActivePluginsForTeacher();
+      if (activePlugins.length > 0 && base.length > 0) {
+        const pluginItems = activePlugins.map((plugin) => {
+          const Icon = plugin.icon;
+          return {
+            label: plugin.name,
+            href: `/dashboard/teacher/plugins/${plugin.slug}`,
+            icon: <Icon className="h-5 w-5 flex-shrink-0" />,
+          };
+        });
+        
+        // Merge into the first section
+        base[0] = {
+          ...base[0],
+          items: [...base[0].items, ...pluginItems]
+        };
+      }
     }
-  }
+    return base;
+  }, [processedSections, user.role]);
+ 
+  // Show loading state for school admins while permissions load
+  const showLoadingSkeleton = user.role === 'SCHOOL_ADMIN' && isLoadingPermissions;
 
   return (
     <SidebarBody className="justify-between gap-10" hideMobileHeader={hideMobileHeader}>
@@ -121,28 +134,38 @@ export function SidebarNew({ hideMobileHeader }: { hideMobileHeader?: boolean })
               ))}
             </>
           ) : (
-            links.map((link, idx) => {
-              const isActive =
-                pathname === link.href ||
-                pathname.startsWith(link.href + '/') ||
-                (link.href === '/dashboard/super-admin/overview' &&
-                  pathname === '/dashboard/super-admin') ||
-                (link.href === '/dashboard/school/overview' &&
-                  (pathname === '/dashboard/school' || pathname === '/dashboard')) ||
-                (link.href === '/dashboard/student/overview' &&
-                  (pathname === '/dashboard/student' || pathname === '/dashboard')) ||
-                (link.href === '/dashboard/teacher/timetables' &&
-                  (pathname === '/dashboard/teacher' || pathname === '/dashboard')) ||
-                (link.href === '/dashboard/teacher/overview' &&
-                  (pathname === '/dashboard/teacher' || pathname === '/dashboard'));
-              return (
-                <SidebarLink
-                  key={idx}
-                  link={link}
-                  isActive={isActive}
-                />
-              );
-            })
+            finalSections.map((section, sectionIdx) => (
+              <div key={sectionIdx} className="flex flex-col gap-1">
+                {section.title && (
+                  <p className="sidebar-section-title px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 mb-2 mt-4">
+                    {section.title}
+                  </p>
+                )}
+                {section.items.map((link, idx) => {
+                  const isActive =
+                    pathname === link.href ||
+                    pathname.startsWith(link.href + '/') ||
+                    (link.href === '/dashboard/super-admin/overview' &&
+                      pathname === '/dashboard/super-admin') ||
+                    (link.href === '/dashboard/school/overview' &&
+                      (pathname === '/dashboard/school' || pathname === '/dashboard')) ||
+                    (link.href === '/dashboard/student/overview' &&
+                      (pathname === '/dashboard/student' || pathname === '/dashboard')) ||
+                    (link.href === '/dashboard/teacher/timetables' &&
+                      (pathname === '/dashboard/teacher' || pathname === '/dashboard')) ||
+                    (link.href === '/dashboard/teacher/overview' &&
+                      (pathname === '/dashboard/teacher' || pathname === '/dashboard'));
+                  
+                  return (
+                    <SidebarLink
+                      key={idx}
+                      link={link}
+                      isActive={isActive}
+                    />
+                  );
+                })}
+              </div>
+            ))
           )}
         </div>
       </div>

@@ -98,7 +98,7 @@ export const DesktopSidebar = ({
     <div
       ref={ref}
       className={cn(
-        "h-screen px-4 py-4 hidden md:flex md:flex-col bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-r border-[var(--light-border)] dark:border-[var(--dark-border)] flex-shrink-0 fixed left-0 top-0 z-20",
+        "desktop-sidebar h-screen px-4 py-4 hidden md:flex md:flex-col bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] border-r border-[var(--light-border)] dark:border-[var(--dark-border)] flex-shrink-0 fixed left-0 top-0 z-20",
         className
       )}
       style={{ width: 250 }}
@@ -157,27 +157,18 @@ export const MobileSidebar = ({
       {!hideMobileHeader && (
         <div
           className={cn(
-            "h-[64px] px-4 py-4 flex flex-row md:hidden items-center justify-between bg-[var(--light-bg)] dark:bg-[var(--dark-surface)] border-b border-[var(--light-border)] dark:border-[var(--dark-border)] fixed top-0 w-full z-40 transition-all duration-300"
+            "mobile-navbar h-[64px] px-4 py-4 flex flex-row md:hidden items-center justify-between bg-white dark:bg-[#000000] border-b border-gray-100 dark:border-white/10 fixed top-0 w-full z-40 transition-all duration-300"
           )}
           {...props}
         >
           <div className="flex justify-start items-center">
             <Link href="/" className="flex items-center">
-              {theme === 'light' ? (
-                <img
-                  src="/assets/logos/agora_main.png"
-                  alt="Agora"
-                  className="h-8 w-auto flex-shrink-0 grayscale brightness-0"
-                  style={{ height: '32px' }}
-                />
-              ) : (
-                <img
-                  src="/assets/logos/agora_worded_white.png"
-                  alt="Agora"
-                  className="h-8 w-auto flex-shrink-0"
-                  style={{ height: '32px' }}
-                />
-              )}
+              <img
+                src="/assets/logos/agora_main.png"
+                alt="Agora"
+                className="h-8 w-auto flex-shrink-0"
+                style={{ height: '32px' }}
+              />
             </Link>
           </div>
           <div className="flex justify-end z-20">
@@ -199,7 +190,7 @@ export const MobileSidebar = ({
           <div
             ref={ref}
             className={cn(
-              "absolute top-0 left-0 h-full w-[280px] bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto",
+              "mobile-sidebar-drawer absolute top-0 left-0 h-full w-[280px] bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto",
               className
             )}
             style={{ transform: 'translateX(-100%)', opacity: 0 }}
@@ -229,13 +220,13 @@ export const SidebarLink = ({
   isActive?: boolean;
   props?: LinkProps;
 }) => {
-  const { open, animate } = useSidebar();
+  const { setOpen, animate } = useSidebar();
 
   const iconWithColor = React.cloneElement(link.icon as React.ReactElement, {
     className: cn(
       (link.icon as React.ReactElement)?.props?.className,
-      isActive 
-        ? "text-black dark:text-white" 
+      isActive
+        ? "text-black dark:text-white"
         : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] group-hover/sidebar:text-black dark:group-hover/sidebar:text-white"
     ),
   });
@@ -246,19 +237,20 @@ export const SidebarLink = ({
     <Link
       href={link.href}
       className={cn(
-        "flex items-center justify-between gap-2 group/sidebar py-2 px-3 rounded-lg transition-all relative",
+        "flex items-center justify-between gap-2 group/sidebar py-2 px-3 rounded-lg transition-all relative sidebar-link-item",
         isActive
-          ? "text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] bg-[var(--light-card)] dark:bg-[var(--dark-surface)] "
-          : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] hover:shadow-sm border border-transparent",
+          ? "text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] bg-[var(--light-card)] dark:bg-[var(--dark-surface)] sidebar-link-active"
+          : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] hover:shadow-sm border border-transparent sidebar-link-inactive",
         className
       )}
+      onClick={() => setOpen(false)}
       {...props}
     >
       <div className="flex items-center gap-2">
         {iconWithColor}
         <span
           className={cn(
-            "font-semibold group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
+            "group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
             isActive ? " text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]" : " text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}

@@ -185,7 +185,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-indigo-500/10 dark:bg-indigo-600/20 rounded-full blur-[160px] pointer-events-none z-0 transition-opacity duration-1000" />
 
       {/* Top Bar */}
-      <div className="px-8 py-6 flex items-center justify-between z-10 shrink-0">
+      <div className="px-4 md:px-8 py-4 md:py-6 flex items-center justify-between z-10 shrink-0">
         <div className="flex items-center gap-3">
           <Sparkles className="w-5 h-5 text-indigo-500 dark:text-blue-400" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-light-text-secondary dark:text-white/40" style={{ fontFamily: 'var(--font-heading)' }}>Agora Neural Cloud</span>
@@ -205,10 +205,10 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
             variant="ghost"
             size="sm"
             onClick={() => setIsHistoryOpen(true)}
-            className="text-light-text-muted dark:text-white/20 hover:text-agora-blue dark:hover:text-white hover:bg-light-hover dark:hover:bg-white/5 rounded-full px-4 border border-transparent hover:border-light-border dark:hover:border-white/10 transition-all"
+            className="text-light-text-muted dark:text-white/20 hover:text-agora-blue dark:hover:text-white hover:bg-light-hover dark:hover:bg-white/5 rounded-full px-2 md:px-4 border border-transparent hover:border-light-border dark:hover:border-white/10 transition-all"
           >
-            <History className="w-4 h-4 mr-2" />
-            <span className="text-[9px] font-semibold uppercase tracking-wider">Chat History</span>
+            <History className="w-4 h-4 md:mr-2" />
+            <span className="text-[9px] font-semibold uppercase tracking-wider hidden md:inline">Chat History</span>
           </Button>
         </div>
       </div>
@@ -219,18 +219,18 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
         messages.length === 1 ? "justify-center" : "overflow-y-auto"
       )}>
         {messages.length === 1 ? (
-          <div className="flex flex-col items-center justify-center text-center px-8 py-10 animate-in fade-in zoom-in-[0.98] duration-1000">
+          <div className="flex flex-col items-center justify-center text-center px-4 md:px-8 py-6 md:py-10 animate-in fade-in zoom-in-[0.98] duration-1000">
             <FadeInUp duration={0.8} delay={0.1} className="flex flex-col items-center">
               <div className="mb-6 relative">
                 <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full animate-pulse" />
                 <Sparkles className="w-12 h-12 text-indigo-500 dark:text-blue-400 relative z-10" />
               </div>
               <p className="text-[9px] items-center uppercase font-semibold tracking-[0.3em] text-light-text-muted dark:text-white/30 mb-2">Authenticated: {firstName}</p>
-              <h2 className="text-2xl md:text-3xl font-semibold text-light-text-primary dark:text-white tracking-tighter mb-10 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              <h2 className="text-xl md:text-3xl font-semibold text-light-text-primary dark:text-white tracking-tighter mb-6 md:mb-10 leading-tight px-4" style={{ fontFamily: 'var(--font-heading)' }}>
                 How can I help, <span className="text-agora-blue">{firstName}?</span>
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
+              <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
                 {[
                   {
                     title: "Lesson Planning",
@@ -257,19 +257,19 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
                   <button
                     key={i}
                     onClick={() => setInputValue(card.prompt)}
-                    className="group relative flex flex-col items-start p-6 rounded-[2rem] bg-light-card/40 dark:bg-white/[0.03] border border-light-border dark:border-white/10 hover:border-agora-blue/50 transition-all text-left overflow-hidden min-h-[160px] hover:translate-y-[-4px] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5"
+                    className="group relative flex flex-col items-start p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-light-card/40 dark:bg-white/[0.03] border border-light-border dark:border-white/10 hover:border-agora-blue/50 transition-all text-left overflow-hidden min-h-[100px] md:min-h-[160px] hover:translate-y-[-4px] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5"
                   >
                     <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 dark:group-hover:opacity-100 transition-opacity duration-500", card.color)} />
-                    <span className="text-2xl mb-4 z-10">{card.icon}</span>
-                    <h3 className="text-base font-semibold text-light-text-primary dark:text-white mb-2 leading-tight z-10" style={{ fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
-                    <p className="text-[11px] text-light-text-secondary dark:text-white/40 font-medium z-10 leading-relaxed">{card.desc}</p>
+                    <span className="text-xl md:text-2xl mb-2 md:mb-4 z-10">{card.icon}</span>
+                    <h3 className="text-sm md:text-base font-semibold text-light-text-primary dark:text-white mb-1 md:mb-2 leading-tight z-10" style={{ fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
+                    <p className="text-[10px] md:text-[11px] text-light-text-secondary dark:text-white/40 font-medium z-10 leading-relaxed line-clamp-2 md:line-clamp-none">{card.desc}</p>
                   </button>
                 ))}
               </div>
             </FadeInUp>
           </div>
         ) : (
-          <div className="px-8 space-y-10 py-8">
+          <div className="px-4 md:px-8 space-y-6 md:space-y-10 py-4 md:py-8">
             {messages.map((msg, idx) => (
               idx === 0 ? null : (
                 <FadeInUp key={idx} duration={0.4} delay={0}>
@@ -287,11 +287,11 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
                     </div>
 
                     <div className={cn(
-                      "flex flex-col max-w-[75%] gap-2",
+                      "flex flex-col max-w-[85%] md:max-w-[75%] gap-2",
                       msg.role === 'user' ? "items-end text-right" : "items-start text-left"
                     )}>
                       <div className={cn(
-                        "p-5 rounded-[2rem] text-[15px] leading-relaxed relative border",
+                        "p-3 md:p-5 rounded-2xl md:rounded-[2rem] text-sm md:text-[15px] leading-relaxed relative border",
                         msg.role === 'user'
                           ? "bg-agora-blue text-white rounded-tr-none border-blue-400/20 shadow-lg shadow-blue-500/10"
                           : "bg-light-card/40 dark:bg-white/[0.04] text-light-text-primary dark:text-white/90 border-light-border dark:border-white/10 rounded-tl-none backdrop-blur-md"
@@ -338,9 +338,9 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
       </div>
 
       {/* Redesigned Input Area */}
-      <div className="p-4 md:p-12 z-20 shrink-0">
-        <div className="max-w-4xl mx-auto relative px-4">
-          <div className="relative group flex flex-col bg-light-input dark:bg-[#141416]/95 backdrop-blur-3xl p-2 rounded-[2.8rem] border border-light-border dark:border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] transition-all duration-300 ">
+      <div className="p-2 md:p-12 z-20 shrink-0 pb-6 md:pb-12">
+        <div className="max-w-4xl mx-auto relative px-2 md:px-4">
+          <div className="relative group flex flex-col bg-light-input dark:bg-[#141416]/95 backdrop-blur-3xl p-1.5 md:p-2 rounded-[1.8rem] md:rounded-[2.8rem] border border-light-border dark:border-white/10 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] transition-all duration-300 ">
             <div className="flex items-center">
               <button className="p-4 rounded-full text-light-text-muted dark:text-white/20 hover:text-agora-blue dark:hover:text-white transition-all shrink-0 hover:bg-light-hover dark:hover:bg-white/5">
                 <Paperclip size={15} />
@@ -358,9 +358,9 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({ schoolId }) => {
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isLoading}
-                  className="w-14 h-14 p-0 rounded-full bg-agora-blue dark:bg-indigo-600 hover:bg-agora-blue/90 dark:hover:bg-indigo-500 text-white shadow-lg shadow-blue-500/10 active:scale-90 transition-all shrink-0 border-none"
+                  className="w-10 h-10 md:w-14 md:h-14 p-0 rounded-full bg-agora-blue dark:bg-indigo-600 hover:bg-agora-blue/90 dark:hover:bg-indigo-500 text-white shadow-lg shadow-blue-500/10 active:scale-90 transition-all shrink-0 border-none"
                 >
-                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send size={16} className="w-6 h-6" />}
+                  {isLoading ? <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" /> : <Send className="w-4 h-4 md:w-6 md:h-6" />}
                 </Button>
               </div>
             </div>

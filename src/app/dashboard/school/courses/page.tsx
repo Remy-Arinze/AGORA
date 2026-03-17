@@ -201,42 +201,57 @@ export default function ClassesPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-1" style={{ fontSize: 'var(--text-page-title)' }}>
-                {terminology.courses}
-              </h1>
-
-              {activeSession?.session && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="font-medium text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-body)' }}>
-                    Active: {activeSession.session.name}
-                    {activeSession.term && ` (${activeSession.term.name})`}
-                  </span>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col w-full md:w-auto">
+                <div className="flex items-center justify-between w-full">
+                  <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                    {terminology.courses}
+                  </h1>
+                  {/* Compact Search bar for Mobile */}
+                  <div className="md:hidden flex-1 max-w-[200px] ml-4">
+                    <SearchInput
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      placeholder="Search..."
+                      size="sm"
+                      containerClassName="w-full"
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
-            <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
-              <div className="flex flex-wrap items-center gap-3">
-                <AutoGenerateButton
-                  onClick={handleGenerateClasses}
-                  isLoading={isGenerating}
-                  label={`Generate Default ${currentType === 'PRIMARY' ? 'Primary 1-6' : currentType === 'SECONDARY' ? 'JSS/SS' : 'Year 1-4'}`}
-                  variant="secondary"
-                  className="w-full sm:w-auto text-xs h-9"
-                />
-                <Button variant="primary" onClick={() => setShowAddClass(true)} className="w-full sm:w-auto h-9 text-xs">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add {terminology.courseSingular}
-                </Button>
+                <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+                  Manage {terminology.courses.toLowerCase()} for {currentType || 'your school'}
+                </p>
+
+                {activeSession?.session && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="font-medium text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-body)' }}>
+                      Active: {activeSession.session.name}
+                      {activeSession.term && ` (${activeSession.term.name})`}
+                    </span>
+                  </div>
+                )}
               </div>
-            </PermissionGate>
-          </div>
+              <PermissionGate resource={PermissionResource.CLASSES} type={PermissionType.WRITE}>
+                <div className="flex flex-row items-center gap-3 w-full md:w-auto">
+                  <AutoGenerateButton
+                    onClick={handleGenerateClasses}
+                    isLoading={isGenerating}
+                    label="Auto-Generate"
+                    variant="secondary"
+                    className="flex-1 sm:w-auto text-[10px] sm:text-xs h-9"
+                  />
+                  <Button variant="primary" onClick={() => setShowAddClass(true)} className="flex-1 sm:w-auto h-9 text-[10px] sm:text-xs">
+                    <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+                    Add {terminology.courseSingular}
+                  </Button>
+                </div>
+              </PermissionGate>
+            </div>
         </FadeInUp>
 
         {/* Search and View Controls */}
-        <div className="mb-6">
+        <div className="mb-6 hidden md:block">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="flex-1 max-w-2xl">
               <SearchInput

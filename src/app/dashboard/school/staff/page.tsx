@@ -370,8 +370,8 @@ export default function StaffPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Filter Pills */}
-            <div className="flex items-center gap-2">
+            {/* Filter Pills - Desktop */}
+            <div className="hidden md:flex items-center gap-2">
               {(['all', 'active', 'pending', 'suspended'] as FilterType[]).map((filterType) => (
                 <Button
                   key={filterType}
@@ -382,7 +382,7 @@ export default function StaffPage() {
                     setCurrentPage(1);
                   }}
                   className={cn(
-                    'capitalize',
+                    'capitalize px-3 py-1 text-[var(--text-small)]',
                     filter === filterType
                       ? 'bg-[#2490FD] dark:bg-[#2490FD] text-white'
                       : 'bg-light-surface dark:bg-[#151a23] text-light-text-secondary dark:text-[#9ca3af] hover:bg-light-hover dark:hover:bg-[#1f2937]'
@@ -393,6 +393,25 @@ export default function StaffPage() {
               ))}
             </div>
 
+            {/* Filter Dropdown - Mobile */}
+            <div className="md:hidden">
+              <Select
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value as FilterType);
+                  setCurrentPage(1);
+                }}
+                className="h-9 px-2.5 py-1 text-[var(--text-small)] w-28"
+                wrapperClassName="w-auto"
+                hideChevron={false}
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="suspended">Suspended</option>
+              </Select>
+            </div>
+
             {/* Role Filter */}
             <Select
               value={roleFilter}
@@ -401,7 +420,7 @@ export default function StaffPage() {
                 setCurrentPage(1);
               }}
               wrapperClassName="w-32"
-              className="h-9 px-2.5 py-1.5"
+              className="h-9 px-2.5 py-1.5 text-[var(--text-small)]"
             >
               <option value="All">All Roles</option>
               {availableRoles.map((role) => (

@@ -184,7 +184,7 @@ export default function TeacherOverviewPage() {
                         <span className="px-2 py-0.5 text-xs font-semibold bg-green-500 text-white rounded animate-pulse">
                           NOW
                         </span>
-                        <span className="text-green-700 dark:text-green-300 font-medium" style={{ fontSize: 'var(--text-body)' }}>
+                        <span className="text-green-700 dark:text-green-300 font-semibold" style={{ fontSize: 'var(--text-body)' }}>
                           {currentPeriod.startTime} - {currentPeriod.endTime}
                         </span>
                       </div>
@@ -206,7 +206,7 @@ export default function TeacherOverviewPage() {
                   {/* Upcoming Periods */}
                   {upcomingPeriods.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs font-medium text-light-text-muted dark:text-dark-text-muted uppercase tracking-wide">
+                      <p className="font-semibold text-light-text-muted dark:text-dark-text-muted uppercase tracking-wide" style={{ fontSize: 'var(--text-body)' }}>
                         Coming Up
                       </p>
                       {upcomingPeriods.map((period) => {
@@ -238,7 +238,7 @@ export default function TeacherOverviewPage() {
                   {/* Full Today's List (collapsed) */}
                   {todaysPeriods.length > (currentPeriod ? 1 : 0) + upcomingPeriods.length && (
                     <div className="pt-3 border-t border-light-border dark:border-dark-border">
-                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted mb-2">
+                      <p className="font-semibold text-light-text-muted dark:text-dark-text-muted mb-2" style={{ fontSize: 'var(--text-body)' }}>
                         Full Schedule
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

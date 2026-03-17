@@ -123,7 +123,7 @@ export default function StudentOverviewPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-center md:justify-start gap-2">
                   <div className="h-1 w-8 bg-blue-600 rounded-full" />
-                  <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em]">Dashboard Overview</p>
+                  <p className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-[0.1em]" style={{ fontSize: 'var(--text-body)' }}>Dashboard Overview</p>
                 </div>
                 <h1 className="font-black text-light-text-primary dark:text-dark-text-primary tracking-tight" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', lineHeight: '1' }}>
                   Hey, {student.firstName}! 👋
@@ -135,10 +135,10 @@ export default function StudentOverviewPage() {
               </div>
 
               <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                <Badge className="bg-blue-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black border-none">
+                <Badge className="px-4 py-1.5 rounded-xl font-semibold border-blue-200/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-white/5 backdrop-blur-md" style={{ fontSize: 'var(--text-body)' }}>
                   {activeTerm?.name || 'Current Term'}
                 </Badge>
-                <Badge className="px-4 py-1.5 rounded-xl text-[10px] font-black border-blue-200/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-white/5 backdrop-blur-md">
+                <Badge className="px-4 py-1.5 rounded-xl font-semibold border-blue-200/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-white/5 backdrop-blur-md" style={{ fontSize: 'var(--text-body)' }}>
                   {school?.name || 'Your School'}
                 </Badge>
               </div>
@@ -146,8 +146,8 @@ export default function StudentOverviewPage() {
 
             <div className="relative hidden md:flex items-center gap-8 z-10">
               <div className="text-right">
-                <p className="text-[10px] font-black text-light-text-muted uppercase tracking-[0.2em] mb-1">Academic Pulse</p>
-                <p className="font-black text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-stat-value)' }}>{stats.averageScore}%</p>
+                <p className="font-semibold text-light-text-muted uppercase tracking-[0.1em] mb-1" style={{ fontSize: 'var(--text-body)' }}>Academic Pulse</p>
+                <p className="font-semibold text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-page-title)' }}>{stats.averageScore}%</p>
               </div>
               <div className="h-20 w-[1px] bg-gradient-to-b from-transparent via-blue-200 dark:via-blue-800 to-transparent" />
               <div className="relative">

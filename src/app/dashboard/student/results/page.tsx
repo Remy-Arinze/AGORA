@@ -5,12 +5,12 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { 
-  FileText, 
-  Download, 
-  TrendingUp, 
-  Award, 
-  Loader2, 
+import {
+  FileText,
+  Download,
+  TrendingUp,
+  Award,
+  Loader2,
   AlertCircle,
   BookOpen,
   ChevronDown,
@@ -127,7 +127,7 @@ export default function StudentResultsPage() {
   const [selectedTermId, setSelectedTermId] = useState<string>('');
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set());
   const [gradeTypeFilter, setGradeTypeFilter] = useState<GradeTypeFilter>('ALL');
-  
+
   // Get school type and school ID from student's enrollment (not localStorage)
   const { schoolType: currentType, schoolId, isLoading: isLoadingSchoolType } = useStudentSchoolType();
   const terminology = getStudentTerminology(currentType);
@@ -146,10 +146,10 @@ export default function StudentResultsPage() {
   );
 
   // Get all grades (published only from backend)
-  const { 
-    data: gradesResponse, 
+  const {
+    data: gradesResponse,
     isLoading: isLoadingGrades,
-    error: gradesError 
+    error: gradesError
   } = useGetMyStudentGradesQuery({});
   const grades = gradesResponse?.data || [];
 
@@ -174,7 +174,7 @@ export default function StudentResultsPage() {
 
     filteredGrades.forEach((grade: Grade) => {
       const termKey = grade.termId || grade.term || 'Unknown';
-      
+
       if (!termMap.has(termKey)) {
         termMap.set(termKey, {
           termId: grade.termId || '',
@@ -188,7 +188,7 @@ export default function StudentResultsPage() {
       }
 
       const termResult = termMap.get(termKey)!;
-      
+
       // Find or create subject entry
       let subjectEntry = termResult.subjects.find(s => s.name === grade.subject);
       if (!subjectEntry) {
@@ -270,7 +270,7 @@ export default function StudentResultsPage() {
 
   // Set default selected term
   const effectiveTermId = selectedTermId || activeSession?.term?.id || termResults[0]?.termId || '';
-  
+
   // Get current results for selected term
   const currentResults = useMemo(() => {
     if (!effectiveTermId) return termResults[0];
@@ -509,7 +509,7 @@ export default function StudentResultsPage() {
                     ) : (
                       <div className="space-y-4">
                         {currentResults.subjects.map((subject, index) => (
-                          <FadeInUp delay={index * 0.05 } from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="border border-light-border dark:border-dark-border rounded-lg overflow-hidden">
+                          <FadeInUp delay={index * 0.05} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="border border-light-border dark:border-dark-border rounded-lg overflow-hidden">
                             {/* Subject Header - Clickable */}
                             <button
                               onClick={() => toggleSubjectExpanded(subject.name)}
@@ -530,7 +530,7 @@ export default function StudentResultsPage() {
                                   {subject.assessments.length} assessment{subject.assessments.length !== 1 ? 's' : ''}
                                 </span>
                               </div>
-                              
+
                               <div className="flex items-center gap-6">
                                 {/* Type breakdown badges - show only when filter is ALL */}
                                 {gradeTypeFilter === 'ALL' && (
@@ -552,7 +552,7 @@ export default function StudentResultsPage() {
                                     )}
                                   </div>
                                 )}
-                                
+
                                 {/* Total Score */}
                                 <div className="text-right">
                                   <p className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -562,7 +562,7 @@ export default function StudentResultsPage() {
                                     {subject.percentage.toFixed(1)}%
                                   </p>
                                 </div>
-                                
+
                                 {/* Grade Badge */}
                                 <span className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(subject.grade)}`}>
                                   {subject.grade}
@@ -595,7 +595,7 @@ export default function StudentResultsPage() {
                                         )}
                                       </div>
                                     )}
-                                    
+
                                     {/* Assessment List */}
                                     <div className="divide-y divide-light-border dark:divide-dark-border">
                                       {subject.assessments.map((assessment) => (
@@ -613,7 +613,7 @@ export default function StudentResultsPage() {
                                                   {assessment.assessmentName || gradeTypeLabels[assessment.gradeType]}
                                                 </h4>
                                               </div>
-                                              
+
                                               <div className="flex items-center gap-4 mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
                                                 {assessment.assessmentDate && (
                                                   <span className="flex items-center gap-1">
@@ -628,7 +628,7 @@ export default function StudentResultsPage() {
                                                   </span>
                                                 )}
                                               </div>
-                                              
+
                                               {assessment.remarks && (
                                                 <div className="mt-2 flex items-start gap-1 text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                                   <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -636,7 +636,7 @@ export default function StudentResultsPage() {
                                                 </div>
                                               )}
                                             </div>
-                                            
+
                                             <div className="flex items-center gap-4 md:text-right">
                                               <div>
                                                 <p className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">

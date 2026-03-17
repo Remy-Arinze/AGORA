@@ -281,26 +281,39 @@ export default function SubjectsPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-                {currentType === 'TERTIARY' ? 'Courses' : 'Subjects'}
-              </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col w-full md:w-auto">
+              <div className="flex items-center justify-between w-full">
+                <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                  {currentType === 'TERTIARY' ? 'Courses' : 'Subjects'}
+                </h1>
+                {/* Compact Search bar for Mobile */}
+                <div className="md:hidden flex-1 max-w-[200px] ml-4">
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Search..."
+                    size="sm"
+                    containerClassName="w-full"
+                  />
+                </div>
+              </div>
+              <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 Manage {currentType === 'TERTIARY' ? 'courses' : 'subjects'} for {currentType || 'your school'}
               </p>
             </div>
             <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-row items-center gap-3 w-full md:w-auto">
                 {canAutoGenerate && (
                   <AutoGenerateButton
                     onClick={openConfirmModal}
                     isLoading={isGenerating}
                     label="Auto-Generate"
+                    className="flex-1 sm:w-auto text-[10px] sm:text-xs h-9"
                   />
                 )}
-                <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button variant="primary" onClick={() => setShowCreateModal(true)} className="flex-1 sm:w-auto h-9 text-[10px] sm:text-xs">
+                  <Plus className="h-4 w-4 mr-1 sm:mr-2" />
                   Add {currentType === 'TERTIARY' ? 'Course' : 'Subject'}
                 </Button>
               </div>
@@ -309,7 +322,7 @@ export default function SubjectsPage() {
         </FadeInUp>
 
         {/* Search and View Toggle */}
-        <div className="flex items-center justify-between mb-6 gap-4">
+        <div className="hidden md:flex items-center justify-between mb-6 gap-4">
           <div className="w-full max-w-md">
             <SearchInput
               value={searchQuery}

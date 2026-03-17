@@ -54,9 +54,9 @@ const PERIOD_TYPE_COLORS: Record<string, { bg: string; text: string; border: str
   },
 };
 
-export function TeacherTimetableGrid({ 
-  timetable, 
-  schoolType, 
+export function TeacherTimetableGrid({
+  timetable,
+  schoolType,
   isLoading,
   allTerms,
   selectedTermId,
@@ -88,7 +88,7 @@ export function TeacherTimetableGrid({
   // Group periods by day and time
   const timetableByDay = useMemo(() => {
     const grouped: Record<string, Record<string, TimetablePeriod[]>> = {};
-    
+
     DAYS.forEach((day) => {
       grouped[day] = {};
       allTimeSlots.forEach((slot) => {
@@ -229,15 +229,14 @@ export function TeacherTimetableGrid({
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b border-light-border dark:border-dark-border sticky left-0 bg-light-bg dark:bg-dark-bg z-10">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b border-light-border dark:border-dark-border sticky left-0 bg-light-card dark:bg-dark-surface z-20">
                     Time
                   </th>
                   {DAYS.map((day) => (
                     <th
                       key={day}
-                      className={`text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b border-light-border dark:border-dark-border ${
-                        day === currentDay ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                      }`}
+                      className={`text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b border-light-border dark:border-dark-border ${day === currentDay ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        }`}
                     >
                       {DAY_LABELS[day]}
                       {day === currentDay && (
@@ -252,7 +251,7 @@ export function TeacherTimetableGrid({
                   const [startTime, endTime] = slot.split('-');
                   return (
                     <tr key={slot} className="border-b border-light-border dark:border-dark-border">
-                      <td className="py-3 px-4 text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary sticky left-0 bg-light-bg dark:bg-dark-bg z-10">
+                      <td className="py-3 px-4 text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary sticky left-0 bg-light-card dark:bg-dark-surface z-20">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4" />
                           <span>
@@ -265,9 +264,8 @@ export function TeacherTimetableGrid({
                         return (
                           <td
                             key={day}
-                            className={`py-2 px-4 ${
-                              day === currentDay ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                            }`}
+                            className={`py-2 px-4 ${day === currentDay ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                              }`}
                           >
                             {periods.length > 0 ? (
                               <div className="space-y-2">
@@ -276,15 +274,14 @@ export function TeacherTimetableGrid({
                                   const colors = PERIOD_TYPE_COLORS[period.type] || PERIOD_TYPE_COLORS.LESSON;
                                   const hasConflict = period.hasConflict || false;
                                   const isFromCourseRegistration = period.isFromCourseRegistration || false;
-                                  
+
                                   return (
                                     <div
                                       key={period.id}
-                                      className={`p-3 rounded-lg border ${
-                                        hasConflict
+                                      className={`p-3 rounded-lg border ${hasConflict
                                           ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800 text-red-700 dark:text-red-300'
                                           : `${colors.bg} ${colors.border} ${colors.text}`
-                                      }`}
+                                        }`}
                                     >
                                       <div className="flex items-start justify-between gap-2 mb-1">
                                         <div className="font-semibold text-sm flex-1">{display.title}</div>

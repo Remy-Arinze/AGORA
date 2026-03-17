@@ -119,7 +119,7 @@ function HistoricalGradesModal({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">Full Name</p>
                     <p className="font-medium text-base">
@@ -134,10 +134,10 @@ function HistoricalGradesModal({
                   </div>
                   <div>
                     <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">Transfer Completed</p>
-                    <p className="font-medium text-base">
+                    <p className="font-medium text-base text-blue-600 dark:text-blue-400">
                       {historicalData.transfer?.completedAt
-                        ? new Date(historicalData.transfer.completedAt).toLocaleDateString()
-                        : 'N/A'}
+                        ? new Date(historicalData.transfer.completedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })
+                        : '—'}
                     </p>
                   </div>
                 </div>
@@ -304,34 +304,31 @@ function TransferEnrollmentsDisplay({ enrollments, grades }: { enrollments?: any
                 <div className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
                   <ArrowDown className="h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary" />
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-base text-light-text-primary dark:text-dark-text-primary">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-base text-light-text-primary dark:text-dark-text-primary truncate">
                     {enrollment.classLevel || 'Unknown Class'}
                   </h4>
-                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-0.5">
+                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-0.5 truncate">
                     {enrollment.academicYear || 'Unknown Year'}
                     {enrollment.isActive && (
-                      <span className="ml-2 px-2 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                      <span className="ml-2 px-2 py-0.5 rounded text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium">
                         Active
                       </span>
                     )}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
                 {/* Cumulative Score */}
-                <div className="text-right">
-                  <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">Cumulative</p>
-                  <p className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">
+                <div className="text-right hidden xs:block">
+                  <p className="text-[10px] text-light-text-secondary dark:text-dark-text-secondary uppercase">Cumulative</p>
+                  <p className="text-base sm:text-lg font-bold text-light-text-primary dark:text-dark-text-primary">
                     {cumulative.percentage}%
-                  </p>
-                  <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-                    {cumulative.totalScore}/{cumulative.totalMaxScore}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">Records</p>
-                  <p className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
+                  <p className="text-[10px] text-light-text-secondary dark:text-dark-text-secondary uppercase">Records</p>
+                  <p className="text-base sm:text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
                     {gradeCount}
                   </p>
                 </div>
@@ -670,12 +667,12 @@ export default function TransfersPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
                 Student Transfers
               </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+              <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 Manage outgoing transfers and view recently accepted students
               </p>
             </div>
@@ -715,24 +712,25 @@ export default function TransfersPage() {
               {/* Accept new transfer + Recently accepted list */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between flex-wrap">
-                    <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <CardTitle className="text-lg sm:text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
                       Recently accepted
                     </CardTitle>
-                    <div className="flex items-center gap-3 flex-wrap ml-auto">
+                    <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
                       <SearchInput
                         value={searchQuery}
                         onChange={setSearchQuery}
-                        placeholder="Search by name, UID or school..."
-                        containerClassName="min-w-[200px] max-w-md"
-                        size="lg"
+                        placeholder="Search students..."
+                        containerClassName="flex-1 min-w-0"
+                        size="md"
                       />
                       <PermissionGate resource={PermissionResource.TRANSFERS} type={PermissionType.WRITE}>
                         <Button
                           variant="primary"
                           size="sm"
                           onClick={() => setShowAcceptTransferModal(true)}
+                          className="h-9 whitespace-nowrap"
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Accept transfer
@@ -819,17 +817,17 @@ export default function TransfersPage() {
                                 <p className="font-semibold text-light-text-primary dark:text-dark-text-primary truncate">
                                   {fullName}
                                 </p>
-                                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary truncate">
                                   {item.student?.uid}
                                 </p>
                               </div>
-                              <div className="flex items-center gap-4 flex-shrink-0">
+                              <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
                                 {perf?.averagePercentage != null && (
-                                  <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                                  <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400">
                                     {perf.averagePercentage}% avg
                                   </p>
                                 )}
-                                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                                <p className="text-[10px] sm:text-xs text-light-text-muted dark:text-dark-text-muted">
                                   {completedDate}
                                 </p>
                               </div>
@@ -916,23 +914,24 @@ export default function TransfersPage() {
               {/* Outgoing Transfers List */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <CardTitle className="text-lg sm:text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
                       Outgoing Transfers ({filteredOutgoing.length})
                     </CardTitle>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
                       <SearchInput
                         value={searchQuery}
                         onChange={setSearchQuery}
-                        placeholder="Search by student name or ID..."
-                        containerClassName="flex-1 max-w-md"
-                        size="lg"
+                        placeholder="Search transfers..."
+                        containerClassName="flex-1 min-w-0"
+                        size="md"
                       />
                       <PermissionGate resource={PermissionResource.TRANSFERS} type={PermissionType.WRITE}>
                         <Button
                           variant="primary"
                           size="sm"
                           onClick={() => setShowGenerateTacModal(true)}
+                          className="h-9 whitespace-nowrap"
                         >
                           <Key className="h-4 w-4 mr-2" />
                           Generate TAC
@@ -1360,7 +1359,7 @@ export default function TransfersPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">Full Name</p>
                       <p className="font-medium text-base">
@@ -1375,7 +1374,7 @@ export default function TransfersPage() {
                     </div>
                     <div>
                       <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">From School</p>
-                      <p className="font-medium text-base">{showTransferPreview.studentData?.fromSchool?.name}</p>
+                      <p className="font-medium text-base text-blue-600 dark:text-blue-400">{showTransferPreview.studentData?.fromSchool?.name}</p>
                     </div>
                     <div>
                       <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">Current Class</p>

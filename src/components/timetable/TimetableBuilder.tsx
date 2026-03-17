@@ -477,13 +477,13 @@ export function TimetableBuilder({
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border">
+                      <th className="sticky left-0 z-20 bg-white dark:bg-dark-surface min-w-[100px] text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                         Time
                       </th>
                       {DAYS.map((day) => (
                         <th
                           key={day}
-                          className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border"
+                          className="text-center py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border min-w-[120px]"
                         >
                           {DAY_LABELS[day]}
                         </th>
@@ -518,7 +518,7 @@ export function TimetableBuilder({
                       if (dbBreakPeriods.length > 0 && !hasLessons) {
                         return (
                           <tr key={`${timePeriod.startTime}-${breakType || 'break'}`}>
-                            <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                            <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                               <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                             </td>
                             <td
@@ -534,7 +534,7 @@ export function TimetableBuilder({
                       // Handle lesson periods
                       return (
                         <tr key={timePeriod.startTime}>
-                          <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                          <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                             <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                           </td>
                           {DAYS.map((day) => {
@@ -579,9 +579,9 @@ export function TimetableBuilder({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Sidebar with draggable subjects/courses */}
-        <div className="col-span-3">
+        <div className="col-span-1 md:col-span-3">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -633,7 +633,7 @@ export function TimetableBuilder({
         </div>
 
         {/* Timetable Grid */}
-        <div className="col-span-9">
+        <div className="col-span-1 md:col-span-9">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Timetable</CardTitle>
@@ -648,13 +648,13 @@ export function TimetableBuilder({
                   <table className="w-full">
                     <thead>
                       <tr>
-                        <th className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border">
+                        <th className="sticky left-0 z-20 bg-white dark:bg-dark-surface min-w-[100px] text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           Time
                         </th>
                         {DAYS.map((day) => (
                           <th
                             key={day}
-                            className="text-left py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border"
+                            className="text-center py-4 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b-2 border-light-border dark:border-dark-border min-w-[120px]"
                           >
                             {DAY_LABELS[day]}
                           </th>
@@ -689,7 +689,7 @@ export function TimetableBuilder({
                         if (dbBreakPeriods.length > 0 && !hasLessons) {
                           return (
                             <tr key={`${timePeriod.startTime}-${breakType || 'break'}`}>
-                              <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                              <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                 <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                               </td>
                               <td
@@ -705,7 +705,7 @@ export function TimetableBuilder({
                         // Handle lesson periods
                         return (
                           <tr key={timePeriod.startTime}>
-                            <td className="py-4 px-4 text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap">
+                            <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface text-sm font-medium text-light-text-primary dark:text-dark-text-primary whitespace-nowrap py-4 px-4 border-r border-light-border dark:border-dark-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                               <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                             </td>
                             {DAYS.map((day) => {

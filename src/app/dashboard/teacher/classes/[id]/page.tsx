@@ -64,7 +64,7 @@ import { FloatingAiCta } from '@/components/ai/FloatingAiCta';
 import { AiChatDrawer } from '@/components/ai/AiChatDrawer';
 import { Sparkles } from 'lucide-react';
 
-type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'ai' | 'rollcall';
+type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'rollcall';
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -282,7 +282,6 @@ export default function ClassDetailPage() {
     { id: 'rollcall', label: 'Roll Call', icon: <Smartphone className="h-4 w-4" />, available: true },
     { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" />, available: true },
     { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
-    { id: 'ai', label: 'AI Assistant', icon: <Sparkles className="h-4 w-4" />, available: true },
   ];
 
   if (isLoading) {
@@ -1028,31 +1027,6 @@ export default function ClassDetailPage() {
             </div>
           )}
 
-          {/* AI Assistant Tab */}
-          {(activeTab as TabType) === 'ai' && (
-            <div className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-                <div>
-                  <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
-                    <Sparkles className="h-5 w-5 text-indigo-500" />
-                    Class AI Assistant
-                  </h2>
-                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                    Context-aware tools for {classData.name}
-                  </p>
-                </div>
-              </div>
-
-              {schoolId && (
-                <AgoraAiTools
-                  schoolId={schoolId}
-                  defaultSubject={classData?.teachers?.[0]?.subject || ''}
-                  defaultGradeLevel={classData?.classLevel || ''}
-                  lockContext={true}
-                />
-              )}
-            </div>
-          )}
 
           {/* Roll Call Tab */}
           {(activeTab as TabType) === 'rollcall' && schoolId && (

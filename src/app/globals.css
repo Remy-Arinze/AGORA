@@ -59,9 +59,9 @@
     /* 18px - Card titles */
     --text-body: 0.8rem;
     /* 12px - Body text */
-    --text-small: 0.7rem;
+    --text-small: 0.75rem;
     /* 12px - Small text */
-    --text-tiny: 0.65rem;
+    --text-tiny: 0.7rem;
     /* 11.2px - Tiny text for tabs/badges */
     --text-placeholder: var(--text-small);
     /* Placeholder text - consistent with small */
@@ -110,7 +110,7 @@
     /* Dark Mode Colors - PRAX IQ inspired dark theme */
     --agora-success: #36FE96;
     /* Neon green for dark mode */
-    --dark-bg: #1b1b1c;
+    --dark-bg: #101011;
     --dark-surface: #1f1f22;
     --dark-border: #232327;
     --dark-input: #2f2f34;
@@ -149,96 +149,304 @@
 
   /* --- Glassmorphism Overrides for Teacher Dashboard --- */
   body.teacher-dashboard-active {
-    background-color: var(--light-bg);
-    /* Fallback base color behind blobs */
-    --light-bg: transparent;
-    /* Make MainContent background transparent so blobs show through */
-    --dark-bg: transparent;
-    --light-card: rgba(255, 255, 255, 0.55);
-    /* For dark mode, we want a very light, almost invisible gloss over the dark base */
-    --dark-surface: rgba(255, 255, 255, 0.04);
+    background-color: #f4f7fa;
+    /* Slightly cleaner light grey-blue */
+  }
+
+  body.teacher-dashboard-active .desktop-sidebar {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+    box-shadow: none !important;
+  }
+
+  /* Solid Mobile Drawer for Teacher & School Admin Light Mode */
+  body.teacher-dashboard-active .mobile-sidebar-drawer,
+  body.school-dashboard-active .mobile-sidebar-drawer {
+    background-color: #f4f7fa !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
+    opacity: 1 !important;
+  }
+
+  /* Sidebar Link Styling for Light Theme Teacher Dashboard */
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-item {
+    font-size: var(--text-body) !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-active {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-active span {
+    color: #0f172a !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-inactive {
+    color: #64748b !important;
+    background-color: transparent !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .sidebar-link-inactive:hover {
+    color: #0f172a !important;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  /* Logout & Theme Toggle matching for light mode */
+  body.teacher-dashboard-active:not(.dark) .desktop-sidebar button,
+  body.teacher-dashboard-active:not(.dark) .mobile-sidebar-drawer button {
+    color: #64748b !important;
+    font-size: var(--text-body) !important;
+    font-weight: 500 !important;
+  }
+
+  body.teacher-dashboard-active:not(.dark) .desktop-sidebar button:hover,
+  body.teacher-dashboard-active:not(.dark) .mobile-sidebar-drawer button:hover {
+    color: #0f172a !important;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  /* Card styling for light mode teacher dashboard - Solid white with soft shadow */
+  body.teacher-dashboard-active:not(.dark) .bg-white\/80 {
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(0, 0, 0, 0.02) !important;
   }
 
   .dark body.teacher-dashboard-active {
+    background-color: #000000 !important;
+  }
+
+  .dark body.teacher-dashboard-active .desktop-sidebar,
+  .dark body.teacher-dashboard-active .mobile-sidebar-drawer,
+  .dark body.school-dashboard-active .mobile-sidebar-drawer {
+    background-color: #000000 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid #111111 !important;
+    box-shadow: none !important;
+  }
+
+  /* --- Sidebar Link Overrides for Teacher Dashboard --- */
+  .dark body.teacher-dashboard-active .sidebar-link-item {
+    transition: all 0.2s ease;
+    font-size: var(--text-body) !important;
+    font-weight: normal !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-active {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-inactive,
+  .dark body.teacher-dashboard-active .sidebar-link-inactive svg {
+    color: #6b7280 !important;
+    /* Muted grey for inactive state */
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-inactive:hover {
+    color: #ffffff !important;
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-link-item span {
+    color: inherit !important;
+  }
+
+  .dark body.teacher-dashboard-active .sidebar-section-title {
+    color: #6b7280 !important;
+    /* var(--dark-text-muted) equivalent for titles */
+    font-size: var(--text-body) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: none !important;
+    margin-bottom: 0.75rem !important;
+    margin-top: 1.5rem !important;
+  }
+
+
+  /* Logout button matching */
+  .dark body.teacher-dashboard-active .desktop-sidebar button,
+  .dark body.teacher-dashboard-active .mobile-sidebar-drawer button {
+    color: #6b7280 !important;
+    font-size: var(--text-body) !important;
+    font-weight: normal !important;
+  }
+
+  .dark body.teacher-dashboard-active .desktop-sidebar button:hover,
+  .dark body.teacher-dashboard-active .mobile-sidebar-drawer button:hover {
+    color: #ffffff !important;
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  /* Mobile Navbar Solid Backgrounds */
+  body.teacher-dashboard-active:not(.dark) .mobile-navbar,
+  body.student-dashboard-active:not(.dark) .mobile-navbar,
+  body.school-dashboard-active:not(.dark) .mobile-navbar {
+    background-color: #f4f7fa !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .dark body.teacher-dashboard-active .mobile-navbar,
+  .dark body.school-dashboard-active .mobile-navbar {
+    background-color: #000000 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .dark body.student-dashboard-active .mobile-navbar {
     background-color: #0b0b0e !important;
-    --dark-bg: transparent;
-    /* Deep deep dark for better contrast with colorful glowing blobs */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
   }
 
   /* Make sure background is totally transparent so blobs show through */
   .teacher-dashboard-active main,
-  .teacher-dashboard-active .relative.z-10,
-  .teacher-dashboard-active>div>div>div {
+  .teacher-dashboard-active .relative.z-10 {
     background-color: transparent !important;
   }
 
   /* Target cards dynamically */
-  .teacher-glass-content .rounded-lg,
-  .teacher-glass-content .border-b,
-  .teacher-glass-content [class*="bg-[var(--light-bg)]"] {
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-color: rgba(255, 255, 255, 0.4) !important;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  /* Target cards dynamically for Teacher - Solid & Deep */
+  .dark body.teacher-dashboard-active .teacher-glass-content .rounded-lg,
+  .dark body.teacher-dashboard-active .teacher-glass-content .border,
+  .dark body.teacher-dashboard-active .teacher-glass-content [class*="bg-"] {
+    background-color: #0a0a0b !important;
+    border-color: #1a1a1c !important;
+    backdrop-filter: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
   }
 
-  .dark .teacher-glass-content .rounded-lg,
-  .dark .teacher-glass-content .border-b,
-  .dark .teacher-glass-content [class*="bg-[var(--dark-bg)]"] {
-    background-color: rgba(30, 30, 35, 0.3) !important;
-    /* Extremely sheer tinted dark glass */
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    /* Crisper bright white edge reflection */
-    border-top-color: rgba(255, 255, 255, 0.12) !important;
-    /* Stronger top rim light */
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  .dark body.teacher-dashboard-active .teacher-glass-content h1,
+  .dark body.teacher-dashboard-active .teacher-glass-content h2,
+  .dark body.teacher-dashboard-active .teacher-glass-content h3 {
+    color: #ffffff !important;
+  }
+
+  .dark body.teacher-dashboard-active .teacher-glass-content p {
+    color: #9ca3af !important;
+  }
+
+  /* --- Student Dashboard Theme Sync --- */
+  body.student-dashboard-active {
+    background-color: #f4f7fa;
+  }
+
+  body.student-dashboard-active .desktop-sidebar {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+    box-shadow: none !important;
+  }
+
+  /* Solid Mobile Drawer for Student */
+  body.student-dashboard-active .mobile-sidebar-drawer {
+    background-color: #f4f7fa !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .dark body.student-dashboard-active .desktop-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .dark body.student-dashboard-active .mobile-sidebar-drawer {
+    background-color: #0b0b0e !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5) !important;
   }
 
   /* --- Glassmorphism Overrides for Student Dashboard --- */
-  body.student-dashboard-active {
-    background-color: var(--light-bg);
-    /* Fallback base color behind blobs */
-    --light-bg: transparent;
-    /* Make MainContent background transparent so blobs show through */
-    --dark-bg: transparent;
-    --light-card: rgba(255, 255, 255, 0.55);
-    /* For dark mode, we want a very light, almost invisible gloss over the dark base */
-    --dark-surface: rgba(255, 255, 255, 0.04);
+
+  /* --- Student Dashboard Light Mode Card & Link Sync --- */
+  body.student-dashboard-active:not(.dark) .bg-white\/80 {
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(0, 0, 0, 0.02) !important;
+  }
+
+  body.student-dashboard-active:not(.dark) .sidebar-link-item {
+    font-size: var(--text-body) !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+  }
+
+  body.student-dashboard-active:not(.dark) .sidebar-link-active {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.02) !important;
+  }
+
+  body.student-dashboard-active:not(.dark) .sidebar-link-inactive {
+    color: #64748b !important;
   }
 
   .dark body.student-dashboard-active {
     background-color: #0b0b0e !important;
-    --dark-bg: transparent;
-    /* Deep deep dark for better contrast with colorful glowing blobs */
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-active span,
+  .dark body.student-dashboard-active .sidebar-link-active svg {
+    color: #ffffff !important;
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-inactive {
+    color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .dark body.student-dashboard-active .sidebar-link-inactive:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
   }
 
   /* Make background transparent */
   .student-dashboard-active main,
   .student-dashboard-active .relative.z-10,
-  .student-dashboard-active>div>div>div {
+  .student-dashboard-active .md\:ml-\[250px\] {
     background-color: transparent !important;
   }
 
-  /* Target cards dynamically - Matching Teacher Quality */
-  .student-glass-content .rounded-lg,
-  .student-glass-content .border-b,
-  .student-glass-content [class*="bg-[var(--light-bg)]"] {
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-color: rgba(255, 255, 255, 0.4) !important;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  }
-
+  /* Student Dark Glass Content - Matching Teacher Depth but with Vibrancy */
   .dark .student-glass-content .rounded-lg,
   .dark .student-glass-content .border-b,
-  .dark .student-glass-content [class*="bg-[var(--dark-bg)]"] {
-    background-color: rgba(30, 30, 35, 0.3) !important;
-    /* Extremely sheer tinted dark glass */
+  .dark .student-glass-content .border,
+  .dark .student-glass-content [class*="bg-"] {
+    background-color: rgba(20, 20, 25, 0.6) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
-    /* Crisper bright white edge reflection */
     border-top-color: rgba(255, 255, 255, 0.12) !important;
-    /* Stronger top rim light */
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .dark .student-glass-content {
+    background-color: transparent !important;
   }
 
   /* --------------------------------------------------- */

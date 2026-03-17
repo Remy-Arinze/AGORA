@@ -80,7 +80,7 @@ export function BulkGradeEntryModal({
 
   // Calculate suggested sequence number based on existing grades
   const suggestedSequence = useMemo(() => {
-    if (!gradeType || !termId) return null;
+    if (!isOpen || !gradeType || !termId) return null;
     
     // Get all sequences for this grade type and term
     const sequences = existingGrades
@@ -93,24 +93,26 @@ export function BulkGradeEntryModal({
     // Find the next available sequence
     const maxSequence = Math.max(...sequences);
     return maxSequence + 1;
-  }, [existingGrades, gradeType, termId]);
+  }, [existingGrades, gradeType, termId, isOpen]);
 
   // Initialize form when modal opens
   useEffect(() => {
-    if (isOpen && students.length > 0) {
-      // Initialize student grades array
-      setStudentGrades(
-        students.map((student) => ({
-          enrollmentId: student.enrollment?.id || '',
-          studentName: `${student.firstName} ${student.middleName ? `${student.middleName} ` : ''}${student.lastName}`,
-          studentUid: student.uid,
-          score: '',
-          remarks: '',
-        }))
-      );
+    if (isOpen) {
+      if (students.length > 0 && studentGrades.length === 0) {
+        // Initialize student grades array
+        setStudentGrades(
+          students.map((student) => ({
+            enrollmentId: student.enrollment?.id || '',
+            studentName: `${student.firstName} ${student.middleName ? `${student.middleName} ` : ''}${student.lastName}`,
+            studentUid: student.uid,
+            score: '',
+            remarks: '',
+          }))
+        );
+      }
 
-      // Try to find matching subject if one was provided
-      if (subject && subjects.length > 0) {
+      // Try to find matching subject if one was provided and we don't have one selected yet
+      if (subject && subjects.length > 0 && !subjectId) {
         const matchingSubject = subjects.find(
           s => s.name.toLowerCase() === subject.toLowerCase()
         );
@@ -119,26 +121,29 @@ export function BulkGradeEntryModal({
           setSelectedSubjectName(matchingSubject.name);
         }
       }
-    } else if (!isOpen) {
-      // Reset form when modal closes
-      setSubjectId('');
-      setSelectedSubjectName('');
-      setGradeType('CA');
-      setAssessmentName('');
-      setMaxScore(100);
-      setAssessmentDate('');
-      setSequence('');
-      setStudentGrades([]);
-      setIsPublished(false);
+    } else {
+      // Reset form when modal closes - but only if it's not already reset
+      // Use a simple guard to prevent infinite loops if dependencies change while closed
+      if (studentGrades.length > 0 || subjectId !== '' || assessmentName !== '') {
+        setSubjectId('');
+        setSelectedSubjectName(subject || '');
+        setGradeType('CA');
+        setAssessmentName('');
+        setMaxScore(100);
+        setAssessmentDate('');
+        setSequence('');
+        setStudentGrades([]);
+        setIsPublished(false);
+      }
     }
-  }, [isOpen, students, subject, subjects]);
+  }, [isOpen, students, subject, subjects, subjectId, assessmentName, studentGrades.length]);
 
   // Auto-suggest sequence when grade type or term changes
   useEffect(() => {
-    if (isOpen && suggestedSequence !== null && sequence === '') {
+    if (isOpen && suggestedSequence !== null && (sequence === '' || sequence === 0)) {
       setSequence(suggestedSequence);
     }
-  }, [suggestedSequence, gradeType, termId, isOpen]);
+  }, [suggestedSequence, sequence, isOpen]);
 
   const handleSubjectChange = (newSubjectId: string) => {
     const selectedSubject = subjects.find(s => s.id === newSubjectId);

@@ -433,10 +433,10 @@ export default function AdminOverviewPage() {
                 <FadeInUp
                   from={{ opacity: 0, y: -10 }}
                   to={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-x-2"
-                  style={{ marginTop: '50px', fontSize: 'var(--text-body)' }}
+                  className="flex items-center gap-x-2 mt-4 md:mt-[50px]"
+                  style={{ fontSize: 'var(--text-body)' }}
                 >
-                  <Calendar className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                  <Calendar className="hidden md:block h-4 w-4 text-orange-500 flex-shrink-0" />
                   <span className="text-light-text-secondary dark:text-dark-text-secondary">
                     Upcoming {terminology.periodSingular} starts on{' '}
                     <span className="font-semibold text-light-text-primary dark:text-dark-text-primary">
@@ -474,10 +474,10 @@ export default function AdminOverviewPage() {
               <FadeInUp
                 from={{ opacity: 0, y: -10 }}
                 to={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-x-2"
-                style={{ marginTop: '50px', fontSize: 'var(--text-body)' }}
+                className="flex items-center gap-x-2 mt-4 md:mt-[50px]"
+                style={{ fontSize: 'var(--text-body)' }}
               >
-                <Calendar className="h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary flex-shrink-0" />
+                <Calendar className="hidden md:block h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary flex-shrink-0" />
                 <span className="text-light-text-secondary dark:text-dark-text-secondary">
                   Current {terminology.periodSingular} ends on{' '}
                   <span className="font-semibold text-light-text-primary dark:text-dark-text-primary">

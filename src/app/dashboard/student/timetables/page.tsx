@@ -40,9 +40,9 @@ export default function StudentTimetablesPage() {
 
   // If user selected a different term, fetch that timetable
   const needsSeparateFetch = selectedTermId && selectedTermId !== activeTerm?.id;
-  
-  const { 
-    data: selectedTermTimetableResponse, 
+
+  const {
+    data: selectedTermTimetableResponse,
     isLoading: isLoadingSelectedTerm,
   } = useGetMyStudentTimetableQuery(
     { termId: selectedTermId },
@@ -50,7 +50,7 @@ export default function StudentTimetablesPage() {
   );
 
   // Use selected term's timetable if fetched, otherwise use dashboard's timetable
-  const timetable = needsSeparateFetch 
+  const timetable = needsSeparateFetch
     ? (selectedTermTimetableResponse?.data || [])
     : dashboardTimetable;
 
@@ -59,13 +59,13 @@ export default function StudentTimetablesPage() {
   // Extract all terms from sessions for selector - filtered by school type and deduplicated
   const allTerms = useMemo(() => {
     if (!sessionsResponse?.data) return [];
-    
+
     // Filter sessions by current school type to avoid duplicates
     const filteredSessions = sessionsResponse.data.filter((session: any) => {
       if (!schoolType) return !session.schoolType;
       return session.schoolType === schoolType;
     });
-    
+
     // Deduplicate sessions by name (keep first/latest)
     const uniqueSessionsMap = new Map<string, any>();
     filteredSessions.forEach((session: any) => {
@@ -73,7 +73,7 @@ export default function StudentTimetablesPage() {
         uniqueSessionsMap.set(session.name, session);
       }
     });
-    
+
     const terms: Array<{ id: string; name: string; sessionName: string }> = [];
     Array.from(uniqueSessionsMap.values()).forEach((session: any) => {
       if (session.terms) {
@@ -86,7 +86,7 @@ export default function StudentTimetablesPage() {
         });
       }
     });
-    
+
     // Sort by session name and term name
     return terms.sort((a, b) => {
       if (a.sessionName !== b.sessionName) {

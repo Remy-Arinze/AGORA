@@ -781,37 +781,39 @@ export default function TimetablesPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-                Timetables
-              </h1>
-              <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
-                Manage class schedules and timetables for {currentType || 'all school types'}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => setShowHistory(!showHistory)}
-                size="sm"
-                className={showHistory ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : ''}
-              >
-                <Clock className="h-4 w-4 mr-2" />
-                {showHistory ? 'Current Term' : 'History'}
-              </Button>
-              <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col w-full md:w-auto">
+                <div className="flex items-center justify-between w-full">
+                  <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                    Timetables
+                  </h1>
+                </div>
+                <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
+                  Manage class schedules and timetables for {currentType || 'your school'}
+                </p>
+              </div>
+              <div className="flex flex-row items-center gap-3 w-full md:w-auto md:justify-end">
                 <Button
-                  variant="primary"
-                  onClick={() => setShowCreateModal(true)}
-                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className={`flex-1 sm:w-auto h-9 text-[10px] sm:text-xs ${showHistory ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : ''}`}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Timetable
+                  <Clock className="h-4 w-4 mr-1 sm:mr-2" />
+                  {showHistory ? 'Current Term' : 'History'}
                 </Button>
-              </PermissionGate>
+                <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
+                  <Button
+                    variant="primary"
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex-1 sm:w-auto h-9 text-[10px] sm:text-xs"
+                  >
+                    <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Create Timetable</span>
+                    <span className="sm:hidden">Create</span>
+                  </Button>
+                </PermissionGate>
+              </div>
             </div>
-          </div>
         </FadeInUp>
 
         {/* Timetables List */}

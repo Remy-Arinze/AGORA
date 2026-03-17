@@ -11,8 +11,9 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Pagination } from '@/components/ui/Pagination';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { GraduationCap, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, CheckCircle, Clock, Ban, Mail, Loader2, Users } from 'lucide-react';
+import { GraduationCap, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, CheckCircle, Clock, Ban, Mail, Loader2, Users, ChevronDown } from 'lucide-react';
 import { useGetStudentsQuery, useGetMySchoolQuery, useResendPasswordResetForStudentMutation } from '@/lib/store/api/schoolAdminApi';
+import { Select } from '@/components/ui';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { StudentImportModal } from '@/components/modals/StudentImportModal';
 import { StudentAdmissionModal } from '@/components/modals/StudentAdmissionModal';
@@ -325,8 +326,8 @@ function StudentsPageContent() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Filter Pills */}
-            <div className="flex items-center gap-2">
+            {/* Filter Pills - Desktop */}
+            <div className="hidden md:flex items-center gap-2">
               {(['all', 'active', 'pending', 'suspended'] as FilterType[]).map((filterType) => (
                 <Button
                   key={filterType}
@@ -337,7 +338,7 @@ function StudentsPageContent() {
                     setPage(1);
                   }}
                   className={cn(
-                    'capitalize',
+                    'capitalize px-3 py-1 text-[var(--text-small)]',
                     filter === filterType
                       ? 'bg-[#2490FD] dark:bg-[#2490FD] text-white'
                       : 'bg-light-surface dark:bg-[#151a23] text-light-text-secondary dark:text-[#9ca3af] hover:bg-light-hover dark:hover:bg-[#1f2937]'
@@ -346,6 +347,25 @@ function StudentsPageContent() {
                   {filterType}
                 </Button>
               ))}
+            </div>
+
+            {/* Filter Dropdown - Mobile */}
+            <div className="md:hidden">
+              <Select
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value as FilterType);
+                  setPage(1);
+                }}
+                className="h-9 px-2.5 py-1 text-[var(--text-small)] w-28"
+                wrapperClassName="w-auto"
+                hideChevron={false}
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="suspended">Suspended</option>
+              </Select>
             </div>
 
             {/* View Toggle */}

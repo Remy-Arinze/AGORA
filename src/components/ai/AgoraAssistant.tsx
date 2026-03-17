@@ -91,9 +91,9 @@ export const AgoraAssistant: React.FC<AgoraAssistantProps> = ({ schoolId }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-light-bg dark:bg-[#0A0A0B] text-light-text-primary dark:text-white overflow-hidden transition-colors duration-300" style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className="flex flex-col h-full bg-transparent text-light-text-primary dark:text-white overflow-hidden transition-colors duration-300" style={{ fontFamily: 'var(--font-sans)' }}>
       {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between border-b border-light-border dark:border-white/5 bg-light-card/20 dark:bg-transparent">
+      <div className="px-6 py-4 flex items-center justify-between border-b border-light-border dark:border-white/5 bg-white/40 dark:bg-transparent backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-agora-blue dark:bg-indigo-600 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
@@ -136,7 +136,7 @@ export const AgoraAssistant: React.FC<AgoraAssistantProps> = ({ schoolId }) => {
                   <button 
                     key={i}
                     onClick={() => handleSendMessage(q)}
-                    className="w-full p-4 rounded-xl bg-light-card/40 dark:bg-white/[0.03] border border-light-border dark:border-white/5 text-left text-light-text-primary dark:text-white/80 hover:bg-light-hover dark:hover:bg-white/[0.05] hover:border-agora-blue/30 dark:hover:border-white/10 transition-all font-medium text-sm"
+                    className="w-full p-4 rounded-xl bg-white/60 dark:bg-white/[0.03] border border-light-border dark:border-white/5 text-left text-light-text-primary dark:text-white/80 hover:bg-white/80 dark:hover:bg-white/[0.05] hover:border-agora-blue/30 dark:hover:border-white/10 transition-all font-medium text-sm shadow-sm"
                   >
                     {q}
                   </button>
@@ -166,8 +166,8 @@ export const AgoraAssistant: React.FC<AgoraAssistantProps> = ({ schoolId }) => {
                     <div className={cn(
                       "p-5 rounded-2xl md:rounded-[1.5rem] text-[15px] leading-relaxed shadow-sm",
                       msg.role === 'user' 
-                        ? "bg-agora-blue text-white rounded-tr-none" 
-                        : "bg-light-card/40 dark:bg-white/[0.03] border border-light-border dark:border-white/5 text-light-text-primary dark:text-white/90 rounded-tl-none"
+                        ? "bg-agora-blue text-white rounded-tr-none shadow-blue-500/20" 
+                        : "bg-white/60 dark:bg-white/[0.03] border border-light-border dark:border-white/5 text-light-text-primary dark:text-white/90 rounded-tl-none"
                     )}>
                       {msg.content}
                     </div>
@@ -210,9 +210,9 @@ export const AgoraAssistant: React.FC<AgoraAssistantProps> = ({ schoolId }) => {
       )}
 
       {/* Input Section */}
-      <div className="p-6 pt-2 bg-light-bg dark:bg-transparent">
+      <div className="p-6 pt-2 bg-transparent">
         <div className="flex gap-3 items-end">
-          <div className="flex-1 relative bg-light-input dark:bg-white/[0.03] border border-light-border dark:border-white/10 rounded-2xl overflow-hidden focus-within:border-agora-blue dark:focus-within:border-white/20 transition-all shadow-sm">
+          <div className="flex-1 relative bg-white/60 dark:bg-white/[0.03] border border-light-border dark:border-white/10 rounded-2xl overflow-hidden focus-within:border-agora-blue dark:focus-within:border-white/20 transition-all shadow-sm">
             <textarea
               placeholder="Ask about Agora products..."
               value={inputValue}

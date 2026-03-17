@@ -13,7 +13,7 @@ export default function AgoraAIPage() {
     return (
         <ProtectedRoute roles={['TEACHER']}>
             <div className="min-h-screen bg-light-bg dark:bg-[transparent] text-light-text-primary dark:text-white overflow-hidden relative flex flex-col transition-colors duration-300">
-                <div className="flex-1 w-full max-w-7xl mx-auto px-6 py-6 relative z-10 flex flex-col">
+                <div className="flex-1 w-full max-w-7xl mx-auto px-2 md:px-6 py-4 md:py-6 relative z-10 flex flex-col">
                     {/* Main Chat Interface */}
                     <FadeInUp duration={0.8} className="flex-1 flex flex-col">
                         {schoolId ? (
