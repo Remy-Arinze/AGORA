@@ -220,7 +220,9 @@ export function PricingTable({ onSelectPlan, className = '' }: PricingTableProps
                       ? (plan.tierCode === SubscriptionTier.FREE ? 'Continue' : 'Get Started')
                       : isCurrentPlan
                         ? 'Current Active Plan'
-                        : plan.cta}
+                        : (plan.tierCode === SubscriptionTier.FREE && currentTier !== SubscriptionTier.FREE)
+                          ? 'Included in subscription'
+                          : plan.cta}
                 </button>
               </div>
             </FadeInUp>

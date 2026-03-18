@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/lib/store/store';
 import { cn } from '@/lib/utils';
+import { GlobalAiAssistant } from '@/components/ai/GlobalAiAssistant';
 
 function MainContent({ children, showNavbar, userRole }: { children: React.ReactNode, showNavbar: boolean, userRole?: string }) {
   return (
@@ -42,6 +43,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {showNavbar && <Navbar />}
       <SidebarNew hideMobileHeader={showNavbar} />
       <MainContent showNavbar={showNavbar} userRole={userRole}>{children}</MainContent>
+      <GlobalAiAssistant />
     </div>
   );
 }

@@ -62,9 +62,9 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ schoolId, isOpen, on
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 relative">
-            <AgoraAssistant schoolId={schoolId} />
+        <div className="flex-1 min-h-0 flex flex-col pt-16">
+          <div className="flex-1 relative overflow-hidden">
+            <AgoraChat schoolId={schoolId} variant="minimal" />
           </div>
         </div>
       </div>
