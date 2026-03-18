@@ -20,7 +20,7 @@ variables:
 
   # Staging environment (staging branch)
   ${{ if eq(variables['Build.SourceBranchName'], 'staging') }}:
-    azureSubscription: 'agora-stg-sc-stg'
+    azureSubscription: 'agora-current-sc-stg'
     webAppName: 'agora-web-stg'
     NEXT_PUBLIC_API_URL: 'https://agora-api-stg.azurewebsites.net'
     environmentName: 'Staging'
