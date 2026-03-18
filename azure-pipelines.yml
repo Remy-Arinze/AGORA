@@ -25,6 +25,8 @@ variables:
     NEXT_PUBLIC_API_URL: 'https://agora-api-stg.azurewebsites.net'
     environmentName: 'Staging'
 
+    # Sample
+
 stages:
 - stage: Frontend
   displayName: 'Deploy Frontend to $(environmentName)'
