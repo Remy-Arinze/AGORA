@@ -25,7 +25,7 @@ export default function CreateAssessmentPage() {
   const router = useRouter();
   const [createAssessment, { isLoading: isSaving }] = useCreateAssessmentMutation();
   const { classes, school, activeTerm, isLoadingClasses: classesLoading } = useTeacherDashboard();
-  
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -59,7 +59,7 @@ export default function CreateAssessmentPage() {
   const [publishImmediately, setPublishImmediately] = useState(false);
   const [autoDistribute, setAutoDistribute] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState<'PUBLISH' | 'DRAFT' | null>(null);
-  
+
   // Local states to avoid snapping to 0 while typing
   const [localPoints, setLocalPoints] = useState<Record<number, string>>({});
   const [localMaxScore, setLocalMaxScore] = useState(formData.maxScore.toString());
@@ -75,7 +75,7 @@ export default function CreateAssessmentPage() {
     if (aiContext) {
       try {
         const data = JSON.parse(aiContext);
-        
+
         const newMaxScore = data.maxScore || 100;
         setFormData(prev => ({
           ...prev,
@@ -113,7 +113,7 @@ export default function CreateAssessmentPage() {
   useEffect(() => {
     if (questions.length > 0 && autoDistribute) {
       const evenPoints = Math.round(((formData.maxScore || 0) / questions.length) * 10) / 10;
-      
+
       // Update local points map
       const newLocalPoints: Record<number, string> = {};
       questions.forEach((_, i) => {
@@ -151,7 +151,7 @@ export default function CreateAssessmentPage() {
       if (aiContext) {
         try {
           const data = JSON.parse(aiContext);
-          
+
           // 1. Check for pre-resolved ID from backend
           if (data.subjectId) {
             setFormData(prev => ({ ...prev, subjectId: data.subjectId }));
@@ -161,11 +161,11 @@ export default function CreateAssessmentPage() {
           // 2. Fallback to name matching
           const subjectName = data.subject || data.subjectName;
           if (subjectName && teacherSubjects.length > 0) {
-            const matchedSubject = teacherSubjects.find((s: any) => 
+            const matchedSubject = teacherSubjects.find((s: any) =>
               s.name?.toLowerCase() === subjectName.toLowerCase() ||
               s.code?.toLowerCase() === subjectName.toLowerCase()
             );
-            
+
             if (matchedSubject) {
               setFormData(prev => ({ ...prev, subjectId: matchedSubject.id }));
             }
@@ -206,7 +206,7 @@ export default function CreateAssessmentPage() {
     if (val !== '' && !isNaN(Number(val))) {
       // Turn off auto-distribute if teacher manually edits a point value
       if (autoDistribute) setAutoDistribute(false);
-      
+
       const num = Number(val);
       const newQs = [...questions];
       newQs[idx] = { ...newQs[idx], points: num };
@@ -238,11 +238,11 @@ export default function CreateAssessmentPage() {
 
   // Strict validation for publishing, more lenient for drafts
   const isBasicsValid = !!(
-    formData.title?.trim() && 
-    formData.classId && 
-    formData.subjectId && 
-    formData.termId && 
-    formData.dueDate && 
+    formData.title?.trim() &&
+    formData.classId &&
+    formData.subjectId &&
+    formData.termId &&
+    formData.dueDate &&
     questions.length > 0 &&
     questions.every(q => q.text?.trim())
   );
@@ -254,16 +254,27 @@ export default function CreateAssessmentPage() {
     if (!schoolId) return;
 
     try {
+      setIsSaving(true);
       const status = showConfirmModal === 'PUBLISH' ? 'PUBLISHED' : 'DRAFT';
+      const selectedClassObject = classes?.find((c: any) => c.id === formData.classId);
+
       await createAssessment({
         schoolId,
         classId: formData.classId,
         dto: {
           ...formData,
+          classId: formData.classId || undefined,
+          classArmId: selectedClassObject?.classArmId || undefined,
+          subjectId: formData.subjectId || undefined,
+          termId: formData.termId || undefined,
           status,
           questions: questions.map(q => ({
-            ...q,
-            points: Number(q.points)
+            text: q.text,
+            type: q.type,
+            options: q.options,
+            correctAnswer: q.correctAnswer,
+            points: Number(q.points),
+            order: q.order
           }))
         }
       }).unwrap();
@@ -297,9 +308,9 @@ export default function CreateAssessmentPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowConfirmModal('DRAFT')} 
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmModal('DRAFT')}
                 disabled={!isValidToSave || isSaving}
                 isFlat
                 size="md"
@@ -311,14 +322,14 @@ export default function CreateAssessmentPage() {
                 </div>
               </Button>
 
-              <Button 
+              <Button
                 onClick={() => {
                   if (isPointMismatch) {
                     toast.error("Total question points must match the Maximum Score before publishing.");
                     return;
                   }
                   setShowConfirmModal('PUBLISH');
-                }} 
+                }}
                 disabled={!isValidToSave || isSaving}
                 isFlat
                 size="md"
@@ -354,9 +365,9 @@ export default function CreateAssessmentPage() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Title <span className="text-red-500">*</span>
                   </label>
-                  <Input 
-                    value={formData.title} 
-                    onChange={e => setFormData({...formData, title: e.target.value})} 
+                  <Input
+                    value={formData.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
                     className="h-12 text-lg font-semibold"
                     placeholder="e.g. Chemistry Quiz"
                   />
@@ -367,19 +378,19 @@ export default function CreateAssessmentPage() {
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Due Date <span className="text-red-500">*</span>
                     </label>
-                    <DatePicker 
-                      value={formData.dueDate} 
-                      onChange={val => setFormData({...formData, dueDate: val})} 
+                    <DatePicker
+                      value={formData.dueDate}
+                      onChange={val => setFormData({ ...formData, dueDate: val })}
                       min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Maximum Score</label>
                     <div className="space-y-1">
-                      <Input 
-                        type="text" 
-                        value={localMaxScore} 
-                        onChange={e => handleMaxScoreChange(e.target.value)} 
+                      <Input
+                        type="text"
+                        value={localMaxScore}
+                        onChange={e => handleMaxScoreChange(e.target.value)}
                         onBlur={() => validateMaxScore()}
                         className={cn("h-10", isPointMismatch && "border-red-500 focus:ring-red-500")}
                       />
@@ -393,9 +404,9 @@ export default function CreateAssessmentPage() {
                               {isPointMismatch ? <AlertCircle size={12} /> : <CheckCircle2 size={12} />}
                               Total: {totalPoints} / {formData.maxScore}
                             </div>
-                            
+
                             {isPointMismatch && (
-                              <button 
+                              <button
                                 onClick={() => handleMaxScoreChange(totalPoints.toString())}
                                 className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-600 transition-colors"
                               >
@@ -403,9 +414,9 @@ export default function CreateAssessmentPage() {
                               </button>
                             )}
                           </div>
-                          
+
                           {isPointMismatch && (
-                            <button 
+                            <button
                               onClick={() => setAutoDistribute(true)}
                               className="text-[9px] text-slate-400 hover:text-indigo-500 text-left transition-colors flex items-center gap-1"
                             >
@@ -420,9 +431,9 @@ export default function CreateAssessmentPage() {
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instructions</label>
-                  <textarea 
+                  <textarea
                     value={formData.description}
-                    onChange={e => setFormData({...formData, description: e.target.value})}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
                     className="w-full min-h-[100px] p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-black/20 text-sm outline-none"
                     placeholder="Provide instructions..."
                   />
@@ -445,7 +456,7 @@ export default function CreateAssessmentPage() {
                     <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-start gap-6">
                         <div className="flex-1">
-                          <textarea 
+                          <textarea
                             value={q.text}
                             onChange={e => updateQuestion(idx, 'text', e.target.value)}
                             className="w-full bg-transparent border-none outline-none font-bold text-lg resize-none placeholder:opacity-50"
@@ -454,17 +465,17 @@ export default function CreateAssessmentPage() {
                           />
                         </div>
                         <div className="flex items-center gap-2">
-                           <Input 
-                            type="text" 
-                            className="w-20 h-9 text-center bg-indigo-500/5 font-bold" 
+                          <Input
+                            type="text"
+                            className="w-20 h-9 text-center bg-indigo-500/5 font-bold"
                             value={localPoints[idx] || ''}
                             onChange={e => handlePointChange(idx, e.target.value)}
                             onBlur={() => validatePoints(idx)}
                             title="Points"
                           />
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => removeQuestion(idx)}
                             className="text-slate-400 hover:text-red-500"
                           >
@@ -492,13 +503,13 @@ export default function CreateAssessmentPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                           {q.options.map((opt: string, optIdx: number) => (
                             <div key={optIdx} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-slate-800">
-                              <input 
-                                type="radio" 
-                                checked={q.correctAnswer === opt && opt !== ''} 
+                              <input
+                                type="radio"
+                                checked={q.correctAnswer === opt && opt !== ''}
                                 onChange={() => updateQuestion(idx, 'correctAnswer', opt)}
                                 className="w-4 h-4 accent-indigo-600"
                               />
-                              <input 
+                              <input
                                 type="text"
                                 value={opt}
                                 onChange={e => {
@@ -517,7 +528,7 @@ export default function CreateAssessmentPage() {
                       {(q.type === 'SHORT_ANSWER' || q.type === 'ESSAY') && (
                         <div className="bg-slate-50 dark:bg-black/20 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
                           <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Sample Answer</label>
-                          <textarea 
+                          <textarea
                             value={q.correctAnswer}
                             onChange={e => updateQuestion(idx, 'correctAnswer', e.target.value)}
                             className="w-full bg-transparent border-none outline-none text-sm resize-none"
@@ -543,9 +554,9 @@ export default function CreateAssessmentPage() {
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">
                     Class <span className="text-red-300">*</span>
                   </label>
-                  <select 
-                    value={formData.classId} 
-                    onChange={e => setFormData({...formData, classId: e.target.value, subjectId: ''})}
+                  <select
+                    value={formData.classId}
+                    onChange={e => setFormData({ ...formData, classId: e.target.value, subjectId: '' })}
                     disabled={classesLoading || !classes}
                     className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 [&>option]:text-black"
                   >
@@ -561,7 +572,7 @@ export default function CreateAssessmentPage() {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100">Auto-distribute Points</p>
                     <p className="text-[9px] text-indigo-200/60 leading-tight mt-0.5">Keep points balanced across all questions</p>
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setAutoDistribute(!autoDistribute)}
                     className={cn(
@@ -589,8 +600,8 @@ export default function CreateAssessmentPage() {
                         </span>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => setFormData({...formData, subjectId: ''})}
+                    <button
+                      onClick={() => setFormData({ ...formData, subjectId: '' })}
                       className="text-[10px] font-bold uppercase tracking-widest text-indigo-100/40 hover:text-white transition-colors"
                     >
                       Change
@@ -599,11 +610,11 @@ export default function CreateAssessmentPage() {
                 ) : (
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-100/70 mb-2">
-                       {isLoadingSubjects ? "Fetching Subjects..." : "Select Subject"} <span className="text-red-300">*</span>
+                      {isLoadingSubjects ? "Fetching Subjects..." : "Select Subject"} <span className="text-red-300">*</span>
                     </label>
-                    <select 
-                      value={formData.subjectId} 
-                      onChange={e => setFormData({...formData, subjectId: e.target.value})}
+                    <select
+                      value={formData.subjectId}
+                      onChange={e => setFormData({ ...formData, subjectId: e.target.value })}
                       disabled={!formData.classId || isLoadingSubjects}
                       className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 [&>option]:text-black"
                     >
@@ -619,9 +630,9 @@ export default function CreateAssessmentPage() {
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">
                     Academic Term <span className="text-red-300">*</span>
                   </label>
-                  <select 
-                    value={formData.termId} 
-                    onChange={e => setFormData({...formData, termId: e.target.value})}
+                  <select
+                    value={formData.termId}
+                    onChange={e => setFormData({ ...formData, termId: e.target.value })}
                     disabled={isFetchingTerms || !termsRes}
                     className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 [&>option]:text-black"
                   >
@@ -640,9 +651,9 @@ export default function CreateAssessmentPage() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="pt-4 border-t border-white/10 opacity-70">
-                   <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-amber-300" />
                     <span className="text-xs font-medium">AI Insights Active</span>
                   </div>
@@ -656,8 +667,8 @@ export default function CreateAssessmentPage() {
         </div>
       </div>
 
-      <Modal 
-        isOpen={showConfirmModal !== null} 
+      <Modal
+        isOpen={showConfirmModal !== null}
         onClose={() => setShowConfirmModal(null)}
         title={showConfirmModal === 'PUBLISH' ? 'Publish Assessment' : 'Save as Draft'}
         size="sm"
@@ -665,30 +676,30 @@ export default function CreateAssessmentPage() {
         <div className="space-y-6">
           <div className={cn(
             "p-4 rounded-2xl border flex items-start gap-4",
-            showConfirmModal === 'PUBLISH' 
+            showConfirmModal === 'PUBLISH'
               ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300"
               : "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20 text-indigo-800 dark:text-indigo-300"
           )}>
-             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/50 shrink-0">
-               {showConfirmModal === 'PUBLISH' ? <Send className="w-5 h-5 text-emerald-600" /> : <div className="w-5 h-5 rounded-full border-2 border-indigo-600" />}
-             </div>
-             <div>
-               <p className="font-bold text-sm mb-1">Confirm Action</p>
-               <p className="text-xs leading-relaxed opacity-70">
-                 {showConfirmModal === 'PUBLISH' 
-                   ? "Publishing will make this assessment visible to students immediately."
-                   : "Saving as draft will keep this assessment hidden from students until published."}
-               </p>
-             </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/50 shrink-0">
+              {showConfirmModal === 'PUBLISH' ? <Send className="w-5 h-5 text-emerald-600" /> : <div className="w-5 h-5 rounded-full border-2 border-indigo-600" />}
+            </div>
+            <div>
+              <p className="font-bold text-sm mb-1">Confirm Action</p>
+              <p className="text-xs leading-relaxed opacity-70">
+                {showConfirmModal === 'PUBLISH'
+                  ? "Publishing will make this assessment visible to students immediately."
+                  : "Saving as draft will keep this assessment hidden from students until published."}
+              </p>
+            </div>
           </div>
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="flex-1 h-12 rounded-xl" onClick={() => setShowConfirmModal(null)}>Cancel</Button>
-            <Button 
+            <Button
               className={cn(
                 "flex-1 h-12 rounded-xl text-white font-bold",
                 showConfirmModal === 'PUBLISH' ? "bg-emerald-600" : "bg-indigo-600"
-              )} 
-              onClick={handleSave} 
+              )}
+              onClick={handleSave}
               isLoading={isSaving}
             >
               Continue
