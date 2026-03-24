@@ -45,6 +45,7 @@ import toast from 'react-hot-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
+import { SaveAssessmentEditor } from './SaveAssessmentEditor';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,8 +134,12 @@ const BrainIndicator = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
   );
 };
 
-const ToolCard = ({ event }: { event: ToolEvent }) => {
-  const [expanded, setExpanded] = useState(false);
+const ToolCard = ({ event, schoolId, conversationId, variant = 'default' }: { event: ToolEvent; schoolId: string; conversationId?: string | null; variant?: 'default' | 'minimal' }) => {
+  const [expanded, setExpanded] = useState(
+    event.toolName === 'generate_assessment' ||
+    event.toolName === 'generate_quiz' ||
+    event.toolName === 'generate_lesson_plan'
+  );
 
   if (event.type === 'thinking') {
     return (
@@ -169,7 +174,9 @@ const ToolCard = ({ event }: { event: ToolEvent }) => {
             {event.toolDisplayName}
           </span>
           <p className="text-[11px] text-amber-600/70 dark:text-amber-400/60 font-medium">
-            Working on: {event.args?.topic || event.args?.subject || 'Processing...'}
+            {event.toolName === 'execute_sql'
+              ? 'Analyzing school database...'
+              : `Working on: ${event.args?.topic || event.args?.subject || 'Processing...'}`}
           </p>
         </div>
         <ThreeDotTyping />
@@ -211,7 +218,7 @@ const ToolCard = ({ event }: { event: ToolEvent }) => {
               className="overflow-hidden"
             >
               <div className="px-4 pb-4 max-h-[320px] overflow-y-auto scrollbar-thin">
-                <ToolResultContent toolName={event.toolName || ''} result={event.result} />
+                <ToolResultContent toolName={event.toolName || ''} result={event.result} schoolId={schoolId} variant={variant} conversationId={conversationId} />
               </div>
             </motion.div>
           )}
@@ -223,19 +230,43 @@ const ToolCard = ({ event }: { event: ToolEvent }) => {
   return null;
 };
 
-const ToolResultContent = ({ toolName, result }: { toolName: string; result: any }) => {
+const ToolResultContent = ({
+  toolName,
+  result,
+  schoolId,
+  conversationId,
+  variant = 'default'
+}: {
+  toolName: string;
+  result: any;
+  schoolId: string;
+  conversationId?: string | null;
+  variant?: 'default' | 'minimal'
+}) => {
   if (toolName === 'generate_lesson_plan') {
     return (
       <div className="space-y-3 text-sm">
-        {result.title && (
-          <h4 className="font-bold text-emerald-900 dark:text-emerald-300 text-base">{result.title}</h4>
-        )}
+        <div className="flex items-start justify-between gap-4">
+          {result.title && (
+            <h4 className="font-bold text-emerald-900 dark:text-emerald-300 text-base flex-1">{result.title}</h4>
+          )}
+          <button
+            onClick={() => {
+              const text = `Lesson Plan: ${result.title || 'Untitled'}\n\nObjectives:\n${(result.objectives || []).join('\n')}\n\nIntroduction:\n${result.introduction}\n\nActivities:\n${(result.mainContent || []).map((a: any) => `${a.duration}: ${a.activity} - ${a.description}`).join('\n')}`;
+              navigator.clipboard.writeText(text);
+              toast.success('Lesson plan copied to clipboard');
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0"
+          >
+            <Copy className="w-3 h-3" /> Copy Plan
+          </button>
+        </div>
         {result.objectives && (
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-black text-emerald-600/70 dark:text-emerald-400/60 mb-1">Objectives</p>
+            <p className="text-[10px] uppercase tracking-widest font-black text-emerald-700 dark:text-emerald-400/60 mb-1">Objectives</p>
             <ul className="space-y-1">
               {result.objectives.map((obj: string, i: number) => (
-                <li key={i} className="flex gap-2 text-emerald-800/80 dark:text-emerald-300/80">
+                <li key={i} className="flex gap-2 text-emerald-900 dark:text-emerald-300/80">
                   <span className="text-emerald-500">•</span> {obj}
                 </li>
               ))}
@@ -244,21 +275,21 @@ const ToolResultContent = ({ toolName, result }: { toolName: string; result: any
         )}
         {result.introduction && (
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-black text-emerald-600/70 dark:text-emerald-400/60 mb-1">Introduction</p>
-            <p className="text-emerald-800/80 dark:text-emerald-300/80 italic leading-relaxed">"{result.introduction}"</p>
+            <p className="text-[10px] uppercase tracking-widest font-black text-emerald-700 dark:text-emerald-400/60 mb-1">Introduction</p>
+            <p className="text-emerald-900 dark:text-emerald-300/80 italic leading-relaxed">"{result.introduction}"</p>
           </div>
         )}
         {result.mainContent && (
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-black text-emerald-600/70 dark:text-emerald-400/60 mb-1">Activities</p>
+            <p className="text-[10px] uppercase tracking-widest font-black text-emerald-700 dark:text-emerald-400/60 mb-1">Activities</p>
             <div className="space-y-2">
               {result.mainContent.map((item: any, i: number) => (
                 <div key={i} className="p-2 rounded-xl bg-white/60 dark:bg-black/20 border border-emerald-100 dark:border-emerald-500/10">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-semibold text-emerald-900 dark:text-emerald-300 text-xs">{item.activity}</span>
-                    <span className="text-[10px] text-emerald-500 font-bold">{item.duration}</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-bold">{item.duration}</span>
                   </div>
-                  <p className="text-xs text-emerald-700/70 dark:text-emerald-400/60">{item.description}</p>
+                  <p className="text-xs text-emerald-800 dark:text-emerald-400/60">{item.description}</p>
                 </div>
               ))}
             </div>
@@ -268,30 +299,48 @@ const ToolResultContent = ({ toolName, result }: { toolName: string; result: any
     );
   }
 
-  if (toolName === 'generate_quiz' || toolName === 'generate_assessment') {
-    const questions = Array.isArray(result) ? result : result?.questions || [];
+
+
+  if (toolName === 'grade_essay') {
     return (
-      <div className="space-y-3">
-        {questions.slice(0, 5).map((q: any, i: number) => (
-          <div key={i} className="p-3 rounded-xl bg-white/60 dark:bg-black/20 border border-emerald-100 dark:border-emerald-500/10 text-sm">
-            <p className="font-semibold text-emerald-900 dark:text-emerald-300 mb-2 text-xs">{i + 1}. {q.question}</p>
-            {q.options && (
-              <div className="grid gap-1 pl-2 mb-2">
-                {q.options.map((opt: string, j: number) => (
-                  <div key={j} className="text-xs text-emerald-700/70 dark:text-emerald-400/60 flex items-center gap-1.5">
-                    <div className="w-1 h-1 rounded-full bg-emerald-400/40" /> {opt}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="text-[10px] font-black uppercase text-green-600 dark:text-green-400 tracking-tighter">
-              ANS: {q.correctAnswer}
-            </div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+          <div>
+            <p className="text-[10px] uppercase font-black text-emerald-600/70 dark:text-emerald-400/60 mb-1">Score</p>
+            <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-200">{result.score} <span className="text-sm font-medium opacity-50">/ {result.maxScore}</span></p>
           </div>
-        ))}
-        {questions.length > 5 && (
-          <p className="text-xs text-emerald-500 font-semibold text-center">+{questions.length - 5} more questions</p>
-        )}
+          <div className="w-12 h-12 rounded-full border-2 border-emerald-500/20 flex items-center justify-center font-bold text-emerald-600">
+            {Math.round((result.score / result.maxScore) * 100)}%
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[10px] uppercase font-black text-emerald-700 dark:text-emerald-400/60 mb-1">Feedback</p>
+          <p className="text-sm text-emerald-900 dark:text-emerald-300/80 leading-relaxed italic">"{result.feedback}"</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-3 rounded-xl bg-white/60 dark:bg-black/20 border border-emerald-100 dark:border-emerald-500/10">
+            <p className="text-[9px] uppercase font-black text-emerald-700 mb-1">Key Strengths</p>
+            <ul className="space-y-1">
+              {result.strengths?.map((s: string, i: number) => (
+                <li key={i} className="text-[11px] text-emerald-900 dark:text-emerald-400/80 flex gap-1.5 items-start">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" /> {s}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="p-3 rounded-xl bg-white/60 dark:bg-black/20 border border-emerald-100 dark:border-emerald-500/10">
+            <p className="text-[9px] uppercase font-black text-amber-600 mb-1">Areas to Improve</p>
+            <ul className="space-y-1">
+              {result.areasForImprovement?.map((a: string, i: number) => (
+                <li key={i} className="text-[11px] text-amber-700/80 dark:text-amber-400/80 flex gap-1.5 items-start">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5" /> {a}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     );
   }
@@ -314,9 +363,59 @@ const ToolResultContent = ({ toolName, result }: { toolName: string; result: any
     );
   }
 
+  if (toolName === 'generate_quiz' || toolName === 'generate_assessment') {
+    return <SaveAssessmentEditor toolName={toolName} initialData={result} schoolId={schoolId} variant={variant} conversationId={conversationId} />;
+  }
+
   // Fallback: render as formatted JSON
   if (typeof result === 'string') {
     return <p className="text-sm text-emerald-800/80 dark:text-emerald-300/80 whitespace-pre-wrap">{result}</p>;
+  }
+
+  if (toolName === 'execute_sql') {
+    if (result.error) {
+      return (
+        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-xs text-red-600 dark:text-red-400 font-medium">
+          Lois hit a technical snag while querying the database. I'm refining the approach...
+        </div>
+      );
+    }
+
+    // Show a clean summary for SQL results
+    const data = Array.isArray(result) ? result : [result];
+    if (data.length === 0) return <div className="text-xs text-slate-500 italic">No records found matching this query.</div>;
+
+    return (
+      <div className="overflow-x-auto rounded-xl border border-emerald-100 dark:border-white/5 bg-white/40 dark:bg-black/20">
+        <table className="w-full text-[11px] text-left border-collapse">
+          <thead>
+            <tr className="bg-emerald-500/5 dark:bg-white/5">
+              {Object.keys(data[0]).map(key => (
+                <th key={key} className="px-3 py-2 border-b border-emerald-100/50 dark:border-white/5 font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  {key}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.slice(0, 5).map((row, i) => (
+              <tr key={i} className="hover:bg-emerald-500/[0.02] transition-colors">
+                {Object.values(row).map((val: any, j) => (
+                  <td key={j} className="px-3 py-2 border-b border-emerald-100/10 dark:border-white/5 text-emerald-900/80 dark:text-white/70">
+                    {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {data.length > 5 && (
+          <div className="px-3 py-1.5 bg-emerald-500/5 dark:bg-white/5 text-[9px] text-emerald-600 dark:text-emerald-500 italic font-medium">
+            + {data.length - 5} more records (Lois is summarizing the full set below)
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -332,12 +431,14 @@ interface AgoraChatProps {
   schoolId: string;
   initialConversationId?: string;
   variant?: 'default' | 'minimal';
+  pageContext?: string;
 }
 
 export const AgoraChat: React.FC<AgoraChatProps> = ({
   schoolId,
   initialConversationId,
-  variant = 'default'
+  variant = 'default',
+  pageContext
 }) => {
   const { theme } = useTheme();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -356,15 +457,21 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
   const [getMessages] = useLazyGetChatMessagesQuery();
   const [deleteConversation] = useDeleteConversationMutation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     if (!initialConversationId) {
+      let greetingDesc = "How can I help you with your lessons, curriculum, or assessments today?";
+      if (pageContext?.includes('/students')) greetingDesc = "I see you're looking at your students. Want me to analyze their performance or generate a progress report?";
+      else if (pageContext?.includes('/classes')) greetingDesc = "I see you're managing a class. Do you need a generated quiz, timetable check, or subject overview?";
+      else if (pageContext?.includes('/assessments')) greetingDesc = "Working on assessments? I can build a new test or grade existing submissions.";
+
       setMessages([
         {
           role: 'assistant',
-          content: `Hello ${firstName}! I'm Lois, your dedicated Agora School Space AI Assistant. How can I help you with your lessons, curriculum, or assessments today?`,
+          content: `Hello ${firstName}! I'm Lois, your dedicated Agora School Space AI Assistant. ${greetingDesc}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -393,18 +500,26 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Focus the input field whenever the chat is ready or a new chat starts
+    if (!isStreaming && !isHistoryOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isStreaming, isHistoryOpen, messages.length]);
+
   // ─── SSE Streaming Send ─────────────────────────────────────────────────
 
-  const handleSendMessage = useCallback(async () => {
-    if (!inputValue.trim() || isStreaming) return;
+  const handleSendMessage = useCallback(async (overrideText?: string) => {
+    const textToSubmit = overrideText || inputValue;
+    if (!textToSubmit.trim() || isStreaming) return;
 
     const userMessage: Message = {
       role: 'user',
-      content: inputValue,
+      content: textToSubmit,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    const currentInput = inputValue;
+    const currentInput = textToSubmit;
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsStreaming(true);
@@ -424,6 +539,11 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
       .slice(1) // skip welcome message
       .map(({ role, content }) => ({ role, content }));
     chatHistory.push({ role: 'user', content: currentInput });
+
+    // Inject invisible page context manually if present
+    if (pageContext) {
+      chatHistory.unshift({ role: 'system', content: `[Context: ${pageContext}]` });
+    }
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -458,6 +578,15 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
               }
               return updated;
             });
+          },
+          onConversationId: (id) => {
+            if (!currentConversationId) {
+              setCurrentConversationId(id);
+              // Update URL immediately so browser back button works during generation
+              const url = new URL(window.location.href);
+              url.searchParams.set('id', id);
+              window.history.replaceState(null, '', url.pathname + url.search);
+            }
           },
           onToolStart: (data) => {
             setMessages(prev => {
@@ -577,11 +706,14 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
           content: `Welcome back! Loading your conversation...`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         },
-        ...res.map((m: any) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-          timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }))
+        ...res
+          .filter((m: any) => m.role.toLowerCase() !== 'system')
+          .map((m: any) => ({
+            role: m.role.toLowerCase() as 'user' | 'assistant',
+            content: m.content,
+            toolEvents: m.toolEvents || [],
+            timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }))
       ]);
     } catch (error: any) {
       toast.error(error?.data?.message || 'Failed to load chat history');
@@ -648,7 +780,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
             </>
           )}
           {variant === 'minimal' && (
-            <span className="text-[12px] font-bold uppercase tracking-widest text-indigo-500/80" style={{ fontFamily: 'var(--font-heading)' }}>Lois</span>
+            <span className="text-[12px] font-bold uppercase tracking-widest text-[#111827] dark:text-blue-400" style={{ fontFamily: 'var(--font-heading)' }}>Lois</span>
           )}
         </div>
 
@@ -697,7 +829,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
               </h2>
               <p className={cn(
                 "text-light-text-muted dark:text-white/30 max-w-md mx-auto px-4",
-                variant === 'minimal' ? "text-[10px] mb-4 md:mb-6" : "text-xs mb-6 md:mb-10"
+                variant === 'minimal' ? "text-[10px] mb-4 md:mb-6" : "text-sm mb-6 md:mb-10 text-light-text-secondary dark:text-gray-400"
               )}>
                 I can generate lesson plans, quizzes, flashcards, assessments and more — just ask naturally.
               </p>
@@ -706,54 +838,98 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
                 "grid grid-cols-1 gap-4 max-w-5xl w-full px-4",
                 variant === 'minimal' ? "md:grid-cols-1" : "md:grid-cols-3"
               )}>
-                {[
-                  {
-                    title: "Lesson Planning",
-                    desc: "Curriculum-aligned structures for your specific subjects",
-                    icon: "📚",
-                    color: "bg-blue-500/10 dark:bg-blue-500/20",
-                    prompt: "Create a lesson plan for Photosynthesis for SS 1 Biology"
-                  },
-                  {
-                    title: "Quick Quiz",
-                    desc: "Generate quizzes on any topic instantly",
-                    icon: "📝",
-                    color: "bg-purple-500/10 dark:bg-purple-500/20",
-                    prompt: "Generate a 5-question quiz on Algebraic Expressions for JSS 2 Math"
-                  },
-                  {
-                    title: "Study Materials",
-                    desc: "Create flashcards and summaries for revision",
-                    icon: "🎯",
-                    color: "bg-emerald-500/10 dark:bg-emerald-500/20",
-                    prompt: "Create flashcards on Cell Biology for SS 1"
-                  }
-                ].map((card, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setInputValue(card.prompt)}
-                    className={cn(
-                      "group relative flex flex-col items-start bg-light-card/40 dark:bg-white/[0.03] border border-light-border dark:border-white/10 hover:border-agora-blue/50 transition-all text-left overflow-hidden hover:translate-y-[-4px] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5",
-                      variant === 'minimal'
-                        ? "p-3 rounded-xl min-h-[60px]"
-                        : "p-4 md:p-6 rounded-2xl md:rounded-[2rem] min-h-[100px] md:min-h-[160px]"
-                    )}
-                  >
-                    <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 dark:group-hover:opacity-100 transition-opacity duration-500", card.color)} />
-                    <span className={cn(
-                      "z-10",
-                      variant === 'minimal' ? "text-base mb-1" : "text-xl md:text-2xl mb-2 md:mb-4"
-                    )}>{card.icon}</span>
-                    <h3 className={cn(
-                      "font-semibold text-light-text-primary dark:text-white leading-tight z-10",
-                      variant === 'minimal' ? "text-[11px] mb-0.5" : "text-sm md:text-base mb-1 md:mb-2"
-                    )} style={{ fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
-                    <p className={cn(
-                      "text-light-text-secondary dark:text-white/40 font-medium z-10 leading-relaxed",
-                      variant === 'minimal' ? "text-[9px] line-clamp-1" : "text-[10px] md:text-[11px] line-clamp-2 md:line-clamp-none"
-                    )}>{card.desc}</p>
-                  </button>
-                ))}
+                {(() => {
+                  const defaultOptions = [
+                    {
+                      icon: "📝",
+                      color: "bg-blue-500/10 dark:bg-blue-500/20",
+                      prompt: "Generate a 10-question quiz for my class right now."
+                    },
+                    {
+                      icon: "⏰",
+                      color: "bg-purple-500/10 dark:bg-purple-500/20",
+                      prompt: "What is my next subject and in which class/room?"
+                    },
+                    {
+                      icon: "🎯",
+                      color: "bg-emerald-500/10 dark:bg-emerald-500/20",
+                      prompt: "Help me grade this student's essay and give me feedback."
+                    }
+                  ];
+
+                  const isStudentsContext = pageContext?.includes('/students');
+                  const isClassesContext = pageContext?.includes('/classes');
+
+                  const contextualOptions = isStudentsContext ? [
+                    {
+                      title: "Analyze Grades",
+                      desc: "Review recent academic performance",
+                      icon: "📊",
+                      color: "bg-indigo-500/10 dark:bg-indigo-500/20",
+                      prompt: "Show me the recent performance and grades for this student"
+                    },
+                    {
+                      title: "Draft Parent Email",
+                      desc: "Write a progress update to parents",
+                      icon: "✉️",
+                      color: "bg-purple-500/10 dark:bg-purple-500/20",
+                      prompt: "Draft an email to this student's parents regarding their performance"
+                    },
+                    {
+                      title: "Behavioral Log",
+                      desc: "Check recent teacher notes",
+                      icon: "📋",
+                      color: "bg-emerald-500/10 dark:bg-emerald-500/20",
+                      prompt: "What are the latest behavioral notes active for this student?"
+                    }
+                  ] : isClassesContext ? [
+                    {
+                      title: "Class Timetable",
+                      desc: "Check the schedule for this class",
+                      icon: "⏰",
+                      color: "bg-amber-500/10 dark:bg-amber-500/20",
+                      prompt: "What is going on in this class right now?"
+                    },
+                    {
+                      title: "Class Quiz",
+                      desc: "Generate a quiz for this class",
+                      icon: "📝",
+                      color: "bg-purple-500/10 dark:bg-purple-500/20",
+                      prompt: "Generate a 5-question pop quiz for this class"
+                    },
+                    {
+                      title: "Subject Teachers",
+                      desc: "List educators for this class",
+                      icon: "👨‍🏫",
+                      color: "bg-blue-500/10 dark:bg-blue-500/20",
+                      prompt: "Who are the subject teachers assigned to this class?"
+                    }
+                  ] : defaultOptions;
+
+                  const displayOptions = (pageContext && (isStudentsContext || isClassesContext)) ? contextualOptions : defaultOptions;
+
+                  return displayOptions.map((card, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSendMessage(card.prompt)}
+                      className={cn(
+                        "group relative flex flex-col items-start transition-all text-left overflow-hidden hover:translate-y-[-4px] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5",
+                        variant === 'minimal'
+                          ? "bg-light-card/40 dark:bg-white/[0.03] border border-light-border dark:border-white/10"
+                          : "bg-transparent border border-light-border/40 dark:border-white/5 hover:border-agora-blue/50",
+                        "p-3 md:p-4 rounded-xl md:rounded-2xl"
+                      )}
+                    >
+                      <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 dark:group-hover:opacity-100 transition-opacity duration-500", card.color)} />
+                      <div className="flex items-center gap-4 z-10 w-full">
+                        <span className="text-xl shrink-0">{card.icon}</span>
+                        <p className="text-sm font-semibold text-[#111827] dark:text-white/90 leading-tight flex-1">
+                          {card.prompt}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+                })()}
               </div>
             </FadeInUp>
           </div>
@@ -781,7 +957,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
                       {msg.role === 'assistant' && msg.toolEvents && msg.toolEvents.length > 0 && (
                         <div className="w-full space-y-2 mb-2">
                           {msg.toolEvents.map((event, eventIdx) => (
-                            <ToolCard key={eventIdx} event={event} />
+                            <ToolCard key={eventIdx} event={event} schoolId={schoolId} variant={variant} conversationId={currentConversationId} />
                           ))}
                         </div>
                       )}
@@ -789,33 +965,29 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
                       {/* Message Content */}
                       {(msg.content || msg.isStreaming) && (
                         <div className={cn(
-                          "p-4 md:p-6 text-sm md:text-[15px] leading-relaxed relative",
+                          "p-4 md:p-2 text-sm md:text-[15px] leading-relaxed relative",
                           msg.role === 'user'
-                            ? variant === 'minimal'
-                              ? "bg-transparent border-none p-0 md:p-0 text-indigo-600 dark:text-indigo-400 font-bold"
-                              : "bg-agora-blue text-white rounded-2xl md:rounded-[2.5rem] rounded-tr-none border border-blue-400/20 shadow-lg shadow-blue-500/10"
-                            : variant === 'minimal'
-                              ? "bg-transparent border-none p-0 md:p-0"
-                              : "bg-light-card/40 dark:bg-white/[0.04] text-light-text-primary dark:text-white/90 border border-light-border dark:border-white/10 rounded-2xl md:rounded-[2.5rem] rounded-tl-none backdrop-blur-md"
+                            ? "bg-transparent border-none p-0 text-indigo-600 dark:text-indigo-400 font-bold"
+                            : "bg-transparent border-none p-0 text-light-text-primary dark:text-white/90"
                         )}>
                           <div className={cn(
                             "whitespace-pre-wrap font-medium",
                             msg.role === 'assistant' && variant === 'minimal' && "text-light-text-primary dark:text-white/80"
                           )}>
-                            {msg.content || (msg.isStreaming && <ThreeDotTyping />)}
-                            {msg.isStreaming && msg.content && (
-                              <motion.span
-                                animate={{ opacity: [1, 0, 1] }}
-                                transition={{ duration: 0.8, repeat: Infinity }}
-                                className="inline-block w-2.5 h-5 ml-1 bg-indigo-500 align-middle rounded-sm shadow-[0_0_8px_rgba(99,102,241,0.5)]"
-                              />
-                            )}
+                            <div className="flex flex-col gap-2">
+                              {msg.content}
+                              {msg.isStreaming && (
+                                <div className="mt-1">
+                                  <ThreeDotTyping />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}
 
                       <div className="flex items-center gap-3 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] text-light-text-muted dark:text-white/30 uppercase font-semibold tracking-widest">
+                        <span className="text-[10px] text-[#4b5563] dark:text-white/30 uppercase font-bold tracking-widest">
                           {msg.timestamp}
                         </span>
                         {msg.role === 'assistant' && !msg.isStreaming && msg.content && (
@@ -846,13 +1018,16 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
               {/* Themed Input Bubble (Paperclip + Input) */}
               <div className={cn(
                 "flex-1 flex items-center gap-1 transition-all duration-300",
-                "bg-light-input dark:bg-white/[0.04] border border-light-border dark:border-white/10 rounded-2xl md:rounded-[2rem]"
+                variant === 'minimal'
+                  ? "bg-light-input dark:bg-white/[0.04] border border-light-border dark:border-white/10 rounded-2xl md:rounded-[2rem]"
+                  : "bg-transparent border border-light-border/40 dark:border-white/5 focus-within:border-agora-blue/30 rounded-2xl md:rounded-[2rem]"
               )}>
                 <button className="p-4 rounded-full text-light-text-muted dark:text-white/20 hover:text-agora-blue dark:hover:text-white transition-all shrink-0">
                   <Paperclip size={15} />
                 </button>
 
                 <input
+                  ref={inputRef}
                   placeholder={`Hi ${firstName}, what can I do for you today?`}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
@@ -863,7 +1038,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
                     }
                   }}
                   disabled={isStreaming}
-                  className="flex-1 h-13 py-2 bg-transparent !bg-transparent text-light-text-primary dark:text-white placeholder:text-light-text-muted dark:placeholder:text-white/15 focus:outline-none px-2 text-[15px] font-medium disabled:opacity-50"
+                  className="flex-1 h-13 py-2 bg-transparent !bg-transparent text-[#111827] dark:text-white placeholder:text-[#9ca3af] dark:placeholder:text-white/15 focus:outline-none px-2 text-[15px] font-bold disabled:cursor-not-allowed"
                   style={{ backgroundColor: 'transparent' }}
                 />
               </div>
@@ -874,7 +1049,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isStreaming}
                   className={cn(
-                    "rounded-full bg-agora-blue dark:bg-indigo-600 hover:bg-agora-blue/90 dark:hover:bg-indigo-500 text-white shadow-lg shadow-blue-500/10 active:scale-95 transition-all shrink-0 border-none disabled:opacity-40",
+                    "rounded-full bg-agora-blue dark:bg-indigo-600 hover:bg-agora-blue/90 dark:hover:bg-indigo-500 text-white shadow-lg shadow-blue-500/10 active:scale-95 transition-all shrink-0 border-none",
                     variant === 'minimal' ? "w-8 h-8 md:w-9 md:h-9 p-0" : "w-10 h-10 md:w-11 md:h-11 p-0"
                   )}
                 >

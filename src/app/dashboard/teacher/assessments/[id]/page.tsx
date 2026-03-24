@@ -42,7 +42,7 @@ export default function AssessmentDetailPage() {
         { schoolId: schoolId!, assessmentId },
         { skip: !schoolId || !assessmentId }
     );
-    const assessment = assessmentResponse?.data || assessmentResponse;
+    const assessment = assessmentResponse?.data; // Use data from ResponseDto
 
     const classId = assessment?.classId;
 
@@ -50,7 +50,7 @@ export default function AssessmentDetailPage() {
         { schoolId: schoolId!, classId: classId! },
         { skip: !schoolId || !classId }
     );
-    const students = studentsResponse?.data || studentsResponse || [];
+    const students = studentsResponse?.data || []; // Use data from ResponseDto
 
     if (isLoadingAssessment) {
         return (

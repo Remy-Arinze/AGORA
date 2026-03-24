@@ -149,13 +149,14 @@ export interface SSEDoneEvent {
     usage?: any;
 }
 
-export type SSEEventType = 'token' | 'tool_start' | 'tool_result' | 'done' | 'error' | 'thinking';
+export type SSEEventType = 'token' | 'tool_start' | 'tool_result' | 'done' | 'error' | 'thinking' | 'conversation_id';
 
 export interface SSECallbacks {
     onToken: (token: string) => void;
     onToolStart: (data: SSEToolStartEvent) => void;
     onToolResult: (data: SSEToolResultEvent) => void;
     onThinking: (message: string) => void;
+    onConversationId: (id: string) => void;
     onDone: (data: SSEDoneEvent) => void;
     onError: (message: string) => void;
 }
@@ -260,6 +261,9 @@ export async function streamAiChat(
                                 break;
                             case 'thinking':
                                 callbacks.onThinking(parsed.message);
+                                break;
+                            case 'conversation_id':
+                                callbacks.onConversationId(parsed.conversationId);
                                 break;
                             case 'done':
                                 callbacks.onDone(parsed);

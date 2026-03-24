@@ -6,12 +6,15 @@ import {
     useCreateAssessmentMutation,
     useGetTermsQuery,
     useGetTeacherSubjectsQuery,
+    useGetCurriculumForClassQuery,
+    useGetMyTeacherProfileQuery,
     type AssessmentType,
-    type QuestionType
+    type QuestionType,
+    type CurriculumItem
 } from '@/lib/store/api/schoolAdminApi';
 import { useGenerateAssessmentMutation } from '@/lib/store/api/aiApi';
 import { toast } from 'react-hot-toast';
-import { Trash2, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Sparkles, Loader2, BookOpen, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 
 interface CreateAssessmentModalProps {
     isOpen: boolean;
@@ -35,8 +38,8 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
     const [createAssessment, { isLoading: isCreating }] = useCreateAssessmentMutation();
     const [generateAiAssessment, { isLoading: isGeneratingAi }] = useGenerateAssessmentMutation();
     const { data: termsResponse } = useGetTermsQuery({ schoolId });
-    // Assuming we need the teacher's profile ID or just the schoolId to get subjects
-    const { data: subjectsResponse } = useGetTeacherSubjectsQuery({ schoolId, teacherId: 'me' }); // 'me' might be handled by backend if token is present
+    const { data: teacherProfileResponse } = useGetMyTeacherProfileQuery();
+    const { data: subjectsResponse } = useGetTeacherSubjectsQuery({ schoolId, teacherId: 'me' });
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -48,14 +51,35 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
     const [questions, setQuestions] = useState<Question[]>([]);
 
     // AI Generation state
-    const [aiTopic, setAiTopic] = useState('');
-    const [aiCount, setAiCount] = useState(10);
     const [useAi, setUseAi] = useState(false);
+    const [aiCount, setAiCount] = useState(10);
+    const [selectedWeeks, setSelectedWeeks] = useState<number[]>([]);
+    const [showWeeks, setShowWeeks] = useState(false);
+
+    // Fetch curriculum based on selected subject and term
+    const selectedSubject = subjectsResponse?.data?.find((s: any) => s.id === selectedSubjectId);
+    
+    const { data: curriculumResponse, isLoading: isLoadingCurriculum } = useGetCurriculumForClassQuery({
+        schoolId,
+        classId,
+        subject: selectedSubject?.name,
+        termId: termId,
+    }, { 
+        skip: !selectedSubjectId || !termId || !useAi,
+        refetchOnMountOrArgChange: true 
+    });
+
+    const curriculumItems = curriculumResponse?.data?.items || [];
 
     useEffect(() => {
         if (activeTermId) setTermId(activeTermId);
         if (subjectId) setSelectedSubjectId(subjectId);
     }, [activeTermId, subjectId, isOpen]);
+
+    // Reset selected weeks when subject or term changes
+    useEffect(() => {
+        setSelectedWeeks([]);
+    }, [selectedSubjectId, termId]);
 
     const addQuestion = () => {
         setQuestions([
@@ -86,20 +110,30 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
     };
 
     const handleAiGenerate = async () => {
-        if (!aiTopic) {
-            toast.error('Please enter a topic for AI generation');
+        if (!selectedSubject) {
+            toast.error('Please select a subject first');
             return;
         }
 
-        const subjectName = subjectsResponse?.data?.find(s => s.id === selectedSubjectId)?.name || 'General';
+        if (selectedWeeks.length === 0) {
+            toast.error('Please select at least one week from the curriculum');
+            return;
+        }
+
+        // Construct combined topic and objectives from selected weeks
+        const selectedItems = curriculumItems.filter(item => selectedWeeks.includes(item.weekNumber));
+        const combinedTopics = selectedItems.map(item => item.topic).join(', ');
+        const combinedObjectives = selectedItems.flatMap(item => item.objectives).join('; ');
+        
+        const fullPrompt = `Topics: ${combinedTopics}. Learning Objectives: ${combinedObjectives}`;
 
         try {
             const result = await generateAiAssessment({
                 schoolId,
                 body: {
-                    topic: aiTopic,
-                    subject: subjectName,
-                    gradeLevel: 'Class ' + classId, // Simplified for now
+                    topic: fullPrompt,
+                    subject: selectedSubject.name,
+                    gradeLevel: teacherProfileResponse?.data?.schoolType === 'PRIMARY' ? 'Primary' : 'Grade', // Use appropriate context
                     questionCount: aiCount,
                     questionTypes: ['multiple_choice', 'short_answer'],
                     difficulty: 'medium'
@@ -173,7 +207,7 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
             onClose={onClose}
             title="Create Assessment"
             size="xl"
-            scrollable
+            // scrollable removed because it's not a prop
         >
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -196,7 +230,7 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
                             required
                         >
                             <option value="">Select Subject</option>
-                            {subjectsResponse?.data?.map((subject) => (
+                            {subjectsResponse?.data?.map((subject: any) => (
                                 <option key={subject.id} value={subject.id}>
                                     {subject.name}
                                 </option>
@@ -213,11 +247,7 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
                             required
                         >
                             <option value="">Select Term</option>
-                            {termsResponse?.data?.items?.map((term: any) => (
-                                <option key={term.id} value={term.id}>
-                                    {term.name}
-                                </option>
-                            )) || termsResponse?.map((term: any) => (
+                            {(Array.isArray(termsResponse?.data?.items) ? termsResponse.data.items : Array.isArray(termsResponse?.data) ? termsResponse.data : []).map((term: any) => (
                                 <option key={term.id} value={term.id}>
                                     {term.name}
                                 </option>
@@ -280,15 +310,73 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
                     {useAi && (
                         <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-2">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-semibold mb-1 uppercase tracking-wider opacity-70">Topic to cover</label>
-                                    <Input
-                                        placeholder="e.g. Quadratic Equations, Photosynthesis..."
-                                        value={aiTopic}
-                                        onChange={(e) => setAiTopic(e.target.value)}
-                                    />
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-semibold mb-1 uppercase tracking-wider opacity-70">Curriculum Coverage</label>
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowWeeks(!showWeeks)}
+                                            disabled={!selectedSubjectId || !termId}
+                                            className="w-full h-10 flex items-center justify-between rounded-md border border-blue-200 dark:border-blue-800 bg-white dark:bg-dark-surface px-3 py-2 text-sm text-left disabled:opacity-50"
+                                        >
+                                            <div className="flex items-center gap-2 truncate">
+                                                <BookOpen className="h-4 w-4 text-blue-500" />
+                                                <span>
+                                                    {selectedWeeks.length === 0 
+                                                        ? "Select weeks (Scheme of Work)" 
+                                                        : `${selectedWeeks.length} week(s) selected`}
+                                                </span>
+                                            </div>
+                                            {showWeeks ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                        </button>
+
+                                        {showWeeks && (
+                                            <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-md border border-light-border dark:border-dark-border bg-white dark:bg-dark-surface shadow-lg p-2 space-y-1">
+                                                {isLoadingCurriculum ? (
+                                                    <div className="p-4 text-center">
+                                                        <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-500" />
+                                                        <p className="text-xs mt-2">Fetching Scheme of Work...</p>
+                                                    </div>
+                                                ) : curriculumItems.length > 0 ? (
+                                                    curriculumItems.map((item) => (
+                                                        <div 
+                                                            key={item.id}
+                                                            onClick={() => {
+                                                                setSelectedWeeks(prev => 
+                                                                    prev.includes(item.weekNumber) 
+                                                                        ? prev.filter(w => w !== item.weekNumber)
+                                                                        : [...prev, item.weekNumber]
+                                                                );
+                                                            }}
+                                                            className={`flex items-start gap-2 p-2 rounded-md hover:bg-light-surface dark:hover:bg-dark-border cursor-pointer transition-colors ${
+                                                                selectedWeeks.includes(item.weekNumber) ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                                                            }`}
+                                                        >
+                                                            <div className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center shrink-0 ${
+                                                                selectedWeeks.includes(item.weekNumber) 
+                                                                    ? 'bg-blue-600 border-blue-600 text-white' 
+                                                                    : 'border-light-border dark:border-dark-border'
+                                                            }`}>
+                                                                {selectedWeeks.includes(item.weekNumber) && <CheckCircle2 className="h-3 w-3" />}
+                                                            </div>
+                                                            <div className="text-xs">
+                                                                <span className="font-bold text-blue-600 dark:text-blue-400">Week {item.weekNumber}:</span>
+                                                                <p className="line-clamp-2">{item.topic}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="p-4 text-center">
+                                                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                                                            No curriculum found for this selection. Try selecting a subject and term first.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div>
+                                <div className="md:col-span-1">
                                     <label className="block text-xs font-semibold mb-1 uppercase tracking-wider opacity-70">Number of Questions</label>
                                     <Input
                                         type="number"
@@ -299,17 +387,32 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
                                     />
                                 </div>
                             </div>
+
+                            {selectedWeeks.length > 0 && (
+                                <div className="p-3 bg-white dark:bg-black/20 rounded-lg border border-blue-100 dark:border-blue-900 animate-in zoom-in-95 duration-200">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">Selected Topics Coverage</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {curriculumItems.filter(i => selectedWeeks.includes(i.weekNumber)).map(i => (
+                                            <span key={i.id} className="text-[10px] px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-800">
+                                                W{i.weekNumber}: {i.topic}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <Button
                                 type="button"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2 h-11"
                                 onClick={handleAiGenerate}
                                 isLoading={isGeneratingAi}
+                                disabled={selectedWeeks.length === 0}
                             >
                                 <Sparkles className="h-4 w-4" />
-                                Generate Questions with AI
+                                Generate Assessment Questions
                             </Button>
                             <p className="text-[10px] text-center text-light-text-secondary dark:text-dark-text-secondary">
-                                This will use tokens from your school's subscription. You can edit the resulting questions manually.
+                                Lois will analyze your Scheme of Work and generate questions that match your learning objectives.
                             </p>
                         </div>
                     )}
@@ -330,7 +433,7 @@ export function CreateAssessmentModal({ isOpen, onClose, schoolId, classId, acti
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="icon"
+                                    size="sm"
                                     className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={() => removeQuestion(idx)}
                                 >

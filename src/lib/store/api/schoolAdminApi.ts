@@ -583,6 +583,7 @@ export interface UpdateStudentDto {
 export interface Student {
   id: string;
   uid: string;
+  publicId?: string | null;
   firstName: string;
   lastName: string;
   middleName: string | null;
@@ -832,6 +833,9 @@ export interface Assessment {
   createdAt: string;
   updatedAt: string;
   questions?: AssessmentQuestion[];
+  submissions?: AssessmentSubmission[];
+  subject?: Subject;
+  class?: Class;
   _count?: {
     submissions: number;
   };
@@ -871,6 +875,7 @@ export interface CreateAssessmentDto {
   subjectId: string;
   termId?: string;
   dueDate?: string;
+  status?: AssessmentStatus;
   maxScore: number;
   questions: {
     text: string;
@@ -3260,7 +3265,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
     }),
 
     // Assessment Endpoints
-    createAssessment: builder.mutation<Assessment, { schoolId: string; classId: string; dto: CreateAssessmentDto }>({
+    createAssessment: builder.mutation<ResponseDto<Assessment>, { schoolId: string; classId: string; dto: CreateAssessmentDto }>({
       query: ({ schoolId, classId, dto }) => ({
         url: `/schools/${schoolId}/classes/${classId}/assessments`,
         method: 'POST',
@@ -3268,18 +3273,18 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Assessments'],
     }),
-    getClassAssessments: builder.query<Assessment[], { schoolId: string; classId: string; termId?: string }>({
+    getClassAssessments: builder.query<ResponseDto<Assessment[]>, { schoolId: string; classId: string; termId?: string }>({
       query: ({ schoolId, classId, termId }) => ({
         url: `/schools/${schoolId}/classes/${classId}/assessments`,
         params: { termId },
       }),
       providesTags: ['Assessments'],
     }),
-    getAssessmentById: builder.query<Assessment, { schoolId: string; assessmentId: string }>({
+    getAssessmentById: builder.query<ResponseDto<Assessment>, { schoolId: string; assessmentId: string }>({
       query: ({ schoolId, assessmentId }) => `/schools/${schoolId}/assessments/${assessmentId}`,
       providesTags: (_result, _error, { assessmentId }) => [{ type: 'Assessments', id: assessmentId }],
     }),
-    submitAssessment: builder.mutation<AssessmentSubmission, { schoolId: string; assessmentId: string; dto: SubmitAssessmentDto }>({
+    submitAssessment: builder.mutation<ResponseDto<AssessmentSubmission>, { schoolId: string; assessmentId: string; dto: SubmitAssessmentDto }>({
       query: ({ schoolId, assessmentId, dto }) => ({
         url: `/schools/${schoolId}/assessments/${assessmentId}/submit`,
         method: 'POST',
@@ -3287,17 +3292,24 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Assessments'],
     }),
-    getAssessmentSubmission: builder.query<AssessmentSubmission, { schoolId: string; submissionId: string }>({
+    getAssessmentSubmission: builder.query<ResponseDto<AssessmentSubmission>, { schoolId: string; submissionId: string }>({
       query: ({ schoolId, submissionId }) => `/schools/${schoolId}/assessments/submissions/${submissionId}`,
       providesTags: (_result, _error, { submissionId }) => [{ type: 'Submissions', id: submissionId }],
     }),
-    gradeAssessmentSubmission: builder.mutation<AssessmentSubmission, { schoolId: string; submissionId: string; dto: GradeSubmissionDto }>({
+    gradeAssessmentSubmission: builder.mutation<ResponseDto<AssessmentSubmission>, { schoolId: string; submissionId: string; dto: GradeSubmissionDto }>({
       query: ({ schoolId, submissionId, dto }) => ({
         url: `/schools/${schoolId}/assessments/submissions/${submissionId}/grade`,
         method: 'POST',
         body: dto,
       }),
       invalidatesTags: ['Submissions', 'Assessments', 'Grades'],
+    }),
+    deleteAssessment: builder.mutation<ResponseDto<void>, { schoolId: string; assessmentId: string }>({
+      query: ({ schoolId, assessmentId }) => ({
+        url: `/schools/${schoolId}/assessments/${assessmentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Assessments'],
     }),
     // Attendance Endpoints
     markAttendance: builder.mutation<ResponseDto<any>, { schoolId: string; attendanceData: any }>({
@@ -3527,6 +3539,7 @@ export const {
   useSubmitAssessmentMutation,
   useGetAssessmentSubmissionQuery,
   useGradeAssessmentSubmissionMutation,
+  useDeleteAssessmentMutation,
   // Attendance hooks
   useMarkAttendanceMutation,
   useMarkBulkAttendanceMutation,

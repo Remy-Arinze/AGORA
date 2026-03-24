@@ -1,9 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { useSelector, useDispatch } from 'react-redux';
+import { useRouter, usePathname } from 'next/navigation';
 import { RootState } from '@/lib/store/store';
+import { logout } from '@/lib/store/slices/authSlice';
+
+// Helper to decode JWT and check if it has expired 
+const isTokenExpired = (token: string | null) => {
+  if (!token) return true;
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(decodedJson);
+    // Return true if expired (add a 5 second grace period)
+    return payload.exp * 1000 < Date.now() + 5000;
+  } catch (e) {
+    return true; // Treat unparseable tokens as expired
+  }
+};
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,8 +31,10 @@ export function ProtectedRoute({
   roles,
   redirectTo = '/auth/login',
 }: ProtectedRouteProps) {
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user, token, refreshToken } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
+  const pathname = usePathname();
+  const dispatch = useDispatch();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Wait for client-side hydration
@@ -26,11 +43,23 @@ export function ProtectedRoute({
   }, []);
 
   useEffect(() => {
-    // Only redirect if we're hydrated and there's no user
-    if (isHydrated && !user) {
-      router.push(redirectTo);
+    // Only proceed if hydrated
+    if (isHydrated) {
+      if (!user) {
+        router.push(redirectTo);
+        return;
+      }
+      
+      // Fluid Auth Guard: If navigating around with an expired token and refresh token,
+      // proactively boot them to the login screen instead of waiting for a network fetch to fail.
+      if (token && isTokenExpired(token)) {
+        if (!refreshToken || isTokenExpired(refreshToken)) {
+          dispatch(logout());
+          router.replace('/auth/login?expired=true');
+        }
+      }
     }
-  }, [user, router, redirectTo, isHydrated]);
+  }, [user, token, refreshToken, router, redirectTo, isHydrated, pathname, dispatch]);
 
   // Show loading while hydrating
   if (!isHydrated) {

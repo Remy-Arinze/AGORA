@@ -25,7 +25,8 @@ import {
   Upload,
   Loader2,
   AlertCircle,
-  QrCode
+  QrCode,
+  Trash2
 } from 'lucide-react';
 import {
   useGetClassByIdQuery,
@@ -39,9 +40,10 @@ import {
   useGetTimetableForClassQuery,
   useGetSessionsQuery,
   useGetClassAssessmentsQuery,
-  useMarkAttendanceMutation,
   useMarkBulkAttendanceMutation,
+  useMarkAttendanceMutation,
   useGetClassAttendanceQuery,
+  useDeleteAssessmentMutation,
   type StudentWithEnrollment,
   type Grade,
   type GradeType,
@@ -54,7 +56,6 @@ import { CreateAssessmentModal } from '@/components/modals/CreateAssessmentModal
 import { ConfirmModal } from '@/components/ui/Modal';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import toast from 'react-hot-toast';
-import { StoreProvider } from '@/lib/store/StoreProvider';
 import { safeDownload } from '@/lib/utils/download';
 import { cn } from '@/lib/utils';
 import { useSchoolType } from '@/hooks/useSchoolType';
@@ -82,8 +83,10 @@ export default function ClassDetailPage() {
   const [sequenceFilter, setSequenceFilter] = useState<number | ''>('');
   const [selectedTimetableTermId, setSelectedTimetableTermId] = useState<string>('');
   const [showUploadResourceModal, setShowUploadResourceModal] = useState(false);
-  const [assessmentTermFilter, setAssessmentTermFilter] = useState<string>('');
   const [showCreateAssessmentModal, setShowCreateAssessmentModal] = useState(false);
+  const [assessmentToDelete, setAssessmentToDelete] = useState<Assessment | null>(null);
+  const [assessmentTermFilter, setAssessmentTermFilter] = useState<string>('');
+  const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] = useState(false);
   const [showAiChat, setShowAiChat] = useState(false);
 
   const { currentType } = useSchoolType();
@@ -153,10 +156,33 @@ export default function ClassDetailPage() {
     { skip: !schoolId || !classId || activeTab !== 'assessments' }
   );
 
-  const assessments = assessmentsResponse?.data || assessmentsResponse || []; // Handle both direct array and ResponseDto
+  const assessments = assessmentsResponse?.data || []; // Use data from ResponseDto
 
   const [deleteGrade, { isLoading: isDeleting }] = useDeleteGradeMutation();
+  const [deleteAssessment, { isLoading: isDeletingAssessment }] = useDeleteAssessmentMutation();
   const [updateGrade, { isLoading: isPublishing }] = useUpdateGradeMutation();
+
+  const handleDeleteAssessment = async () => {
+    if (!assessmentToDelete || !schoolId) return;
+
+    if ((assessmentToDelete._count?.submissions ?? 0) > 0) {
+      toast.error('Cannot delete an assessment that already has student submissions.');
+      setShowDeleteAssessmentModal(false);
+      return;
+    }
+
+    try {
+      await deleteAssessment({
+        schoolId,
+        assessmentId: assessmentToDelete.id,
+      }).unwrap();
+      toast.success('Assessment deleted successfully');
+      setShowDeleteAssessmentModal(false);
+      setAssessmentToDelete(null);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to delete assessment');
+    }
+  };
 
   const handlePublishGrade = async (gradeId: string) => {
     if (!schoolId) return;
@@ -827,6 +853,7 @@ export default function ClassDetailPage() {
                     onChange={(e) => setAssessmentTermFilter(e.target.value)}
                     className="text-xs px-2 py-1.5 border border-light-border dark:border-dark-border rounded-md bg-transparent"
                   >
+                    <option value="">Select Term</option>
                     {timetableTerms.map((term: any) => (
                       <option key={term.id} value={term.id}>{term.name} ({term.sessionName})</option>
                     ))}
@@ -842,7 +869,7 @@ export default function ClassDetailPage() {
                 <div className="flex justify-center py-20">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                 </div>
-              ) : (assessments as Assessment[]).length === 0 ? (
+              ) : assessments.length === 0 ? (
                 <Card>
                   <CardContent className="py-20 text-center">
                     <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
@@ -854,44 +881,79 @@ export default function ClassDetailPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(assessments as Assessment[]).map((assessment: Assessment) => (
-                    <Card key={assessment.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer" onClick={() => router.push(`/dashboard/teacher/assessments/${assessment.id}`)}>
-                      <div className="h-2 w-full bg-blue-500" />
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600' :
-                            assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
-                            }`}>
-                            {assessment.type}
-                          </span>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${assessment.status === 'PUBLISHED' ? 'text-green-500' : 'text-amber-500'
-                            }`}>
-                            {assessment.status}
-                          </span>
-                        </div>
-                        <CardTitle className="mt-2 group-hover:text-blue-600 transition-colors">{assessment.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4">
-                          {assessment.description || 'No description provided.'}
-                        </p>
-                        <div className="space-y-2 pt-4 border-t border-light-border dark:border-dark-border">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-light-text-muted">Max Score:</span>
-                            <span className="font-bold">{assessment.maxScore}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-light-text-muted">Submissions:</span>
-                            <span className="font-bold">{assessment._count?.submissions || 0}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-light-text-muted">Due Date:</span>
-                            <span className="font-bold">{assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                <div className="space-y-8">
+                  {Object.entries(
+                    assessments.reduce((groups: any, assessment) => {
+                      const date = new Date(assessment.createdAt);
+                      const month = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                      if (!groups[month]) groups[month] = [];
+                      groups[month].push(assessment);
+                      return groups;
+                    }, {})
+                  ).map(([month, monthAssessments]: [string, any]) => (
+                    <div key={month} className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs font-bold uppercase tracking-widest text-light-text-muted">{month}</span>
+                        <div className="h-[1px] flex-1 bg-light-border dark:bg-dark-border opacity-50" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {monthAssessments.map((assessment: Assessment) => (
+                          <Card
+                            key={assessment.id}
+                            className="group relative hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer border-light-border dark:border-dark-border"
+                            onClick={() => router.push(`/dashboard/teacher/assessments/${assessment.id}`)}
+                          >
+                            <div className={`h-1.5 w-full ${assessment.status === 'PUBLISHED' ? 'bg-green-500' : 'bg-amber-500'}`} />
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-start">
+                                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                                    assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
+                                      'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                                  }`}>
+                                  {assessment.type}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[9px] font-bold uppercase tracking-wider ${assessment.status === 'PUBLISHED' ? 'text-green-500' : 'text-amber-500'
+                                    }`}>
+                                    {assessment.status}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAssessmentToDelete(assessment);
+                                      setShowDeleteAssessmentModal(true);
+                                    }}
+                                    className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-light-text-muted hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                              <CardTitle className="mt-2 text-base group-hover:text-blue-600 transition-colors truncate">{assessment.title}</CardTitle>
+                              <p className="text-[10px] text-light-text-muted flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(assessment.createdAt).toLocaleDateString()}
+                              </p>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4 h-8">
+                                {assessment.description || 'No description provided.'}
+                              </p>
+                              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-light-border dark:border-dark-border">
+                                <div className="space-y-0.5">
+                                  <p className="text-[10px] text-light-text-muted uppercase tracking-tighter">Submissions</p>
+                                  <p className="text-sm font-bold">{assessment._count?.submissions || 0}</p>
+                                </div>
+                                <div className="space-y-0.5 text-right">
+                                  <p className="text-[10px] text-light-text-muted uppercase tracking-tighter">Max Score</p>
+                                  <p className="text-sm font-bold">{assessment.maxScore}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1106,6 +1168,21 @@ export default function ClassDetailPage() {
         cancelText="Cancel"
         variant="danger"
         isLoading={isDeleting}
+      />
+
+      <ConfirmModal
+        isOpen={showDeleteAssessmentModal}
+        onClose={() => {
+          setShowDeleteAssessmentModal(false);
+          setAssessmentToDelete(null);
+        }}
+        onConfirm={handleDeleteAssessment}
+        title="Delete Assessment"
+        message={`Are you sure you want to delete "${assessmentToDelete?.title}"? This action cannot be undone and will be blocked if students have already submitted answers.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeletingAssessment}
       />
 
       {/* Upload Resource Modal */}

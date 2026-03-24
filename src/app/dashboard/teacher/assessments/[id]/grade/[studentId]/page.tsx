@@ -13,6 +13,7 @@ import {
     useGetMyTeacherSchoolQuery,
     type AssessmentAnswer
 } from '@/lib/store/api/schoolAdminApi';
+import { useGradeEssayMutation } from '@/lib/store/api/aiApi';
 import {
     ArrowLeft,
     CheckCircle2,
@@ -37,10 +38,14 @@ export default function GradeAssessmentPage() {
         { schoolId: schoolId!, assessmentId },
         { skip: !schoolId || !assessmentId }
     );
-    const assessment = assessmentResponse?.data || assessmentResponse;
+    const assessment = assessmentResponse?.data; // Use data from ResponseDto
 
-    const submission = assessment?.submissions?.find((s: any) => s.studentId === studentId);
+    const submission = assessment?.submissions?.find(s => s.studentId === studentId);
     const [gradeSubmission, { isLoading: isGrading }] = useGradeAssessmentSubmissionMutation();
+    const [gradeWithAi, { isLoading: isAiGrading }] = useGradeEssayMutation();
+
+    const [aiSuggestions, setAiSuggestions] = useState<Record<string, { score: number; feedback: string }>>({});
+    const [loadingAI, setLoadingAI] = useState<Record<string, boolean>>({});
 
     const [questionScores, setQuestionScores] = useState<Record<string, number>>({});
     const [questionFeedback, setQuestionFeedback] = useState<Record<string, string>>({});
@@ -77,6 +82,54 @@ export default function GradeAssessmentPage() {
 
     const handleFeedbackChange = (questionId: string, feedback: string) => {
         setQuestionFeedback(prev => ({ ...prev, [questionId]: feedback }));
+    };
+
+    const handleAiSuggest = async (questionId: string, qText: string, studentAnswer: string, maxPoints: number) => {
+        if (!studentAnswer) {
+            toast.error("Student hasn't provided an answer for this question.");
+            return;
+        }
+
+        setLoadingAI(prev => ({ ...prev, [questionId]: true }));
+        try {
+            const result = await gradeWithAi({
+                schoolId: schoolId!,
+                body: {
+                    essay: studentAnswer,
+                    prompt: qText,
+                    subject: assessment?.subject?.name || 'General',
+                    gradeLevel: assessment?.class?.name || 'Class',
+                    maxScore: maxPoints,
+                }
+            }).unwrap();
+
+            if (result) {
+                setAiSuggestions(prev => ({
+                    ...prev,
+                    [questionId]: {
+                        score: result.score,
+                        feedback: result.feedback
+                    }
+                }));
+            }
+        } catch (error: any) {
+            toast.error(error?.data?.message || 'AI suggest failed. Please try again.');
+        } finally {
+            setLoadingAI(prev => ({ ...prev, [questionId]: false }));
+        }
+    };
+
+    const applyAiSuggestion = (questionId: string) => {
+        const suggestion = aiSuggestions[questionId];
+        if (suggestion) {
+            handleScoreChange(questionId, suggestion.score, 1000); // 1000 is just a safe upper bound, handleScoreChange handles maxPoints
+            handleFeedbackChange(questionId, suggestion.feedback);
+            // Clear suggestion after applying
+            const newSuggestions = { ...aiSuggestions };
+            delete newSuggestions[questionId];
+            setAiSuggestions(newSuggestions);
+            toast.success('AI suggestion applied');
+        }
     };
 
     const handleSubmit = async () => {
@@ -154,8 +207,8 @@ export default function GradeAssessmentPage() {
 
                 {/* Questions and Answers */}
                 <div className="space-y-6">
-                    {assessment.questions?.map((q: any, idx: number) => {
-                        const answer = submission.answers?.find((a: any) => a.questionId === q.id);
+                    {assessment.questions?.map((q, idx: number) => {
+                        const answer = submission.answers?.find(a => a.questionId === q.id);
                         return (
                             <FadeInUp key={q.id} delay={idx * 0.1}>
                                 <Card className="overflow-hidden border-l-4 border-l-blue-500">
@@ -212,6 +265,68 @@ export default function GradeAssessmentPage() {
                                                 className="text-sm"
                                             />
                                         </div>
+
+                                        {/* AI Suggest Section */}
+                                        {(q.type === 'ESSAY' || q.type === 'SHORT_ANSWER') && (
+                                            <div className="mt-4 pt-4 border-t border-light-border dark:border-dark-border">
+                                                {!aiSuggestions[q.id] ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-[10px] h-8 bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-600 gap-2 font-bold px-4"
+                                                        onClick={() => handleAiSuggest(q.id, q.text, answer?.text || '', q.points)}
+                                                        disabled={loadingAI[q.id]}
+                                                    >
+                                                        {loadingAI[q.id] ? (
+                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                        ) : (
+                                                            <Sparkles className="h-3 w-3" />
+                                                        )}
+                                                        {loadingAI[q.id] ? 'Lois is reviewing...' : 'Suggest Grade & Feedback'}
+                                                    </Button>
+                                                ) : (
+                                                    <div className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-surface p-4 rounded-xl border border-blue-200 dark:border-blue-800 animate-in fade-in slide-in-from-top-2">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <Sparkles className="h-4 w-4 text-amber-500" />
+                                                                <span className="text-xs font-black uppercase text-blue-700 dark:text-blue-400">Lois's Review</span>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-6 text-[10px] text-light-text-muted"
+                                                                    onClick={() => {
+                                                                        const newSuggestions = { ...aiSuggestions };
+                                                                        delete newSuggestions[q.id];
+                                                                        setAiSuggestions(newSuggestions);
+                                                                    }}
+                                                                >
+                                                                    Dismiss
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="h-6 text-[10px] bg-blue-600 text-white font-bold px-3"
+                                                                    onClick={() => applyAiSuggestion(q.id)}
+                                                                >
+                                                                    Accept Suggestion
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-4 gap-4">
+                                                            <div className="col-span-1">
+                                                                <p className="text-[9px] font-black uppercase text-blue-600/60 mb-1">Score</p>
+                                                                <p className="text-lg font-black text-blue-900 dark:text-blue-200">{aiSuggestions[q.id].score} <span className="text-[10px] font-normal opacity-50">/ {q.points}</span></p>
+                                                            </div>
+                                                            <div className="col-span-3">
+                                                                <p className="text-[9px] font-black uppercase text-blue-600/60 mb-1">Proposed Feedback</p>
+                                                                <p className="text-xs italic text-blue-800/80 dark:text-blue-300/80 leading-relaxed">"{aiSuggestions[q.id].feedback}"</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             </FadeInUp>

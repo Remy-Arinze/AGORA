@@ -95,11 +95,23 @@ export function SidebarNew({ hideMobileHeader }: { hideMobileHeader?: boolean })
       const activePlugins = getActivePluginsForTeacher();
       if (activePlugins.length > 0 && base.length > 0) {
         const pluginItems = activePlugins.map((plugin) => {
+          const isLois = plugin.slug === 'agora-ai';
           const Icon = plugin.icon;
+          
           return {
-            label: plugin.name,
+            label: isLois ? 'LOIS' : plugin.name,
             href: `/dashboard/teacher/plugins/${plugin.slug}`,
-            icon: <Icon className="h-5 w-5 flex-shrink-0" />,
+            icon: isLois ? (
+              <div className="h-5 w-5 flex items-center justify-center overflow-hidden">
+                <Image 
+                  src="/assets/logos/agora_main.png" 
+                  alt="Lois" 
+                  width={20} 
+                  height={20} 
+                  className="object-contain" 
+                />
+              </div>
+            ) : <Icon className="h-5 w-5 flex-shrink-0" />,
           };
         });
         

@@ -40,7 +40,7 @@ export default function StudentAssessmentPage() {
         { schoolId: schoolId!, assessmentId },
         { skip: !schoolId || !assessmentId }
     );
-    const assessment = assessmentResponse?.data || assessmentResponse;
+    const assessment = assessmentResponse?.data; // Use data from ResponseDto
 
     const [submitAssessment, { isLoading: isSubmitting }] = useSubmitAssessmentMutation();
 
@@ -48,7 +48,7 @@ export default function StudentAssessmentPage() {
     const [isStarted, setIsStarted] = useState(false);
 
     // Find student's submission if it exists
-    const submission = assessment?.submissions?.find((s: any) => s.studentId === studentId);
+    const submission = assessment?.submissions?.find(s => s.studentId === studentId);
     const isSubmitted = !!submission;
     const isGraded = submission?.status === 'GRADED';
 
@@ -60,7 +60,7 @@ export default function StudentAssessmentPage() {
         if (!assessment) return;
 
         // Check if all questions are answered
-        const unansweredCount = assessment.questions?.filter((q: any) => !answers[q.id]).length || 0;
+        const unansweredCount = assessment.questions?.filter(q => !answers[q.id]).length || 0;
         if (unansweredCount > 0) {
             if (!confirm(`You have ${unansweredCount} unanswered questions. Are you sure you want to submit?`)) {
                 return;
@@ -198,7 +198,7 @@ export default function StudentAssessmentPage() {
                     ) : (
                         <div className="space-y-8">
                             <div className="space-y-6">
-                                {assessment.questions?.map((q: any, idx: number) => (
+                                {assessment.questions?.map((q, idx: number) => (
                                     <FadeInUp key={q.id} delay={idx * 0.1}>
                                         <Card className="overflow-hidden bg-light-card dark:bg-dark-surface border-none shadow-md">
                                             <CardContent className="p-6 md:p-8">
@@ -310,8 +310,8 @@ export default function StudentAssessmentPage() {
                         )}
 
                         <div className="space-y-6">
-                            {assessment.questions?.map((q: any, idx: number) => {
-                                const answer = submission.answers?.find((a: any) => a.questionId === q.id);
+                            {assessment.questions?.map((q, idx: number) => {
+                                const answer = submission.answers?.find(a => a.questionId === q.id);
                                 return (
                                     <Card key={q.id} className="opacity-90">
                                         <CardContent className="p-6">

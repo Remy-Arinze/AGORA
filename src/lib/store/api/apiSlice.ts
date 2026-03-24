@@ -76,10 +76,11 @@ const baseQueryWithReauth: BaseQueryFn<
 
   // If we get an error (except 401 which is handled below), report to Sentry
   if (result.error && result.error.status !== 401 && result.error.status !== 404) {
+    const error = result.error;
     Sentry.withScope((scope) => {
       scope.setExtra('apiArgs', args);
-      scope.setExtra('apiError', result.error);
-      Sentry.captureException(new Error(`API Error ${result.error.status}: ${JSON.stringify(result.error.data)}`));
+      scope.setExtra('apiError', error);
+      Sentry.captureException(new Error(`API Error ${error.status}: ${JSON.stringify(error.data)}`));
     });
   }
 
@@ -143,7 +144,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory'],
+  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Grades', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory', 'Attendance'],
   endpoints: (builder) => ({
     changePassword: builder.mutation<
       { success: boolean; message: string },

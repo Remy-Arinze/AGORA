@@ -159,7 +159,7 @@ export default function StudentClassesPage() {
     },
     { skip: !schoolId || !classData?.id }
   );
-  const assessments = Array.isArray(assessmentsResponse) ? assessmentsResponse : assessmentsResponse?.data || [];
+  const assessments = assessmentsResponse?.data || []; // Use data from ResponseDto
 
   // Calculate unread assessments (published and not submitted)
   const pendingAssessmentsCount = useMemo(() => {

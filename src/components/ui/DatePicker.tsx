@@ -30,10 +30,18 @@ export interface DatePickerProps {
 const DISPLAY_FORMAT = 'MMM d, yyyy';
 const VALUE_FORMAT = 'yyyy-MM-dd';
 
-function parseValue(value: string): Date | undefined {
+function parseValue(value: string | undefined): Date | undefined {
   if (!value || value.trim() === '') return undefined;
-  const d = parse(value, VALUE_FORMAT, new Date());
-  return isValid(d) ? d : undefined;
+  
+  // Try parsing with our expected format and start of day as reference
+  const d = parse(value, VALUE_FORMAT, startOfDay(new Date()));
+  if (isValid(d)) return d;
+  
+  // Fallback to native Date parsing if it's an ISO string or other format
+  const native = new Date(value);
+  if (isValid(native)) return startOfDay(native);
+  
+  return undefined;
 }
 
 function toValueFormat(date: Date): string {
@@ -61,6 +69,21 @@ export function DatePicker({
   const selectedDate = parseValue(value);
   const minDate = min ? parseValue(min) : undefined;
   const maxDate = max ? parseValue(max) : undefined;
+
+  // Debugging logs to understand why dates might be disabled
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line no-console
+      console.log('[DatePicker] Open state debug:', { 
+        value, 
+        parsedValue: selectedDate?.toISOString(),
+        min,
+        parsedMin: minDate?.toISOString(),
+        max,
+        parsedMax: maxDate?.toISOString()
+      });
+    }
+  }, [open, value, min, max, selectedDate, minDate, maxDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on click outside
   useEffect(() => {
@@ -100,7 +123,11 @@ export function DatePicker({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={label ? `${label}${displayText ? `, ${displayText}` : ''}` : undefined}
-        onClick={() => !disabled && setOpen((o) => !o)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!disabled) setOpen((o) => !o);
+        }}
         disabled={disabled}
         className={cn(
           'w-full px-3 py-2 border rounded-lg text-left flex items-center gap-2',
@@ -126,37 +153,95 @@ export function DatePicker({
         </span>
       </button>
 
-      {open && (
-        <div
-          className="absolute z-50 mt-1 p-2 rounded-lg border border-light-border dark:border-dark-border bg-light-card dark:bg-dark-surface shadow-lg date-picker-dropdown"
-          role="dialog"
-          aria-label="Choose date"
-        >
-          <DayPicker
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleSelect}
-            disabled={
-              minDate || maxDate
-                ? ([
-                    ...(minDate ? [{ before: minDate }] : []),
-                    ...(maxDate ? [{ after: maxDate }] : []),
-                  ] as Array<{ before: Date } | { after: Date }>)
-                : undefined
-            }
-            defaultMonth={selectedDate ?? minDate ?? maxDate ?? new Date()}
-            required={required}
-            showOutsideDays
-            captionLayout="dropdown"
-            fromYear={(minDate ?? new Date(new Date().getFullYear() - 100, 0, 1)).getFullYear()}
-            toYear={(maxDate ?? new Date(new Date().getFullYear() + 20, 0, 1)).getFullYear()}
-          />
-        </div>
+      {open && typeof document !== 'undefined' && (
+        <DropdownPortal triggerRef={wrapperRef}>
+          <div
+            className="p-2 rounded-lg border border-light-border dark:border-dark-border bg-[var(--light-card)] dark:bg-dark-surface shadow-lg date-picker-dropdown pointer-events-auto"
+            role="dialog"
+            aria-label="Choose date"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <DayPicker
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleSelect}
+              disabled={(date) => {
+                const day = startOfDay(date);
+                if (minDate && day.getTime() < minDate.getTime()) return true;
+                if (maxDate && day.getTime() > maxDate.getTime()) return true;
+                return false;
+              }}
+              defaultMonth={selectedDate ?? minDate ?? maxDate ?? new Date()}
+              required={required}
+              showOutsideDays
+              captionLayout="dropdown"
+              fromYear={(minDate ?? new Date(new Date().getFullYear() - 100, 0, 1)).getFullYear()}
+              toYear={(maxDate ?? new Date(new Date().getFullYear() + 20, 0, 1)).getFullYear()}
+            />
+          </div>
+        </DropdownPortal>
       )}
 
       {error && (
         <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
     </div>
+  );
+}
+
+/**
+ * Robust Portal wrapper that handles positioning for the DatePicker dropdown
+ */
+function DropdownPortal({ children, triggerRef }: { children: React.ReactNode, triggerRef: React.RefObject<HTMLDivElement> }) {
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+    
+    // Update positioning on scroll/resize
+    const handleUpdate = () => {
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setCoords({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width
+        });
+      }
+    };
+
+    window.addEventListener('scroll', handleUpdate, true);
+    window.addEventListener('resize', handleUpdate);
+    return () => {
+      window.removeEventListener('scroll', handleUpdate, true);
+      window.removeEventListener('resize', handleUpdate);
+    };
+  }, [triggerRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!mounted) return null;
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return require('react-dom').createPortal(
+    <div 
+      style={{ 
+        position: 'absolute', 
+        top: `${coords.top + 4}px`, 
+        left: `${coords.left}px`,
+        zIndex: 9999,
+        pointerEvents: 'none'
+      }}
+    >
+      {children}
+    </div>,
+    document.body
   );
 }
