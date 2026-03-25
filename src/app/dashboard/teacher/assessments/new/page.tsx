@@ -58,16 +58,64 @@ export default function CreateAssessmentPage() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [publishImmediately, setPublishImmediately] = useState(false);
   const [autoDistribute, setAutoDistribute] = useState(true);
+
+  // Fetch teacher profile to check school type
+  const { data: teacherProfileResponse } = useGetMyTeacherProfileQuery();
+  const teacherProfile = teacherProfileResponse?.data;
+  const isPrimary = teacherProfile?.school?.type === 'NURSERY_PRIMARY';
+
+  useEffect(() => {
+    if (isAiSource) {
+      const savedData = localStorage.getItem('ai_assessment_data');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setFormData({
+            ...formData,
+            title: parsed.title || '',
+            description: parsed.description || '',
+            classId: parsed.classId || '',
+            subjectId: parsed.subjectId || '',
+            type: parsed.type || 'QUIZ',
+          });
+          if (parsed.questions) {
+            setQuestions(parsed.questions);
+          }
+        } catch (e) {
+          console.error('Error parsing saved AI data', e);
+        }
+      }
+    }
+  }, [isAiSource]);
   const [showConfirmModal, setShowConfirmModal] = useState<'PUBLISH' | 'DRAFT' | null>(null);
 
   // Local states to avoid snapping to 0 while typing
   const [localPoints, setLocalPoints] = useState<Record<number, string>>({});
   const [localMaxScore, setLocalMaxScore] = useState(formData.maxScore.toString());
 
-  // Load data from localStorage (if coming from AI chat)
+  // Load classId from URL if present
+  useEffect(() => {
+    const classIdParam = searchParams.get('classId');
+    if (classIdParam && !formData.classId) {
+      setFormData(prev => ({ ...prev, classId: classIdParam, subjectId: '' }));
+    }
+  }, [searchParams, formData.classId]);
+
+  // Read AI source context or Initialize Manual questions
   useEffect(() => {
     if (!isAiSource) {
       localStorage.removeItem('agora_ai_assessment_context');
+      // Initialize with one empty question if none exist (manual mode)
+      if (questions.length === 0) {
+        setQuestions([{
+          text: '',
+          type: 'SHORT_ANSWER',
+          options: ['', '', '', ''],
+          correctAnswer: '',
+          points: 5,
+          order: 0
+        }]);
+      }
       return;
     }
 
@@ -107,7 +155,7 @@ export default function CreateAssessmentPage() {
         console.error('Failed to parse AI context', e);
       }
     }
-  }, [isAiSource]);
+  }, [isAiSource, questions.length]);
 
   // Handle mass point update when maxScore or questions.length change (Auto-distribution)
   useEffect(() => {
@@ -251,10 +299,12 @@ export default function CreateAssessmentPage() {
   const isValidToSave = isBasicsValid;
 
   const handleSave = async () => {
-    if (!schoolId) return;
+    if (!schoolId) {
+      toast.error('School context is missing. Please refresh.');
+      return;
+    }
 
     try {
-      setIsSaving(true);
       const status = showConfirmModal === 'PUBLISH' ? 'PUBLISHED' : 'DRAFT';
       const selectedClassObject = classes?.find((c: any) => c.id === formData.classId);
 
@@ -265,13 +315,13 @@ export default function CreateAssessmentPage() {
           ...formData,
           classId: formData.classId || undefined,
           classArmId: selectedClassObject?.classArmId || undefined,
-          subjectId: formData.subjectId || undefined,
+          subjectId: formData.subjectId,
           termId: formData.termId || undefined,
           status,
           questions: questions.map(q => ({
             text: q.text,
             type: q.type,
-            options: q.options,
+            options: q.options && q.options.length > 0 ? q.options : undefined,
             correctAnswer: q.correctAnswer,
             points: Number(q.points),
             order: q.order
@@ -283,9 +333,9 @@ export default function CreateAssessmentPage() {
       localStorage.removeItem('agora_ai_assessment_context');
       router.push(`/dashboard/teacher/classes/${formData.classId}`);
     } catch (err: any) {
+      console.error('[AssessmentCreation] Save failed:', err);
       toast.error(err?.data?.message || 'Failed to create assessment');
     } finally {
-      setIsSaving(false);
       setShowConfirmModal(null);
     }
   };
@@ -300,10 +350,12 @@ export default function CreateAssessmentPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
-                Review & Save Assessment
+                {isAiSource ? 'Review & Save Assessment' : 'Create New Assessment'}
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary text-sm">
-                Review logic, points distribution, and assign to your class.
+                {isAiSource 
+                  ? 'Review logic, points distribution, and assign to your class.' 
+                  : 'Manually create and customize an assessment for your students.'}
               </p>
             </div>
 
@@ -596,7 +648,7 @@ export default function CreateAssessmentPage() {
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
                         <span className="text-white font-bold">
-                          {teacherSubjects.find(s => s.id === formData.subjectId)?.name || "Selected Subject"}
+                          {teacherSubjects.find((s: any) => s.id === formData.subjectId)?.name || "Selected Subject"}
                         </span>
                       </div>
                     </div>
@@ -652,15 +704,17 @@ export default function CreateAssessmentPage() {
                   </select>
                 </div>
 
-                <div className="pt-4 border-t border-white/10 opacity-70">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span className="text-xs font-medium">AI Insights Active</span>
+                {isAiSource && (
+                  <div className="pt-4 border-t border-white/10 opacity-70">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span className="text-xs font-medium">AI Insights Active</span>
+                    </div>
+                    <p className="text-[10px] italic leading-relaxed">
+                      Assessment generated by Lois based on context.
+                    </p>
                   </div>
-                  <p className="text-[10px] italic leading-relaxed">
-                    Assessment generated by Lois based on context.
-                  </p>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

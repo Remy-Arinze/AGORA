@@ -38,8 +38,8 @@ const baseQuery = fetchBaseQuery({
       headers.set('authorization', `Bearer ${token}`);
     }
 
-    // Inject tenant ID from subdomain
-    const tenantId = getTenantId();
+    // Get tenant ID from state (most current) or fallback to subdomain/localStorage
+    const tenantId = (state as any)?.auth?.tenantId || getTenantId();
     if (tenantId) {
       headers.set('x-tenant-id', tenantId);
     }

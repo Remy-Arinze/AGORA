@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/Badge';
 import {
   useGetUpcomingEventsQuery,
   useGetMyStudentCalendarQuery,
+  useGetClassAssessmentsQuery,
 } from '@/lib/store/api/schoolAdminApi';
 import {
   useStudentDashboard,
@@ -74,6 +75,22 @@ export default function StudentOverviewPage() {
     { skip: !schoolId || (calendarEvents && calendarEvents.length > 0) }
   );
   const upcomingEvents = calendarEvents.length > 0 ? calendarEvents : (upcomingEventsResponse?.data || []);
+
+  // Fetch assessments for the active class
+  const { data: assessmentsResponse, isLoading: isLoadingAssessments } = useGetClassAssessmentsQuery(
+    { 
+      schoolId: schoolId!, 
+      classId: activeClass?.id!,
+      termId: activeTermId || undefined 
+    },
+    { skip: !schoolId || !activeClass?.id }
+  );
+  
+  const assessments = assessmentsResponse?.data || [];
+  const pendingAssessments = assessments.filter((a: any) => 
+    a.status === 'PUBLISHED' && 
+    (!a.submissions || a.submissions.length === 0)
+  ).slice(0, 2); // Show only top 2 pending ones
 
   if (isLoading) {
     return (
@@ -241,6 +258,52 @@ export default function StudentOverviewPage() {
                   <p className="text-light-text-secondary max-w-[200px] mx-auto text-sm">
                     No classes scheduled for today. Take some time for self-study and rest.
                   </p>
+                </Card>
+              )}
+            </section>
+
+            {/* Upcoming Assessments - New Section */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <h2 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
+                  Upcoming Tasks
+                </h2>
+                <Link href="/dashboard/student/classes?tab=assessments">
+                  <Button variant="ghost" className="text-blue-600">All Tasks</Button>
+                </Link>
+              </div>
+
+              {isLoadingAssessments ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[1, 2].map((i) => (
+                    <Card key={i} className="animate-pulse h-32 bg-slate-50 dark:bg-slate-900/10" />
+                  ))}
+                </div>
+              ) : pendingAssessments.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {pendingAssessments.map((assessment: any) => (
+                    <FadeInUp key={assessment.id}>
+                      <Link href={`/dashboard/student/assessments/${assessment.id}`}>
+                        <Card className="hover:border-blue-500 transition-all cursor-pointer group">
+                          <CardContent className="p-4 flex items-start gap-4">
+                            <div className="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                              <FileText className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-sm truncate group-hover:text-blue-600 transition-colors">{assessment.title}</h4>
+                              <p className="text-[10px] text-light-text-muted uppercase font-bold tracking-wider mt-1">
+                                {assessment.subjectName || 'General'} • {assessment.dueDate ? `Due ${new Date(assessment.dueDate).toLocaleDateString()}` : 'No deadline'}
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </FadeInUp>
+                  ))}
+                </div>
+              ) : (
+                <Card className="border-dashed py-10 text-center opacity-60">
+                  <p className="text-sm text-light-text-muted">No pending tasks. Great job staying ahead!</p>
                 </Card>
               )}
             </section>

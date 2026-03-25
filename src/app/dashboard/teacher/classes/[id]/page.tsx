@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -52,7 +52,6 @@ import {
 import { useClassResources } from '@/hooks/useClassResources';
 import { BulkGradeEntryModal } from '@/components/modals/BulkGradeEntryModal';
 import { GradeEntryModal } from '@/components/modals/GradeEntryModal';
-import { CreateAssessmentModal } from '@/components/modals/CreateAssessmentModal';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import toast from 'react-hot-toast';
@@ -71,7 +70,16 @@ export default function ClassDetailPage() {
   const params = useParams();
   const router = useRouter();
   const classId = params.id as string;
-  const [activeTab, setActiveTab] = useState<TabType>('timetable');
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab') as TabType;
+  const [activeTab, setActiveTab] = useState<TabType>(urlTab || 'timetable');
+
+  // Sync state with URL changes (for browser back/forward)
+  React.useEffect(() => {
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showBulkGradeModal, setShowBulkGradeModal] = useState(false);
   const [showGradeModal, setShowGradeModal] = useState(false);
@@ -83,7 +91,6 @@ export default function ClassDetailPage() {
   const [sequenceFilter, setSequenceFilter] = useState<number | ''>('');
   const [selectedTimetableTermId, setSelectedTimetableTermId] = useState<string>('');
   const [showUploadResourceModal, setShowUploadResourceModal] = useState(false);
-  const [showCreateAssessmentModal, setShowCreateAssessmentModal] = useState(false);
   const [assessmentToDelete, setAssessmentToDelete] = useState<Assessment | null>(null);
   const [assessmentTermFilter, setAssessmentTermFilter] = useState<string>('');
   const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] = useState(false);
@@ -378,7 +385,12 @@ export default function ClassDetailPage() {
             {tabs.filter(tab => tab.available).map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('tab', tab.id);
+                  window.history.pushState({}, '', url);
+                }}
                 className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === tab.id
                   ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                   : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
@@ -859,7 +871,7 @@ export default function ClassDetailPage() {
                     ))}
                   </select>
                 </div>
-                <Button onClick={() => setShowCreateAssessmentModal(true)}>
+                <Button onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Assessment
                 </Button>
@@ -875,7 +887,7 @@ export default function ClassDetailPage() {
                     <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No assessments found for this term.</p>
                     <p className="text-sm text-light-text-muted mt-2 mb-6">Create your first assessment or use AI to generate one.</p>
-                    <Button variant="outline" onClick={() => setShowCreateAssessmentModal(true)}>
+                    <Button variant="outline" onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
                       <Plus className="h-4 w-4 mr-2" /> Create First Assessment
                     </Button>
                   </CardContent>
@@ -903,18 +915,17 @@ export default function ClassDetailPage() {
                             className="group relative hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer border-light-border dark:border-dark-border"
                             onClick={() => router.push(`/dashboard/teacher/assessments/${assessment.id}`)}
                           >
-                            <div className={`h-1.5 w-full ${assessment.status === 'PUBLISHED' ? 'bg-green-500' : 'bg-amber-500'}`} />
-                            <CardHeader className="pb-2">
+                            <CardHeader className="pb-2 pt-5">
                               <div className="flex justify-between items-start">
-                                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                                <span className={`font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
                                     assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
                                       'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                                  }`}>
+                                  }`} style={{ fontSize: 'var(--text-tiny)' }}>
                                   {assessment.type}
                                 </span>
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-[9px] font-bold uppercase tracking-wider ${assessment.status === 'PUBLISHED' ? 'text-green-500' : 'text-amber-500'
-                                    }`}>
+                                  <span className={`font-bold uppercase tracking-wider ${assessment.status === 'PUBLISHED' ? 'text-green-500' : 'text-amber-500'
+                                    }`} style={{ fontSize: 'var(--text-tiny)' }}>
                                     {assessment.status}
                                   </span>
                                   <button
@@ -929,24 +940,24 @@ export default function ClassDetailPage() {
                                   </button>
                                 </div>
                               </div>
-                              <CardTitle className="mt-2 text-base group-hover:text-blue-600 transition-colors truncate">{assessment.title}</CardTitle>
-                              <p className="text-[10px] text-light-text-muted flex items-center gap-1">
+                              <CardTitle className="mt-2 group-hover:text-blue-600 transition-colors truncate" style={{ fontSize: 'var(--text-card-title)' }}>{assessment.title}</CardTitle>
+                              <p className="text-light-text-muted flex items-center gap-1 font-medium" style={{ fontSize: 'var(--text-tiny)' }}>
                                 <Calendar className="h-3 w-3" />
                                 {new Date(assessment.createdAt).toLocaleDateString()}
                               </p>
                             </CardHeader>
                             <CardContent>
-                              <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4 h-8">
+                              <p className="text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4 h-8" style={{ fontSize: 'var(--text-small)' }}>
                                 {assessment.description || 'No description provided.'}
                               </p>
                               <div className="grid grid-cols-2 gap-2 pt-3 border-t border-light-border dark:border-dark-border">
                                 <div className="space-y-0.5">
-                                  <p className="text-[10px] text-light-text-muted uppercase tracking-tighter">Submissions</p>
-                                  <p className="text-sm font-bold">{assessment._count?.submissions || 0}</p>
+                                  <p className="text-light-text-muted uppercase tracking-tighter" style={{ fontSize: 'var(--text-tiny)' }}>Submissions</p>
+                                  <p className="font-bold" style={{ fontSize: 'var(--text-body)' }}>{assessment._count?.submissions || 0}</p>
                                 </div>
                                 <div className="space-y-0.5 text-right">
-                                  <p className="text-[10px] text-light-text-muted uppercase tracking-tighter">Max Score</p>
-                                  <p className="text-sm font-bold">{assessment.maxScore}</p>
+                                  <p className="text-light-text-muted uppercase tracking-tighter" style={{ fontSize: 'var(--text-tiny)' }}>Max Score</p>
+                                  <p className="font-bold" style={{ fontSize: 'var(--text-body)' }}>{assessment.maxScore}</p>
                                 </div>
                               </div>
                             </CardContent>
@@ -1293,15 +1304,6 @@ export default function ClassDetailPage() {
           </FadeInUp>
         </div>
       )}
-
-      {/* Modals */}
-      <CreateAssessmentModal
-        isOpen={showCreateAssessmentModal}
-        onClose={() => setShowCreateAssessmentModal(false)}
-        schoolId={schoolId!}
-        classId={classId}
-        activeTermId={assessmentTermFilter || activeSession?.term?.id}
-      />
 
       {/* Floating AI CTA */}
       <FloatingAiCta onClick={() => setShowAiChat(true)} />

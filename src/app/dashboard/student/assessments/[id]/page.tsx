@@ -218,7 +218,7 @@ export default function StudentAssessmentPage() {
 
                                                 {q.type === 'MULTIPLE_CHOICE' ? (
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        {JSON.parse(q.options || '[]').map((option: string, optIdx: number) => (
+                                                        {(Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]')).map((option: string, optIdx: number) => (
                                                             <button
                                                                 key={optIdx}
                                                                 className={`p-4 text-left border-2 rounded-xl transition-all font-medium flex items-center gap-4 ${answers[q.id] === option

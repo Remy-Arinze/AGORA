@@ -42,6 +42,7 @@ export const GlobalAiAssistant: React.FC = () => {
   const isHiddenPage = 
     pathname?.includes('/assessments/new') || 
     pathname?.includes('/assessments/edit') ||
+    (pathname?.includes('/assessments/') && pathname.split('/').length > 4) || // Catch [id] but not the list
     pathname?.includes('/plugins/agora-ai');
 
   // Strict data readiness gate: 
