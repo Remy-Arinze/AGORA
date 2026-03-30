@@ -57,24 +57,19 @@ export default function StudentTransfersPage() {
     { status: statusFilter },
     { skip: false }
   );
-  const transfers = transfersResponse?.data || [];
+  const transfers = transfersResponse?.data;
 
   // Group transfers by status for stats
   const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      ALL: transfers.length,
-      PENDING: 0,
-      APPROVED: 0,
-      REJECTED: 0,
-      CANCELLED: 0,
-      COMPLETED: 0,
-    };
-
-    transfers.forEach((transfer: any) => {
+    transfers?.forEach((transfer: any) => {
       if (counts[transfer.status] !== undefined) {
         counts[transfer.status]++;
       }
     });
+
+    if (transfers) {
+      counts.ALL = transfers.length;
+    }
 
     return counts;
   }, [transfers]);
@@ -155,7 +150,11 @@ export default function StudentTransfersPage() {
         </Card>
 
         {/* Transfers List */}
-        {transfers.length === 0 ? (
+        {isLoading || transfers === undefined ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-light-text-secondary dark:text-dark-text-secondary">Loading...</div>
+          </div>
+        ) : transfers.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center text-light-text-secondary dark:text-dark-text-secondary">
               <School className="h-12 w-12 mx-auto mb-4 opacity-50" />

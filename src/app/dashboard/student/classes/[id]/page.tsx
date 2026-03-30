@@ -96,11 +96,11 @@ export default function StudentClassDetailPage() {
     { skip: !schoolId || !classId || !student?.id }
   );
   
-  const assessments = assessmentsResponse?.data || [];
+  const assessments = assessmentsResponse?.data;
 
   // Use selected term's timetable if fetched, otherwise use dashboard's timetable (same as timetables page)
   const timetable = needsSeparateFetch 
-    ? (selectedTermTimetableResponse?.data || [])
+    ? selectedTermTimetableResponse?.data
     : dashboardTimetable;
 
   // Track loading state: either loading selected term OR dashboard timetable
@@ -541,11 +541,11 @@ export default function StudentClassDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingTimetable ? (
+                  {isLoadingTimetable || timetable === undefined ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted animate-spin" />
                     </div>
-                  ) : timetable.length > 0 ? (
+                  ) : timetable && timetable.length > 0 ? (
                     <TeacherTimetableGrid
                       timetable={timetable}
                       schoolType={schoolType}
@@ -578,7 +578,7 @@ export default function StudentClassDetailPage() {
                 </h2>
               </div>
 
-              {isLoadingAssessments ? (
+              {isLoadingAssessments || assessments === undefined ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted animate-spin" />
                 </div>

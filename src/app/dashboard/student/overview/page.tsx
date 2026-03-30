@@ -115,14 +115,14 @@ export default function StudentOverviewPage() {
     { skip: !schoolId }
   );
   const calendarData = calendarResponse?.data;
-  const calendarEvents = calendarData?.events || [];
+  const calendarEvents = calendarData?.events;
 
   // Get upcoming events (fallback to events query if calendar doesn't have events)
   const { data: upcomingEventsResponse } = useGetUpcomingEventsQuery(
     { schoolId: schoolId!, days: 7, schoolType: schoolType || undefined },
     { skip: !schoolId || (calendarEvents && calendarEvents.length > 0) }
   );
-  const upcomingEvents = calendarEvents.length > 0 ? calendarEvents : (upcomingEventsResponse?.data || []);
+  const upcomingEvents = (calendarEvents && calendarEvents.length > 0) ? calendarEvents : upcomingEventsResponse?.data;
 
   // Fetch assessments for the active class
   const { data: assessmentsResponse, isLoading: isLoadingAssessments } = useGetClassAssessmentsQuery(
@@ -135,8 +135,8 @@ export default function StudentOverviewPage() {
     { skip: !schoolId || !activeClass?.id || !student?.id }
   );
 
-  const assessments = assessmentsResponse?.data || [];
-  const recentAssessments = assessments.slice(0, 4);
+  const assessments = assessmentsResponse?.data;
+  const recentAssessments = assessments?.slice(0, 4);
 
   if (isLoading || !isReady || isLoadingProfile || isLoadingEnrollments) {
     return (
@@ -248,7 +248,7 @@ export default function StudentOverviewPage() {
                 </Link>
               </div>
 
-              {isInitialLoadingTimetable ? (
+              {isInitialLoadingTimetable || timetable === undefined ? (
                 <div className="space-y-2 px-2">
                   <Skeleton className="h-[74px] w-full rounded-xl border border-light-border dark:border-dark-border" />
                   <Skeleton className="h-[74px] w-full rounded-xl border border-light-border dark:border-dark-border" />
@@ -360,7 +360,7 @@ export default function StudentOverviewPage() {
                 </Link>
               </div>
 
-              {isLoadingAssessments || isLoadingProfile || isLoadingEnrollments || isLoadingClasses || isLoadingSession ? (
+              {isLoadingAssessments || recentAssessments === undefined ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[1, 2].map((i) => (
                     <Card key={i} className="animate-pulse h-32 bg-slate-50 dark:bg-slate-900/10" />
@@ -368,7 +368,7 @@ export default function StudentOverviewPage() {
                 </div>
               ) : recentAssessments.length > 0 ? (
                 <div className="space-y-4">
-                  {recentAssessments.map((assessment: any, i: number) => {
+                  {recentAssessments?.map((assessment: any, i: number) => {
                     const submission = assessment.submission;
                     const isSubmitted = assessment.isSubmitted;
                     const isGraded = submission?.status === 'GRADED';
@@ -451,7 +451,7 @@ export default function StudentOverviewPage() {
             </section>
 
             {/* Upcoming Events - Card Style */}
-            {upcomingEvents.length > 0 && (
+            {upcomingEvents && upcomingEvents.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-center justify-between px-2">
                   <h2 className="font-bold" style={{ fontSize: 'var(--text-card-title)' }}>Events</h2>
@@ -462,7 +462,7 @@ export default function StudentOverviewPage() {
                 <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 text-white border-none overflow-hidden">
                   <CardContent className="p-0">
                     <div className="p-5 space-y-5">
-                      {upcomingEvents.slice(0, 3).map((event: any, i: number) => (
+                      {upcomingEvents?.slice(0, 3).map((event: any, i: number) => (
                         <div key={i} className="flex gap-4 group cursor-pointer">
                           <div className="h-10 w-10 rounded-lg bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-[10px] font-bold uppercase overflow-hidden shrink-0">
                             <span className="bg-white/40 w-full text-center py-0.5">{format(parseISO(event.startDate), 'MMM')}</span>

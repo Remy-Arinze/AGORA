@@ -151,12 +151,12 @@ export default function StudentResultsPage() {
     isLoading: isLoadingGrades,
     error: gradesError
   } = useGetMyStudentGradesQuery({});
-  const grades = gradesResponse?.data || [];
+  const grades = gradesResponse?.data;
 
   // Get available grade types from data
   const availableGradeTypes = useMemo(() => {
     const types = new Set<string>();
-    grades.forEach((grade: Grade) => {
+    grades?.forEach((grade: Grade) => {
       types.add(grade.gradeType);
     });
     return Array.from(types);
@@ -164,6 +164,7 @@ export default function StudentResultsPage() {
 
   // Filter grades by type
   const filteredGrades = useMemo(() => {
+    if (!grades) return [];
     if (gradeTypeFilter === 'ALL') return grades;
     return grades.filter((grade: Grade) => grade.gradeType === gradeTypeFilter);
   }, [grades, gradeTypeFilter]);
@@ -344,7 +345,11 @@ export default function StudentResultsPage() {
           </div>
         </FadeInUp>
 
-        {grades.length === 0 ? (
+        {isLoading || grades === undefined ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+             <Loader2 className="h-8 w-8 text-blue-600 mx-auto animate-spin" />
+          </div>
+        ) : grades.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
               <div className="text-center py-12">

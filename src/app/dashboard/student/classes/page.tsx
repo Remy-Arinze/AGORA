@@ -95,6 +95,10 @@ export default function StudentClassesPage() {
   const { schoolType: currentType, schoolId, isLoading: isLoadingSchoolType } = useStudentSchoolType();
   const terminology = getStudentTerminology(currentType);
 
+  // Get student profile for studentId
+  const { data: profileResponse, isLoading: isLoadingProfile } = useGetMyStudentProfileQuery();
+  const student = profileResponse?.data;
+
   // Get student's classes
   const { data: classesResponse, isLoading: isLoadingClasses } = useGetMyStudentClassesQuery();
   const classes = classesResponse?.data || [];
@@ -132,7 +136,7 @@ export default function StudentClassesPage() {
     { classId: classData?.id },
     { skip: !classData?.id || activeTab !== 'classmates' }
   );
-  const classmates = classmatesResponse?.data || [];
+  const classmates = classmatesResponse?.data;
 
   // Get all sessions for term selector
   const { data: sessionsResponse } = useGetSessionsQuery(
@@ -156,17 +160,18 @@ export default function StudentClassesPage() {
       schoolId: schoolId!,
       classId: classData?.id!,
       termId: activeSession?.term?.id || undefined,
+      studentId: student?.id,
     },
-    { skip: !schoolId || !classData?.id }
+    { skip: !schoolId || !classData?.id || !student?.id }
   );
-  const assessments = assessmentsResponse?.data || []; // Use data from ResponseDto
+  const assessments = assessmentsResponse?.data; // Use data from ResponseDto
 
   // Calculate unread assessments (published and not submitted)
   const pendingAssessmentsCount = useMemo(() => {
-    return assessments.filter((a: any) =>
+    return assessments?.filter((a: any) =>
       a.status === 'PUBLISHED' &&
       (!a.submissions || a.submissions.length === 0)
-    ).length;
+    ).length || 0;
   }, [assessments]);
 
   // Extract all terms from sessions for selector - filtered by school type and deduplicated
@@ -208,7 +213,7 @@ export default function StudentClassesPage() {
     });
   }, [sessionsResponse, currentType]);
 
-  const isLoading = isLoadingSchoolType || isLoadingClasses || isLoadingTimetable || (activeSessionResponse === undefined);
+  const isLoading = isLoadingProfile || isLoadingSchoolType || isLoadingClasses || isLoadingTimetable || (activeSessionResponse === undefined);
 
   // Handle resource download
   const handleDownload = async (resource: any) => {
@@ -306,7 +311,7 @@ export default function StudentClassesPage() {
     );
   }
 
-  if (!classData) {
+  if (!classData && !isLoading) {
     return (
       <ProtectedRoute roles={['STUDENT']}>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -377,7 +382,7 @@ export default function StudentClassesPage() {
           {activeTab === 'assessments' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {isLoadingAssessments || (activeSessionResponse === undefined) ? (
+                {isLoadingAssessments || assessments === undefined ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <Card key={i} className="animate-pulse">
                       <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-t-lg" />
@@ -387,83 +392,105 @@ export default function StudentClassesPage() {
                       </div>
                     </Card>
                   ))
-                ) : assessments.length > 0 ? (
+                ) : assessments && assessments.length > 0 ? (
                   assessments.map((assessment: any) => {
-                    const submission = assessment.submissions?.[0];
-                    const isSubmitted = !!submission;
+                    const submission = assessment.submission;
+                    const isSubmitted = assessment.isSubmitted;
                     const isGraded = submission?.status === 'GRADED';
+                    const isPastDue = assessment.dueDate ? new Date(assessment.dueDate) < new Date() : false;
+                    const isMissed = !isSubmitted && isPastDue;
 
                     return (
                       <FadeInUp key={assessment.id} duration={0.4}>
-                        <Card className="h-full group hover:shadow-xl transition-all duration-300 border-t-4 border-t-blue-500 overflow-hidden bg-light-card dark:bg-dark-surface">
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start mb-2">
-                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
-                                assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'
-                                }`}>
-                                {assessment.type}
-                              </span>
-                              {isSubmitted ? (
-                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isGraded ? 'text-green-500' : 'text-blue-500'}`}>
-                                  {isGraded ? 'GRADED' : 'SUBMITTED'}
+                        <Link href={`/dashboard/student/assessments/${assessment.id}`}>
+                          <Card className={`h-full group hover:shadow-xl transition-all duration-300 border-t-4 overflow-hidden bg-light-card dark:bg-dark-surface ${
+                            isMissed ? 'border-t-red-500 opacity-80' : 
+                            isGraded ? 'border-t-green-500' : 
+                            isSubmitted ? 'border-t-blue-500' : 'border-t-amber-500'
+                          }`}>
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${assessment.type === 'EXAM' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
+                                  assessment.type === 'QUIZ' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                                  }`}>
+                                  {assessment.type}
                                 </span>
-                              ) : (
-                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">
-                                  PENDING
-                                </span>
+                                {isMissed ? (
+                                  <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">
+                                    MISSED
+                                  </span>
+                                ) : isSubmitted ? (
+                                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isGraded ? 'text-green-500' : 'text-blue-500'}`}>
+                                    {isGraded ? 'GRADED' : 'SUBMITTED'}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                                    PENDING
+                                  </span>
+                                )}
+                              </div>
+                              <CardTitle className="group-hover:text-blue-600 transition-colors uppercase tracking-tight font-black" style={{ fontSize: 'var(--text-card-title)' }}>
+                                {assessment.title}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4 h-10" style={{ fontSize: 'var(--text-small)' }}>
+                                {assessment.description || 'No description provided.'}
+                              </p>
+
+                              {isGraded && (
+                                <div className="mb-4 bg-green-50 dark:bg-green-900/10 p-3 rounded-lg flex items-center justify-between border border-green-200 dark:border-green-800">
+                                  <span className="font-bold text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-tiny)' }}>YOUR SCORE</span>
+                                  <span className="font-black text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-stat-value)' }}>
+                                    {submission.totalScore} / {assessment.maxScore}
+                                  </span>
+                                </div>
                               )}
-                            </div>
-                            <CardTitle className="group-hover:text-blue-600 transition-colors uppercase tracking-tight font-black" style={{ fontSize: 'var(--text-card-title)' }}>
-                              {assessment.title}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-4 h-10" style={{ fontSize: 'var(--text-small)' }}>
-                              {assessment.description || 'No description provided.'}
-                            </p>
 
-                            {isGraded && (
-                              <div className="mb-4 bg-green-50 dark:bg-green-900/10 p-3 rounded-lg flex items-center justify-between border border-green-200 dark:border-green-800">
-                                <span className="font-bold text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-tiny)' }}>YOUR SCORE</span>
-                                <span className="font-black text-green-700 dark:text-green-400" style={{ fontSize: 'var(--text-stat-value)' }}>
-                                  {submission.totalScore} / {assessment.maxScore}
-                                </span>
+                              <div className="space-y-2 pt-4 border-t border-light-border dark:border-dark-border">
+                                <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
+                                  <span>Subject</span>
+                                  <span className="text-light-text-primary dark:text-dark-text-primary">{assessment.subjectName || 'General'}</span>
+                                </div>
+                                <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
+                                  <span>Due Date</span>
+                                  <span className="text-light-text-primary dark:text-dark-text-primary">
+                                    {assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}
+                                  </span>
+                                </div>
                               </div>
-                            )}
 
-                            <div className="space-y-2 pt-4 border-t border-light-border dark:border-dark-border">
-                              <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
-                                <span>Subject</span>
-                                <span className="text-light-text-primary dark:text-dark-text-primary">{assessment.subjectName || 'General'}</span>
+                              <div className="mt-6">
+                                {isSubmitted && !isGraded ? (
+                                  <div className="text-center py-2 px-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
+                                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center gap-2">
+                                      <Clock className="h-3 w-3" />
+                                      Awaiting Grade
+                                    </p>
+                                  </div>
+                                ) : isMissed ? (
+                                  <div className="text-center py-2 px-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100 dark:border-red-900/30">
+                                    <p className="text-xs font-bold text-red-600 dark:text-red-400">
+                                      Submission Window Closed
+                                    </p>
+                                  </div>
+                                ) : !isSubmitted && !isPastDue ? (
+                                  <div className="text-center py-2 px-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                                      Click to Take Assessment
+                                    </p>
+                                  </div>
+                                ) : isGraded ? (
+                                  <div className="text-center py-2 px-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900/30">
+                                    <p className="text-xs font-bold text-green-600 dark:text-green-400">
+                                      View Detailed Result
+                                    </p>
+                                  </div>
+                                ) : null}
                               </div>
-                              <div className="flex items-center justify-between font-bold uppercase tracking-widest text-light-text-muted" style={{ fontSize: 'var(--text-tiny)' }}>
-                                <span>Due Date</span>
-                                <span className="text-light-text-primary dark:text-dark-text-primary">
-                                  {assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="mt-6">
-                              {isSubmitted ? (
-                                <Button
-                                  variant="outline"
-                                  className="w-full border-2"
-                                  onClick={() => router.push(`/dashboard/student/assessments/${assessment.id}`)}
-                                >
-                                  View Result
-                                </Button>
-                              ) : (
-                                <Button
-                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
-                                  onClick={() => router.push(`/dashboard/student/assessments/${assessment.id}`)}
-                                >
-                                  Take Assessment
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                        </Link>
                       </FadeInUp>
                     );
                   })
@@ -731,11 +758,11 @@ export default function StudentClassesPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingClassmates ? (
+                  {isLoadingClassmates || classmates === undefined ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted animate-spin" />
                     </div>
-                  ) : classmates.length > 0 ? (
+                  ) : classmates && classmates.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {classmates.map((classmate: any) => (
                         <ClassmateCard key={classmate.id} classmate={classmate} />

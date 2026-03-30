@@ -161,7 +161,14 @@ export default function StudentHistoryPage() {
         {/* Grades Tab */}
         {activeTab === 'grades' && (
           <div className="space-y-6">
-            {gradesBySchool.length === 0 ? (
+            {isLoading || transcriptData === undefined ? (
+              <div className="flex items-center justify-center min-h-[400px]">
+                 <div className="text-center">
+                    <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">Loading history...</p>
+                 </div>
+              </div>
+            ) : gradesBySchool.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-light-text-secondary dark:text-dark-text-secondary">
                   No grades found
@@ -341,7 +348,14 @@ export default function StudentHistoryPage() {
         {/* Transcript Tab */}
         {activeTab === 'transcript' && (
           <div className="space-y-6">
-            {!transcriptData ? (
+            {isLoading || transcriptData === undefined ? (
+              <div className="flex items-center justify-center min-h-[400px]">
+                 <div className="text-center">
+                    <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">Loading transcript...</p>
+                 </div>
+              </div>
+            ) : !transcriptData ? (
               <Card>
                 <CardContent className="pt-6 text-center text-light-text-secondary dark:text-dark-text-secondary">
                   No transcript data available

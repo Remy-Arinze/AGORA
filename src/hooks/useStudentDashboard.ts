@@ -165,7 +165,6 @@ export function useStudentDashboard(): StudentDashboardData {
   const { 
     data: profileResponse, 
     isLoading: isLoadingProfile,
-    isInitialLoading: isInitialLoadingProfile,
     error: profileError 
   } = useGetMyStudentProfileQuery();
   
@@ -279,7 +278,6 @@ export function useStudentDashboard(): StudentDashboardData {
   const { 
     data: timetableResponse, 
     isLoading: isLoadingTimetable,
-    isInitialLoading: isInitialLoadingTimetable,
     error: timetableError 
   } = useGetMyStudentTimetableQuery(
     { termId },
@@ -298,11 +296,11 @@ export function useStudentDashboard(): StudentDashboardData {
     { skip: !termId }
   );
   
-  const grades = gradesResponse?.data || [];
+  const grades = (gradesResponse?.data || []) as any[];
   
   // Filter to only published grades
   const publishedGrades = useMemo(() => {
-    return grades.filter((g: any) => g.isPublished !== false);
+    return grades?.filter((g: any) => g.isPublished !== false) || [];
   }, [grades]);
   
   // Calculate stats including subject breakdown
@@ -396,7 +394,7 @@ export function useStudentDashboard(): StudentDashboardData {
     isLoadingClasses,
     isLoadingSession,
     isLoadingTimetable,
-    isInitialLoadingTimetable: !!isInitialLoadingTimetable,
+    isInitialLoadingTimetable: isLoadingTimetable,
     isLoadingGrades,
     hasError,
     errorMessage,
@@ -409,7 +407,8 @@ export function useStudentDashboard(): StudentDashboardData {
 /**
  * Helper to get today's schedule from timetable
  */
-export function getStudentTodaySchedule(timetable: TimetablePeriod[]): TimetablePeriod[] {
+export function getStudentTodaySchedule(timetable: TimetablePeriod[] | undefined): TimetablePeriod[] {
+  if (!timetable) return [];
   const dayMap: Record<number, string> = {
     0: 'SUNDAY',
     1: 'MONDAY',

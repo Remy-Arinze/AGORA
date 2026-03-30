@@ -24,6 +24,7 @@ import {
     AlertCircle,
     Info
 } from 'lucide-react';
+import { ConfirmModal } from '@/components/ui/Modal';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import toast from 'react-hot-toast';
 
@@ -46,6 +47,8 @@ export default function StudentAssessmentPage() {
 
     const [answers, setAnswers] = useState<Record<string, any>>({});
     const [isStarted, setIsStarted] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [pendingUnansweredCount, setPendingUnansweredCount] = useState(0);
 
     // Find student's submission if it exists
     const submission = assessment?.submissions?.find(s => s.studentId === studentId);
@@ -56,16 +59,8 @@ export default function StudentAssessmentPage() {
         setAnswers(prev => ({ ...prev, [questionId]: value }));
     };
 
-    const handleSubmit = async () => {
-        if (!assessment) return;
-
-        // Check if all questions are answered
-        const unansweredCount = assessment.questions?.filter(q => !answers[q.id]).length || 0;
-        if (unansweredCount > 0) {
-            if (!confirm(`You have ${unansweredCount} unanswered questions. Are you sure you want to submit?`)) {
-                return;
-            }
-        }
+    const performSubmission = async () => {
+        if (!assessment || !schoolId) return;
 
         try {
             const dtoAnswers = assessment.questions?.map((q: AssessmentQuestion) => {
@@ -78,7 +73,7 @@ export default function StudentAssessmentPage() {
             }) || [];
 
             await submitAssessment({
-                schoolId: schoolId!,
+                schoolId,
                 assessmentId,
                 dto: { answers: dtoAnswers }
             }).unwrap();
@@ -90,7 +85,21 @@ export default function StudentAssessmentPage() {
         }
     };
 
-    if (isLoadingAssessment) {
+    const handleSubmit = async () => {
+        if (!assessment) return;
+
+        // Check if all questions are answered
+        const unansweredCount = assessment.questions?.filter(q => !answers[q.id]).length || 0;
+        if (unansweredCount > 0) {
+            setPendingUnansweredCount(unansweredCount);
+            setIsConfirmModalOpen(true);
+            return;
+        }
+
+        await performSubmission();
+    };
+
+    if (isLoadingAssessment || assessment === undefined) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -187,7 +196,7 @@ export default function StudentAssessmentPage() {
                                     </p>
                                 </div>
                                 <Button
-                                    size="lg"
+                                    size="md"
                                     className="px-12 bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 text-lg rounded-xl shadow-xl"
                                     onClick={() => setIsStarted(true)}
                                 >
@@ -260,7 +269,7 @@ export default function StudentAssessmentPage() {
 
                             <div className="flex flex-col items-center gap-4 py-8">
                                 <Button
-                                    size="lg"
+                                    size="md"
                                     className="px-12 bg-green-600 hover:bg-green-700 text-white font-bold h-16 text-xl rounded-2xl shadow-2xl gap-3 w-full md:w-auto"
                                     onClick={handleSubmit}
                                     disabled={isSubmitting}
@@ -270,7 +279,7 @@ export default function StudentAssessmentPage() {
                                     ) : (
                                         <Send className="h-6 w-6" />
                                     )}
-                                    Submit Final Assessment
+                                    Submit Assessment
                                 </Button>
                                 <p className="text-light-text-muted text-sm font-medium">Please review your answers before submitting.</p>
                             </div>
@@ -353,6 +362,17 @@ export default function StudentAssessmentPage() {
                         </div>
                     </div>
                 )}
+                <ConfirmModal
+                    isOpen={isConfirmModalOpen}
+                    onClose={() => setIsConfirmModalOpen(false)}
+                    onConfirm={performSubmission}
+                    title="Unanswered Questions"
+                    message={`You have ${pendingUnansweredCount} unanswered question${pendingUnansweredCount !== 1 ? 's' : ''}. Are you sure you want to submit?`}
+                    confirmText="Submit Anyway"
+                    cancelText="Go Back"
+                    variant="warning"
+                    isLoading={isSubmitting}
+                />
             </div>
         </ProtectedRoute>
     );

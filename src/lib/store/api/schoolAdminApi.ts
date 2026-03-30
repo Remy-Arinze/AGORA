@@ -2252,7 +2252,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       providesTags: ['Student'],
     }),
     getMyStudentTimetable: builder.query<
-      ResponseDto<any[]>,
+      ResponseDto<TimetablePeriod[]>,
       { termId?: string }
     >({
       query: (params) => {
