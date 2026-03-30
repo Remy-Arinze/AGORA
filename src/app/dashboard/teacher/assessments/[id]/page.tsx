@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import {
     useGetAssessmentByIdQuery,
-    useGetClassStudentsQuery,
     useGetMyTeacherSchoolQuery,
     type AssessmentType,
     type QuestionType
@@ -45,14 +44,6 @@ export default function AssessmentDetailPage() {
     );
     const assessment = assessmentResponse?.data; // Use data from ResponseDto
 
-    const classId = assessment?.classId;
-
-    const { data: studentsResponse, isLoading: isLoadingStudents } = useGetClassStudentsQuery(
-        { schoolId: schoolId!, classId: classId! },
-        { skip: !schoolId || !classId }
-    );
-    const students = studentsResponse?.data || []; // Use data from ResponseDto
-
     if (isLoadingAssessment) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -69,6 +60,8 @@ export default function AssessmentDetailPage() {
             </div>
         );
     }
+
+    const submissions = assessment.submissions || [];
 
     return (
         <ProtectedRoute roles={['TEACHER']}>
@@ -144,44 +137,59 @@ export default function AssessmentDetailPage() {
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-xl font-bold">Student Submissions</h2>
-                                    <span className="text-xs font-bold uppercase tracking-widest text-light-text-muted">Total: {students.length}</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-light-text-muted">Total Submissions: {submissions.length}</span>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {students.map((student: any) => {
-                                                const studentSubmission = assessment.submissions?.find((s: any) => s.studentId === student.id);
-                                                const status = studentSubmission
-                                                    ? (studentSubmission.status === 'GRADED' ? 'Graded' : 'Submitted')
-                                                    : 'Pending';
+                                {submissions.length === 0 ? (
+                                    <Card>
+                                        <CardContent className="py-20 text-center">
+                                            <Users className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
+                                            <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No submissions yet.</p>
+                                            <p className="text-sm text-light-text-muted mt-2 mb-6">When students complete this assessment, their work will appear here.</p>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {submissions.map((submission: any) => {
+                                            const student = submission.student;
+                                            const status = submission.status === 'GRADED' ? 'Graded' : 'Pending';
 
-                                                return (
-                                                    <div
-                                                        key={student.id}
-                                                        className="flex items-center justify-between p-4 border border-light-border dark:border-dark-border rounded-xl hover:bg-light-surface/50 dark:hover:bg-dark-surface/50 transition-colors cursor-pointer"
-                                                        onClick={() => router.push(`/dashboard/teacher/assessments/${assessmentId}/grade/${student.id}`)}
-                                                    >
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
-                                                                {student.firstName[0]}{student.lastName[0]}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-semibold text-light-text-primary dark:text-dark-text-primary">
-                                                                    {student.firstName} {student.lastName}
-                                                                </p>
-                                                                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-                                                                    ID: {student.uid}
-                                                                </p>
-                                                            </div>
+                                            return (
+                                                <div
+                                                    key={submission.id}
+                                                    className="flex items-center justify-between p-4 border border-light-border dark:border-dark-border rounded-xl hover:bg-light-surface/50 dark:hover:bg-dark-surface/50 transition-colors cursor-pointer"
+                                                    onClick={() => router.push(`/dashboard/teacher/assessments/${assessmentId}/grade/${student.id}`)}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
+                                                            {student?.firstName?.[0]}{student?.lastName?.[0]}
                                                         </div>
-                                                        <div className="flex items-center gap-4">
-                                                            <Badge variant={status === 'Graded' ? 'success' : status === 'Submitted' ? 'primary' : 'outline'} className="text-xs uppercase">
-                                                                {status}
-                                                            </Badge>
-                                                            <ChevronRight className="h-5 w-5 text-light-text-muted" />
+                                                        <div>
+                                                            <p className="font-semibold text-light-text-primary dark:text-dark-text-primary">
+                                                                {student?.firstName} {student?.lastName}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary font-medium">
+                                                                    ID: {student?.uid}
+                                                                </p>
+                                                                <span className="text-xs text-light-text-muted opacity-50">•</span>
+                                                                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary font-medium flex items-center gap-1">
+                                                                    <Clock className="h-3 w-3" />
+                                                                    {new Date(submission.submittedAt).toLocaleDateString()}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
-                                 </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <Badge variant={status === 'Graded' ? 'success' : 'outline'} className="text-xs uppercase">
+                                                            {status}
+                                                        </Badge>
+                                                        <ChevronRight className="h-5 w-5 text-light-text-muted" />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </section>
                         )}
  
@@ -266,18 +274,6 @@ export default function AssessmentDetailPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-indigo-50 dark:bg-blue-600 border-0 overflow-hidden relative shadow-lg">
-                            <Sparkles className="absolute top-[-10px] right-[-10px] h-24 w-24 opacity-10 dark:opacity-20 rotate-12 text-indigo-500 dark:text-white" />
-                            <CardContent className="pt-6 relative z-10">
-                                <h3 className="font-bold text-lg mb-2 text-indigo-900 dark:text-white">AI Grading Assistant</h3>
-                                <p className="text-sm text-indigo-700/80 dark:text-white/90 mb-6 leading-relaxed">
-                                    Speed up your work! Let our AI analyze essay and short answers based on your rubric.
-                                </p>
-                                <Button className="w-full bg-indigo-600 dark:bg-white text-white dark:text-blue-600 hover:bg-indigo-700 dark:hover:bg-blue-50 font-bold border-0 h-10">
-                                    Open AI Grader
-                                </Button>
-                            </CardContent>
-                        </Card>
                     </div>
                 </div>
             </div>

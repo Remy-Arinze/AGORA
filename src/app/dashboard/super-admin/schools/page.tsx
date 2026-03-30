@@ -406,7 +406,7 @@ export default function SchoolsPage() {
                               )}
                             </div>
 
-                            {/* Teachers, Students, and Subdomain - Inline */}
+                            {/* Teachers and Students - Inline */}
                             <div className="flex items-center gap-4 text-light-text-secondary dark:text-[#9ca3af] flex-wrap" style={{ fontSize: 'var(--text-body)' }}>
                               <div className="flex items-center gap-1">
                                 <Target className="h-4 w-4" />
@@ -416,9 +416,6 @@ export default function SchoolsPage() {
                                 <Users className="h-4 w-4" />
                                 <span>{school.studentsCount || 0} students</span>
                               </div>
-                              <span className="text-light-text-muted dark:text-[#6b7280]" style={{ fontSize: 'var(--text-small)' }}>
-                                {school.subdomain}.agora.com
-                              </span>
                             </div>
                           </div>
                           <span className="text-blue-600 dark:text-blue-400 font-medium flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>

@@ -1046,7 +1046,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
               {/* Independent Send Button */}
               <div className="flex-shrink-0">
                 <Button
-                  onClick={handleSendMessage}
+                  onClick={() => handleSendMessage()}
                   disabled={!inputValue.trim() || isStreaming}
                   className={cn(
                     "rounded-full bg-agora-blue dark:bg-indigo-600 hover:bg-agora-blue/90 dark:hover:bg-indigo-500 text-white shadow-lg shadow-blue-500/10 active:scale-95 transition-all shrink-0 border-none",

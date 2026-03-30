@@ -1,75 +1,39 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { setCredentials, logout } from '../slices/authSlice';
-
-// Get tenant ID from subdomain or localStorage
-const getTenantId = (): string | null => {
-  if (typeof window === 'undefined') return null;
-
-  // Try to get from localStorage first (set after login)
-  const stored = localStorage.getItem('tenantId');
-  if (stored) return stored;
-
-  // Fallback: extract from subdomain
-  const hostname = window.location.hostname;
-  const subdomain = hostname.split('.')[0];
-
-  // Ignore common non-tenant subdomains
-  if (['localhost', 'www', 'api', 'app'].includes(subdomain)) {
-    return null;
-  }
-
-  return subdomain;
-};
+import * as Sentry from '@sentry/nextjs';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: (() => {
-    const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
-    const baseUrl = envUrl || 'http://localhost:4000';
-    // Routes are directly accessible without /api prefix
-    return baseUrl;
-  })(),
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   prepareHeaders: (headers, { getState }) => {
-    // Get token from Redux state
-    const state = getState() as { auth: { accessToken?: string | null; token?: string | null } };
-    const token = state?.auth?.accessToken || state?.auth?.token;
+    const state = getState() as { auth: { token?: string | null; tenantId?: string | null } };
+    const token = state?.auth?.token;
 
+    // 1. Set Authorization Header — the JWT contains the schoolId,
+    //    which is the sole source of truth for tenant context.
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
 
-    // Get tenant ID from state (most current) or fallback to subdomain/localStorage
-    const tenantId = (state as any)?.auth?.tenantId || getTenantId();
-    if (tenantId) {
-      headers.set('x-tenant-id', tenantId);
-    }
-
-    // Only set Content-Type for JSON requests (not FormData)
-    const contentType = headers.get('Content-Type');
-    if (!contentType || contentType === 'application/json') {
-      headers.set('Content-Type', 'application/json');
-    }
+    headers.set('Content-Type', 'application/json');
     return headers;
   },
 });
-
-import * as Sentry from '@sentry/nextjs';
 
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  const state = api.getState() as { auth: { refreshToken?: string | null; user?: any; currentSchoolId?: string } };
+  const state = api.getState() as { auth: { token?: string | null; refreshToken?: string | null; user?: any; tenantId?: string | null } };
   const user = state.auth.user;
-  const schoolId = state.auth.currentSchoolId || getTenantId();
 
-  // Update Sentry context with current user and school
+  // Update Sentry context
   if (user) {
     Sentry.setUser({ id: user.id, email: user.email });
   }
-  if (schoolId) {
-    Sentry.setTag('schoolId', schoolId);
+  if (state.auth.tenantId) {
+    Sentry.setTag('schoolId', state.auth.tenantId);
   }
 
   let result = await baseQuery(args, api, extraOptions);
@@ -90,7 +54,6 @@ const baseQueryWithReauth: BaseQueryFn<
 
     if (refreshToken) {
       try {
-        // Try to refresh the token
         const refreshResult = await baseQuery(
           {
             url: '/auth/refresh',
@@ -116,21 +79,18 @@ const baseQueryWithReauth: BaseQueryFn<
           // Retry the original query with new token
           result = await baseQuery(args, api, extraOptions);
         } else {
-          // Refresh failed, logout user
           api.dispatch(logout());
           if (typeof window !== 'undefined') {
             window.location.href = '/auth/login?expired=true';
           }
         }
       } catch (error) {
-        // Refresh failed, logout user
         api.dispatch(logout());
         if (typeof window !== 'undefined') {
           window.location.href = '/auth/login?expired=true';
         }
       }
     } else {
-      // No refresh token, logout user
       api.dispatch(logout());
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login?expired=true';
@@ -166,8 +126,8 @@ export const apiSlice = createApi({
         const formData = new FormData();
         formData.append('image', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';

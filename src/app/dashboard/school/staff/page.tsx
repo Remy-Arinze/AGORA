@@ -14,6 +14,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { Users, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, BookOpen, CheckCircle, Clock, Ban, Mail, Loader2, Trash2, GraduationCap } from 'lucide-react';
 import { useGetStaffListQuery, useGetMySchoolQuery, useResendPasswordResetForStaffMutation, useDeleteAdminMutation, useDeleteTeacherMutation } from '@/lib/store/api/schoolAdminApi';
+import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
 import { Modal } from '@/components/ui/Modal';
@@ -513,6 +514,7 @@ export default function StaffPage() {
                                   {statusConfig.label}
                                 </span>
                               </div>
+                              <LiveStatusBadge activity={staffMember.currentActivity} size="sm" className="mb-1" />
                               <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
                                 {staffMember.email || 'No email'}
                               </p>
@@ -638,6 +640,7 @@ export default function StaffPage() {
                                 )}>
                                   {staffMember.role || 'N/A'}
                                 </span>
+                                <LiveStatusBadge activity={staffMember.currentActivity} size="sm" />
                               </div>
                               <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-body)' }}>
                                 {staffMember.email || 'No email'} • {staffMember.type === 'teacher' && currentType === 'PRIMARY'

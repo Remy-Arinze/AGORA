@@ -28,7 +28,7 @@ export default function AddSchoolPage() {
   const router = useRouter();
   const params = useParams();
 
-  // Extract schoolId from params - this should be the database ID, not subdomain
+  // Extract schoolId from params - this should be the database ID
   const schoolId = params?.id as string | undefined;
   const isEditMode = !!schoolId;
 
@@ -44,7 +44,7 @@ export default function AddSchoolPage() {
       console.log('School data loaded:', school ? 'Yes' : 'No');
       if (school) {
         console.log('School database ID:', school.id);
-        console.log('School subdomain:', school.subdomain);
+        console.log('School name:', school.name);
       }
     }
   }, [isEditMode, schoolId, school]);
@@ -53,7 +53,6 @@ export default function AddSchoolPage() {
   const [formData, setFormData] = useState({
     // School Info
     name: '',
-    subdomain: '',
     address: '',
     city: '',
     state: '',
@@ -135,7 +134,6 @@ export default function AddSchoolPage() {
     if (isEditMode && school) {
       setFormData({
         name: school.name || '',
-        subdomain: school.subdomain || '',
         address: school.address || '',
         city: school.city || '',
         state: school.state || '',
@@ -179,7 +177,7 @@ export default function AddSchoolPage() {
       if (isEditMode) {
         // Update school - don't include principal/admins in update
         // CRITICAL: Always use school.id from fetched data, never the URL param
-        // The URL param might be a subdomain, but we need the database ID
+        // Use the school database ID
         if (!school?.id) {
           toast.error('School data not loaded. Please wait and try again.');
           return;
@@ -285,21 +283,8 @@ export default function AddSchoolPage() {
                       placeholder="Enter school name"
                     />
                   </div>
-                  <div>
-                    <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
-                      Subdomain
-                      <span className="text-light-text-muted dark:text-dark-text-muted ml-1" style={{ fontSize: 'var(--text-small)' }}>(Optional - will be auto-generated if not provided)</span>
-                    </label>
-                    <Input
-                      name="subdomain"
-                      value={formData.subdomain}
-                      onChange={handleChange}
-                      placeholder="schoolname"
-                    />
-                    <p className="text-light-text-muted dark:text-dark-text-muted mt-1" style={{ fontSize: 'var(--text-small)' }}>
-                      {formData.subdomain ? `${formData.subdomain}.agora.com` : 'Will be auto-generated from school name'}
-                    </p>
-                  </div>
+
+
                   <div className="md:col-span-2">
                     <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2" style={{ fontSize: 'var(--text-body)' }}>
                       Address *

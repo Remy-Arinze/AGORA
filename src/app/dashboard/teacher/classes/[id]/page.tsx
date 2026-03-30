@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -63,6 +64,7 @@ import { AgoraAiTools } from '@/components/ai/AgoraAiTools';
 import { FloatingAiCta } from '@/components/ai/FloatingAiCta';
 import { AiChatDrawer } from '@/components/ai/AiChatDrawer';
 import { Sparkles } from 'lucide-react';
+import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
 
 type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'rollcall';
 
@@ -108,9 +110,9 @@ export default function ClassDetailPage() {
     subjectSingular: 'Subject',
   };
 
-  // Get teacher's school
-  const { data: schoolResponse } = useGetMyTeacherSchoolQuery();
-  const schoolId = schoolResponse?.data?.id;
+  // Get school ID from Redux auth state (populated during login)
+  const { user } = useSelector((state: any) => state.auth);
+  const schoolId = user?.schoolId;
 
   // Get class data first - we need the class type to fetch the correct active session
   const { data: classResponse, isLoading, error } = useGetClassByIdQuery(
@@ -124,7 +126,7 @@ export default function ClassDetailPage() {
   const classType = classData?.type as 'PRIMARY' | 'SECONDARY' | 'TERTIARY' | undefined;
 
   // Get active session - use the class type to get the correct session for this school type
-  const { data: activeSessionResponse } = useGetActiveSessionQuery(
+  const { data: activeSessionResponse, isLoading: isLoadingActiveSession } = useGetActiveSessionQuery(
     { schoolId: schoolId!, schoolType: classType || currentType || undefined },
     { skip: !schoolId }
   );
@@ -137,13 +139,13 @@ export default function ClassDetailPage() {
   );
 
   // Get students in class (always fetch so they're available for grade entry modal)
-  const { data: studentsResponse } = useGetClassStudentsQuery(
+  const { data: studentsResponse, isLoading: isLoadingStudents } = useGetClassStudentsQuery(
     { schoolId: schoolId!, classId },
     { skip: !schoolId || !classId }
   );
 
   // Get grades for class
-  const { data: gradesResponse, refetch: refetchGrades } = useGetClassGradesQuery(
+  const { data: gradesResponse, isLoading: isLoadingGrades, refetch: refetchGrades } = useGetClassGradesQuery(
     {
       schoolId: schoolId!,
       classId,
@@ -208,7 +210,7 @@ export default function ClassDetailPage() {
   };
 
   // Get curriculum for class
-  const { data: curriculumResponse, refetch: refetchCurriculum } = useGetCurriculumForClassQuery(
+  const { data: curriculumResponse, isLoading: isLoadingCurriculum, refetch: refetchCurriculum } = useGetCurriculumForClassQuery(
     {
       schoolId: schoolId!,
       classId,
@@ -416,7 +418,11 @@ export default function ClassDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {curriculumResponse?.data ? (
+                  {isLoadingCurriculum ? (
+                    <div className="flex items-center justify-center py-20">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    </div>
+                  ) : curriculumResponse?.data ? (
                     <div className="space-y-6">
                       {curriculumResponse.data.items.map((item, index) => (
                         <div
@@ -491,7 +497,11 @@ export default function ClassDetailPage() {
           {/* Timetable Tab */}
           {(activeTab as TabType) === 'timetable' && (
             <div className="space-y-6">
-              {timetableTermId ? (
+              {isLoadingActiveSession ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+              ) : timetableTermId ? (
                 <ClassTimetableView
                   schoolId={schoolId!}
                   classId={classId}
@@ -528,7 +538,11 @@ export default function ClassDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {filteredStudents.length === 0 ? (
+                  {isLoadingStudents ? (
+                    <div className="flex items-center justify-center py-20">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    </div>
+                  ) : filteredStudents.length === 0 ? (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
                       <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
@@ -580,6 +594,7 @@ export default function ClassDetailPage() {
                                     <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
                                       {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
                                     </p>
+                                    <LiveStatusBadge activity={student.currentActivity} size="sm" />
                                   </div>
                                 </td>
                                 <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
@@ -686,7 +701,11 @@ export default function ClassDetailPage() {
                   <div className="space-y-4">
 
                     {/* Grades Table */}
-                    {grades.length === 0 ? (
+                    {isLoadingGrades ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      </div>
+                    ) : grades.length === 0 ? (
                       <div className="text-center py-12">
                         <Award className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">

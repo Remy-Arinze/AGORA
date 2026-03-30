@@ -46,6 +46,15 @@ export interface SchoolDashboard {
 // Staff list types
 export type AccountStatus = 'SHADOW' | 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
 
+export interface CurrentActivity {
+  type: string;
+  title: string;
+  location?: string;
+  context?: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface StaffListItem {
   id: string;
   type: 'teacher' | 'admin';
@@ -62,6 +71,7 @@ export interface StaffListItem {
   profileImage: string | null;
   schoolType: string | null;
   assignedClass?: { id: string; name: string } | null;
+  currentActivity?: CurrentActivity | null;
   createdAt: string;
   user?: {
     id: string;
@@ -619,9 +629,10 @@ export interface StudentWithEnrollment extends Student {
     school: {
       id: string;
       name: string;
-      subdomain: string;
+      
     };
   };
+  currentActivity?: CurrentActivity | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -834,6 +845,8 @@ export interface Assessment {
   updatedAt: string;
   questions?: AssessmentQuestion[];
   submissions?: AssessmentSubmission[];
+  isSubmitted?: boolean;
+  submission?: AssessmentSubmission | null;
   subject?: Subject;
   class?: Class;
   _count?: {
@@ -1300,8 +1313,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
     }),
     uploadSchoolLogo: builder.mutation<ResponseDto<School>, { file: File }>({
       queryFn: async ({ file }, _api, _extraOptions, baseQuery) => {
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state.auth.accessToken || state.auth.token;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state.auth.token;
 
         if (!token) {
           return { error: { status: 'CUSTOM_ERROR', error: 'Not authenticated' } };
@@ -2368,6 +2381,10 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       query: () => '/students/me/school',
       providesTags: ['Student', 'School'],
     }),
+    getMyStudentDashboardStats: builder.query<ResponseDto<any>, void>({
+      query: () => '/students/me/dashboard/stats',
+      providesTags: ['Student', 'Grade'],
+    }),
     // Teacher Classes (wrapper for teacher's classes)
     getMyClasses: builder.query<
       ResponseDto<Class[]>,
@@ -2402,11 +2419,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         }
 
         // Get token from state
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        // Get tenant ID
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -2415,9 +2429,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
         // Don't set Content-Type - browser will set it with boundary
 
@@ -2911,10 +2922,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('image', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -2923,9 +2932,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         try {
@@ -2975,10 +2981,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('file', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -2987,9 +2991,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         const response = await fetch(url, {
@@ -3014,10 +3015,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('file', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -3026,9 +3025,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         const response = await fetch(url, {
@@ -3273,11 +3269,16 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Assessments'],
     }),
-    getClassAssessments: builder.query<ResponseDto<Assessment[]>, { schoolId: string; classId: string; termId?: string }>({
-      query: ({ schoolId, classId, termId }) => ({
-        url: `/schools/${schoolId}/classes/${classId}/assessments`,
-        params: { termId },
-      }),
+    getClassAssessments: builder.query<ResponseDto<Assessment[]>, { schoolId: string; classId: string; termId?: string; studentId?: string }>({
+      query: ({ schoolId, classId, termId, studentId }) => {
+        const params = new URLSearchParams();
+        if (termId) params.append('termId', termId);
+        if (studentId) params.append('studentId', studentId);
+        const queryString = params.toString();
+        return {
+          url: `/schools/${schoolId}/classes/${classId}/assessments${queryString ? `?${queryString}` : ''}`,
+        };
+      },
       providesTags: ['Assessments'],
     }),
     getAssessmentById: builder.query<ResponseDto<Assessment>, { schoolId: string; assessmentId: string }>({
@@ -3503,6 +3504,7 @@ export const {
   useGetMyStudentTranscriptQuery,
   useGetMyStudentTransfersQuery,
   useGetMyStudentSchoolQuery,
+  useGetMyStudentDashboardStatsQuery,
   // Student Admission hooks
   useAdmitStudentMutation,
   // Student hooks

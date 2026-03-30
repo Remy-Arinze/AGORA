@@ -19,15 +19,19 @@ import {
   Download,
   Loader2,
   AlertCircle,
+  Award,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 import { 
   useGetSessionsQuery,
   useGetMyStudentTimetableQuery,
+  useGetClassAssessmentsQuery,
 } from '@/lib/store/api/schoolAdminApi';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
 import { useStudentDashboard, getStudentTerminology, ClassData } from '@/hooks/useStudentDashboard';
 
-type TabType = 'overview' | 'teachers' | 'resources' | 'timetable';
+type TabType = 'overview' | 'teachers' | 'resources' | 'timetable' | 'assessments';
 
 export default function StudentClassDetailPage() {
   const params = useParams();
@@ -44,6 +48,7 @@ export default function StudentClassDetailPage() {
     activeSession,
     activeTerm,
     timetable: dashboardTimetable,
+    student,
     isLoading: isDashboardLoading,
     isLoadingTimetable: isDashboardLoadingTimetable,
     hasError,
@@ -76,6 +81,22 @@ export default function StudentClassDetailPage() {
     { termId: selectedTermId },
     { skip: !needsSeparateFetch || !selectedTermId }
   );
+  
+  // Fetch assessments for the class
+  const { 
+    data: assessmentsResponse, 
+    isLoading: isLoadingAssessments 
+  } = useGetClassAssessmentsQuery(
+    { 
+      schoolId: schoolId!, 
+      classId, 
+      termId: currentTermId || undefined,
+      studentId: student?.id
+    },
+    { skip: !schoolId || !classId || !student?.id }
+  );
+  
+  const assessments = assessmentsResponse?.data || [];
 
   // Use selected term's timetable if fetched, otherwise use dashboard's timetable (same as timetables page)
   const timetable = needsSeparateFetch 
@@ -219,6 +240,12 @@ export default function StudentClassDetailPage() {
       id: 'timetable' as TabType,
       label: 'Timetable',
       icon: <Clock className="h-4 w-4" />,
+      available: true,
+    },
+    {
+      id: 'assessments' as TabType,
+      label: 'Assessments',
+      icon: <FileText className="h-4 w-4" />,
       available: true,
     },
   ];
@@ -539,6 +566,96 @@ export default function StudentClassDetailPage() {
                   )}
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Assessments Tab */}
+          {activeTab === 'assessments' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                   Assessments
+                </h2>
+              </div>
+
+              {isLoadingAssessments ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted animate-spin" />
+                </div>
+              ) : assessments.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {assessments.map((assessment: any) => {
+                    const isSubmitted = assessment.isSubmitted;
+                    const submission = assessment.submission;
+                    const isGraded = submission?.status === 'GRADED';
+                    
+                    return (
+                      <Card 
+                        key={assessment.id} 
+                        className={cn(
+                          "group hover:border-blue-500 transition-all cursor-pointer overflow-hidden",
+                          isSubmitted ? "opacity-90 grayscale-[0.2]" : ""
+                        )}
+                        onClick={() => router.push(`/dashboard/student/assessments/${assessment.id}`)}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <Badge variant={assessment.type === 'EXAM' ? 'danger' : assessment.type === 'QUIZ' ? 'primary' : 'success'}>
+                              {assessment.type}
+                            </Badge>
+                            <div className="flex items-center gap-2">
+                              {isSubmitted ? (
+                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-none">
+                                  {isGraded ? 'Graded' : 'Submitted'}
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-none">
+                                  Pending
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <h3 className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {assessment.title}
+                          </h3>
+                          
+                          <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-6 min-h-[40px]">
+                            {assessment.description || 'No description provided.'}
+                          </p>
+                          
+                          <div className="flex items-center justify-between pt-4 border-t border-light-border dark:border-dark-border">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5 text-xs text-light-text-muted dark:text-dark-text-muted">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString() : 'No deadline'}
+                                </div>
+                                {isGraded && (
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400">
+                                        <Award className="h-3.5 w-3.5" />
+                                        {submission.totalScore} / {assessment.maxScore}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <Button size="sm" variant={isSubmitted ? "ghost" : "primary"}>
+                                {isSubmitted ? 'View Details' : 'Take Assessment'}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Card className="border-dashed">
+                  <CardContent className="py-12 text-center">
+                    <FileText className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-2">No assessments published yet.</p>
+                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted">You will see published quizzes and assignments here.</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </FadeInUp>

@@ -1,12 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { FloatingAiCta } from './FloatingAiCta';
-import { AiChatDrawer } from './AiChatDrawer';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
 import { useParams, usePathname } from 'next/navigation';
-import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
+
+// Dynamically import the heavy chat drawer to keep the dashboard layout chunk small
+const AiChatDrawer = lazy(() =>
+  import('./AiChatDrawer').then((mod) => ({ default: mod.AiChatDrawer }))
+);
+
+/**
+ * Inner component that gates on teacher data readiness.
+ * By isolating useTeacherDashboard here, the hook ONLY runs
+ * when the user is actually a TEACHER — preventing 401s for
+ * other roles and avoiding the cascading ChunkLoadError.
+ */
+function TeacherReadinessGate({ children }: { children: (ready: boolean) => React.ReactNode }) {
+  // Lazy-require the hook so it's only evaluated when this component mounts
+  const { useTeacherDashboard } = require('@/hooks/useTeacherDashboard');
+  const { isReady } = useTeacherDashboard();
+  return <>{children(isReady)}</>;
+}
 
 export const GlobalAiAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,20 +34,13 @@ export const GlobalAiAssistant: React.FC = () => {
   const pathname = usePathname();
   const schoolId = (params?.schoolId as string) || reduxSchoolId || (user as any)?.schoolId;
 
-  // For teachers, we want to ensure all their classes/assignments are loaded too
-  const { isReady: teacherDataReady } = useTeacherDashboard();
-
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
   if (!isHydrated) return null;
 
-  // Logging for debugging (visible in browser console)
-  // if (typeof window !== 'undefined') console.log('[GlobalAiAssistant] User:', user?.role, 'SchoolId:', schoolId);
-
   // Define target roles for the floating assistant
-  // The user specifically mentioned "principal roles" and "school owner"
   const isAuthorized = 
     user?.role === 'SCHOOL_ADMIN' || 
     user?.role === 'SUPER_ADMIN' ||
@@ -42,24 +51,34 @@ export const GlobalAiAssistant: React.FC = () => {
   const isHiddenPage = 
     pathname?.includes('/assessments/new') || 
     pathname?.includes('/assessments/edit') ||
-    (pathname?.includes('/assessments/') && pathname.split('/').length > 4) || // Catch [id] but not the list
+    (pathname?.includes('/assessments/') && pathname.split('/').length > 4) ||
     pathname?.includes('/plugins/agora-ai');
 
-  // Strict data readiness gate: 
-  // 1. Must have a user and a school context
-  // 2. If teacher, must have their assignments (teacherDataReady)
-  const isDataReady = !!user && !!schoolId && (user.role === 'TEACHER' ? teacherDataReady : true);
+  if (!isAuthorized || !user || !schoolId || isHiddenPage) return null;
 
-  if (!isAuthorized || !isDataReady || isHiddenPage) return null;
+  // For teachers, wrap in the readiness gate; for other roles, render immediately
+  const renderAssistant = (dataReady: boolean) => {
+    if (!dataReady) return null;
+    return (
+      <>
+        <FloatingAiCta onClick={() => setIsOpen(true)} />
+        {isOpen && (
+          <Suspense fallback={null}>
+            <AiChatDrawer
+              schoolId={schoolId}
+              isOpen={isOpen}
+              onClose={() => setIsOpen(false)}
+            />
+          </Suspense>
+        )}
+      </>
+    );
+  };
 
-  return (
-    <>
-      <FloatingAiCta onClick={() => setIsOpen(true)} />
-      <AiChatDrawer 
-        schoolId={schoolId} 
-        isOpen={isOpen} 
-        onClose={() => setIsOpen(false)} 
-      />
-    </>
-  );
+  if (user.role === 'TEACHER') {
+    return <TeacherReadinessGate>{renderAssistant}</TeacherReadinessGate>;
+  }
+
+  // Non-teacher authorized roles — no teacher data gate needed
+  return <>{renderAssistant(true)}</>;
 };

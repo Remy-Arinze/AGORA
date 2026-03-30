@@ -15,7 +15,7 @@ import {
 } from '@/lib/store/api/schoolAdminApi';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Loader2, Sparkles, Send, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Loader2, Sparkles, Send, AlertCircle, Pencil, Check } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'next/navigation';
@@ -113,7 +113,8 @@ export default function CreateAssessmentPage() {
           options: ['', '', '', ''],
           correctAnswer: '',
           points: 5,
-          order: 0
+          order: 0,
+          isEditing: true
         }]);
       }
       return;
@@ -146,7 +147,8 @@ export default function CreateAssessmentPage() {
               options: Array.isArray(q.options) ? q.options : (inferredType === 'MULTIPLE_CHOICE' ? (q.choices || ['', '', '', '']) : []),
               correctAnswer: q.correctAnswer || q.answer || '',
               points: Number(q.points) || 1,
-              order: i
+              order: i,
+              isEditing: false
             };
           });
           setQuestions(mappedQuestions);
@@ -234,7 +236,8 @@ export default function CreateAssessmentPage() {
         options: ['', '', '', ''],
         correctAnswer: '',
         points: 0, // Will be auto-calculated by effect
-        order: questions.length
+        order: questions.length,
+        isEditing: true
       }
     ]);
   };
@@ -508,18 +511,45 @@ export default function CreateAssessmentPage() {
                     <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-start gap-6">
                         <div className="flex-1">
-                          <textarea
-                            value={q.text}
-                            onChange={e => updateQuestion(idx, 'text', e.target.value)}
-                            className="w-full bg-transparent border-none outline-none font-bold text-lg resize-none placeholder:opacity-50"
-                            placeholder="Type your question..."
-                            rows={1}
-                          />
+                          {q.isEditing ? (
+                            <textarea
+                              value={q.text}
+                              onChange={e => updateQuestion(idx, 'text', e.target.value)}
+                              className="w-full bg-transparent border-none outline-none font-bold text-lg resize-none placeholder:opacity-50 min-h-[40px] focus:ring-0"
+                              placeholder="Type your question..."
+                              autoFocus
+                              onBlur={(e) => {
+                                // Only switch off if there's text
+                                if (q.text.trim()) {
+                                  updateQuestion(idx, 'isEditing', false);
+                                }
+                              }}
+                              rows={1}
+                            />
+                          ) : (
+                            <div 
+                              className="w-full font-bold text-lg leading-relaxed text-light-text-primary dark:text-dark-text-primary cursor-text group-hover:text-indigo-600 transition-colors"
+                              onClick={() => updateQuestion(idx, 'isEditing', true)}
+                            >
+                              {q.text || <span className="opacity-30 italic font-normal">Click to add question text...</span>}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => updateQuestion(idx, 'isEditing', !q.isEditing)}
+                            className={cn(
+                              "h-8 w-8 rounded-lg",
+                              q.isEditing ? "text-emerald-500 hover:bg-emerald-500/10" : "text-slate-400 hover:text-indigo-500"
+                            )}
+                          >
+                            {q.isEditing ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                          </Button>
                           <Input
                             type="text"
-                            className="w-20 h-9 text-center bg-indigo-500/5 font-bold"
+                            className="w-16 h-9 text-center bg-indigo-500/5 font-bold"
                             value={localPoints[idx] || ''}
                             onChange={e => handlePointChange(idx, e.target.value)}
                             onBlur={() => validatePoints(idx)}
@@ -529,7 +559,7 @@ export default function CreateAssessmentPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => removeQuestion(idx)}
-                            className="text-slate-400 hover:text-red-500"
+                            className="text-slate-400 hover:text-red-500 h-8 w-8 rounded-lg"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

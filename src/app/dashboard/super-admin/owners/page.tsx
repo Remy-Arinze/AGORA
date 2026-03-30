@@ -10,7 +10,6 @@ const mockSchools = [
   {
     id: '1',
     name: 'Test Academy',
-    subdomain: 'testacademy',
     city: 'Lagos',
     state: 'Lagos',
     students: 1250,
@@ -21,7 +20,6 @@ const mockSchools = [
   {
     id: '2',
     name: 'Elite Secondary School',
-    subdomain: 'elite',
     city: 'Abuja',
     state: 'FCT',
     students: 890,
@@ -32,7 +30,6 @@ const mockSchools = [
   {
     id: '3',
     name: 'Premier High School',
-    subdomain: 'premier',
     city: 'Port Harcourt',
     state: 'Rivers',
     students: 2100,
@@ -82,7 +79,7 @@ export default function OwnersPage() {
                         {school.name} Admin
                       </p>
                       <p className="text-sm text-gray-500 dark:text-dark-text-secondary">
-                        admin@{school.subdomain}.agora.com
+                        admin@{school.name.toLowerCase().replace(/\s+/g, '')}.com
                       </p>
                     </div>
                   </div>

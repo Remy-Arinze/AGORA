@@ -50,10 +50,12 @@ const authSlice = createSlice({
       // Keep for backwards compatibility during migration
       state.refreshToken = action.payload.refreshToken || null;
       state.user = action.payload.user;
-      if (action.payload.tenantId) {
-        state.tenantId = action.payload.tenantId;
+      // Extract tenantId from either direct payload or user context
+      const tenantId = action.payload.tenantId || action.payload.user?.schoolId;
+      if (tenantId) {
+        state.tenantId = tenantId;
         if (typeof window !== 'undefined') {
-          localStorage.setItem('tenantId', action.payload.tenantId);
+          localStorage.setItem('tenantId', tenantId);
         }
       }
     },

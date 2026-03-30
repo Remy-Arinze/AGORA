@@ -184,7 +184,7 @@ export async function streamAiChat(
             if (persistedState) {
                 const parsed = JSON.parse(persistedState);
                 const authState = JSON.parse(parsed.auth || '{}');
-                authToken = authState.accessToken || authState.token || '';
+                authToken = authState.token || '';
             }
         } catch {
             // Fallback: token will be empty

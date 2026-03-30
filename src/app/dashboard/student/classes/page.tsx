@@ -208,7 +208,7 @@ export default function StudentClassesPage() {
     });
   }, [sessionsResponse, currentType]);
 
-  const isLoading = isLoadingSchoolType || isLoadingClasses || isLoadingTimetable;
+  const isLoading = isLoadingSchoolType || isLoadingClasses || isLoadingTimetable || (activeSessionResponse === undefined);
 
   // Handle resource download
   const handleDownload = async (resource: any) => {
@@ -377,7 +377,7 @@ export default function StudentClassesPage() {
           {activeTab === 'assessments' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {isLoadingAssessments ? (
+                {isLoadingAssessments || (activeSessionResponse === undefined) ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <Card key={i} className="animate-pulse">
                       <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-t-lg" />

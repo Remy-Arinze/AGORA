@@ -289,7 +289,7 @@ export default function StudentResultsPage() {
     });
   };
 
-  const isLoading = isLoadingSchoolType || isLoadingGrades;
+  const isLoading = isLoadingSchoolType || isLoadingGrades || (activeSessionResponse === undefined);
 
   if (isLoading) {
     return (
