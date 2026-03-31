@@ -98,6 +98,7 @@ export default function CreateAssessmentPage() {
   // Local states to avoid snapping to 0 while typing
   const [localPoints, setLocalPoints] = useState<Record<number, string>>({});
   const [localMaxScore, setLocalMaxScore] = useState(formData.maxScore.toString());
+  const [localDuration, setLocalDuration] = useState(formData.duration.toString());
 
   // Load classId from URL if present
   useEffect(() => {
@@ -396,7 +397,7 @@ export default function CreateAssessmentPage() {
                 size="md"
                 className={cn(
                   "h-11 px-8 rounded-xl font-bold transition-all",
-                  isValidToPublish ? "bg-[#2490FD] hover:bg-[#1a7ae6] text-white shadow-sm" : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
+                  isValidToPublish ? "bg-[var(--agora-blue)] hover:bg-[#1a7ae6] text-white shadow-sm dark:hover:bg-[#1565c0]" : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -415,7 +416,7 @@ export default function CreateAssessmentPage() {
           )}
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative items-start">
           <div className="lg:col-span-2 space-y-8">
             <Card className="p-6 !overflow-visible border-none shadow-sm dark:bg-dark-surface">
               <CardHeader>
@@ -632,11 +633,12 @@ export default function CreateAssessmentPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-1 space-y-6 text-white ">
-            <Card className="sticky top-8 bg-[var(--agora-blue)] border-none shadow-xl shadow-indigo-500/20 !overflow-visible">
-              <CardHeader>
-                <CardTitle className='text-white'>Configuration</CardTitle>
-              </CardHeader>
+          <div className="lg:col-span-1 space-y-6 text-white self-start">
+            <div className="lg:sticky lg:top-24 lg:z-10 lg:h-fit">
+              <Card className="bg-[var(--agora-blue)] dark:bg-dark-surface border-none shadow-xl shadow-indigo-500/20 !overflow-visible">
+                <CardHeader>
+                  <CardTitle className='text-white'>Configuration</CardTitle>
+                </CardHeader>
               <CardContent className="space-y-6">
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">
@@ -646,7 +648,7 @@ export default function CreateAssessmentPage() {
                     value={formData.classId}
                     onChange={e => setFormData({ ...formData, classId: e.target.value, subjectId: '' })}
                     disabled={classesLoading || !classes}
-                    className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 [&>option]:text-black"
+                    className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 text-white dark:text-white [&>option]:text-black dark:[&>option]:text-white [&>option]:bg-white dark:[&>option]:bg-slate-800"
                   >
                     <option value="">{(classesLoading || !classes) ? 'Fetching classes...' : 'Select a class...'}</option>
                     {classes?.map((c: any) => (
@@ -664,13 +666,17 @@ export default function CreateAssessmentPage() {
                     type="button"
                     onClick={() => setAutoDistribute(!autoDistribute)}
                     className={cn(
-                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                      autoDistribute ? "bg-emerald-500" : "bg-white/20"
+                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none",
+                      autoDistribute 
+                        ? "bg-emerald-500 border-emerald-400" 
+                        : "bg-white/10 border-white/20 dark:bg-slate-700/50 dark:border-slate-500/50"
                     )}
                   >
                     <span className={cn(
-                      "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                      autoDistribute ? "translate-x-4" : "translate-x-0"
+                      "pointer-events-none inline-block h-4 w-4 transform rounded-full shadow ring-0 transition duration-200 ease-in-out",
+                      autoDistribute 
+                        ? "translate-x-4 bg-white" 
+                        : "translate-x-0 bg-white dark:bg-slate-200"
                     )} />
                   </button>
                 </div>
@@ -704,7 +710,7 @@ export default function CreateAssessmentPage() {
                       value={formData.subjectId}
                       onChange={e => setFormData({ ...formData, subjectId: e.target.value })}
                       disabled={!formData.classId || isLoadingSubjects}
-                      className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 [&>option]:text-black"
+                      className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 text-white dark:text-white [&>option]:text-black dark:[&>option]:text-white [&>option]:bg-white dark:[&>option]:bg-slate-800"
                     >
                       <option value="">{isLoadingSubjects ? "Loading..." : "Select subject..."}</option>
                       {teacherSubjects.map((s: any) => (
@@ -722,7 +728,7 @@ export default function CreateAssessmentPage() {
                     value={formData.termId}
                     onChange={e => setFormData({ ...formData, termId: e.target.value })}
                     disabled={isFetchingTerms || !termsRes}
-                    className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 [&>option]:text-black"
+                    className="w-full bg-white/10 p-3 rounded-lg font-bold outline-none border border-white/20 disabled:opacity-50 text-white dark:text-white [&>option]:text-black dark:[&>option]:text-white [&>option]:bg-white dark:[&>option]:bg-slate-800"
                   >
                     <option value="">{(isFetchingTerms || !termsRes) ? 'Fetching terms...' : 'Select term...'}</option>
                     {/* Ensure active term is always an option even if list is loading */}
@@ -741,22 +747,31 @@ export default function CreateAssessmentPage() {
                 </div>
 
                 <div className="pt-4 border-t border-white/10 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-indigo-200" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-indigo-100">Timed Exam</span>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="w-4 h-4 text-indigo-200" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-indigo-100">Timed Exam</span>
+                      </div>
+                      <p className="text-[9px] text-indigo-200/60 leading-tight">
+                        Set a time limit to automatically submit when time expires
+                      </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, isTimed: !prev.isTimed }))}
                       className={cn(
-                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                        formData.isTimed ? "bg-emerald-500" : "bg-white/20"
+                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none",
+                        formData.isTimed 
+                          ? "bg-emerald-500 border-emerald-400" 
+                          : "bg-white/10 border-white/20 dark:bg-slate-700/50 dark:border-slate-500/50"
                       )}
                     >
                       <span className={cn(
-                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                        formData.isTimed ? "translate-x-4" : "translate-x-0"
+                        "pointer-events-none inline-block h-4 w-4 transform rounded-full shadow ring-0 transition duration-200 ease-in-out",
+                        formData.isTimed 
+                          ? "translate-x-4 bg-white" 
+                          : "translate-x-0 bg-white dark:bg-slate-200"
                       )} />
                     </button>
                   </div>
@@ -767,46 +782,76 @@ export default function CreateAssessmentPage() {
                         <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-200">Duration (Minutes)</label>
                         <input
                           type="number"
-                          value={formData.duration}
-                          onChange={e => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                          value={localDuration}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setLocalDuration(val);
+                            if (val !== '' && !isNaN(Number(val))) {
+                              setFormData({ ...formData, duration: parseInt(val) });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (localDuration === '' || isNaN(Number(localDuration)) || Number(localDuration) <= 0) {
+                              setLocalDuration('30');
+                              setFormData({ ...formData, duration: 30 });
+                            }
+                          }}
                           className="w-full bg-white/10 p-2 rounded-lg font-bold outline-none border border-white/20 text-white text-sm"
                         />
                       </div>
                       <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-100">Auto-Submit</span>
+                        <div className="flex-1">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-100 block mb-1">Auto-Submit</span>
+                          <p className="text-[9px] text-indigo-200/60 leading-tight">
+                            Automatically submit assessment when time runs out
+                          </p>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, autoSubmitOnTimeout: !prev.autoSubmitOnTimeout }))}
                           className={cn(
-                            "relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                            formData.autoSubmitOnTimeout ? "bg-emerald-500" : "bg-white/20"
+                            "relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none",
+                            formData.autoSubmitOnTimeout 
+                              ? "bg-emerald-500 border-emerald-400" 
+                              : "bg-white/10 border-white/20 dark:bg-slate-700/50 dark:border-slate-500/50"
                           )}
                         >
                           <span className={cn(
-                            "pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                            formData.autoSubmitOnTimeout ? "translate-x-3" : "translate-x-0"
+                            "pointer-events-none inline-block h-3 w-3 transform rounded-full shadow ring-0 transition duration-200 ease-in-out",
+                            formData.autoSubmitOnTimeout 
+                              ? "translate-x-3 bg-white" 
+                              : "translate-x-0 bg-white dark:bg-slate-200"
                           )} />
                         </button>
                       </div>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-indigo-200" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-indigo-100">Integrity Check</span>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Shield className="w-4 h-4 text-indigo-200" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-indigo-100">Integrity Check</span>
+                      </div>
+                      <p className="text-[9px] text-indigo-200/60 leading-tight">
+                        Monitor for suspicious activities and enforce academic integrity
+                      </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, hasIntegrity: !prev.hasIntegrity }))}
                       className={cn(
-                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                        formData.hasIntegrity ? "bg-emerald-500" : "bg-white/20"
+                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none",
+                        formData.hasIntegrity 
+                          ? "bg-emerald-500 border-emerald-400" 
+                          : "bg-white/10 border-white/20 dark:bg-slate-700/50 dark:border-slate-500/50"
                       )}
                     >
                       <span className={cn(
-                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                        formData.hasIntegrity ? "translate-x-4" : "translate-x-0"
+                        "pointer-events-none inline-block h-4 w-4 transform rounded-full shadow ring-0 transition duration-200 ease-in-out",
+                        formData.hasIntegrity 
+                          ? "translate-x-4 bg-white" 
+                          : "translate-x-0 bg-white dark:bg-slate-200"
                       )} />
                     </button>
                   </div>
@@ -892,6 +937,7 @@ export default function CreateAssessmentPage() {
           </div>
         </div>
       </Modal>
+    </div>
     </ProtectedRoute>
   );
 }

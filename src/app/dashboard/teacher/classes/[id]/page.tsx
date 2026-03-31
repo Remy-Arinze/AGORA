@@ -27,7 +27,9 @@ import {
   Loader2,
   AlertCircle,
   QrCode,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import {
   useGetClassByIdQuery,
@@ -35,6 +37,7 @@ import {
   useGetActiveSessionQuery,
   useGetClassStudentsQuery,
   useGetClassGradesQuery,
+  useGetClassGradesGroupedByStudentsQuery,
   useDeleteGradeMutation,
   useUpdateGradeMutation,
   useGetCurriculumForClassQuery,
@@ -154,6 +157,20 @@ export default function ClassDetailPage() {
     },
     { skip: !schoolId || !classId || activeTab !== 'grades' }
   );
+
+  // Get student-grouped grades for the new UI
+  const { data: studentGradesResponse, isLoading: isLoadingStudentGrades } = useGetClassGradesGroupedByStudentsQuery(
+    {
+      schoolId: schoolId!,
+      classId,
+      gradeType: gradeTypeFilter || undefined,
+      termId: termFilter || undefined,
+    },
+    { skip: !schoolId || !classId || activeTab !== 'grades' }
+  );
+
+  // State for expanded student card
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
   // Get assessments for class
   const { data: assessmentsResponse, isLoading: isLoadingAssessments } = useGetClassAssessmentsQuery(
@@ -700,12 +717,12 @@ export default function ClassDetailPage() {
                 <CardContent>
                   <div className="space-y-4">
 
-                    {/* Grades Table */}
-                    {isLoadingGrades ? (
+                    {/* Student-Centric Grade Cards */}
+                    {isLoadingStudentGrades ? (
                       <div className="flex items-center justify-center py-20">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                       </div>
-                    ) : grades.length === 0 ? (
+                    ) : !studentGradesResponse?.data || studentGradesResponse.data.length === 0 ? (
                       <div className="text-center py-12">
                         <Award className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
@@ -720,149 +737,137 @@ export default function ClassDetailPage() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-light-surface dark:bg-dark-surface">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Student
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Assessment
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Type
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Date
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Score
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Percentage
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Status
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary uppercase">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-light-border dark:divide-dark-border">
-                            {grades.map((grade) => {
-                              const percentage = grade.maxScore > 0
-                                ? ((grade.score / grade.maxScore) * 100).toFixed(1)
-                                : '0.0';
-                              const studentName = grade.student
-                                ? `${grade.student.firstName} ${grade.student.lastName}`
-                                : 'Unknown';
-
-                              return (
-                                <tr key={grade.id} className="hover:bg-light-surface dark:hover:bg-[var(--dark-hover)]">
-                                  <td className="px-4 py-3">
-                                    <div>
-                                      <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
-                                        {studentName}
-                                      </p>
-                                      {grade.student?.uid && (
-                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                                          {grade.student.uid}
-                                        </p>
-                                      )}
+                      <div className="space-y-4">
+                        {studentGradesResponse.data.map((studentGrade: any) => (
+                          <Card
+                            key={studentGrade.student.id}
+                            className="transition-all duration-300 hover:shadow-lg border-light-border dark:border-dark-border"
+                          >
+                            <CardHeader
+                              className="cursor-pointer select-none"
+                              onClick={() => setExpandedStudentId(
+                                expandedStudentId === studentGrade.student.id ? null : studentGrade.student.id
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex-shrink-0">
+                                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold bg-gray-400 dark:bg-gray-400 text-gray-600 dark:text-gray-300" style={{ 
+                                      fontSize: 'var(--text-body)'
+                                    }}>
+                                      {studentGrade.student.firstName[0]}{studentGrade.student.lastName[0]}
                                     </div>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <div>
-                                      <p className="text-sm text-light-text-primary dark:text-dark-text-primary">
-                                        {grade.assessmentName || '-'}
-                                      </p>
-                                      {grade.sequence && (
-                                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary mt-0.5">
-                                          Sequence: {grade.sequence}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <span className={`px-2 py-1 text-xs font-medium rounded ${grade.gradeType === 'CA'
-                                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
-                                      : grade.gradeType === 'ASSIGNMENT'
-                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                                        : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
-                                      }`}>
-                                      {grade.gradeType}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                                      {grade.assessmentDate
-                                        ? new Date(grade.assessmentDate).toLocaleDateString()
-                                        : '-'}
+                                  </div>
+                                  <div>
+                                    <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
+                                      {studentGrade.student.firstName} {studentGrade.student.lastName}
+                                    </h3>
+                                    <p className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                                      ID: {studentGrade.student.uid}
                                     </p>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
-                                      {grade.score} / {grade.maxScore}
-                                    </p>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
-                                      {percentage}%
-                                    </p>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    {grade.isPublished ? (
-                                      <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-                                        Published
-                                      </span>
-                                    ) : (
-                                      <span className="px-2 py-1 text-xs font-medium rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400">
-                                        Draft
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-3">
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <div className="text-right">
                                     <div className="flex items-center gap-2">
-                                      {!grade.isPublished && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handlePublishGrade(grade.id)}
-                                          disabled={isPublishing}
-                                          className="text-blue-600 dark:text-blue-400"
-                                        >
-                                          Publish
-                                        </Button>
-                                      )}
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedGrade(grade);
-                                          // TODO: Implement edit functionality
-                                        }}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedGrade(grade);
-                                          setShowDeleteModal(true);
-                                        }}
-                                      >
-                                        Delete
-                                      </Button>
+                                      <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                        studentGrade.performanceStatus === 'above'
+                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                          : studentGrade.performanceStatus === 'below'
+                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                                      }`}>
+                                        {studentGrade.performanceStatus === 'above' ? 'Excellent' :
+                                         studentGrade.performanceStatus === 'below' ? 'Needs Improvement' : 'Average'}
+                                      </span>
+                                      <span className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-stat-value)' }}>
+                                        {studentGrade.averagePercentage}%
+                                      </span>
                                     </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                                    <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-1">
+                                      {studentGrade.gradedCount} of {studentGrade.totalCount} grades published
+                                    </p>
+                                  </div>
+                                  <div className="transition-transform duration-200">
+                                    {expandedStudentId === studentGrade.student.id ? (
+                                      <ChevronUp className="h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                                    ) : (
+                                      <ChevronDown className="h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            
+                            {expandedStudentId === studentGrade.student.id && (
+                              <CardContent className="border-t border-light-border dark:border-dark-border">
+                                <div className="pt-4">
+                                  <h4 className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-3" style={{ fontSize: 'var(--text-body)' }}>
+                                    Assessment Details
+                                  </h4>
+                                  {studentGrade.grades.length === 0 ? (
+                                    <p className="text-center py-8 text-light-text-muted dark:text-dark-text-muted">
+                                      No assessments recorded for this student
+                                    </p>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      {studentGrade.grades.map((grade: any) => (
+                                        <div
+                                          key={grade.id}
+                                          className="flex items-center justify-between p-3 rounded-lg bg-light-surface dark:bg-dark-surface"
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <div className={`w-2 h-2 rounded-full ${
+                                              grade.gradeType === 'CA'
+                                                ? 'bg-blue-500'
+                                                : grade.gradeType === 'ASSIGNMENT'
+                                                  ? 'bg-green-500'
+                                                  : 'bg-purple-500'
+                                            }`} />
+                                            <div>
+                                              <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                                                {grade.assessmentName || 'Unnamed Assessment'}
+                                              </p>
+                                              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                                                {grade.gradeType} {grade.sequence && `• Seq ${grade.sequence}`}
+                                                {grade.assessmentDate && ` • ${new Date(grade.assessmentDate).toLocaleDateString()}`}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                                                {grade.score} / {grade.maxScore}
+                                              </p>
+                                              <p className={`text-xs ${
+                                                grade.percentage >= 80
+                                                  ? 'text-green-600 dark:text-green-400'
+                                                  : grade.percentage >= 60
+                                                    ? 'text-yellow-600 dark:text-yellow-400'
+                                                    : 'text-red-600 dark:text-red-400'
+                                              }`}>
+                                                {grade.percentage}%
+                                              </p>
+                                            </div>
+                                            {grade.isPublished ? (
+                                              <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+                                                Published
+                                              </span>
+                                            ) : (
+                                              <span className="px-2 py-1 text-xs font-medium rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400">
+                                                Draft
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
+                            )}
+                          </Card>
+                        ))}
                       </div>
                     )}
                   </div>

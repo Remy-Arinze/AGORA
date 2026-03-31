@@ -60,6 +60,23 @@ export default function GradeAssessmentPage() {
     const [overallFeedback, setOverallFeedback] = useState('');
     const [totalScore, setTotalScore] = useState(0);
     const [isGradingAll, setIsGradingAll] = useState(false);
+    const [allEvaluationsComplete, setAllEvaluationsComplete] = useState(false);
+    const [hasAppliedAll, setHasAppliedAll] = useState(false);
+
+    // Check if publish should be enabled
+    const isPublishEnabled = () => {
+        if (!assessment?.questions) return false;
+        
+        return assessment.questions.some((q: any) => {
+            const score = questionScores[q.id];
+            // For multiple choice, any score (including 0) means it's been graded
+            if (q.type === 'MULTIPLE_CHOICE') {
+                return score !== undefined && score !== '';
+            }
+            // For essay/short answer, must have a numeric score (not empty string)
+            return score !== '' && score !== undefined && score !== null;
+        });
+    };
 
     useEffect(() => {
         if (submission && assessment?.questions) {
@@ -204,6 +221,7 @@ export default function GradeAssessmentPage() {
 
         setIsGradingAll(false);
         if (successCount > 0) {
+            setAllEvaluationsComplete(true);
             toast.success(`Lois has finished analyzing ${successCount} answers! Please review and apply.`);
         }
     };
@@ -211,6 +229,42 @@ export default function GradeAssessmentPage() {
     const handleSaveDraft = () => {
         toast.success("Draft saved successfully.");
         // UI only for now
+    };
+
+    const applyAllAiSuggestions = () => {
+        let appliedCount = 0;
+        const newSuggestions = { ...aiSuggestions };
+        
+        Object.entries(aiSuggestions).forEach(([questionId, suggestion]) => {
+            // Only apply if the question hasn't been manually graded or individually applied
+            const currentScore = questionScores[questionId];
+            const currentFeedback = questionFeedback[questionId];
+            
+            // Check if this question was already manually set or individually applied
+            const wasAlreadyGraded = currentScore !== '' && currentScore !== undefined && 
+                                   (currentFeedback !== suggestion.feedback);
+            
+            if (!wasAlreadyGraded) {
+                // Apply the AI suggestion
+                const question = assessment?.questions?.find((q: any) => q.id === questionId);
+                if (question) {
+                    handleScoreChange(questionId, suggestion.score, question.points);
+                    handleFeedbackChange(questionId, suggestion.feedback);
+                    appliedCount++;
+                    delete newSuggestions[questionId];
+                }
+            }
+        });
+        
+        setAiSuggestions(newSuggestions);
+        setAllEvaluationsComplete(false);
+        setHasAppliedAll(true);
+        
+        if (appliedCount > 0) {
+            toast.success(`Applied Lois's suggestions to ${appliedCount} questions! Review and publish when ready.`);
+        } else {
+            toast('All eligible suggestions have already been applied or questions were manually graded.', { icon: 'ℹ️' });
+        }
     };
 
     const handleSubmit = async () => {
@@ -268,7 +322,8 @@ export default function GradeAssessmentPage() {
 
     return (
         <ProtectedRoute roles={['TEACHER']}>
-            <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
                 {/* Header */}
                 <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                     <Button variant="ghost" className="mb-4" onClick={() => router.back()}>
@@ -286,10 +341,10 @@ export default function GradeAssessmentPage() {
                 </FadeInUp>
 
                 {/* Split Pane Layout */}
-                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                <div className="flex flex-col lg:flex-row gap-8 items-start relative">
                     
                     {/* Main Left Pane - Questions List */}
-                    <div className="flex-1 w-full space-y-6">
+                    <div className="flex-1 w-full space-y-6 lg:pr-96 xl:pr-[28rem]">
                         {assessment.questions?.map((q: any, idx: number) => {
                             const answer = submission.answers?.find((a: any) => a.questionId === q.id);
                             
@@ -421,13 +476,15 @@ export default function GradeAssessmentPage() {
                                                                             >
                                                                                 Dismiss
                                                                             </Button>
-                                                                            <Button
-                                                                                size="sm"
-                                                                                className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-                                                                                onClick={() => applyAiSuggestion(q.id)}
-                                                                            >
-                                                                                Apply Score & Feedback
-                                                                            </Button>
+                                                                            {!allEvaluationsComplete && (
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                                                                    onClick={() => applyAiSuggestion(q.id)}
+                                                                                >
+                                                                                    Apply Score & Feedback
+                                                                                </Button>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                     <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 relative z-10 bg-white/40 dark:bg-black/20 p-4 rounded-lg border border-indigo-100/50 dark:border-indigo-900/30">
@@ -469,8 +526,114 @@ export default function GradeAssessmentPage() {
                         })}
                     </div>
 
+                    {/* Mobile Sidebar - Bottom of page on mobile/tablet */}
+                    <div className="lg:hidden space-y-6 mt-8">
+                        {/* Summary Card */}
+                        <Card className="border-slate-200 dark:border-blue-900/30 shadow-md hover:shadow-lg transition-shadow overflow-hidden bg-white dark:bg-dark-surface/50">
+                            <CardHeader className="bg-slate-900 dark:bg-blue-800 text-white pb-6 pt-5">
+                                <CardTitle className="flex items-center gap-2 text-white text-lg">
+                                    <Award className="h-5 w-5 text-slate-300 dark:text-blue-200" />
+                                    Grading Summary
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="p-6 text-center border-b border-slate-100 dark:border-dark-border bg-slate-50 dark:from-blue-900/10 dark:to-dark-surface/50">
+                                    <p className="text-[10px] font-black text-slate-400 dark:text-light-text-muted uppercase tracking-widest mb-1">Total Score</p>
+                                    <div className="flex items-baseline justify-center gap-2">
+                                        <span className="text-6xl font-black text-slate-900 dark:text-blue-400 tracking-tighter">{totalScore}</span>
+                                        <span className="text-xl font-bold text-slate-400 dark:text-light-text-muted">/ {assessment.maxScore}</span>
+                                    </div>
+                                    {submission.pointDeductions > 0 && (
+                                        <div className="mt-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-red-100 dark:border-red-900/30">
+                                            -{submission.pointDeductions} Integrity Deduction
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="p-5 space-y-4">
+                                    <div className="space-y-3">
+                                        <label className="text-xs font-black text-slate-700 dark:text-dark-text-primary uppercase tracking-wider flex items-center gap-2">
+                                            <MessageSquare className="h-3.5 w-3.5 text-indigo-500 dark:text-blue-500" />
+                                            Global Feedback
+                                        </label>
+                                        <Textarea
+                                            className="w-full min-h-[140px] text-sm resize-none border-slate-200 focus-visible:ring-indigo-500 bg-white dark:bg-dark-surface/50 leading-relaxed shadow-sm"
+                                            placeholder="Provide general, overarching feedback on the student's entire performance here..."
+                                            value={overallFeedback}
+                                            onChange={(e) => setOverallFeedback(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="p-5 bg-slate-50/50 dark:bg-dark-surface/80 border-t border-slate-100 dark:border-dark-border space-y-3">
+                                    <Button
+                                        className={cn(
+                                            "w-full font-bold gap-2 relative overflow-hidden group shadow-md",
+                                            allEvaluationsComplete 
+                                                ? "bg-green-600 hover:bg-green-700 text-white"
+                                                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        )}
+                                        onClick={allEvaluationsComplete ? applyAllAiSuggestions : handleGradeAll}
+                                        disabled={isGradingAll}
+                                        isLoading={isGradingAll}
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-out" />
+                                        {allEvaluationsComplete ? (
+                                            <>
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                {isGradingAll ? 'Applying...' : 'Apply All Scores & Feedback'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Bot className="h-4 w-4" />
+                                                {isGradingAll ? 'Lois is Analyzing...' : 'Grade All with Lois'}
+                                            </>
+                                        )}
+                                    </Button>
+                                    
+                                    {hasAppliedAll && (
+                                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 rounded-lg p-3 text-center">
+                                            <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-300">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                <span className="text-xs font-bold">All Lois suggestions applied! Review above and publish when ready.</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {!isPublishEnabled() && (
+                                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-lg p-3 text-center mb-3">
+                                            <div className="flex items-center justify-center gap-2 text-amber-700 dark:text-amber-300">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                <span className="text-xs font-bold">Please grade at least one question before publishing</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="grid grid-cols-2 gap-3 pt-3">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full font-bold border-slate-200 bg-white hover:bg-slate-50 dark:border-dark-border shadow-sm text-slate-700 dark:text-dark-text-secondary"
+                                            onClick={handleSaveDraft}
+                                        >
+                                            Save Draft
+                                        </Button>
+                                        <Button
+                                            className="w-full bg-slate-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold gap-2 shadow-md"
+                                            onClick={handleSubmit}
+                                            isLoading={isGrading}
+                                            disabled={!isPublishEnabled()}
+                                        >
+                                            <Send className="h-4 w-4" />
+                                            Publish
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
                     {/* Sticky Sidebar Right Pane */}
-                    <FadeInUp delay={0.2} className="w-full lg:w-80 xl:w-96 shrink-0 lg:sticky lg:top-24 space-y-6">
+                    <FadeInUp delay={0.2} className="hidden lg:block lg:fixed lg:right-4 lg:top-24 lg:w-80 xl:w-96 space-y-6">
                         
                         {/* Summary Card */}
                         <Card className="border-slate-200 dark:border-blue-900/30 shadow-md hover:shadow-lg transition-shadow overflow-hidden bg-white dark:bg-dark-surface/50">
@@ -511,15 +674,47 @@ export default function GradeAssessmentPage() {
 
                                 <div className="p-5 bg-slate-50/50 dark:bg-dark-surface/80 border-t border-slate-100 dark:border-dark-border space-y-3">
                                     <Button
-                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-2 relative overflow-hidden group shadow-md"
-                                        onClick={handleGradeAll}
+                                        className={cn(
+                                            "w-full font-bold gap-2 relative overflow-hidden group shadow-md",
+                                            allEvaluationsComplete 
+                                                ? "bg-green-600 hover:bg-green-700 text-white"
+                                                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        )}
+                                        onClick={allEvaluationsComplete ? applyAllAiSuggestions : handleGradeAll}
                                         disabled={isGradingAll}
                                         isLoading={isGradingAll}
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-out" />
-                                        <Bot className="h-4 w-4" />
-                                        {isGradingAll ? 'Lois is Analyzing...' : 'Grade All with Lois'}
+                                        {allEvaluationsComplete ? (
+                                            <>
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                {isGradingAll ? 'Applying...' : 'Apply All Scores & Feedback'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Bot className="h-4 w-4" />
+                                                {isGradingAll ? 'Lois is Analyzing...' : 'Grade All with Lois'}
+                                            </>
+                                        )}
                                     </Button>
+                                    
+                                    {hasAppliedAll && (
+                                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 rounded-lg p-3 text-center">
+                                            <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-300">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                <span className="text-xs font-bold">All Lois suggestions applied! Review above and publish when ready.</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {!isPublishEnabled() && (
+                                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-lg p-3 text-center mb-3">
+                                            <div className="flex items-center justify-center gap-2 text-amber-700 dark:text-amber-300">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                <span className="text-xs font-bold">Please grade at least one question before publishing</span>
+                                            </div>
+                                        </div>
+                                    )}
                                     
                                     <div className="grid grid-cols-2 gap-3 pt-3">
                                         <Button
@@ -533,6 +728,7 @@ export default function GradeAssessmentPage() {
                                             className="w-full bg-slate-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold gap-2 shadow-md"
                                             onClick={handleSubmit}
                                             isLoading={isGrading}
+                                            disabled={!isPublishEnabled()}
                                         >
                                             <Send className="h-4 w-4" />
                                             Publish
@@ -634,6 +830,7 @@ export default function GradeAssessmentPage() {
                         </Card>
                     </FadeInUp>
                 </div>
+            </div>
             </div>
         </ProtectedRoute>
     );

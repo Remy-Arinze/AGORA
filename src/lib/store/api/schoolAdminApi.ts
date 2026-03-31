@@ -2853,6 +2853,20 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       },
       providesTags: (result, error, { classId }) => [{ type: 'Grade' as const, id: classId }],
     }),
+    getClassGradesGroupedByStudents: builder.query<
+      ResponseDto<any[]>,
+      { schoolId: string; classId: string; subject?: string; termId?: string; gradeType?: 'CA' | 'ASSIGNMENT' | 'EXAM' }
+    >({
+      query: ({ schoolId, classId, subject, termId, gradeType }) => {
+        const queryParams = new URLSearchParams();
+        if (subject) queryParams.append('subject', subject);
+        if (termId) queryParams.append('termId', termId);
+        if (gradeType) queryParams.append('gradeType', gradeType);
+        const queryString = queryParams.toString();
+        return `/schools/${schoolId}/grades/classes/${classId}/students${queryString ? `?${queryString}` : ''}`;
+      },
+      providesTags: (result, error, { classId }) => [{ type: 'Grade' as const, id: `${classId}-students` }],
+    }),
     getStudentGrades: builder.query<
       ResponseDto<Grade[]>,
       { schoolId: string; studentId: string; subject?: string; gradeType?: 'CA' | 'ASSIGNMENT' | 'EXAM' }
@@ -3542,6 +3556,7 @@ export const {
   useCreateGradeMutation,
   useBulkCreateGradesMutation,
   useGetClassGradesQuery,
+  useGetClassGradesGroupedByStudentsQuery,
   useGetStudentGradesQuery,
   useUpdateGradeMutation,
   useDeleteGradeMutation,

@@ -74,7 +74,6 @@
     --stat-card-padding: .1rem;
     /* 16px - Reduced Stat card padding */
     --stat-icon-size: 1rem;
-    /* 20px - Stat card icon size */
     --card-padding: .1rem;
     /* 20px - Standard card padding */
     --card-padding-large: 1.2rem;
@@ -82,7 +81,8 @@
 
     /* Light Mode Colors */
     --light-bg: #ebebeb;
-    --light-card: #dee3ed;
+    --light-card: #ffffff;
+    --light-surface: #f8fafc;
     --light-text-primary: #111827;
     --light-text-secondary: #4b5563;
     --light-text-muted: #9ca3af;
@@ -111,6 +111,7 @@
     --agora-success: #36FE96;
     /* Neon green for dark mode */
     --dark-bg: #101011;
+    --dark-card: #2a2a2a;
     --dark-surface: #1f1f22;
     --dark-border: #232327;
     --dark-input: #2f2f34;
