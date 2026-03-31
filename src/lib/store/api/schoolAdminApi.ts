@@ -841,6 +841,15 @@ export interface Assessment {
   status: AssessmentStatus;
   dueDate: string | null;
   maxScore: number;
+  
+  // Timer & Integrity Settings
+  isTimed: boolean;
+  duration: number | null;
+  hasIntegrity: boolean;
+  autoSubmitOnTimeout: boolean;
+  violationThreshold: number | null;
+  pointsPerViolation: number | null;
+
   createdAt: string;
   updatedAt: string;
   questions?: AssessmentQuestion[];
@@ -858,14 +867,32 @@ export interface AssessmentSubmission {
   id: string;
   assessmentId: string;
   studentId: string;
-  status: 'SUBMITTED' | 'GRADED';
+  status: 'STARTED' | 'SUBMITTED' | 'GRADED';
   totalScore: number | null;
   teacherFeedback: string | null;
   aiFeedback: string | null;
-  submittedAt: string;
+  
+  // Timing & Integrity
+  startedAt: string | null;
+  submittedAt: string | null;
   gradedAt: string | null;
+  examSessionToken: string | null;
+  violationCount: number;
+  isFlagged: boolean;
+  pointDeductions: number;
+  isAutoSubmitted: boolean;
+
   student?: Student;
   answers?: AssessmentAnswer[];
+  violations?: AssessmentViolation[];
+}
+
+export interface AssessmentViolation {
+  id: string;
+  submissionId: string;
+  type: 'TAB_SWITCH' | 'FULLSCREEN_EXIT' | 'CLIPBOARD_COPY' | 'CLIPBOARD_PASTE' | 'CLIPBOARD_CUT' | 'DEVTOOLS_OPEN' | 'WINDOW_BLUR';
+  details?: string;
+  timestamp: string;
 }
 
 export interface AssessmentAnswer {
@@ -890,6 +917,15 @@ export interface CreateAssessmentDto {
   dueDate?: string;
   status?: AssessmentStatus;
   maxScore: number;
+
+  // New Integrity & Timer Fields
+  isTimed?: boolean;
+  duration?: number;
+  hasIntegrity?: boolean;
+  autoSubmitOnTimeout?: boolean;
+  violationThreshold?: number;
+  pointsPerViolation?: number;
+
   questions: {
     text: string;
     type: QuestionType;
@@ -901,11 +937,24 @@ export interface CreateAssessmentDto {
 }
 
 export interface SubmitAssessmentDto {
+  examSessionToken: string;
   answers: {
     questionId: string;
     text?: string;
     selectedOption?: string;
   }[];
+}
+
+export interface StartAssessmentResponse {
+  submissionId: string;
+  examSessionToken: string;
+  startedAt: string;
+  expiresAt?: string;
+}
+
+export interface LogViolationDto {
+  type: 'TAB_SWITCH' | 'FULLSCREEN_EXIT' | 'CLIPBOARD_COPY' | 'CLIPBOARD_PASTE' | 'CLIPBOARD_CUT' | 'DEVTOOLS_OPEN' | 'WINDOW_BLUR';
+  details?: string;
 }
 
 export interface GradeSubmissionDto {
@@ -3312,6 +3361,20 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Assessments'],
     }),
+    startAssessment: builder.mutation<ResponseDto<StartAssessmentResponse>, { schoolId: string; assessmentId: string }>({
+      query: ({ schoolId, assessmentId }) => ({
+        url: `/schools/${schoolId}/assessments/${assessmentId}/start`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Assessments'],
+    }),
+    logAssessmentViolation: builder.mutation<ResponseDto<void>, { schoolId: string; assessmentId: string; dto: LogViolationDto }>({
+      query: ({ schoolId, assessmentId, dto }) => ({
+        url: `/schools/${schoolId}/assessments/${assessmentId}/violation`,
+        method: 'POST',
+        body: dto,
+      }),
+    }),
     // Attendance Endpoints
     markAttendance: builder.mutation<ResponseDto<any>, { schoolId: string; attendanceData: any }>({
       query: ({ schoolId, attendanceData }) => ({
@@ -3542,6 +3605,8 @@ export const {
   useGetAssessmentSubmissionQuery,
   useGradeAssessmentSubmissionMutation,
   useDeleteAssessmentMutation,
+  useStartAssessmentMutation,
+  useLogAssessmentViolationMutation,
   // Attendance hooks
   useMarkAttendanceMutation,
   useMarkBulkAttendanceMutation,

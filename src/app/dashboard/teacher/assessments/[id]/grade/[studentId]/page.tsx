@@ -24,10 +24,14 @@ import {
     Save,
     Send,
     Bot,
-    Award
+    Award,
+    Shield,
+    AlertTriangle,
+    Eye,
 } from 'lucide-react';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import toast from 'react-hot-toast';
+import { cn } from '@/lib/utils';
 
 export default function GradeAssessmentPage() {
     const params = useParams();
@@ -483,11 +487,11 @@ export default function GradeAssessmentPage() {
                                         <span className="text-6xl font-black text-slate-900 dark:text-blue-400 tracking-tighter">{totalScore}</span>
                                         <span className="text-xl font-bold text-slate-400 dark:text-light-text-muted">/ {assessment.maxScore}</span>
                                     </div>
-                                    <div className="mt-3">
-                                        <Badge variant="outline" className="font-bold text-indigo-700 bg-indigo-50 border-indigo-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400 px-3 py-1 text-xs shadow-sm">
-                                            {assessment.maxScore ? Math.round((totalScore / Number(assessment.maxScore)) * 100) : 0}% Grade
-                                        </Badge>
-                                    </div>
+                                    {submission.pointDeductions > 0 && (
+                                        <div className="mt-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-red-100 dark:border-red-900/30">
+                                            -{submission.pointDeductions} Integrity Deduction
+                                        </div>
+                                    )}
                                 </div>
                                 
                                 <div className="p-5 space-y-4">
@@ -537,6 +541,77 @@ export default function GradeAssessmentPage() {
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {/* Integrity Audit Card */}
+                        {assessment.hasIntegrity && (
+                            <Card className={cn(
+                                "shadow-sm border-2",
+                                submission.isFlagged ? "border-red-200 bg-red-50/20 dark:border-red-900/30" : "border-slate-100 dark:border-dark-border"
+                            )}>
+                                <CardHeader className={cn(
+                                    "pb-3 pt-4 border-b",
+                                    submission.isFlagged ? "bg-red-50 dark:bg-red-900/30 border-red-100 dark:border-red-900/20" : "bg-slate-50 dark:bg-dark-surface border-slate-100 dark:border-dark-border"
+                                )}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Shield className={cn("h-4 w-4", submission.isFlagged ? "text-red-600" : "text-slate-400")} />
+                                            <CardTitle className={cn("text-xs font-black uppercase tracking-widest", submission.isFlagged ? "text-red-900 dark:text-red-300" : "text-slate-900 dark:text-dark-text-primary")}>
+                                                Integrity Report
+                                            </CardTitle>
+                                        </div>
+                                        <Badge variant={submission.isFlagged ? "danger" : "outline"} className="text-[10px] px-2 py-0">
+                                            {submission.isFlagged ? "FLAGGED" : "SECURE"}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-4">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="bg-white dark:bg-black/20 p-2 rounded-lg border border-slate-100 dark:border-dark-border">
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Violations</p>
+                                            <p className={cn("text-lg font-black", submission.violationCount > 0 ? "text-red-600" : "text-slate-900 dark:text-dark-text-primary")}>
+                                                {submission.violationCount}
+                                            </p>
+                                        </div>
+                                        <div className="bg-white dark:bg-black/20 p-2 rounded-lg border border-slate-100 dark:border-dark-border">
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Penalties</p>
+                                            <p className="text-lg font-black text-slate-900 dark:text-dark-text-primary">
+                                                -{submission.pointDeductions}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1 thin-scrollbar">
+                                        {submission.violations && (submission as any).violations.length > 0 ? (
+                                            (submission as any).violations.map((v: any, i: number) => (
+                                                <div key={v.id} className="p-2 bg-white dark:bg-black/20 rounded-lg border border-slate-100 dark:border-dark-border flex items-start gap-3">
+                                                    <div className="mt-1">
+                                                        <AlertTriangle className="h-3 w-3 text-red-500" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-slate-700 dark:text-dark-text-primary uppercase leading-tight">
+                                                            {v.type.replace('_', ' ')}
+                                                        </p>
+                                                        <p className="text-[9px] text-slate-400 mt-0.5">
+                                                            {new Date(v.timestamp).toLocaleTimeString()}
+                                                        </p>
+                                                        {v.details && (
+                                                            <p className="text-[9px] text-slate-500 italic mt-1 leading-tight">
+                                                                {v.details}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-4 opacity-40">
+                                                <Eye className="h-4 w-4 mx-auto mb-2" />
+                                                <p className="text-[10px] font-bold uppercase tracking-widest leading-tight">No suspicious<br/>activity detected</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Student Context Card */}
                         <Card className="shadow-sm border-light-border dark:border-dark-border">

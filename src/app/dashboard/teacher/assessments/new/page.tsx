@@ -15,7 +15,7 @@ import {
 } from '@/lib/store/api/schoolAdminApi';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Loader2, Sparkles, Send, AlertCircle, Pencil, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Loader2, Sparkles, Send, AlertCircle, Pencil, Check, Clock, Shield } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'next/navigation';
@@ -35,6 +35,12 @@ export default function CreateAssessmentPage() {
     termId: '',
     dueDate: '',
     maxScore: 100,
+    isTimed: false,
+    duration: 30,
+    hasIntegrity: false,
+    autoSubmitOnTimeout: true,
+    violationThreshold: 3,
+    pointsPerViolation: 1,
   });
 
   // Fetch subjects teacher can grade for this class
@@ -732,6 +738,101 @@ export default function CreateAssessmentPage() {
                       <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="pt-4 border-t border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-indigo-200" />
+                      <span className="text-xs font-bold uppercase tracking-widest text-indigo-100">Timed Exam</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, isTimed: !prev.isTimed }))}
+                      className={cn(
+                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                        formData.isTimed ? "bg-emerald-500" : "bg-white/20"
+                      )}
+                    >
+                      <span className={cn(
+                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        formData.isTimed ? "translate-x-4" : "translate-x-0"
+                      )} />
+                    </button>
+                  </div>
+
+                  {formData.isTimed && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-200">Duration (Minutes)</label>
+                        <input
+                          type="number"
+                          value={formData.duration}
+                          onChange={e => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                          className="w-full bg-white/10 p-2 rounded-lg font-bold outline-none border border-white/20 text-white text-sm"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-100">Auto-Submit</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, autoSubmitOnTimeout: !prev.autoSubmitOnTimeout }))}
+                          className={cn(
+                            "relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                            formData.autoSubmitOnTimeout ? "bg-emerald-500" : "bg-white/20"
+                          )}
+                        >
+                          <span className={cn(
+                            "pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            formData.autoSubmitOnTimeout ? "translate-x-3" : "translate-x-0"
+                          )} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-indigo-200" />
+                      <span className="text-xs font-bold uppercase tracking-widest text-indigo-100">Integrity Check</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, hasIntegrity: !prev.hasIntegrity }))}
+                      className={cn(
+                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                        formData.hasIntegrity ? "bg-emerald-500" : "bg-white/20"
+                      )}
+                    >
+                      <span className={cn(
+                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        formData.hasIntegrity ? "translate-x-4" : "translate-x-0"
+                      )} />
+                    </button>
+                  </div>
+
+                  {formData.hasIntegrity && (
+                    <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-200">Max Violations</label>
+                        <input
+                          type="number"
+                          value={formData.violationThreshold}
+                          onChange={e => setFormData({ ...formData, violationThreshold: parseInt(e.target.value) })}
+                          className="w-full bg-white/10 p-2 rounded-lg font-bold outline-none border border-white/20 text-white text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-indigo-200">Point Penalty</label>
+                        <input
+                          type="number"
+                          value={formData.pointsPerViolation}
+                          onChange={e => setFormData({ ...formData, pointsPerViolation: parseInt(e.target.value) })}
+                          className="w-full bg-white/10 p-2 rounded-lg font-bold outline-none border border-white/20 text-white text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {isAiSource && (
