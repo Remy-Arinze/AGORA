@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { setCredentials, logout } from '../slices/authSlice';
 import * as Sentry from '@sentry/nextjs';
@@ -101,9 +101,36 @@ const baseQueryWithReauth: BaseQueryFn<
   return result;
 };
 
+/**
+ * Robust Retry Strategy:
+ * 1. Exponential Backoff (1s, 2s, 4s...)
+ * 2. Fail-Fast for auth/logic errors (401, 403, 404, 400)
+ * 3. Max 5 attempts for transient network/server errors
+ */
+const staggeredBaseQuery = retry(
+  async (args: string | FetchArgs, api, extraOptions) => {
+    const result = await baseQueryWithReauth(args, api, extraOptions);
+    
+    // Fail immediately for these status codes — no point in retrying
+    if (
+      result.error?.status === 401 || 
+      result.error?.status === 403 || 
+      result.error?.status === 404 ||
+      result.error?.status === 400
+    ) {
+      retry.fail(result.error);
+    }
+    
+    return result;
+  },
+  {
+    maxRetries: 5,
+  }
+);
+
 export const apiSlice = createApi({
   reducerPath: 'api',
-  baseQuery: baseQueryWithReauth,
+  baseQuery: staggeredBaseQuery,
   tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Grades', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory', 'Attendance', 'SchemeOfWork', 'AgoraCurriculum', 'AgoraCurriculumSource', 'NerdcSubject'],
   endpoints: (builder) => ({
     changePassword: builder.mutation<

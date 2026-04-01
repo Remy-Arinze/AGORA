@@ -154,6 +154,40 @@ export enum PermissionResource {
   INTEGRATIONS = 'INTEGRATIONS',
 }
 
+// Subscription Types
+export enum SubscriptionTier {
+  FREE = 'FREE',
+  PRO = 'PRO',
+  PRO_PLUS = 'PRO_PLUS',
+  CUSTOM = 'CUSTOM',
+}
+
+export enum ToolStatus {
+  ACTIVE = 'ACTIVE',
+  TRIAL = 'TRIAL',
+  EXPIRED = 'EXPIRED',
+  DISABLED = 'DISABLED',
+}
+
+export interface SubscriptionSummaryDto {
+  tier: SubscriptionTier;
+  isActive: boolean;
+  aiCredits: number;
+  aiCreditsUsed: number;
+  aiCreditsRemaining: number;
+  limits: {
+    maxStudents: number;
+    maxTeachers: number;
+    maxAdmins: number;
+  };
+  tools: {
+    slug: string;
+    name: string;
+    status: ToolStatus;
+    hasAccess: boolean;
+  }[];
+}
+
 export interface SchemeOfWorkWeek {
   id: string;
   weekNumber: number;
@@ -3472,6 +3506,51 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       providesTags: ['Attendance'],
     }),
+
+    getSchemesSummary: builder.query<any[], { schoolId: string; classLevelId: string; termId: string }>({
+      query: ({ schoolId, classLevelId, termId }) => ({
+        url: `schools/${schoolId}/curriculum/class-level/${classLevelId}/schemes-summary`,
+        params: { termId },
+      }),
+      providesTags: (result, error, { classLevelId }) => [{ type: 'Curriculum', id: `SCHEME_SUMMARY_${classLevelId}` }],
+      transformResponse: (response: ResponseDto<any[]>) => response.data,
+    }),
+
+    setupSchemeOfWork: builder.mutation<any, { schoolId: string; body: any }>({
+      query: ({ schoolId, body }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/setup`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (result, error, { body }) => [
+        { type: 'Curriculum', id: `SCHEME_SUMMARY_${body.classLevelId}` },
+        'Curriculum',
+      ],
+    }),
+
+    cancelSchemeOfWork: builder.mutation<any, { schoolId: string; schemeId: string; classLevelId: string }>({
+      query: ({ schoolId, schemeId }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/${schemeId}/cancel`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, { classLevelId }) => [
+        { type: 'Curriculum', id: `SCHEME_SUMMARY_${classLevelId}` },
+        'Curriculum',
+      ],
+    }),
+
+    getAgoraLibrary: builder.query<any[], { schoolId: string; subjectId: string; gradeLevel: string }>({
+      query: ({ schoolId, subjectId, gradeLevel }) => ({
+        url: `schools/${schoolId}/curriculum/agora-library`,
+        params: { subjectId, gradeLevel },
+      }),
+      transformResponse: (response: ResponseDto<any[]>) => response.data,
+    }),
+
+    getSubscriptionSummary: builder.query<SubscriptionSummaryDto, void>({
+      query: () => 'subscriptions/summary',
+      transformResponse: (response: ResponseDto<SubscriptionSummaryDto>) => response.data,
+    }),
   }),
 });
 
@@ -3682,5 +3761,11 @@ export const {
   // Scheme of Work hooks
   useGetSchemeOfWorkForClassQuery,
   useUpdateSchemeOfWorkWeekMutation,
+  useGetSchemesSummaryQuery,
+  useSetupSchemeOfWorkMutation,
+  useCancelSchemeOfWorkMutation,
+  useGetAgoraLibraryQuery,
+  // Subscription hooks
+  useGetSubscriptionSummaryQuery,
 } = schoolAdminApi;
 

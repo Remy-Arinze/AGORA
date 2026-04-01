@@ -115,7 +115,7 @@ export default function SuperAdminCurriculumPage() {
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
+            <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2 font-heading" style={{ fontSize: 'var(--text-page-title)' }}>
               Curriculum Management
             </h1>
             <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
@@ -135,20 +135,26 @@ export default function SuperAdminCurriculumPage() {
           <div className="flex space-x-1 overflow-x-auto">
             <button
               onClick={() => setActiveTab('consolidated')}
-              className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'consolidated'
-                  ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+              className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors whitespace-nowrap`}
+              style={{ 
+                fontSize: 'var(--text-tiny)',
+                borderBottom: activeTab === 'consolidated' ? '2px solid' : 'none',
+                borderColor: activeTab === 'consolidated' ? 'var(--agora-blue)' : 'transparent',
+                color: activeTab === 'consolidated' ? 'var(--agora-blue)' : 'inherit'
+              }}
             >
               <Layers className="w-4 h-4" />
               Consolidated
             </button>
             <button
               onClick={() => setActiveTab('sources')}
-              className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'sources'
-                  ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
-                }`}
+              className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors whitespace-nowrap`}
+              style={{ 
+                fontSize: 'var(--text-tiny)',
+                borderBottom: activeTab === 'sources' ? '2px solid' : 'none',
+                borderColor: activeTab === 'sources' ? 'var(--agora-blue)' : 'transparent',
+                color: activeTab === 'sources' ? 'var(--agora-blue)' : 'inherit'
+              }}
             >
               <FileText className="w-4 h-4" />
               Sources
@@ -188,15 +194,15 @@ export default function SuperAdminCurriculumPage() {
                     <Card key={curr.id} className="transition-all border hover:shadow-md">
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
-                          <CardTitle className="text-lg">
+                          <CardTitle className="font-heading" style={{ fontSize: 'var(--text-card-title)' }}>
                             {curr.subject?.name || 'Unknown Subject'}
                           </CardTitle>
                           {renderStatusBadge(curr.status)}
                         </div>
-                        <p className="text-sm font-medium text-light-text-secondary">Grade: {curr.gradeLevel}</p>
+                        <p className="font-medium text-light-text-secondary" style={{ fontSize: 'var(--text-small)' }}>Grade: {curr.gradeLevel}</p>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-sm text-light-text-muted mt-2 space-y-1">
+                        <div className="text-light-text-muted mt-2 space-y-1" style={{ fontSize: 'var(--text-tiny)' }}>
                           <p>Version: v{curr.version}</p>
                           <p>Topics: {curr.topics?.length || 0}</p>
                           <p>Sources Merged: {curr.sourceIds?.length || 0}</p>
@@ -243,7 +249,7 @@ export default function SuperAdminCurriculumPage() {
                 <div className="space-y-4">
                   {selectedSourceIds.length > 0 && (
                     <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-900/50">
-                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                      <span className="font-medium text-blue-800 dark:text-blue-300" style={{ fontSize: 'var(--text-small)' }}>
                         {selectedSourceIds.length} source(s) selected
                       </span>
                       <Button variant="primary" size="sm" onClick={handleConsolidate} isLoading={isConsolidating}>
@@ -266,15 +272,15 @@ export default function SuperAdminCurriculumPage() {
                       >
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">
+                            <CardTitle className="font-heading" style={{ fontSize: 'var(--text-card-title)' }}>
                               {source.subject?.name || 'Unknown Subject'}
                             </CardTitle>
                             {renderStatusBadge(source.status)}
                           </div>
-                          <p className="text-sm font-medium text-light-text-secondary">Grade: {source.gradeLevel}</p>
+                          <p className="font-medium text-light-text-secondary" style={{ fontSize: 'var(--text-small)' }}>Grade: {source.gradeLevel}</p>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-sm text-light-text-muted mt-2 space-y-1">
+                          <div className="text-light-text-muted mt-2 space-y-1" style={{ fontSize: 'var(--text-tiny)' }}>
                             <p>Type: {source.sourceType}</p>
                             {source.fileName && <p className="truncate" title={source.fileName}>File: {source.fileName}</p>}
                             <p>Added: {new Date(source.createdAt).toLocaleDateString()}</p>
@@ -347,7 +353,7 @@ function UploadSourceModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Upload Curriculum Source" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-light-text-primary dark:text-dark-text-primary">
+          <label className="block font-medium mb-1 text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
             Subject *
           </label>
           <select
@@ -364,7 +370,7 @@ function UploadSourceModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1 text-light-text-primary dark:text-dark-text-primary">
+          <label className="block font-medium mb-1 text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
             Grade Level *
           </label>
           <Input
@@ -376,7 +382,7 @@ function UploadSourceModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1 text-light-text-primary dark:text-dark-text-primary">
+          <label className="block font-medium mb-1 text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
             Document (PDF/DOCX) *
           </label>
           <div
@@ -398,7 +404,7 @@ function UploadSourceModal({
             {selectedFile ? (
               <div className="flex flex-col items-center">
                 <FileText className="w-10 h-10 text-blue-500 mb-2" />
-                <p className="text-sm font-medium break-all text-light-text-primary dark:text-dark-text-primary">{selectedFile.name}</p>
+                <p className="font-medium break-all text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>{selectedFile.name}</p>
                 <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }} className="mt-2 text-red-500">
                   Remove File
                 </Button>
@@ -406,8 +412,8 @@ function UploadSourceModal({
             ) : (
               <div className="flex flex-col items-center">
                 <Upload className="w-10 h-10 text-light-text-muted dark:text-dark-text-muted mb-2" />
-                <p className="text-sm text-light-text-primary dark:text-dark-text-primary">Click to select file</p>
-                <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-1">PDF or DOCX</p>
+                <p className="text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>Click to select file</p>
+                <p className="text-light-text-muted dark:text-dark-text-muted mt-1" style={{ fontSize: 'var(--text-tiny)' }}>PDF or DOCX</p>
               </div>
             )}
           </div>
