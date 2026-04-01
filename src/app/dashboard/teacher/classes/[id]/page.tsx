@@ -56,8 +56,8 @@ import {
 import { useClassResources } from '@/hooks/useClassResources';
 import { BulkGradeEntryModal } from '@/components/modals/BulkGradeEntryModal';
 import { GradeEntryModal } from '@/components/modals/GradeEntryModal';
-import { ConfirmModal } from '@/components/ui/Modal';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
+import { SchemeOfWorkView } from '@/components/scheme-of-work/SchemeOfWorkView';
 import toast from 'react-hot-toast';
 import { safeDownload } from '@/lib/utils/download';
 import { cn } from '@/lib/utils';
@@ -68,8 +68,9 @@ import { FloatingAiCta } from '@/components/ai/FloatingAiCta';
 import { AiChatDrawer } from '@/components/ai/AiChatDrawer';
 import { Sparkles } from 'lucide-react';
 import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
+import { ConfirmModal } from '@/components/ui/Modal';
 
-type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'rollcall';
+type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'rollcall' | 'scheme-of-work';
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -332,6 +333,7 @@ export default function ClassDetailPage() {
     { id: 'grades', label: 'Grades', icon: <Award className="h-4 w-4" />, available: true },
     { id: 'assessments', label: 'Assessments', icon: <Award className="h-4 w-4" />, available: true },
     { id: 'rollcall', label: 'Roll Call', icon: <Smartphone className="h-4 w-4" />, available: true },
+    { id: 'scheme-of-work', label: 'Scheme of Work', icon: <Sparkles className="h-4 w-4" />, available: true },
     { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" />, available: true },
     { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
   ];
@@ -508,6 +510,18 @@ export default function ClassDetailPage() {
                   )}
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Scheme of Work Tab */}
+          {(activeTab as TabType) === 'scheme-of-work' && (
+            <div className="space-y-6">
+              <SchemeOfWorkView 
+                schoolId={schoolId!} 
+                classId={classId} 
+                role="TEACHER" 
+                terminology={terminology} 
+              />
             </div>
           )}
 

@@ -148,9 +148,46 @@ export enum PermissionResource {
   // New resources for complete coverage
   GRADES = 'GRADES',
   CURRICULUM = 'CURRICULUM',
+  SCHEME_OF_WORK = 'SCHEME_OF_WORK',
   RESOURCES = 'RESOURCES',
   TRANSFERS = 'TRANSFERS',
   INTEGRATIONS = 'INTEGRATIONS',
+}
+
+export interface SchemeOfWorkWeek {
+  id: string;
+  weekNumber: number;
+  topic: string;
+  subTopics: string[];
+  learningOutcomes: string[];
+  studentFriendlyOutcomes: string[];
+  suggestedActivities: string[];
+  resources: string[];
+  assessmentType: string | null;
+  teacherNotes: string | null;
+  privateTeacherNotes: string | null;
+  isDelivered: boolean;
+  deliveredAt: string | null;
+}
+
+export interface SchemeOfWork {
+  id: string;
+  schoolId: string;
+  classId: string | null;
+  classArmId: string | null;
+  subjectId: string;
+  termId: string;
+  status: 'GENERATING' | 'DRAFT' | 'APPROVED' | 'PUBLISHED' | 'FAILED';
+  version: number;
+  weeks: SchemeOfWorkWeek[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateSchemeOfWorkWeekDto {
+  isDelivered?: boolean;
+  privateTeacherNotes?: string;
+  teacherNotes?: string;
 }
 
 export enum PermissionType {
@@ -1575,8 +1612,23 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
     // Get a single class by ID
     getClassById: builder.query<ResponseDto<Class>, { schoolId: string; classId: string }>({
       query: ({ schoolId, classId }) => `/schools/${schoolId}/classes/${classId}`,
-      providesTags: (result, error, { classId }) => [{ type: 'Class', id: classId }],
+      providesTags: (result, error, { schoolId }) => [{ type: 'School', id: schoolId }],
     }),
+
+    // Scheme of Work endpoints
+    getSchemeOfWorkForClass: builder.query<ResponseDto<SchemeOfWork>, { schoolId: string, classId: string }>({
+      query: ({ schoolId, classId }) => `/schools/${schoolId}/scheme-of-work/class/${classId}`,
+      providesTags: (result, error, { classId }) => [{ type: 'SchemeOfWork' as const, id: classId }],
+    }),
+    updateSchemeOfWorkWeek: builder.mutation<ResponseDto<SchemeOfWorkWeek>, { schoolId: string, weekId: string, data: UpdateSchemeOfWorkWeekDto }>({
+      query: ({ schoolId, weekId, data }) => ({
+        url: `/schools/${schoolId}/scheme-of-work/week/${weekId}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { weekId }) => ['SchemeOfWork'],
+    }),
+
     // Create a new class
     createClass: builder.mutation<ResponseDto<Class>, { schoolId: string; classData: CreateClassDto }>({
       query: ({ schoolId, classData }) => ({
@@ -3623,9 +3675,12 @@ export const {
   useStartAssessmentMutation,
   useLogAssessmentViolationMutation,
   // Attendance hooks
-  useMarkAttendanceMutation,
   useMarkBulkAttendanceMutation,
+  useMarkAttendanceMutation,
   useGetClassAttendanceQuery,
   useGetClassAttendanceSummaryQuery,
+  // Scheme of Work hooks
+  useGetSchemeOfWorkForClassQuery,
+  useUpdateSchemeOfWorkWeekMutation,
 } = schoolAdminApi;
 

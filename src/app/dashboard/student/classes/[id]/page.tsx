@@ -29,9 +29,10 @@ import {
   useGetClassAssessmentsQuery,
 } from '@/lib/store/api/schoolAdminApi';
 import { TeacherTimetableGrid } from '@/components/timetable/TeacherTimetableGrid';
+import { SchemeOfWorkView } from '@/components/scheme-of-work/SchemeOfWorkView';
 import { useStudentDashboard, getStudentTerminology, ClassData } from '@/hooks/useStudentDashboard';
 
-type TabType = 'overview' | 'teachers' | 'resources' | 'timetable' | 'assessments';
+type TabType = 'overview' | 'teachers' | 'resources' | 'timetable' | 'assessments' | 'scheme-of-work';
 
 export default function StudentClassDetailPage() {
   const params = useParams();
@@ -246,6 +247,12 @@ export default function StudentClassDetailPage() {
       id: 'assessments' as TabType,
       label: 'Assessments',
       icon: <FileText className="h-4 w-4" />,
+      available: true,
+    },
+    {
+      id: 'scheme-of-work' as TabType,
+      label: 'Scheme of Work',
+      icon: <Sparkles className="h-4 w-4" />,
       available: true,
     },
   ];
@@ -566,6 +573,18 @@ export default function StudentClassDetailPage() {
                   )}
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Scheme of Work Tab */}
+          {activeTab === 'scheme-of-work' && (
+            <div className="space-y-6">
+              <SchemeOfWorkView 
+                schoolId={schoolId!} 
+                classId={classId} 
+                role="STUDENT" 
+                terminology={terminology} 
+              />
             </div>
           )}
 
