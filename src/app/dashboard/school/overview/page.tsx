@@ -110,7 +110,7 @@ export default function AdminOverviewPage() {
   const terminology = getTerminology(currentType);
 
   // Get school and active session
-  const { data: schoolResponse, refetch: refetchSchool } = useGetMySchoolQuery();
+  const { data: schoolResponse, refetch: refetchSchool, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const school = schoolResponse?.data;
 
   // Get user's name for welcome message
@@ -546,19 +546,21 @@ export default function AdminOverviewPage() {
 
         {/* Loading State */}
         {
-          isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
-              <span className="ml-3 text-light-text-secondary dark:text-dark-text-secondary">
-                Loading dashboard data...
-              </span>
+          (isLoading || isLoadingSchool) && (
+            <div className="flex items-center justify-center py-24">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+                <span className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+                  Loading dashboard data...
+                </span>
+              </div>
             </div>
           )
         }
 
         {/* Dashboard Content */}
         {
-          !isLoading && !error && stats && (
+          !isLoading && !isLoadingSchool && !error && stats && (
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">

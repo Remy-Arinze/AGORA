@@ -69,9 +69,10 @@ export function useSidebarConfig(): {
           items: [
             { label: 'Overview', href: '/dashboard/super-admin/overview', icon: LayoutDashboard },
             { label: 'Schools', href: '/dashboard/super-admin/schools', icon: Building2 },
+            { label: 'Subjects', href: '/dashboard/super-admin/subjects', icon: BookMarked },
+            { label: 'Curriculum', href: '/dashboard/super-admin/curriculum', icon: BookOpen },
             { label: 'Analytics', href: '/dashboard/super-admin/analytics', icon: BarChart3 },
             { label: 'Plans', href: '/dashboard/super-admin/plans', icon: CreditCard },
-            { label: 'Curriculum', href: '/dashboard/super-admin/curriculum', icon: BookOpen },
             { label: 'Plugins', href: '/dashboard/super-admin/plugins', icon: Puzzle },
             { label: 'Profile', href: '/dashboard/profile', icon: User },
           ],

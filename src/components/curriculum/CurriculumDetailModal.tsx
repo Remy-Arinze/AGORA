@@ -155,10 +155,10 @@ export function CurriculumDetailModal({
               {curriculum.termName || curriculum.academicYear}
             </p>
           </div>
-          {curriculum.isNerdcBased && (
+          {curriculum.isAgoraBased && (
             <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
               <Sparkles className="h-4 w-4" />
-              <span className="text-sm">NERDC Based</span>
+              <span className="text-sm">Agora Based</span>
             </div>
           )}
           <div className="ml-auto">

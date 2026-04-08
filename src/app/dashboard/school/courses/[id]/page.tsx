@@ -86,7 +86,7 @@ export default function ClassDetailPage() {
   const [studentsPage, setStudentsPage] = useState(1);
 
   // Get school ID and type
-  const { data: schoolResponse } = useGetMySchoolQuery();
+  const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
   const { currentType: schoolType } = useSchoolType();
   const terminology = getTerminology(schoolType || 'SECONDARY');
@@ -262,11 +262,14 @@ export default function ClassDetailPage() {
   const timeSlots = Object.keys(timetableByTimeSlot).sort();
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || isLoadingSchool) {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+          <p className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+            Loading class details...
+          </p>
         </div>
       </ProtectedRoute>
     );

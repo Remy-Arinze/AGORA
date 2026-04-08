@@ -53,7 +53,7 @@ export default function StaffPage() {
   const user = useSelector((state: RootState) => state.auth.user);
 
   // Use the adminRole from the school profile as the source of truth
-  const { data: schoolResponse } = useGetMySchoolQuery();
+  const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
   const currentProfileId = schoolResponse?.data?.currentAdmin?.id;
   const currentProfileRole = schoolResponse?.data?.currentAdmin?.role;
@@ -266,11 +266,14 @@ export default function StaffPage() {
     }
   };
 
-  if (isLoading && !staff.length) {
+  if ((isLoading || isLoadingSchool) && !staff.length) {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
-        <div className="w-full flex items-center justify-center min-h-[400px]">
-          <LoadingSpinner size="lg" />
+        <div className="w-full flex flex-col items-center justify-center min-h-[400px]">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+          <p className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+            Loading staff...
+          </p>
         </div>
       </ProtectedRoute>
     );

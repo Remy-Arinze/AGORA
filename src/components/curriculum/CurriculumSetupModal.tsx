@@ -22,7 +22,9 @@ import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 import {
   useSetupSchemeOfWorkMutation,
-  useGetAgoraLibraryQuery
+  useGetAgoraLibraryQuery,
+  useGetSchoolCurriculumDocsQuery,
+  useUploadSchoolCurriculumDocMutation
 } from '@/lib/store/api/schoolAdminApi';
 import { toast } from 'react-hot-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
@@ -55,6 +57,8 @@ export function CurriculumSetupModal({
 
   // Custom AI State
   const [file, setFile] = useState<File | null>(null);
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([classLevelName]); // Default to current grade
   const [isUploading, setIsUploading] = useState(false);
 
   // Queries & Mutations
@@ -67,7 +71,14 @@ export function CurriculumSetupModal({
     { skip: !isOpen || activeTab !== 'AGORA' }
   );
 
+  const { data: schoolDocsResponse, isLoading: isLoadingDocs } = useGetSchoolCurriculumDocsQuery(
+    { schoolId, subjectId: subject.subjectId },
+    { skip: !isOpen || activeTab !== 'CUSTOM' }
+  );
+  const schoolDocs = schoolDocsResponse?.data || [];
+
   const [setupScheme, { isLoading: isSubmitting }] = useSetupSchemeOfWorkMutation();
+  const [uploadDoc, { isLoading: isUploadingDoc }] = useUploadSchoolCurriculumDocMutation();
 
   const handleSetup = async () => {
     if (activeTab === 'AGORA' && !selectedAgoraId) {
@@ -75,16 +86,31 @@ export function CurriculumSetupModal({
       return;
     }
 
-    if (activeTab === 'CUSTOM' && !file) {
-      toast.error('Please upload a curriculum document');
+    if (activeTab === 'CUSTOM' && !selectedSourceId && !file) {
+      toast.error('Please select an existing document or upload a new one');
       return;
     }
 
     try {
-      // For CUSTOM, we'd normally upload the file to Cloudinary first
-      // But for this implementation, we assume the backend handles the 'SCHOOL_ONLY' mode
-      // with a placeholder or the file is handled via a separate upload service.
-      // For now, let's simulate the payload.
+      if (activeTab === 'CUSTOM' && file) {
+        // INTELLIGENT SPLIT FLOW: Upload and start parsing
+        setIsUploading(true);
+        toast.loading('Lois is uploading and scanning your document...', { id: 'upload-toast' });
+        
+        // We'll upload for the first grade, but Lois will detect others based on selectedGrades
+        await uploadDoc({
+          schoolId,
+          subjectId: subject.subjectId,
+          gradeLevel: classLevelName,
+          file
+        }).unwrap();
+        
+        toast.success('Master document uploaded! Lois is now splitting and parsing the content.', { id: 'upload-toast' });
+        setIsUploading(false);
+        setFile(null);
+        // We don't close the modal yet because we want them to see the background progress in the library
+        return;
+      }
 
       await setupScheme({
         schoolId,
@@ -94,18 +120,19 @@ export function CurriculumSetupModal({
           termId,
           mode: activeTab === 'AGORA' ? 'AGORA_ONLY' : 'SCHOOL_ONLY',
           agoraCurriculumId: activeTab === 'AGORA' ? selectedAgoraId : undefined,
-          // documentUrl: customDocUrl, // If we had one
+          schoolCurriculumDocId: activeTab === 'CUSTOM' ? selectedSourceId : undefined,
         },
       }).unwrap();
 
       toast.success(
         activeTab === 'AGORA'
           ? 'Curriculum setup complete'
-          : 'LOIS AI has started verifying and drafting your curriculum'
+          : 'Lois AI has started drafting your scheme of work'
       );
       onClose();
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to setup curriculum');
+      toast.error(err?.data?.message || 'Failed to setup curriculum', { id: 'upload-toast' });
+      setIsUploading(false);
     }
   };
 
@@ -150,14 +177,14 @@ export function CurriculumSetupModal({
                   )}
                   style={{ fontSize: 'var(--text-tiny)' }}
                   onClick={handleSetup}
-                  disabled={isSubmitting || (activeTab === 'CUSTOM' && (!file || creditsRemaining < 50))}
+                  disabled={isSubmitting || isUploadingDoc || (activeTab === 'CUSTOM' && (!file && !selectedSourceId) || creditsRemaining < 50)}
                 >
-                  {isSubmitting ? (
+                  {isSubmitting || isUploadingDoc ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : activeTab === 'AGORA' ? (
                     <Plus className="h-4 w-4 mr-2" />
-                  ) : null}
-                  {activeTab === 'AGORA' ? 'Use Template' : 'Curate'}
+                  ) : <Zap className="h-4 w-4 mr-2" />}
+                  {activeTab === 'AGORA' ? 'Use Template' : file ? 'Scan & Split' : 'Curate'}
                 </Button>
               )}
 
@@ -281,120 +308,237 @@ export function CurriculumSetupModal({
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="space-y-8">
+             ) : (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2 space-y-6">
-                    <div>
-                      <h3 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight font-heading" style={{ fontSize: 'var(--text-section-title)' }}>
-                        Upload Source Material
-                      </h3>
-                      <p className="text-light-text-muted dark:text-dark-text-muted font-bold font-heading" style={{ fontSize: 'var(--text-small)' }}>
-                        Upload your school's curriculum PDF or Word doc for LOIS to analyze.
-                      </p>
-                    </div>
+                  <div className="md:col-span-2 space-y-8">
+                    
+                    {/* Private Library Section */}
+                    {schoolDocs.length > 0 && (
+                      <div className="space-y-4">
+                         <div className="flex items-center justify-between">
+                            <h4 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight font-heading" style={{ fontSize: 'var(--text-small)' }}>
+                              Private Document Vault
+                            </h4>
+                            <span className="text-light-text-muted dark:text-dark-text-muted font-bold" style={{ fontSize: 'var(--text-tiny)' }}>
+                              {schoolDocs.length} Documents Found
+                            </span>
+                         </div>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                           {schoolDocs.map((doc: any) => (
+                             <div
+                               key={doc.id}
+                               onClick={() => doc.status === 'COMPLETED' && setSelectedSourceId(doc.id)}
+                               className={cn(
+                                 "relative p-4 rounded-xl border-2 transition-all group",
+                                 doc.status !== 'COMPLETED' ? "opacity-60 cursor-not-allowed grayscale" : "cursor-pointer",
+                                 selectedSourceId === doc.id
+                                   ? "border-purple-500 bg-purple-500/5 shadow-md shadow-purple-500/5"
+                                   : "border-light-border dark:border-dark-border hover:border-purple-500/30"
+                               )}
+                             >
+                                <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "h-10 w-10 rounded-lg flex items-center justify-center transition-colors",
+                                    selectedSourceId === doc.id ? "bg-purple-600 text-white" : "bg-light-surface dark:bg-dark-surface text-light-text-muted"
+                                  )}>
+                                    {doc.status === 'PARSING' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-black text-light-text-primary dark:text-dark-text-primary truncate uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>
+                                      {doc.fileName || 'Document Source'}
+                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className={cn(
+                                        "px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest",
+                                        doc.status === 'COMPLETED' ? "bg-agora-success/10 text-agora-success" :
+                                        doc.status === 'FAILED' ? "bg-red-500/10 text-red-500" : "bg-amber-500/10 text-amber-500"
+                                      )}>
+                                        {doc.status}
+                                      </span>
+                                      {doc.gradeLevel && (
+                                        <>
+                                          <div className="h-1 w-1 rounded-full bg-light-border dark:bg-dark-border" />
+                                          <span className="text-[10px] font-black text-light-text-muted uppercase tracking-widest">{doc.gradeLevel.replace('_', ' ')}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                {selectedSourceId === doc.id && (
+                                  <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-purple-500 animate-in zoom-in" />
+                                )}
+                             </div>
+                           ))}
+                         </div>
+                      </div>
+                    )}
 
-                    <div
-                      className={cn(
-                        "group relative border-2 border-dashed rounded-xl p-10 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer overflow-hidden",
-                        file
-                          ? "border-agora-success bg-agora-success/5"
-                          : "border-light-border dark:border-dark-border hover:border-purple-500/30 hover:bg-purple-500/[0.02]"
-                      )}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const droppedFile = e.dataTransfer.files[0];
-                        if (droppedFile) setFile(droppedFile);
-                      }}
-                      onClick={() => document.getElementById('file-upload')?.click()}
-                    >
-                      <input
-                        id="file-upload"
-                        type="file"
-                        className="hidden"
-                        accept=".pdf,.doc,.docx"
-                        onChange={(e) => {
-                          const selectedFile = e.target.files?.[0];
-                          if (selectedFile) setFile(selectedFile);
+                    {/* Smart Upload Section */}
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight font-heading" style={{ fontSize: 'var(--text-section-title)' }}>
+                          Smart Curriculum Scanner
+                        </h3>
+                        <p className="text-light-text-muted dark:text-dark-text-muted font-bold font-heading" style={{ fontSize: 'var(--text-small)' }}>
+                          Lois can automatically split one file into sources for multiple grades.
+                        </p>
+                      </div>
+
+                      <div
+                        className={cn(
+                          "group relative border-2 border-dashed rounded-xl p-10 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer overflow-hidden",
+                          file
+                            ? "border-purple-500 bg-purple-500/5"
+                            : "border-light-border dark:border-dark-border hover:border-purple-500/30 hover:bg-purple-500/[0.02]"
+                        )}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const droppedFile = e.dataTransfer.files[0];
+                          if (droppedFile) setFile(droppedFile);
                         }}
-                      />
-
-                      <div className={cn(
-                        "h-16 w-16 rounded-xl flex items-center justify-center transition-all duration-500",
-                        file ? "bg-agora-success text-white scale-110 shadow-lg shadow-agora-success/20" : "bg-light-surface dark:bg-dark-surface text-light-text-muted group-hover:scale-110 group-hover:text-purple-500"
-                      )}>
-                        {file ? <CheckCircle2 className="h-8 w-8" /> : <FileUp className="h-8 w-8" />}
-                      </div>
-
-                      <div className="text-center">
-                        <p className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>
-                          {file ? file.name : "Drop Curriculum Document"}
-                        </p>
-                        <p className="text-light-text-muted dark:text-dark-text-muted font-bold mt-1" style={{ fontSize: 'var(--text-tiny)' }}>
-                          {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "Supports PDF, Word, and Excel"}
-                        </p>
-                      </div>
-
-                      {file && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFile(null);
+                        onClick={() => document.getElementById('file-upload')?.click()}
+                      >
+                        <input
+                          id="file-upload"
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) => {
+                            const selectedFile = e.target.files?.[0];
+                            if (selectedFile) setFile(selectedFile);
                           }}
-                          className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white dark:bg-dark-bg shadow-sm border border-light-border dark:border-dark-border flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
+                        />
 
-                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 flex items-start gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex-shrink-0 flex items-center justify-center text-amber-600">
-                        <Info className="h-4 w-4" />
+                        <div className={cn(
+                          "h-16 w-16 rounded-xl flex items-center justify-center transition-all duration-500",
+                          file ? "bg-purple-600 text-white scale-110 shadow-lg shadow-purple-600/20" : "bg-light-surface dark:bg-dark-surface text-light-text-muted group-hover:scale-110 group-hover:text-purple-500"
+                        )}>
+                          {file ? <Sparkles className="h-8 w-8 animate-pulse" /> : <FileUp className="h-8 w-8" />}
+                        </div>
+
+                        <div className="text-center">
+                          <p className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>
+                            {file ? file.name : "Upload Master Document"}
+                          </p>
+                          <p className="text-light-text-muted dark:text-dark-text-muted font-bold mt-1" style={{ fontSize: 'var(--text-tiny)' }}>
+                            {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "Lois scans PDF, Word, and Excel formats"}
+                          </p>
+                        </div>
+
+                        {file && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFile(null);
+                            }}
+                            className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white dark:bg-dark-bg shadow-sm border border-light-border dark:border-dark-border flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                      <p className="text-amber-800 dark:text-amber-200/70 leading-relaxed" style={{ fontSize: 'var(--text-tiny)' }}>
-                        <span className="font-black uppercase tracking-widest mr-1">Lois Note:</span>
-                        Verification ensures your document matches <strong>{subject.subjectName}</strong> for <strong>{classLevelName.replace('_', ' ')}</strong>. Unmatched documents will be rejected and credits refunded automatically.
-                      </p>
+
+                      {/* Intelligent Split Selector */}
+                      {file && (
+                        <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-widest" style={{ fontSize: 'var(--text-tiny)' }}>
+                              Multi-Grade Intelligent Split
+                            </h4>
+                            <span className="text-purple-600 font-bold" style={{ fontSize: 'var(--text-tiny)' }}>Auto-Scan Active</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                            {['JSS_1', 'JSS_2', 'JSS_3', 'SS_1', 'SS_2', 'SS_3'].map((grade) => (
+                              <button
+                                key={grade}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedGrades(prev => 
+                                    prev.includes(grade) ? prev.filter(g => g !== grade) : [...prev, grade]
+                                  );
+                                }}
+                                className={cn(
+                                  "px-2 py-2 rounded-lg font-black uppercase tracking-tight transition-all text-center",
+                                  selectedGrades.includes(grade)
+                                    ? "bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-105"
+                                    : "bg-light-surface dark:bg-dark-surface text-light-text-muted hover:bg-light-border dark:hover:bg-dark-border"
+                                )}
+                                style={{ fontSize: 'var(--text-tiny)' }}
+                              >
+                                {grade.replace('_', ' ')}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-light-text-muted dark:text-dark-text-muted font-bold leading-tight" style={{ fontSize: 'var(--text-tiny)' }}>
+                            Lois will scan for these grade levels and create separate private source documents in your vault automatically.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="bg-light-surface dark:bg-dark-surface/50 rounded-xl p-6 border border-light-border dark:border-dark-border sticky top-0">
-                      <h4 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-widest mb-4 font-heading" style={{ fontSize: 'var(--text-tiny)' }}>
-                        Processing Details
-                      </h4>
+                    <div className="bg-light-surface dark:bg-dark-surface/50 rounded-2xl p-6 border border-light-border dark:border-dark-border sticky top-0">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="h-10 w-10 rounded-xl bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+                          <Zap className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>
+                            Lois AI Curation
+                          </h4>
+                          <p className="text-light-text-muted dark:text-dark-text-muted font-bold" style={{ fontSize: 'var(--text-tiny)' }}>
+                            Smart Verification
+                          </p>
+                        </div>
+                      </div>
 
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>AI Curation Cost</span>
-                          <span className="font-black text-purple-600 dark:text-purple-400" style={{ fontSize: 'var(--text-small)' }}>50 Credits</span>
+                          <span className="font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Base Cost</span>
+                          <span className="font-black text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>50 Credits</span>
                         </div>
+                        {selectedGrades.length > 1 && (
+                          <div className="flex items-center justify-between animate-in zoom-in duration-300">
+                             <span className="font-bold text-agora-success uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Split Multiplier</span>
+                             <span className="font-black text-agora-success" style={{ fontSize: 'var(--text-small)' }}>FREE</span>
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Wallet Balance</span>
-                          <span className="font-black text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>{creditsRemaining} Credits</span>
+                          <span className="font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Wallet</span>
+                          <span className="font-black text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>{creditsRemaining}</span>
                         </div>
 
                         <div className="h-px bg-light-border dark:bg-dark-border my-2" />
 
                         <div className="flex items-center justify-between">
-                          <span className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Total Required</span>
-                          <span className="font-black text-purple-600" style={{ fontSize: 'var(--text-card-title)' }}>50</span>
+                          <span className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Total Credits</span>
+                          <span className="font-black text-purple-600 text-lg">50</span>
                         </div>
+                      </div>
+
+                      <div className="mt-8 space-y-3">
+                         <div className="flex items-start gap-2 p-3 bg-purple-500/5 rounded-xl border border-purple-500/10">
+                            <Info className="h-4 w-4 text-purple-600 mt-0.5" />
+                            <p className="text-light-text-muted dark:text-dark-text-muted font-bold leading-tight" style={{ fontSize: 'var(--text-tiny)' }}>
+                              Files are scanned for viruses and binary signatures before processing.
+                            </p>
+                         </div>
                       </div>
 
                       {creditsRemaining < 50 && (
                         <div className="mt-6 p-4 bg-red-500/5 border border-red-500/10 rounded-xl space-y-3">
                           <p className="font-bold text-red-600 leading-tight" style={{ fontSize: 'var(--text-tiny)' }}>
-                            Insufficient credits to start AI generation. Please top up your school wallet.
+                            Insufficient credits to start AI generation.
                           </p>
                           <Button
-                            variant="primary"
-                            className="w-full h-10 rounded-xl bg-red-500 hover:bg-red-600 font-black tracking-widest uppercase"
+                            className="w-full h-10 rounded-xl bg-red-600 hover:bg-red-500 font-black tracking-widest uppercase transition-all"
                             style={{ fontSize: 'var(--text-tiny)' }}
                           >
-                            Top Up Now
+                            Top Up Wallet
                           </Button>
                         </div>
                       )}

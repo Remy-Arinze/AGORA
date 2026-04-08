@@ -63,7 +63,7 @@ export default function ClassesPage() {
   const terminology = getTerminology(currentType);
 
   // Get school data
-  const { data: schoolResponse } = useGetMySchoolQuery();
+  const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
 
   // Get active session
@@ -165,11 +165,14 @@ export default function ClassesPage() {
     setEditModal({ isOpen: false, classId: '', currentName: '' });
   };
 
-  if (isLoadingClasses) {
+  if (isLoadingClasses || isLoadingSchool) {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+          <p className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+            Loading {terminology.courses.toLowerCase()}...
+          </p>
         </div>
       </ProtectedRoute>
     );

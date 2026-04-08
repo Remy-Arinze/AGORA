@@ -57,7 +57,7 @@ export function StatCard({
               )}
             </div>
             {icon && (
-              <div className="flex-shrink-0 self-start sm:self-auto flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] p-1.5 sm:p-2 rounded-lg h-8 w-8 sm:h-10 sm:w-10">
+              <div className="flex-shrink-0 self-start sm:self-auto flex items-center justify-center bg-blue-500/10 dark:bg-blue-500/20 p-2 sm:p-2.5 rounded-xl h-10 w-10 sm:h-12 sm:w-12 transition-colors duration-200">
                 {icon}
               </div>
             )}
