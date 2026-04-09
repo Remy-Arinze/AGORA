@@ -3575,6 +3575,14 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       transformResponse: (response: ResponseDto<any[]>) => response.data,
     }),
 
+    getAgoraCurriculumPreview: builder.query<any, { schoolId: string; curriculumId: string }>({
+      query: ({ schoolId, curriculumId }) => ({
+        url: `schools/${schoolId}/curriculum/agora/${curriculumId}/preview`,
+      }),
+      transformResponse: (response: ResponseDto<any>) => response.data,
+      providesTags: (result, error, { curriculumId }) => [{ type: 'Curriculum', id: `PREVIEW_${curriculumId}` }],
+    }),
+
     getSubscriptionSummary: builder.query<SubscriptionSummaryDto, void>({
       query: () => 'subscriptions/summary',
       transformResponse: (response: ResponseDto<SubscriptionSummaryDto>) => response.data,
@@ -3856,6 +3864,7 @@ export const {
   useSetupSchemeOfWorkMutation,
   useCancelSchemeOfWorkMutation,
   useGetAgoraLibraryQuery,
+  useGetAgoraCurriculumPreviewQuery,
   // School document library
   useGetSchoolCurriculumDocsQuery,
   useUploadSchoolCurriculumDocMutation,

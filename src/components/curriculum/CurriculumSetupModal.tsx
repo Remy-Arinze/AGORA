@@ -29,6 +29,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { Input } from '@/components/ui/Input';
+import { AgoraCurriculumPreviewModal } from './AgoraCurriculumPreviewModal';
 
 interface CurriculumSetupModalProps {
   isOpen: boolean;
@@ -60,6 +61,10 @@ export function CurriculumSetupModal({
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [selectedGrades, setSelectedGrades] = useState<string[]>([classLevelName]); // Default to current grade
   const [isUploading, setIsUploading] = useState(false);
+
+  // Preview State
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Queries & Mutations
   const { data: agoraLibrary = [], isLoading: isLoadingLibrary } = useGetAgoraLibraryQuery(
@@ -140,6 +145,18 @@ export function CurriculumSetupModal({
     item.subject?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.consolidationNotes?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const openPreview = (id: string) => {
+    setPreviewId(id);
+    setIsPreviewOpen(true);
+  };
+
+  const handleSelectCurriculum = (id: string) => {
+    setSelectedAgoraId(id);
+    setIsPreviewOpen(false);
+    // Auto-trigger setup if you want, or just select it
+    // For now we just select it so they can see it's selected in the main modal too
+  };
 
   return (
     <Modal
@@ -259,9 +276,9 @@ export function CurriculumSetupModal({
                     {filteredLibrary.map((item) => (
                       <div
                         key={item.id}
-                        onClick={() => setSelectedAgoraId(item.id)}
+                        onClick={() => openPreview(item.id)}
                         className={cn(
-                          "group p-5 rounded-xl border-2 transition-all cursor-pointer flex items-center gap-4",
+                          "group p-5 rounded-xl border-2 transition-all cursor-pointer flex items-center gap-4 relative",
                           selectedAgoraId === item.id
                             ? "border-blue-500 bg-blue-500/5 shadow-lg shadow-blue-500/5"
                             : "border-light-border dark:border-dark-border hover:border-blue-500/30"
@@ -274,15 +291,34 @@ export function CurriculumSetupModal({
                           <BookOpen className="h-5 w-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-black text-light-text-primary dark:text-dark-text-primary truncate uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>
-                            v{item.version} - {item.subject?.name}
-                          </h4>
+                          <div className="flex items-center gap-2">
+                             <h4 className="font-black text-light-text-primary dark:text-dark-text-primary truncate uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>
+                               v{item.version} - {item.subject?.name}
+                             </h4>
+                             {item.terms && (
+                               <div className="flex gap-1 shrink-0">
+                                 {Object.entries(item.terms).map(([term, count]: any) => (
+                                   <span key={term} className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 text-[8px] font-black">
+                                     T{term}:{count}
+                                   </span>
+                                 ))}
+                               </div>
+                             )}
+                          </div>
                           <p className="text-light-text-muted dark:text-dark-text-muted font-bold truncate" style={{ fontSize: 'var(--text-tiny)' }}>
                             {item.consolidationNotes || 'Standard consolidated version'}
                           </p>
                         </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                           <Button variant="ghost" className="h-8 px-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-500">
+                             Preview
+                             <ChevronRight className="h-3 w-3 ml-1" />
+                           </Button>
+                        </div>
                         {selectedAgoraId === item.id && (
-                          <CheckCircle2 className="h-5 w-5 text-blue-500 animate-in zoom-in" />
+                          <div className="absolute top-2 right-2">
+                             <CheckCircle2 className="h-4 w-4 text-blue-500 animate-in zoom-in" />
+                          </div>
                         )}
                       </div>
                     ))}
@@ -550,6 +586,13 @@ export function CurriculumSetupModal({
           </div>
         </div>
       </div>
+      <AgoraCurriculumPreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        curriculumId={previewId || ''}
+        schoolId={schoolId}
+        onSelect={handleSelectCurriculum}
+      />
     </Modal>
   );
 }

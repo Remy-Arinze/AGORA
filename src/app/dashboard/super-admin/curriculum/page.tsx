@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { Input } from '@/components/ui/Input';
-import { BookOpen, Plus, FileText, CheckCircle2, Layers, AlertCircle, Clock, Upload as UploadIcon, Trash2, Trash2 as Trash, HardDrive, Check, ChevronRight, Info, ExternalLink, FileJson, Terminal, Loader2, Library, XCircle, Edit2 } from 'lucide-react';
+import { BookOpen, Plus, FileText, CheckCircle2, Layers, AlertCircle, Clock, Upload as UploadIcon, Trash2, Trash2 as Trash, HardDrive, Check, ChevronRight, Info, ExternalLink, FileJson, Terminal, Loader2, Library, XCircle, Edit2, Sparkles, Target, Users, ClipboardCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import {
@@ -1152,8 +1152,98 @@ function CurriculumPreviewModal({
   const [editData, setEditData] = useState({
     title: '',
     subTopics: '',
-    learningOutcomes: ''
+    learningOutcomes: '',
+    term: 1
   });
+
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'scheme'>('overview');
+  const [activeTerm, setActiveTerm] = useState<number>(1);
+
+  const renderOverviewContent = (notes: string) => {
+    if (!notes) return <p className="text-xs font-bold text-gray-400 italic">No consolidation notes available for this curriculum.</p>;
+
+    try {
+      // Handle legacy/new structured format
+      const isJson = notes.startsWith('{');
+      const data = isJson ? JSON.parse(notes) : null;
+
+      const getDescription = () => isJson ? data.description : notes.split('# Description')[1]?.split('# Themes')[0]?.trim();
+      const getThemes = () => isJson ? data.themes : notes.split('# Themes')[1]?.split('# Progression Notes')[0]?.trim();
+      const getProgression = () => isJson ? data.progressionNotes : notes.split('# Progression Notes')[1]?.trim();
+
+      const themes = getThemes();
+      const themesList = Array.isArray(themes) ? themes : themes?.split('\n').map(t => t.replace(/^- /, '').trim()).filter(Boolean);
+
+      return (
+        <div className="space-y-10 max-w-4xl mx-auto">
+          {/* Document Header Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pb-10 border-b border-light-border dark:border-dark-border/50">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Subject</span>
+                <p className="text-lg font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight">{curriculum.subject?.name}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase text-amber-500 tracking-[0.2em]">Class</span>
+                <p className="text-lg font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight">{curriculum.gradeLevel?.replace('_', ' ')}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase text-purple-500 tracking-[0.2em]">Level</span>
+                <p className="text-lg font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight">
+                  {curriculum.gradeLevel?.startsWith('PRY') ? 'Primary' : curriculum.gradeLevel?.startsWith('JSS') ? 'Junior Secondary' : 'Senior Secondary'}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase text-agora-success tracking-[0.2em]">Duration</span>
+                <p className="text-lg font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight">3 Terms × 13 Weeks = 39 Weeks</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Narrative Content */}
+          <div className="space-y-12">
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase text-light-text-primary dark:text-dark-text-primary tracking-widest flex items-center gap-3">
+                <div className="w-8 h-[2px] bg-blue-500" /> Description
+              </h4>
+              <p className="text-sm font-bold text-light-text-secondary dark:text-dark-text-secondary leading-loose text-justify italic opacity-90">
+                {getDescription() || 'Detailed curriculum overview not generated yet.'}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase text-light-text-primary dark:text-dark-text-primary tracking-widest flex items-center gap-3">
+                <div className="w-8 h-[2px] bg-amber-500" /> Themes
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-11">
+                {themesList?.map((theme: string, i: number) => (
+                  <div key={i} className="flex items-start gap-3 group">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 shrink-0 group-hover:scale-125 transition-transform" />
+                    <span className="text-xs font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight opacity-70 group-hover:opacity-100 transition-opacity">{theme}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase text-light-text-primary dark:text-dark-text-primary tracking-widest flex items-center gap-3">
+                <div className="w-8 h-[2px] bg-purple-500" /> Progression Notes
+              </h4>
+              <div className="pl-11 pr-4 py-6 bg-purple-500/[0.03] dark:bg-purple-500/[0.05] rounded-3xl border border-purple-500/10">
+                <p className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary leading-loose">
+                  {getProgression() || 'No specific progression strategy defined for this subject yet.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    } catch (e) {
+      return <p className="text-xs font-bold leading-loose whitespace-pre-wrap">{notes}</p>;
+    }
+  };
 
   const handleDelete = () => {
     onDelete(curriculumId);
@@ -1183,7 +1273,8 @@ function CurriculumPreviewModal({
     setEditData({
       title: topic.title,
       subTopics: (topic.subTopics || []).join(', '),
-      learningOutcomes: (topic.learningOutcomes || []).join('\n')
+      learningOutcomes: (topic.learningOutcomes || []).join('\n'),
+      term: topic.term || 1
     });
   };
 
@@ -1198,7 +1289,8 @@ function CurriculumPreviewModal({
         data: {
           title: editData.title,
           subTopics: editData.subTopics.split(',').map(s => s.trim()).filter(Boolean),
-          learningOutcomes: editData.learningOutcomes.split('\n').map(s => s.trim()).filter(Boolean)
+          learningOutcomes: editData.learningOutcomes.split('\n').map(s => s.trim()).filter(Boolean),
+          term: editData.term
         }
       }).unwrap();
       toast.success("Topic updated");
@@ -1210,14 +1302,15 @@ function CurriculumPreviewModal({
 
   const handleAddNewWeek = async () => {
     try {
-      const nextWeekNum = (curriculum.topics?.length || 0) + 1;
+      const nextWeekNum = (curriculum.topics?.filter((t: any) => t.term === activeTerm).length || 0) + 1;
       const newTopic = await addTopic({
         curriculumId,
         data: {
           title: `Week ${nextWeekNum}: [New Subject]`,
           weekNumber: nextWeekNum,
           subTopics: [],
-          learningOutcomes: []
+          learningOutcomes: [],
+          term: activeTerm
         }
       }).unwrap();
 
@@ -1291,115 +1384,199 @@ function CurriculumPreviewModal({
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg flex items-center gap-2">
-            <Layers className="w-5 h-5 text-blue-500" /> Curriculum Topics
-          </h3>
-          <Button variant="outline" size="sm" onClick={handleAddNewWeek} className="border-blue-200 text-blue-600 hover:bg-blue-50">
-            <Plus className="w-4 h-4 mr-2" /> Add Week
-          </Button>
+        <div className="flex border-b border-light-border dark:border-dark-border">
+          <div className="flex bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveSubTab('overview')}
+              className={cn(
+                "relative px-4 py-2 text-xs uppercase tracking-widest transition-all",
+                activeSubTab === 'overview'
+                  ? "text-blue-500"
+                  : "text-light-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary"
+              )}
+            >
+              Curriculum
+              {activeSubTab === 'overview' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveSubTab('scheme')}
+              className={cn(
+                "relative px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all",
+                activeSubTab === 'scheme'
+                  ? "text-blue-500"
+                  : "text-light-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary"
+              )}
+            >
+              Scheme of Work
+              {activeSubTab === 'scheme' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar pb-8">
-          {curriculum.topics?.map((topic) => (
-            <div key={topic.id} className="p-5 bg-light-surface dark:bg-dark-surface rounded-2xl border border-light-border dark:border-dark-border shadow-sm hover:shadow-md transition-shadow group">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-[10px] font-bold rounded-lg uppercase tracking-widest">Week {topic.weekNumber}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => setTopicToDelete(topic.id)} className="p-1 hover:bg-red-50 text-red-400 hover:text-red-500 rounded transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+        {activeSubTab === 'overview' ? (
+          <div className="p-10 bg-light-card dark:bg-dark-surface rounded-[2.5rem] border border-light-border dark:border-dark-border/50 shadow-sm relative overflow-hidden group min-h-[500px]">
+            <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity pointer-events-none">
+              <Sparkles className="w-64 h-64 text-blue-500" />
+            </div>
 
-                  {editingTopicId === topic.id ? (
-                    <div className="space-y-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Week Title</label>
-                        <Input
-                          value={editData.title}
-                          onChange={e => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                          placeholder="Enter week title..."
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Subtopics (comma separated)</label>
-                        <Input
-                          value={editData.subTopics}
-                          onChange={e => setEditData(prev => ({ ...prev, subTopics: e.target.value }))}
-                          placeholder="Algebra, Equations, Functions..."
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Learning Outcomes (one per line)</label>
-                        <textarea
-                          rows={3}
-                          value={editData.learningOutcomes}
-                          onChange={e => setEditData(prev => ({ ...prev, learningOutcomes: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm border border-light-border dark:border-dark-border rounded-xl bg-white dark:bg-[#131824] focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                          placeholder="Students will be able to..."
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => handleSaveTopic(topic.id)}>Save Changes</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingTopicId(null)}>Cancel</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative group/title">
-                      <h4 className="font-bold text-lg text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
-                        {topic.title}
-                        <button onClick={() => handleStartEdit(topic)} className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 hover:bg-blue-50 rounded">
-                          <Edit2 className="w-4 h-4 text-blue-500" />
-                        </button>
-                      </h4>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                        <div>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                            <div className="w-1 h-1 bg-blue-500 rounded-full" /> Subtopics
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {topic.subTopics?.length > 0 ? topic.subTopics.map((st, i) => (
-                              <span key={i} className="text-[11px] px-2.5 py-1 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg border border-gray-100 dark:border-gray-700">
-                                {st}
-                              </span>
-                            )) : <p className="text-[11px] text-gray-400 italic">No subtopics defined</p>}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                            <div className="w-1 h-1 bg-green-500 rounded-full" /> Learning Outcomes
-                          </span>
-                          <ul className="space-y-1.5">
-                            {topic.learningOutcomes?.length > 0 ? topic.learningOutcomes.map((lo, i) => (
-                              <li key={i} className="flex gap-2 items-start text-xs text-gray-600 dark:text-gray-300">
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0 mt-1">
-                                  <div className="w-0.5 h-0.5 rounded-full bg-green-500" />
-                                </div>
-                                <span>{lo}</span>
-                              </li>
-                            )) : <p className="text-[11px] text-gray-400 italic">No outcomes defined</p>}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+            <div className="relative z-10 space-y-10">
+              <div className="flex items-center justify-between">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/5 border border-blue-500/10 text-blue-600">
+                  <FileText className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Session Master Curriculum</span>
                 </div>
               </div>
+
+              {renderOverviewContent(curriculum.consolidationNotes || '')}
             </div>
-          ))}
-          {(!curriculum.topics || curriculum.topics.length === 0) && (
-            <div className="text-center py-20 bg-gray-50 dark:bg-gray-800/30 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
-              <Layers className="w-12 h-12 mx-auto mb-4 text-gray-300 opacity-50" />
-              <h4 className="font-bold text-gray-400">Processing topics...</h4>
-              <p className="text-xs text-gray-400 mt-2">Lois is still consolidating your curriculum.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-light-border dark:border-dark-border">
+              <div className="space-y-1">
+                <h4 className="text-xs font-black uppercase tracking-[0.1em] text-light-text-primary dark:text-dark-text-primary">
+                  Weekly Topic Breakdown
+                </h4>
+                <p className="text-[10px] font-bold text-light-text-muted">Partitioned by Nigerian Academic Terms (1-3)</p>
+              </div>
+              <div className="flex gap-2 p-1.5 bg-gray-200/50 dark:bg-gray-900 rounded-xl border border-light-border dark:border-dark-border">
+                {[1, 2, 3].map(term => (
+                  <button
+                    key={term}
+                    onClick={() => setActiveTerm(term)}
+                    className={cn(
+                      "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                      activeTerm === term ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                    )}
+                  >
+                    Term {term}
+                  </button>
+                ))}
+              </div>
+              <Button variant="secondary" size="sm" onClick={handleAddNewWeek} className="rounded-xl px-5">
+                <Plus className="w-4 h-4 mr-2" /> Add Week to Term {activeTerm}
+              </Button>
             </div>
-          )}
-          <div ref={topicsEndRef} />
-        </div>
+
+            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar pb-8">
+              {curriculum.topics?.filter((t: any) => t.term === activeTerm).sort((a: any, b: any) => a.weekNumber - b.weekNumber).map((topic: any) => (
+                <div key={topic.id} className="p-5 bg-light-surface dark:bg-dark-surface rounded-2xl border border-light-border dark:border-dark-border shadow-sm hover:shadow-md transition-shadow group">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-[10px] font-bold rounded-lg uppercase tracking-widest">Week {topic.weekNumber}</span>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setTopicToDelete(topic.id)} className="p-1 hover:bg-red-50 text-red-400 hover:text-red-500 rounded transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {editingTopicId === topic.id ? (
+                        <div className="space-y-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Week Title</label>
+                              <Input
+                                value={editData.title}
+                                onChange={e => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                                placeholder="Enter week title..."
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Term</label>
+                              <Select
+                                value={editData.term}
+                                onChange={e => setEditData(prev => ({ ...prev, term: parseInt(e.target.value) }))}
+                              >
+                                <option value={1}>Term 1</option>
+                                <option value={2}>Term 2</option>
+                                <option value={3}>Term 3</option>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Subtopics (comma separated)</label>
+                            <Input
+                              value={editData.subTopics}
+                              onChange={e => setEditData(prev => ({ ...prev, subTopics: e.target.value }))}
+                              placeholder="Algebra, Equations, Functions..."
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Learning Outcomes (one per line)</label>
+                            <textarea
+                              rows={3}
+                              value={editData.learningOutcomes}
+                              onChange={e => setEditData(prev => ({ ...prev, learningOutcomes: e.target.value }))}
+                              className="w-full px-3 py-2 text-sm border border-light-border dark:border-dark-border rounded-xl bg-white dark:bg-[#131824] focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                              placeholder="Students will be able to..."
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleSaveTopic(topic.id)}>Save Changes</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingTopicId(null)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative group/title">
+                          <h4 className="font-bold text-lg text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
+                            {topic.title}
+                            <button onClick={() => handleStartEdit(topic)} className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 hover:bg-blue-50 rounded">
+                              <Edit2 className="w-4 h-4 text-blue-500" />
+                            </button>
+                          </h4>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div>
+                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                                <div className="w-1 h-1 bg-blue-500 rounded-full" /> Subtopics
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {topic.subTopics?.length > 0 ? topic.subTopics.map((st: string, i: number) => (
+                                  <span key={i} className="text-[11px] px-2.5 py-1 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    {st}
+                                  </span>
+                                )) : <p className="text-[11px] text-gray-400 italic">No subtopics defined</p>}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                                <div className="w-1 h-1 bg-green-500 rounded-full" /> Learning Outcomes
+                              </span>
+                              <ul className="space-y-1.5">
+                                {topic.learningOutcomes?.length > 0 ? topic.learningOutcomes.map((lo: string, i: number) => (
+                                  <li key={i} className="flex gap-2 items-start text-xs text-gray-600 dark:text-gray-300">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0 mt-1">
+                                      <div className="w-0.5 h-0.5 rounded-full bg-green-500" />
+                                    </div>
+                                    <span>{lo}</span>
+                                  </li>
+                                )) : <p className="text-[11px] text-gray-400 italic">No outcomes defined</p>}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!curriculum.topics || curriculum.topics.filter((t: any) => t.term === activeTerm).length === 0) && (
+                <div className="text-center py-20 bg-gray-50 dark:bg-gray-800/30 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
+                  <Layers className="w-12 h-12 mx-auto mb-4 text-gray-300 opacity-50" />
+                  <h4 className="font-bold text-gray-400">No topics for Term {activeTerm}</h4>
+                  <p className="text-xs text-gray-400 mt-2">Lois might still be consolidating or no content was found for this term.</p>
+                </div>
+              )}
+              <div ref={topicsEndRef} />
+            </div>
+          </div>
+        )}
 
         <ConfirmationModal
           isOpen={!!topicToDelete}

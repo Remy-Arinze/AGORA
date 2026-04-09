@@ -64,6 +64,7 @@ export interface AgoraCurriculumTopic {
   assessmentGuidance?: string;
   duration?: string;
   order: number;
+  term: number;
 }
 
 export interface AgoraCurriculum {
