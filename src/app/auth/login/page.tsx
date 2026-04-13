@@ -105,11 +105,15 @@ function LoginContent() {
               accessToken: data.data.accessToken,
               refreshToken: data.data.refreshToken,
               user: data.data.user,
+              tenantId: data.data.user.tenantId,
             })
           );
 
           if (data.data.user.schoolId) {
             localStorage.setItem('currentSchoolId', data.data.user.schoolId);
+          }
+          if (data.data.user.tenantId) {
+            localStorage.setItem('tenantId', data.data.user.tenantId);
           }
 
           const roleMap: Record<string, string> = {
@@ -179,11 +183,15 @@ function LoginContent() {
             accessToken: data.data.accessToken,
             refreshToken: data.data.refreshToken,
             user: data.data.user,
+            tenantId: data.data.user.tenantId, // ✅ Use tenantId from user object
           })
         );
 
         if (data.data.user.schoolId) {
           localStorage.setItem('currentSchoolId', data.data.user.schoolId);
+        }
+        if (data.data.user.tenantId) {
+          localStorage.setItem('tenantId', data.data.user.tenantId);
         }
 
         const roleMap: Record<string, string> = {

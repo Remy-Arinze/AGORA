@@ -124,8 +124,8 @@ export default function StudentCalendarPage() {
     { skip: !schoolId }
   );
 
-  const events = eventsResponse?.data || [];
-  const upcomingEvents = upcomingEventsResponse?.data || [];
+  const events = eventsResponse?.data;
+  const upcomingEvents = upcomingEventsResponse?.data;
 
   // Get student's timetable - unified endpoint handles all school types
   const { data: timetableResponse } = useGetMyStudentTimetableQuery(
@@ -139,7 +139,7 @@ export default function StudentCalendarPage() {
     const combined: CalendarEventWithType[] = [];
 
     // Add one-off events (admin-created and teacher-created)
-    events.forEach((event) => {
+    events?.forEach((event) => {
       combined.push({
         ...event,
         start: new Date(event.startDate),
@@ -463,7 +463,11 @@ export default function StudentCalendarPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {upcomingEvents.length === 0 ? (
+              {upcomingEvents === undefined ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 text-blue-600 mx-auto animate-spin" />
+                </div>
+              ) : upcomingEvents.length === 0 ? (
                 <div className="text-center py-12">
                   <CalendarIcon className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
                   <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">

@@ -51,10 +51,10 @@ export default function StudentTimetablePage() {
 
   // Use selected term's timetable if fetched, otherwise use dashboard's timetable
   const timetable = needsSeparateFetch 
-    ? (selectedTermTimetableResponse?.data || [])
+    ? selectedTermTimetableResponse?.data
     : dashboardTimetable;
 
-  const isLoading = isDashboardLoading || (needsSeparateFetch && isLoadingSelectedTerm);
+  const isLoading = isDashboardLoading || (needsSeparateFetch && isLoadingSelectedTerm) || timetable === undefined;
 
   // Extract all terms from sessions for selector - filtered by school type and deduplicated
   const allTerms = useMemo(() => {
@@ -146,7 +146,7 @@ export default function StudentTimetablePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {timetable.length > 0 ? (
+            {timetable && timetable.length > 0 ? (
               <TeacherTimetableGrid
                 timetable={timetable}
                 schoolType={schoolType}

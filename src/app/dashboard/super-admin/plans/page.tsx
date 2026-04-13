@@ -133,7 +133,7 @@ export default function PlansPage() {
                                     {plan.customSchool && (
                                         <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-lg text-sm">
                                             <p className="font-semibold text-amber-800 dark:text-amber-500">Custom Plan For:</p>
-                                            <p className="text-amber-700 dark:text-amber-400">{plan.customSchool.name} ({plan.customSchool.subdomain})</p>
+                                            <p className="text-amber-700 dark:text-amber-400">{plan.customSchool.name}</p>
                                         </div>
                                     )}
                                     <ul className="space-y-3 flex-1 overflow-y-auto max-h-60 mb-4 pr-1">

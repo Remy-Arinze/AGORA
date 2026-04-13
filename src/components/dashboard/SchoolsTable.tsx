@@ -9,7 +9,6 @@ import { FadeInUp } from '@/components/ui/FadeInUp';
 interface School {
   id: string;
   name: string;
-  subdomain: string;
   city: string;
   state: string;
   students?: number;
@@ -80,9 +79,6 @@ export function SchoolsTable({ schools }: SchoolsTableProps) {
                     <div>
                       <p className="font-medium text-gray-900 dark:text-dark-text-primary">
                         {school.name}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-dark-text-muted">
-                        {school.subdomain}.agora.com
                       </p>
                     </div>
                   </td>

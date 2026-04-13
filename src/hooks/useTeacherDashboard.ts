@@ -191,7 +191,7 @@ export function useTeacherDashboard(): TeacherDashboardData {
   const refinedSchoolType = derivedSchoolType;
   
   // Aggregate loading and error states
-  const isLoading = isLoadingSchool || isLoadingTeacher || isLoadingSession;
+  const isLoading = isLoadingSchool || isLoadingTeacher || isLoadingSession || isLoadingTimetable || isLoadingClasses;
   const hasError = !!(schoolError || teacherError || sessionError || timetableError || classesError);
   const errorMessage = hasError 
     ? 'Failed to load dashboard data. Please try refreshing.'

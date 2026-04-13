@@ -46,6 +46,15 @@ export interface SchoolDashboard {
 // Staff list types
 export type AccountStatus = 'SHADOW' | 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
 
+export interface CurrentActivity {
+  type: string;
+  title: string;
+  location?: string;
+  context?: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface StaffListItem {
   id: string;
   type: 'teacher' | 'admin';
@@ -62,6 +71,7 @@ export interface StaffListItem {
   profileImage: string | null;
   schoolType: string | null;
   assignedClass?: { id: string; name: string } | null;
+  currentActivity?: CurrentActivity | null;
   createdAt: string;
   user?: {
     id: string;
@@ -138,9 +148,80 @@ export enum PermissionResource {
   // New resources for complete coverage
   GRADES = 'GRADES',
   CURRICULUM = 'CURRICULUM',
+  SCHEME_OF_WORK = 'SCHEME_OF_WORK',
   RESOURCES = 'RESOURCES',
   TRANSFERS = 'TRANSFERS',
   INTEGRATIONS = 'INTEGRATIONS',
+}
+
+// Subscription Types
+export enum SubscriptionTier {
+  FREE = 'FREE',
+  PRO = 'PRO',
+  PRO_PLUS = 'PRO_PLUS',
+  CUSTOM = 'CUSTOM',
+}
+
+export enum ToolStatus {
+  ACTIVE = 'ACTIVE',
+  TRIAL = 'TRIAL',
+  EXPIRED = 'EXPIRED',
+  DISABLED = 'DISABLED',
+}
+
+export interface SubscriptionSummaryDto {
+  tier: SubscriptionTier;
+  isActive: boolean;
+  aiCredits: number;
+  aiCreditsUsed: number;
+  aiCreditsRemaining: number;
+  limits: {
+    maxStudents: number;
+    maxTeachers: number;
+    maxAdmins: number;
+  };
+  tools: {
+    slug: string;
+    name: string;
+    status: ToolStatus;
+    hasAccess: boolean;
+  }[];
+}
+
+export interface SchemeOfWorkWeek {
+  id: string;
+  weekNumber: number;
+  topic: string;
+  subTopics: string[];
+  learningOutcomes: string[];
+  studentFriendlyOutcomes: string[];
+  suggestedActivities: string[];
+  resources: string[];
+  assessmentType: string | null;
+  teacherNotes: string | null;
+  privateTeacherNotes: string | null;
+  isDelivered: boolean;
+  deliveredAt: string | null;
+}
+
+export interface SchemeOfWork {
+  id: string;
+  schoolId: string;
+  classId: string | null;
+  classArmId: string | null;
+  subjectId: string;
+  termId: string;
+  status: 'GENERATING' | 'DRAFT' | 'APPROVED' | 'PUBLISHED' | 'FAILED';
+  version: number;
+  weeks: SchemeOfWorkWeek[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateSchemeOfWorkWeekDto {
+  isDelivered?: boolean;
+  privateTeacherNotes?: string;
+  teacherNotes?: string;
 }
 
 export enum PermissionType {
@@ -583,6 +664,7 @@ export interface UpdateStudentDto {
 export interface Student {
   id: string;
   uid: string;
+  publicId?: string | null;
   firstName: string;
   lastName: string;
   middleName: string | null;
@@ -618,9 +700,10 @@ export interface StudentWithEnrollment extends Student {
     school: {
       id: string;
       name: string;
-      subdomain: string;
+      
     };
   };
+  currentActivity?: CurrentActivity | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -829,9 +912,23 @@ export interface Assessment {
   status: AssessmentStatus;
   dueDate: string | null;
   maxScore: number;
+  
+  // Timer & Integrity Settings
+  isTimed: boolean;
+  duration: number | null;
+  hasIntegrity: boolean;
+  autoSubmitOnTimeout: boolean;
+  violationThreshold: number | null;
+  pointsPerViolation: number | null;
+
   createdAt: string;
   updatedAt: string;
   questions?: AssessmentQuestion[];
+  submissions?: AssessmentSubmission[];
+  isSubmitted?: boolean;
+  submission?: AssessmentSubmission | null;
+  subject?: Subject;
+  class?: Class;
   _count?: {
     submissions: number;
   };
@@ -841,14 +938,32 @@ export interface AssessmentSubmission {
   id: string;
   assessmentId: string;
   studentId: string;
-  status: 'SUBMITTED' | 'GRADED';
+  status: 'STARTED' | 'SUBMITTED' | 'GRADED';
   totalScore: number | null;
   teacherFeedback: string | null;
   aiFeedback: string | null;
-  submittedAt: string;
+  
+  // Timing & Integrity
+  startedAt: string | null;
+  submittedAt: string | null;
   gradedAt: string | null;
+  examSessionToken: string | null;
+  violationCount: number;
+  isFlagged: boolean;
+  pointDeductions: number;
+  isAutoSubmitted: boolean;
+
   student?: Student;
   answers?: AssessmentAnswer[];
+  violations?: AssessmentViolation[];
+}
+
+export interface AssessmentViolation {
+  id: string;
+  submissionId: string;
+  type: 'TAB_SWITCH' | 'FULLSCREEN_EXIT' | 'CLIPBOARD_COPY' | 'CLIPBOARD_PASTE' | 'CLIPBOARD_CUT' | 'DEVTOOLS_OPEN' | 'WINDOW_BLUR';
+  details?: string;
+  timestamp: string;
 }
 
 export interface AssessmentAnswer {
@@ -871,7 +986,17 @@ export interface CreateAssessmentDto {
   subjectId: string;
   termId?: string;
   dueDate?: string;
+  status?: AssessmentStatus;
   maxScore: number;
+
+  // New Integrity & Timer Fields
+  isTimed?: boolean;
+  duration?: number;
+  hasIntegrity?: boolean;
+  autoSubmitOnTimeout?: boolean;
+  violationThreshold?: number;
+  pointsPerViolation?: number;
+
   questions: {
     text: string;
     type: QuestionType;
@@ -883,11 +1008,24 @@ export interface CreateAssessmentDto {
 }
 
 export interface SubmitAssessmentDto {
+  examSessionToken: string;
   answers: {
     questionId: string;
     text?: string;
     selectedOption?: string;
   }[];
+}
+
+export interface StartAssessmentResponse {
+  submissionId: string;
+  examSessionToken: string;
+  startedAt: string;
+  expiresAt?: string;
+}
+
+export interface LogViolationDto {
+  type: 'TAB_SWITCH' | 'FULLSCREEN_EXIT' | 'CLIPBOARD_COPY' | 'CLIPBOARD_PASTE' | 'CLIPBOARD_CUT' | 'DEVTOOLS_OPEN' | 'WINDOW_BLUR';
+  details?: string;
 }
 
 export interface GradeSubmissionDto {
@@ -1295,8 +1433,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
     }),
     uploadSchoolLogo: builder.mutation<ResponseDto<School>, { file: File }>({
       queryFn: async ({ file }, _api, _extraOptions, baseQuery) => {
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state.auth.accessToken || state.auth.token;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state.auth.token;
 
         if (!token) {
           return { error: { status: 'CUSTOM_ERROR', error: 'Not authenticated' } };
@@ -1508,8 +1646,23 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
     // Get a single class by ID
     getClassById: builder.query<ResponseDto<Class>, { schoolId: string; classId: string }>({
       query: ({ schoolId, classId }) => `/schools/${schoolId}/classes/${classId}`,
-      providesTags: (result, error, { classId }) => [{ type: 'Class', id: classId }],
+      providesTags: (result, error, { schoolId }) => [{ type: 'School', id: schoolId }],
     }),
+
+    // Scheme of Work endpoints
+    getSchemeOfWorkForClass: builder.query<ResponseDto<SchemeOfWork>, { schoolId: string, classId: string }>({
+      query: ({ schoolId, classId }) => `/schools/${schoolId}/scheme-of-work/class/${classId}`,
+      providesTags: (result, error, { classId }) => [{ type: 'SchemeOfWork' as const, id: classId }],
+    }),
+    updateSchemeOfWorkWeek: builder.mutation<ResponseDto<SchemeOfWorkWeek>, { schoolId: string, weekId: string, data: UpdateSchemeOfWorkWeekDto }>({
+      query: ({ schoolId, weekId, data }) => ({
+        url: `/schools/${schoolId}/scheme-of-work/week/${weekId}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { weekId }) => ['SchemeOfWork'],
+    }),
+
     // Create a new class
     createClass: builder.mutation<ResponseDto<Class>, { schoolId: string; classData: CreateClassDto }>({
       query: ({ schoolId, classData }) => ({
@@ -2234,7 +2387,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       providesTags: ['Student'],
     }),
     getMyStudentTimetable: builder.query<
-      ResponseDto<any[]>,
+      ResponseDto<TimetablePeriod[]>,
       { termId?: string }
     >({
       query: (params) => {
@@ -2363,6 +2516,10 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       query: () => '/students/me/school',
       providesTags: ['Student', 'School'],
     }),
+    getMyStudentDashboardStats: builder.query<ResponseDto<any>, void>({
+      query: () => '/students/me/dashboard/stats',
+      providesTags: ['Student', 'Grade'],
+    }),
     // Teacher Classes (wrapper for teacher's classes)
     getMyClasses: builder.query<
       ResponseDto<Class[]>,
@@ -2397,11 +2554,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         }
 
         // Get token from state
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        // Get tenant ID
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -2410,9 +2564,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
         // Don't set Content-Type - browser will set it with boundary
 
@@ -2788,6 +2939,20 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       },
       providesTags: (result, error, { classId }) => [{ type: 'Grade' as const, id: classId }],
     }),
+    getClassGradesGroupedByStudents: builder.query<
+      ResponseDto<any[]>,
+      { schoolId: string; classId: string; subject?: string; termId?: string; gradeType?: 'CA' | 'ASSIGNMENT' | 'EXAM' }
+    >({
+      query: ({ schoolId, classId, subject, termId, gradeType }) => {
+        const queryParams = new URLSearchParams();
+        if (subject) queryParams.append('subject', subject);
+        if (termId) queryParams.append('termId', termId);
+        if (gradeType) queryParams.append('gradeType', gradeType);
+        const queryString = queryParams.toString();
+        return `/schools/${schoolId}/grades/classes/${classId}/students${queryString ? `?${queryString}` : ''}`;
+      },
+      providesTags: (result, error, { classId }) => [{ type: 'Grade' as const, id: `${classId}-students` }],
+    }),
     getStudentGrades: builder.query<
       ResponseDto<Grade[]>,
       { schoolId: string; studentId: string; subject?: string; gradeType?: 'CA' | 'ASSIGNMENT' | 'EXAM' }
@@ -2906,10 +3071,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('image', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -2918,9 +3081,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         try {
@@ -2970,10 +3130,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('file', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -2982,9 +3140,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         const response = await fetch(url, {
@@ -3009,10 +3164,8 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('file', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -3021,9 +3174,6 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         const response = await fetch(url, {
@@ -3260,7 +3410,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
     }),
 
     // Assessment Endpoints
-    createAssessment: builder.mutation<Assessment, { schoolId: string; classId: string; dto: CreateAssessmentDto }>({
+    createAssessment: builder.mutation<ResponseDto<Assessment>, { schoolId: string; classId: string; dto: CreateAssessmentDto }>({
       query: ({ schoolId, classId, dto }) => ({
         url: `/schools/${schoolId}/classes/${classId}/assessments`,
         method: 'POST',
@@ -3268,18 +3418,23 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Assessments'],
     }),
-    getClassAssessments: builder.query<Assessment[], { schoolId: string; classId: string; termId?: string }>({
-      query: ({ schoolId, classId, termId }) => ({
-        url: `/schools/${schoolId}/classes/${classId}/assessments`,
-        params: { termId },
-      }),
+    getClassAssessments: builder.query<ResponseDto<Assessment[]>, { schoolId: string; classId: string; termId?: string; studentId?: string }>({
+      query: ({ schoolId, classId, termId, studentId }) => {
+        const params = new URLSearchParams();
+        if (termId) params.append('termId', termId);
+        if (studentId) params.append('studentId', studentId);
+        const queryString = params.toString();
+        return {
+          url: `/schools/${schoolId}/classes/${classId}/assessments${queryString ? `?${queryString}` : ''}`,
+        };
+      },
       providesTags: ['Assessments'],
     }),
-    getAssessmentById: builder.query<Assessment, { schoolId: string; assessmentId: string }>({
+    getAssessmentById: builder.query<ResponseDto<Assessment>, { schoolId: string; assessmentId: string }>({
       query: ({ schoolId, assessmentId }) => `/schools/${schoolId}/assessments/${assessmentId}`,
       providesTags: (_result, _error, { assessmentId }) => [{ type: 'Assessments', id: assessmentId }],
     }),
-    submitAssessment: builder.mutation<AssessmentSubmission, { schoolId: string; assessmentId: string; dto: SubmitAssessmentDto }>({
+    submitAssessment: builder.mutation<ResponseDto<AssessmentSubmission>, { schoolId: string; assessmentId: string; dto: SubmitAssessmentDto }>({
       query: ({ schoolId, assessmentId, dto }) => ({
         url: `/schools/${schoolId}/assessments/${assessmentId}/submit`,
         method: 'POST',
@@ -3287,17 +3442,38 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Assessments'],
     }),
-    getAssessmentSubmission: builder.query<AssessmentSubmission, { schoolId: string; submissionId: string }>({
+    getAssessmentSubmission: builder.query<ResponseDto<AssessmentSubmission>, { schoolId: string; submissionId: string }>({
       query: ({ schoolId, submissionId }) => `/schools/${schoolId}/assessments/submissions/${submissionId}`,
       providesTags: (_result, _error, { submissionId }) => [{ type: 'Submissions', id: submissionId }],
     }),
-    gradeAssessmentSubmission: builder.mutation<AssessmentSubmission, { schoolId: string; submissionId: string; dto: GradeSubmissionDto }>({
+    gradeAssessmentSubmission: builder.mutation<ResponseDto<AssessmentSubmission>, { schoolId: string; submissionId: string; dto: GradeSubmissionDto }>({
       query: ({ schoolId, submissionId, dto }) => ({
         url: `/schools/${schoolId}/assessments/submissions/${submissionId}/grade`,
         method: 'POST',
         body: dto,
       }),
       invalidatesTags: ['Submissions', 'Assessments', 'Grades'],
+    }),
+    deleteAssessment: builder.mutation<ResponseDto<void>, { schoolId: string; assessmentId: string }>({
+      query: ({ schoolId, assessmentId }) => ({
+        url: `/schools/${schoolId}/assessments/${assessmentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Assessments'],
+    }),
+    startAssessment: builder.mutation<ResponseDto<StartAssessmentResponse>, { schoolId: string; assessmentId: string }>({
+      query: ({ schoolId, assessmentId }) => ({
+        url: `/schools/${schoolId}/assessments/${assessmentId}/start`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Assessments'],
+    }),
+    logAssessmentViolation: builder.mutation<ResponseDto<void>, { schoolId: string; assessmentId: string; dto: LogViolationDto }>({
+      query: ({ schoolId, assessmentId, dto }) => ({
+        url: `/schools/${schoolId}/assessments/${assessmentId}/violation`,
+        method: 'POST',
+        body: dto,
+      }),
     }),
     // Attendance Endpoints
     markAttendance: builder.mutation<ResponseDto<any>, { schoolId: string; attendanceData: any }>({
@@ -3329,6 +3505,51 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         params: { classType, startDate, endDate },
       }),
       providesTags: ['Attendance'],
+    }),
+
+    getSchemesSummary: builder.query<any[], { schoolId: string; classLevelId: string; termId: string }>({
+      query: ({ schoolId, classLevelId, termId }) => ({
+        url: `schools/${schoolId}/curriculum/class-level/${classLevelId}/schemes-summary`,
+        params: { termId },
+      }),
+      providesTags: (result, error, { classLevelId }) => [{ type: 'Curriculum', id: `SCHEME_SUMMARY_${classLevelId}` }],
+      transformResponse: (response: ResponseDto<any[]>) => response.data,
+    }),
+
+    setupSchemeOfWork: builder.mutation<any, { schoolId: string; body: any }>({
+      query: ({ schoolId, body }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/setup`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (result, error, { body }) => [
+        { type: 'Curriculum', id: `SCHEME_SUMMARY_${body.classLevelId}` },
+        'Curriculum',
+      ],
+    }),
+
+    cancelSchemeOfWork: builder.mutation<any, { schoolId: string; schemeId: string; classLevelId: string }>({
+      query: ({ schoolId, schemeId }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/${schemeId}/cancel`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, { classLevelId }) => [
+        { type: 'Curriculum', id: `SCHEME_SUMMARY_${classLevelId}` },
+        'Curriculum',
+      ],
+    }),
+
+    getAgoraLibrary: builder.query<any[], { schoolId: string; subjectId: string; gradeLevel: string }>({
+      query: ({ schoolId, subjectId, gradeLevel }) => ({
+        url: `schools/${schoolId}/curriculum/agora-library`,
+        params: { subjectId, gradeLevel },
+      }),
+      transformResponse: (response: ResponseDto<any[]>) => response.data,
+    }),
+
+    getSubscriptionSummary: builder.query<SubscriptionSummaryDto, void>({
+      query: () => 'subscriptions/summary',
+      transformResponse: (response: ResponseDto<SubscriptionSummaryDto>) => response.data,
     }),
   }),
 });
@@ -3466,6 +3687,7 @@ export const {
   useCreateGradeMutation,
   useBulkCreateGradesMutation,
   useGetClassGradesQuery,
+  useGetClassGradesGroupedByStudentsQuery,
   useGetStudentGradesQuery,
   useUpdateGradeMutation,
   useDeleteGradeMutation,
@@ -3491,6 +3713,7 @@ export const {
   useGetMyStudentTranscriptQuery,
   useGetMyStudentTransfersQuery,
   useGetMyStudentSchoolQuery,
+  useGetMyStudentDashboardStatsQuery,
   // Student Admission hooks
   useAdmitStudentMutation,
   // Student hooks
@@ -3527,10 +3750,22 @@ export const {
   useSubmitAssessmentMutation,
   useGetAssessmentSubmissionQuery,
   useGradeAssessmentSubmissionMutation,
+  useDeleteAssessmentMutation,
+  useStartAssessmentMutation,
+  useLogAssessmentViolationMutation,
   // Attendance hooks
-  useMarkAttendanceMutation,
   useMarkBulkAttendanceMutation,
+  useMarkAttendanceMutation,
   useGetClassAttendanceQuery,
   useGetClassAttendanceSummaryQuery,
+  // Scheme of Work hooks
+  useGetSchemeOfWorkForClassQuery,
+  useUpdateSchemeOfWorkWeekMutation,
+  useGetSchemesSummaryQuery,
+  useSetupSchemeOfWorkMutation,
+  useCancelSchemeOfWorkMutation,
+  useGetAgoraLibraryQuery,
+  // Subscription hooks
+  useGetSubscriptionSummaryQuery,
 } = schoolAdminApi;
 

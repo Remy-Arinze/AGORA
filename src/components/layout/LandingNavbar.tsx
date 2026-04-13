@@ -172,7 +172,7 @@ export function LandingNavbar() {
                                             Login
                                         </Button>
                                     </Link>
-                                    <Link href="/auth/login">
+                                    <Link href="/auth/register-school">
                                         <Button variant="primary" size="sm" isFlat className="rounded px-6 font-bold bg-agora-blue text-white">
                                             Get Started
                                         </Button>
@@ -180,7 +180,15 @@ export function LandingNavbar() {
                                 </div>
                             )}
                             {isMounted && user && (
-                                <Link href={user.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/school'}>
+                                <Link href={(() => {
+                                    const roleMap: Record<string, string> = {
+                                        SUPER_ADMIN: '/dashboard/super-admin',
+                                        SCHOOL_ADMIN: '/dashboard/school',
+                                        TEACHER: '/dashboard/teacher',
+                                        STUDENT: '/dashboard/student',
+                                    };
+                                    return roleMap[user.role] || '/dashboard';
+                                })()}>
                                     <Button variant="primary" size="sm" isFlat className="rounded px-6 font-bold bg-agora-blue text-white">
                                         Go to dashboard
                                     </Button>
@@ -249,7 +257,7 @@ export function LandingNavbar() {
                                         Login
                                     </Button>
                                 </Link>
-                                <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="block w-full">
+                                <Link href="/auth/register-school" onClick={() => setMobileMenuOpen(false)} className="block w-full">
                                     <Button variant="primary" size="lg" isFlat className="w-full text-lg font-bold bg-agora-blue text-white">
                                         Get Started Free
                                     </Button>
@@ -258,7 +266,15 @@ export function LandingNavbar() {
                         )}
                         {isMounted && user && (
                             <Link
-                                href={user.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/school'}
+                                href={(() => {
+                                    const roleMap: Record<string, string> = {
+                                        SUPER_ADMIN: '/dashboard/super-admin',
+                                        SCHOOL_ADMIN: '/dashboard/school',
+                                        TEACHER: '/dashboard/teacher',
+                                        STUDENT: '/dashboard/student',
+                                    };
+                                    return roleMap[user.role] || '/dashboard';
+                                })()}
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="block w-full"
                             >

@@ -20,6 +20,7 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
+import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
 import { useGetMyTeacherSchoolQuery, useGetMyTeacherProfileQuery } from '@/lib/store/api/schoolAdminApi';
 import { useGetStudentByIdQuery, useGetStudentGradesQuery, useUpdateGradeMutation } from '@/lib/store/api/schoolAdminApi';
 import toast from 'react-hot-toast';
@@ -139,6 +140,7 @@ export default function TeacherStudentDetailPage() {
               <p className="text-light-text-secondary dark:text-dark-text-secondary">
                 {student.uid || student.publicId} • {student.enrollment?.classLevel || 'N/A'}
               </p>
+              <LiveStatusBadge activity={student.currentActivity} size="md" className="mt-2" />
             </div>
           </div>
         </FadeInUp>

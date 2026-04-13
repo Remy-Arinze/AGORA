@@ -8,6 +8,8 @@ import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/lib/store/store';
 import { cn } from '@/lib/utils';
+import { GlobalAiAssistant } from '@/components/ai/GlobalAiAssistant';
+import { NotificationProvider } from '@/components/notifications/NotificationProvider';
 
 function MainContent({ children, showNavbar, userRole }: { children: React.ReactNode, showNavbar: boolean, userRole?: string }) {
   return (
@@ -35,14 +37,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const showNavbar = userRole !== 'SUPER_ADMIN' && userRole !== 'SCHOOL_ADMIN' && userRole !== 'TEACHER' && userRole !== 'STUDENT';
 
   return (
-    <div className={cn(
-      "min-h-screen transition-colors duration-200 flex overflow-hidden w-full relative",
-      (userRole === 'TEACHER' || userRole === 'STUDENT') ? "bg-transparent" : "bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]"
-    )}>
-      {showNavbar && <Navbar />}
-      <SidebarNew hideMobileHeader={showNavbar} />
-      <MainContent showNavbar={showNavbar} userRole={userRole}>{children}</MainContent>
-    </div>
+    <NotificationProvider>
+      <div className={cn(
+        "min-h-screen transition-colors duration-200 flex overflow-hidden w-full relative",
+        (userRole === 'TEACHER' || userRole === 'STUDENT') ? "bg-transparent" : "bg-[var(--light-bg)] dark:bg-[var(--dark-bg)]"
+      )}>
+        {showNavbar && <Navbar />}
+        <SidebarNew hideMobileHeader={showNavbar} />
+        <MainContent showNavbar={showNavbar} userRole={userRole}>{children}</MainContent>
+        <GlobalAiAssistant />
+      </div>
+    </NotificationProvider>
   );
 }
 

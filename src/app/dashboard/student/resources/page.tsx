@@ -36,11 +36,11 @@ export default function StudentResourcesPage() {
     {},
     { skip: !classData } // Skip until we know student is enrolled
   );
-  const classResources = classResourcesResponse?.data || [];
+  const classResources = classResourcesResponse?.data;
 
   // Get personal resources
   const { data: personalResourcesResponse, isLoading: isLoadingPersonalResources } = useGetMyStudentPersonalResourcesQuery();
-  const personalResources = personalResourcesResponse?.data || [];
+  const personalResources = personalResourcesResponse?.data;
 
   // Upload and delete mutations
   const [uploadPersonalResource, { isLoading: isUploadingMutation }] = useUploadPersonalResourceMutation();
@@ -188,24 +188,24 @@ export default function StudentResourcesPage() {
                 size="sm"
                 onClick={() => setActiveTab('class')}
               >
-                Class Resources ({classResources.length})
+                Class Resources ({classResources?.length || 0})
               </Button>
               <Button
                 variant={activeTab === 'personal' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('personal')}
               >
-                Personal Resources ({personalResources.length})
+                Personal Resources ({personalResources?.length || 0})
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {isLoadingClassResources || isLoadingPersonalResources ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted animate-spin" />
-              </div>
-            ) : activeTab === 'class' ? (
-              classResources.length > 0 ? (
+            {activeTab === 'class' ? (
+              isLoadingClassResources || classResources === undefined ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted animate-spin" />
+                </div>
+              ) : classResources.length > 0 ? (
                 <div className="space-y-3">
                   {classResources.map((resource: any) => (
                     <FadeInUp key={resource.id} from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.4} className="border border-light-border dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors">

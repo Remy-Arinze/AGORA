@@ -41,7 +41,7 @@ export interface School {
   id: string;
   schoolId: string;
   name: string;
-  subdomain: string;
+  
   domain: string | null;
   address: string | null;
   city: string | null;
@@ -72,7 +72,7 @@ export interface School {
 
 export interface CreateSchoolDto {
   name: string;
-  subdomain?: string; // Optional - will be auto-generated from school name if not provided
+
   domain?: string;
   address?: string;
   city?: string;
@@ -429,10 +429,8 @@ export const schoolsApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('image', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -441,9 +439,6 @@ export const schoolsApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         const response = await fetch(url, {
@@ -472,10 +467,8 @@ export const schoolsApi = apiSlice.injectEndpoints({
         const formData = new FormData();
         formData.append('image', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
-
-        const tenantId = typeof window !== 'undefined' ? (localStorage.getItem('tenantId') || window.location.hostname.split('.')[0]) : null;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';
@@ -484,9 +477,6 @@ export const schoolsApi = apiSlice.injectEndpoints({
         const headers: HeadersInit = {};
         if (token) {
           headers['authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId && !['localhost', 'www', 'api', 'app'].includes(tenantId)) {
-          headers['x-tenant-id'] = tenantId;
         }
 
         const response = await fetch(url, {

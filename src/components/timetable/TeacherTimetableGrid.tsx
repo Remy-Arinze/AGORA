@@ -235,12 +235,13 @@ export function TeacherTimetableGrid({
                   {DAYS.map((day) => (
                     <th
                       key={day}
-                      className={`text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b border-light-border dark:border-dark-border ${day === currentDay ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      className={`text-left py-3 px-4 font-semibold text-light-text-secondary dark:text-dark-text-secondary border-b border-light-border dark:border-dark-border ${day === currentDay ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                         }`}
+                      style={{ fontSize: 'var(--text-small)' }}
                     >
                       {DAY_LABELS[day]}
                       {day === currentDay && (
-                        <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">(Today)</span>
+                        <span className="ml-2 text-blue-600 dark:text-blue-400" style={{ fontSize: 'var(--text-tiny)' }}>(Today)</span>
                       )}
                     </th>
                   ))}
@@ -251,9 +252,9 @@ export function TeacherTimetableGrid({
                   const [startTime, endTime] = slot.split('-');
                   return (
                     <tr key={slot} className="border-b border-light-border dark:border-dark-border">
-                      <td className="py-3 px-4 text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary sticky left-0 bg-light-card dark:bg-dark-surface z-20">
+                      <td className="py-3 px-4 font-medium text-light-text-secondary dark:text-dark-text-secondary sticky left-0 bg-light-card dark:bg-dark-surface z-20" style={{ fontSize: 'var(--text-tiny)' }}>
                         <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
+                          <Clock className="h-3 w-3" />
                           <span>
                             {startTime} - {endTime}
                           </span>
@@ -284,18 +285,18 @@ export function TeacherTimetableGrid({
                                         }`}
                                     >
                                       <div className="flex items-start justify-between gap-2 mb-1">
-                                        <div className="font-semibold text-sm flex-1">{display.title}</div>
+                                        <div className="font-bold flex-1" style={{ fontSize: 'var(--text-body)' }}>{display.title}</div>
                                         {hasConflict && (
-                                          <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                                          <AlertTriangle className="h-3 w-3 text-red-600 dark:text-red-400 flex-shrink-0" />
                                         )}
                                         {isFromCourseRegistration && (
-                                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded flex-shrink-0">
+                                          <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded flex-shrink-0 font-bold" style={{ fontSize: 'var(--text-tiny)' }}>
                                             CO
                                           </span>
                                         )}
                                       </div>
                                       {display.subtitle && (
-                                        <div className="text-xs opacity-80 mb-1">{display.subtitle}</div>
+                                        <div className="opacity-80 mb-1 font-medium" style={{ fontSize: 'var(--text-tiny)' }}>{display.subtitle}</div>
                                       )}
                                       {hasConflict && period.conflictMessage && (
                                         <div className="text-xs text-red-600 dark:text-red-400 mt-1 mb-1 font-medium">
@@ -303,7 +304,7 @@ export function TeacherTimetableGrid({
                                         </div>
                                       )}
                                       {display.classInfo && (
-                                        <div className="flex items-center gap-1 text-xs opacity-70 mt-2">
+                                        <div className="flex items-center gap-1 opacity-70 mt-2" style={{ fontSize: 'var(--text-tiny)' }}>
                                           <MapPin className="h-3 w-3" />
                                           {display.classInfo}
                                         </div>

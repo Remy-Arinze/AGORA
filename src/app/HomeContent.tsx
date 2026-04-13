@@ -107,7 +107,7 @@ export default function HomeContent() {
       };
       router.push(roleMap[user.role] || '/dashboard');
     } else {
-      router.push('/auth/login');
+      router.push('/auth/register-school');
     }
   };
 

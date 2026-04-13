@@ -1,85 +1,50 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { setCredentials, logout } from '../slices/authSlice';
-
-// Get tenant ID from subdomain or localStorage
-const getTenantId = (): string | null => {
-  if (typeof window === 'undefined') return null;
-
-  // Try to get from localStorage first (set after login)
-  const stored = localStorage.getItem('tenantId');
-  if (stored) return stored;
-
-  // Fallback: extract from subdomain
-  const hostname = window.location.hostname;
-  const subdomain = hostname.split('.')[0];
-
-  // Ignore common non-tenant subdomains
-  if (['localhost', 'www', 'api', 'app'].includes(subdomain)) {
-    return null;
-  }
-
-  return subdomain;
-};
+import * as Sentry from '@sentry/nextjs';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: (() => {
-    const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
-    const baseUrl = envUrl || 'http://localhost:4000';
-    // Routes are directly accessible without /api prefix
-    return baseUrl;
-  })(),
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   prepareHeaders: (headers, { getState }) => {
-    // Get token from Redux state
-    const state = getState() as { auth: { accessToken?: string | null; token?: string | null } };
-    const token = state?.auth?.accessToken || state?.auth?.token;
+    const state = getState() as { auth: { token?: string | null; tenantId?: string | null } };
+    const token = state?.auth?.token;
 
+    // 1. Set Authorization Header — the JWT contains the schoolId,
+    //    which is the sole source of truth for tenant context.
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
 
-    // Inject tenant ID from subdomain
-    const tenantId = getTenantId();
-    if (tenantId) {
-      headers.set('x-tenant-id', tenantId);
-    }
-
-    // Only set Content-Type for JSON requests (not FormData)
-    const contentType = headers.get('Content-Type');
-    if (!contentType || contentType === 'application/json') {
-      headers.set('Content-Type', 'application/json');
-    }
+    headers.set('Content-Type', 'application/json');
     return headers;
   },
 });
-
-import * as Sentry from '@sentry/nextjs';
 
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  const state = api.getState() as { auth: { refreshToken?: string | null; user?: any; currentSchoolId?: string } };
+  const state = api.getState() as { auth: { token?: string | null; refreshToken?: string | null; user?: any; tenantId?: string | null } };
   const user = state.auth.user;
-  const schoolId = state.auth.currentSchoolId || getTenantId();
 
-  // Update Sentry context with current user and school
+  // Update Sentry context
   if (user) {
     Sentry.setUser({ id: user.id, email: user.email });
   }
-  if (schoolId) {
-    Sentry.setTag('schoolId', schoolId);
+  if (state.auth.tenantId) {
+    Sentry.setTag('schoolId', state.auth.tenantId);
   }
 
   let result = await baseQuery(args, api, extraOptions);
 
   // If we get an error (except 401 which is handled below), report to Sentry
   if (result.error && result.error.status !== 401 && result.error.status !== 404) {
+    const error = result.error;
     Sentry.withScope((scope) => {
       scope.setExtra('apiArgs', args);
-      scope.setExtra('apiError', result.error);
-      Sentry.captureException(new Error(`API Error ${result.error.status}: ${JSON.stringify(result.error.data)}`));
+      scope.setExtra('apiError', error);
+      Sentry.captureException(new Error(`API Error ${error.status}: ${JSON.stringify(error.data)}`));
     });
   }
 
@@ -89,7 +54,6 @@ const baseQueryWithReauth: BaseQueryFn<
 
     if (refreshToken) {
       try {
-        // Try to refresh the token
         const refreshResult = await baseQuery(
           {
             url: '/auth/refresh',
@@ -115,21 +79,18 @@ const baseQueryWithReauth: BaseQueryFn<
           // Retry the original query with new token
           result = await baseQuery(args, api, extraOptions);
         } else {
-          // Refresh failed, logout user
           api.dispatch(logout());
           if (typeof window !== 'undefined') {
             window.location.href = '/auth/login?expired=true';
           }
         }
       } catch (error) {
-        // Refresh failed, logout user
         api.dispatch(logout());
         if (typeof window !== 'undefined') {
           window.location.href = '/auth/login?expired=true';
         }
       }
     } else {
-      // No refresh token, logout user
       api.dispatch(logout());
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login?expired=true';
@@ -140,10 +101,37 @@ const baseQueryWithReauth: BaseQueryFn<
   return result;
 };
 
+/**
+ * Robust Retry Strategy:
+ * 1. Exponential Backoff (1s, 2s, 4s...)
+ * 2. Fail-Fast for auth/logic errors (401, 403, 404, 400)
+ * 3. Max 5 attempts for transient network/server errors
+ */
+const staggeredBaseQuery = retry(
+  async (args: string | FetchArgs, api, extraOptions) => {
+    const result = await baseQueryWithReauth(args, api, extraOptions);
+    
+    // Fail immediately for these status codes — no point in retrying
+    if (
+      result.error?.status === 401 || 
+      result.error?.status === 403 || 
+      result.error?.status === 404 ||
+      result.error?.status === 400
+    ) {
+      retry.fail(result.error);
+    }
+    
+    return result;
+  },
+  {
+    maxRetries: 5,
+  }
+);
+
 export const apiSlice = createApi({
   reducerPath: 'api',
-  baseQuery: baseQueryWithReauth,
-  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory'],
+  baseQuery: staggeredBaseQuery,
+  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Grades', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory', 'Attendance', 'SchemeOfWork', 'AgoraCurriculum', 'AgoraCurriculumSource', 'NerdcSubject'],
   endpoints: (builder) => ({
     changePassword: builder.mutation<
       { success: boolean; message: string },
@@ -165,8 +153,8 @@ export const apiSlice = createApi({
         const formData = new FormData();
         formData.append('image', file);
 
-        const state = _api.getState() as { auth: { accessToken?: string | null; token?: string | null } };
-        const token = state?.auth?.accessToken || state?.auth?.token;
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
 
         const envUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL;
         const baseUrl = envUrl || 'http://localhost:4000';

@@ -73,10 +73,7 @@ export function SchoolDetailsCard({ school, schoolId }: SchoolDetailsCardProps) 
                   <CopyToClipboard text={school.schoolId} id={`school-${school.id}`} size="sm" />
                 </div>
               )}
-              <div className="flex items-center gap-2 text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                <span className="font-medium">Subdomain:</span>
-                <span>{school.subdomain}.agora.com</span>
-              </div>
+
               {school.domain && (
                 <div className="flex items-center gap-2 text-sm text-light-text-secondary dark:text-dark-text-secondary">
                   <span className="font-medium">Domain:</span>

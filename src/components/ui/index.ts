@@ -12,4 +12,5 @@ export { Checkbox } from './Checkbox';
 export { Label } from './Label';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 
+export { Progress } from './Progress';
 export { CountrySelector } from './CountrySelector';

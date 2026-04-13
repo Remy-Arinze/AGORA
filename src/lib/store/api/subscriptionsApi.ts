@@ -133,7 +133,7 @@ export interface SubscriptionPlanDto {
   accent: string;
   isPublic: boolean;
   customSchoolId: string | null;
-  customSchool?: { name: string; subdomain: string } | null;
+  customSchool?: { name: string;  } | null;
   maxStudents: number;
   maxTeachers: number;
   maxAdmins: number;

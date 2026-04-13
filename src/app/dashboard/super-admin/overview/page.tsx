@@ -198,9 +198,6 @@ export default function OverviewPage() {
                             <p className="font-medium text-light-text-primary dark:text-white" style={{ fontSize: 'var(--text-body)' }}>
                               {school.teachersCount || 0} teachers
                             </p>
-                            <p className="text-light-text-muted dark:text-[#6b7280]" style={{ fontSize: 'var(--text-small)' }}>
-                              {school.subdomain}.agora.com
-                            </p>
                           </div>
                         </div>
                       </Link>

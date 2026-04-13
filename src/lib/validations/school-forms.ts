@@ -210,15 +210,6 @@ const sanitizePhone = (phone: string): string => {
   return phone.replace(/[^\d+]/g, '');
 };
 
-const sanitizeSubdomain = (subdomain: string): string => {
-  return subdomain
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
-};
-
 // Create School Form Schema with sanitization
 export const createSchoolFormSchema = z.object({
   name: z
@@ -227,14 +218,6 @@ export const createSchoolFormSchema = z.object({
     .min(2, 'School name must be at least 2 characters')
     .max(200, 'School name must be at most 200 characters')
     .transform((val) => sanitizeString(val, 200)),
-  subdomain: z
-    .string()
-    .optional()
-    .transform((val) => (val ? sanitizeSubdomain(val) : undefined))
-    .refine(
-      (val) => !val || (val.length >= 3 && val.length <= 50),
-      { message: 'Subdomain must be between 3 and 50 characters' }
-    ),
   domain: z
     .string()
     .optional()

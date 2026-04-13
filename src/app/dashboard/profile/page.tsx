@@ -1270,11 +1270,11 @@ function ProfilePageContent() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-light-text-secondary dark:text-[#9ca3af] flex items-center gap-1">
-                        <Globe className="h-4 w-4" />
-                        Subdomain
+                        <GraduationCap className="h-4 w-4" />
+                        School ID
                       </label>
                       <p className="text-base text-light-text-primary dark:text-white mt-1">
-                        {school.subdomain ? `${school.subdomain}.agora.com` : 'N/A'}
+                        {school.schoolId || 'N/A'}
                       </p>
                     </div>
                     <div>

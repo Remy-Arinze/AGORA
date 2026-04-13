@@ -74,7 +74,6 @@
     --stat-card-padding: .1rem;
     /* 16px - Reduced Stat card padding */
     --stat-icon-size: 1rem;
-    /* 20px - Stat card icon size */
     --card-padding: .1rem;
     /* 20px - Standard card padding */
     --card-padding-large: 1.2rem;
@@ -82,7 +81,8 @@
 
     /* Light Mode Colors */
     --light-bg: #ebebeb;
-    --light-card: #dadde2;
+    --light-card: #ffffff;
+    --light-surface: #f8fafc;
     --light-text-primary: #111827;
     --light-text-secondary: #4b5563;
     --light-text-muted: #9ca3af;
@@ -111,6 +111,7 @@
     --agora-success: #36FE96;
     /* Neon green for dark mode */
     --dark-bg: #101011;
+    --dark-card: #2a2a2a;
     --dark-surface: #1f1f22;
     --dark-border: #232327;
     --dark-input: #2f2f34;
@@ -180,7 +181,7 @@
   }
 
   body.teacher-dashboard-active:not(.dark) .sidebar-link-active {
-    background-color: #ffffff !important;
+    background-color: var(--light-card) !important;
     color: #0f172a !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
     border-color: rgba(0, 0, 0, 0.02) !important;
