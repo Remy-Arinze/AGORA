@@ -77,6 +77,9 @@ function LoginContent() {
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Too many attempts. Please wait a moment before trying again.");
+        }
         // Handle validation errors from backend
         const errorMessage = data.message ||
           (data.error && typeof data.error === 'string' ? data.error : null) ||
@@ -139,7 +142,11 @@ function LoginContent() {
         setError('Invalid response from server. Please try again.');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      if (err instanceof TypeError && (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource')) {
+        setError("We're having trouble connecting to Agora services. Please check your internet connection or the server status.");
+      } else {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -170,6 +177,9 @@ function LoginContent() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Too many attempts. Please wait a moment before trying again.");
+        }
         const errorMessage = data.message ||
           (data.error && typeof data.error === 'string' ? data.error : null) ||
           (data.error && Array.isArray(data.error) ? data.error.join(', ') : null) ||
@@ -210,7 +220,11 @@ function LoginContent() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'OTP verification failed');
+      if (err instanceof TypeError && (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource')) {
+        setError("We're having trouble connecting to Agora services. Please check your internet connection or the server status.");
+      } else {
+        setError(err instanceof Error ? err.message : 'OTP verification failed');
+      }
     } finally {
       setIsLoading(false);
     }

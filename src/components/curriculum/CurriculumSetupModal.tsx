@@ -306,7 +306,21 @@ export function CurriculumSetupModal({
                              )}
                           </div>
                           <p className="text-light-text-muted dark:text-dark-text-muted font-bold truncate" style={{ fontSize: 'var(--text-tiny)' }}>
-                            {item.consolidationNotes || 'Standard consolidated version'}
+                            {(() => {
+                              if (!item.consolidationNotes) return 'Standard consolidated version';
+                              if (item.consolidationNotes.startsWith('{')) {
+                                try {
+                                  const data = JSON.parse(item.consolidationNotes);
+                                  return data.description || 'Standard academic framework';
+                                } catch {
+                                  return 'Standard consolidated version';
+                                }
+                              }
+                              if (item.consolidationNotes.includes('# Description')) {
+                                return item.consolidationNotes.split('# Description')[1]?.split('#')[0]?.trim() || 'Standard academic framework';
+                              }
+                              return item.consolidationNotes;
+                            })()}
                           </p>
                         </div>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">

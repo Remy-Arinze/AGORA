@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { SubjectCurriculumCard } from './SubjectCurriculumCard';
 import { CurriculumSetupModal } from './CurriculumSetupModal';
+import { CurriculumDetailModal } from './CurriculumDetailModal';
 import { NoTimetableMessage } from './NoTimetableMessage';
 import { cn } from '@/lib/utils';
 import { 
@@ -41,6 +42,7 @@ export function SubjectCurriculumList({
 }: SubjectCurriculumListProps) {
   const router = useRouter();
   const [setupSubject, setSetupSubject] = useState<any | null>(null);
+  const [viewCurriculumId, setViewCurriculumId] = useState<string | null>(null);
 
   // Fetch schemes summary (status-driven)
   const { 
@@ -143,8 +145,8 @@ export function SubjectCurriculumList({
             key={subj.subjectId}
             subject={subj}
             onSetup={() => setSetupSubject(subj)}
-            onView={(id) => router.push(`/dashboard/school/curriculum/${id}`)}
-            onEdit={(id) => router.push(`/dashboard/school/curriculum/${id}/edit`)}
+            onView={(id) => setViewCurriculumId(id)}
+            onEdit={(id) => setViewCurriculumId(id)}
             onCancel={() => subj.schemeId && handleCancelGeneration(subj.schemeId)}
             canEdit={canEdit}
           />
@@ -164,6 +166,18 @@ export function SubjectCurriculumList({
           classLevelName={classLevelName}
           termId={termId}
           creditsRemaining={creditsRemaining}
+        />
+      )}
+
+      {viewCurriculumId && (
+        <CurriculumDetailModal
+          isOpen={!!viewCurriculumId}
+          onClose={() => setViewCurriculumId(null)}
+          schoolId={schoolId}
+          curriculumId={viewCurriculumId}
+          classId={classId}
+          canEdit={canEdit}
+          onUpdate={() => refetchSchemes()}
         />
       )}
     </div>
