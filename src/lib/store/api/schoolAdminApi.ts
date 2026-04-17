@@ -3650,6 +3650,14 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       },
       invalidatesTags: ['Curriculum'],
     }),
+
+    deleteSchoolCurriculumDoc: builder.mutation<void, { schoolId: string; docId: string }>({
+      query: ({ schoolId, docId }) => ({
+        url: `/schools/${schoolId}/curriculum/documents/${docId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
   }),
 });
 
@@ -3868,6 +3876,7 @@ export const {
   // School document library
   useGetSchoolCurriculumDocsQuery,
   useUploadSchoolCurriculumDocMutation,
+  useDeleteSchoolCurriculumDocMutation,
   // Subscription hooks
   useGetSubscriptionSummaryQuery,
   useGetAgoraSubjectsQuery,

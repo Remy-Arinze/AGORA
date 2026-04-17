@@ -887,7 +887,17 @@ export default function AddStaffPage() {
                     Cancel
                   </Button>
                 </Link>
-                <Button type="submit" isLoading={isLoadingState}>
+                <Button 
+                  type="submit" 
+                  isLoading={isLoadingState}
+                  disabled={
+                    !formData.firstName.trim() ||
+                    !formData.lastName.trim() ||
+                    !formData.email.trim() ||
+                    !formData.phone.trim() ||
+                    (staffType === 'admin' && !adminRole.trim())
+                  }
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Continue
                 </Button>

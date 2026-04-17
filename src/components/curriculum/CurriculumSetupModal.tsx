@@ -15,7 +15,8 @@ import {
   Info,
   Calendar,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -24,7 +25,8 @@ import {
   useSetupSchemeOfWorkMutation,
   useGetAgoraLibraryQuery,
   useGetSchoolCurriculumDocsQuery,
-  useUploadSchoolCurriculumDocMutation
+  useUploadSchoolCurriculumDocMutation,
+  useDeleteSchoolCurriculumDocMutation
 } from '@/lib/store/api/schoolAdminApi';
 import { toast } from 'react-hot-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
@@ -84,6 +86,19 @@ export function CurriculumSetupModal({
 
   const [setupScheme, { isLoading: isSubmitting }] = useSetupSchemeOfWorkMutation();
   const [uploadDoc, { isLoading: isUploadingDoc }] = useUploadSchoolCurriculumDocMutation();
+  const [deleteDoc, { isLoading: isDeletingDoc }] = useDeleteSchoolCurriculumDocMutation();
+
+  const handleDeleteDoc = async (e: React.MouseEvent, docId: string) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to permanently delete this document from your private vault?")) {
+      try {
+        await deleteDoc({ schoolId, docId }).unwrap();
+        toast.success("Document removed");
+      } catch (err: any) {
+        toast.error("Failed to delete document");
+      }
+    }
+  };
 
   const handleSetup = async () => {
     if (activeTab === 'AGORA' && !selectedAgoraId) {
@@ -126,6 +141,7 @@ export function CurriculumSetupModal({
           mode: activeTab === 'AGORA' ? 'AGORA_ONLY' : 'SCHOOL_ONLY',
           agoraCurriculumId: activeTab === 'AGORA' ? selectedAgoraId : undefined,
           schoolCurriculumDocId: activeTab === 'CUSTOM' ? selectedSourceId : undefined,
+          forceOverwrite: false
         },
       }).unwrap();
 
@@ -136,6 +152,32 @@ export function CurriculumSetupModal({
       );
       onClose();
     } catch (err: any) {
+      if (err?.status === 409 || err?.data?.message?.includes('overwrite')) {
+        const confirmReplace = window.confirm(
+          "A Scheme of Work already exists for this subject this term. Do you want to permanently overwrite it with this new selection?"
+        );
+        if (confirmReplace) {
+          try {
+            await setupScheme({
+              schoolId,
+              body: {
+                classLevelId,
+                subjectId: subject.subjectId,
+                termId,
+                mode: activeTab === 'AGORA' ? 'AGORA_ONLY' : 'SCHOOL_ONLY',
+                agoraCurriculumId: activeTab === 'AGORA' ? selectedAgoraId : undefined,
+                schoolCurriculumDocId: activeTab === 'CUSTOM' ? selectedSourceId : undefined,
+                forceOverwrite: true
+              },
+            }).unwrap();
+            toast.success('Curriculum replaced successfully!');
+            onClose();
+          } catch (retryErr: any) {
+            toast.error(retryErr?.data?.message || 'Failed to replace curriculum');
+          }
+        }
+        return;
+      }
       toast.error(err?.data?.message || 'Failed to setup curriculum', { id: 'upload-toast' });
       setIsUploading(false);
     }
@@ -416,8 +458,14 @@ export function CurriculumSetupModal({
                                   </div>
                                 </div>
                                 {selectedSourceId === doc.id && (
-                                  <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-purple-500 animate-in zoom-in" />
+                                  <CheckCircle2 className="absolute top-2 right-[36px] h-4 w-4 text-purple-500 animate-in zoom-in" />
                                 )}
+                                <button
+                                  onClick={(e) => handleDeleteDoc(e, doc.id)}
+                                  className="absolute top-2 right-2 text-light-text-muted hover:text-red-500 transition-colors p-1"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
                              </div>
                            ))}
                          </div>

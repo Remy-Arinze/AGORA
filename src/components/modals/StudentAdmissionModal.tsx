@@ -258,7 +258,7 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
       formData.gender &&
       formData.email?.trim() &&
       formData.phone?.trim() &&
-      formData.classLevel &&
+      (formData.classLevel || formData.classArmId) &&
       formData.parentName?.trim() &&
       formData.parentPhone?.trim() &&
       formData.parentRelationship?.trim() &&
