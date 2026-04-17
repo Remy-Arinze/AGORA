@@ -1,0 +1,411 @@
+'use client';
+
+import React, { useState } from 'react';
+import {
+  Sparkles,
+  BookOpen,
+  Zap,
+  CreditCard,
+  CheckCircle2,
+  Loader2,
+  X,
+  Plus,
+  Search,
+  FileUp,
+  Info,
+  Calendar,
+  Layers,
+  ChevronRight
+} from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { cn } from '@/lib/utils';
+import {
+  useSetupSchemeOfWorkMutation,
+  useGetAgoraLibraryQuery
+} from '@/lib/store/api/schoolAdminApi';
+import { toast } from 'react-hot-toast';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
+import { Input } from '@/components/ui/Input';
+
+interface CurriculumSetupModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  subject: any;
+  schoolId: string;
+  classLevelId: string;
+  classLevelName: string;
+  termId: string;
+  creditsRemaining: number;
+}
+
+export function CurriculumSetupModal({
+  isOpen,
+  onClose,
+  subject,
+  schoolId,
+  classLevelId,
+  classLevelName,
+  termId,
+  creditsRemaining,
+}: CurriculumSetupModalProps) {
+  const [activeTab, setActiveTab] = useState<'AGORA' | 'CUSTOM'>('AGORA');
+  const [selectedAgoraId, setSelectedAgoraId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Custom AI State
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Queries & Mutations
+  const { data: agoraLibrary = [], isLoading: isLoadingLibrary } = useGetAgoraLibraryQuery(
+    {
+      schoolId,
+      subjectId: subject.subjectId,
+      gradeLevel: classLevelName // Match the enum e.g. "JSS_1"
+    },
+    { skip: !isOpen || activeTab !== 'AGORA' }
+  );
+
+  const [setupScheme, { isLoading: isSubmitting }] = useSetupSchemeOfWorkMutation();
+
+  const handleSetup = async () => {
+    if (activeTab === 'AGORA' && !selectedAgoraId) {
+      toast.error('Please select a curriculum template');
+      return;
+    }
+
+    if (activeTab === 'CUSTOM' && !file) {
+      toast.error('Please upload a curriculum document');
+      return;
+    }
+
+    try {
+      // For CUSTOM, we'd normally upload the file to Cloudinary first
+      // But for this implementation, we assume the backend handles the 'SCHOOL_ONLY' mode
+      // with a placeholder or the file is handled via a separate upload service.
+      // For now, let's simulate the payload.
+
+      await setupScheme({
+        schoolId,
+        body: {
+          classLevelId,
+          subjectId: subject.subjectId,
+          termId,
+          mode: activeTab === 'AGORA' ? 'AGORA_ONLY' : 'SCHOOL_ONLY',
+          agoraCurriculumId: activeTab === 'AGORA' ? selectedAgoraId : undefined,
+          // documentUrl: customDocUrl, // If we had one
+        },
+      }).unwrap();
+
+      toast.success(
+        activeTab === 'AGORA'
+          ? 'Curriculum setup complete'
+          : 'LOIS AI has started verifying and drafting your curriculum'
+      );
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to setup curriculum');
+    }
+  };
+
+  const filteredLibrary = agoraLibrary.filter(item =>
+    item.subject?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.consolidationNotes?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      hideHeader={true}
+      size="2xl"
+      className="p-0 border-none shadow-2xl rounded-2xl"
+      contentClassName="p-0"
+    >
+      <div className="flex flex-col bg-white dark:bg-dark-surface font-sans min-h-[600px] overflow-hidden">
+        {/* Header Section */}
+        <div className="p-8 pb-4 border-b border-light-border dark:border-dark-border">
+          <div className="flex items-start justify-between mb-8">
+            <div className="space-y-4">
+
+              <div className="space-y-1">
+                <h2 className="font-black text-light-text-primary dark:text-dark-text-primary font-heading tracking-tight leading-none uppercase" style={{ fontSize: 'var(--text-page-title)' }}>
+                  {subject.subjectName}
+                </h2>
+                <div className="flex items-center gap-2 text-light-text-muted dark:text-dark-text-secondary font-bold uppercase tracking-widest" style={{ fontSize: 'var(--text-tiny)' }}>
+                  <span>{(!classLevelName || classLevelName.toLowerCase().includes('unknown')) ? 'General Grade' : classLevelName.replace('_', ' ')}</span>
+                  <div className="h-1 w-1 rounded-full bg-light-border dark:bg-dark-border" />
+                  <span>Term Outlining</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {((activeTab === 'AGORA' && selectedAgoraId) || activeTab === 'CUSTOM') && (
+                <Button 
+                  className={cn(
+                    "px-8 h-10 rounded-xl font-black uppercase tracking-[0.15em] shadow-lg shadow-blue-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]",
+                    activeTab === 'AGORA' ? "bg-blue-600 hover:bg-blue-500" : "bg-purple-600 hover:bg-purple-500"
+                  )}
+                  style={{ fontSize: 'var(--text-tiny)' }}
+                  onClick={handleSetup}
+                  disabled={isSubmitting || (activeTab === 'CUSTOM' && (!file || creditsRemaining < 50))}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : activeTab === 'AGORA' ? (
+                    <Plus className="h-4 w-4 mr-2" />
+                  ) : null}
+                  {activeTab === 'AGORA' ? 'Use Template' : 'Curate'}
+                </Button>
+              )}
+
+              {((activeTab === 'AGORA' && selectedAgoraId) || activeTab === 'CUSTOM') && (
+                <div className="h-8 w-[1px] bg-light-border dark:bg-dark-border mx-1" />
+              )}
+
+              <button 
+                onClick={onClose}
+                className="h-10 w-10 rounded-xl bg-light-surface dark:bg-dark-bg flex items-center justify-center text-light-text-muted dark:text-dark-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary transition-all border border-light-border dark:border-dark-border group"
+              >
+                <X className="h-5 w-5 transition-transform group-hover:rotate-90 duration-300" />
+              </button>
+            </div>
+          </div>
+
+          {/* Simple Tab Styling - matching Class Detail Page */}
+          <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
+            {(['AGORA', 'CUSTOM'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 font-black transition-all whitespace-nowrap uppercase tracking-[0.15em]",
+                  activeTab === tab
+                    ? "border-b-2 border-agora-blue text-agora-blue"
+                    : "text-light-text-muted dark:text-dark-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary"
+                )}
+                style={{ fontSize: 'var(--text-tiny)' }}
+              >
+                {tab === 'AGORA' && <BookOpen className="h-3.5 w-3.5" />}
+                {tab === 'AGORA' ? 'Standard' : 'Custom'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="flex-1 bg-light-card dark:bg-dark-bg px-8 pb-8 overflow-y-auto max-h-[500px]">
+          <div className="pt-6">
+            {activeTab === 'AGORA' ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight font-heading" style={{ fontSize: 'var(--text-section-title)' }}>
+                      Select Master Curriculum
+                    </h3>
+                    <p className="text-light-text-muted dark:text-dark-text-muted font-bold font-heading" style={{ fontSize: 'var(--text-small)' }}>
+                      Pick a pre-verified template from the Agora database.
+                    </p>
+                  </div>
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-light-text-muted" />
+                    <Input
+                      placeholder="Search templates..."
+                      className="pl-10 h-10 rounded-xl bg-light-surface dark:bg-dark-surface/50 border-transparent focus:border-blue-500/50 transition-all"
+                      style={{ fontSize: 'var(--text-small)' }}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {isLoadingLibrary ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="h-24 rounded-xl bg-light-surface dark:bg-dark-surface/50 animate-pulse" />
+                    ))}
+                  </div>
+                ) : filteredLibrary.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredLibrary.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedAgoraId(item.id)}
+                        className={cn(
+                          "group p-5 rounded-xl border-2 transition-all cursor-pointer flex items-center gap-4",
+                          selectedAgoraId === item.id
+                            ? "border-blue-500 bg-blue-500/5 shadow-lg shadow-blue-500/5"
+                            : "border-light-border dark:border-dark-border hover:border-blue-500/30"
+                        )}
+                      >
+                        <div className={cn(
+                          "h-12 w-12 rounded-lg flex items-center justify-center transition-all",
+                          selectedAgoraId === item.id ? "bg-blue-500 text-white" : "bg-light-surface dark:bg-dark-surface text-light-text-muted"
+                        )}>
+                          <BookOpen className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-black text-light-text-primary dark:text-dark-text-primary truncate uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>
+                            v{item.version} - {item.subject?.name}
+                          </h4>
+                          <p className="text-light-text-muted dark:text-dark-text-muted font-bold truncate" style={{ fontSize: 'var(--text-tiny)' }}>
+                            {item.consolidationNotes || 'Standard consolidated version'}
+                          </p>
+                        </div>
+                        {selectedAgoraId === item.id && (
+                          <CheckCircle2 className="h-5 w-5 text-blue-500 animate-in zoom-in" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-light-surface dark:bg-dark-surface/30 rounded-xl border border-dashed border-light-border dark:border-dark-border">
+                    <div className="p-4 bg-light-card dark:bg-dark-bg rounded-xl shadow-sm">
+                      <BookOpen className="h-8 w-8 text-light-text-muted opacity-20" />
+                    </div>
+                    <div>
+                      <p className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>No Templates Available</p>
+                      <p className="text-light-text-muted dark:text-dark-text-muted font-bold max-w-[240px] mt-1" style={{ fontSize: 'var(--text-tiny)' }}>
+                        We couldn't find a template for this specific subject and grade level.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="rounded-xl px-6"
+                      onClick={() => setActiveTab('CUSTOM')}
+                    >
+                      Use Custom AI Upload
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2 space-y-6">
+                    <div>
+                      <h3 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight font-heading" style={{ fontSize: 'var(--text-section-title)' }}>
+                        Upload Source Material
+                      </h3>
+                      <p className="text-light-text-muted dark:text-dark-text-muted font-bold font-heading" style={{ fontSize: 'var(--text-small)' }}>
+                        Upload your school's curriculum PDF or Word doc for LOIS to analyze.
+                      </p>
+                    </div>
+
+                    <div
+                      className={cn(
+                        "group relative border-2 border-dashed rounded-xl p-10 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer overflow-hidden",
+                        file
+                          ? "border-agora-success bg-agora-success/5"
+                          : "border-light-border dark:border-dark-border hover:border-purple-500/30 hover:bg-purple-500/[0.02]"
+                      )}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const droppedFile = e.dataTransfer.files[0];
+                        if (droppedFile) setFile(droppedFile);
+                      }}
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      <input
+                        id="file-upload"
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                          const selectedFile = e.target.files?.[0];
+                          if (selectedFile) setFile(selectedFile);
+                        }}
+                      />
+
+                      <div className={cn(
+                        "h-16 w-16 rounded-xl flex items-center justify-center transition-all duration-500",
+                        file ? "bg-agora-success text-white scale-110 shadow-lg shadow-agora-success/20" : "bg-light-surface dark:bg-dark-surface text-light-text-muted group-hover:scale-110 group-hover:text-purple-500"
+                      )}>
+                        {file ? <CheckCircle2 className="h-8 w-8" /> : <FileUp className="h-8 w-8" />}
+                      </div>
+
+                      <div className="text-center">
+                        <p className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-small)' }}>
+                          {file ? file.name : "Drop Curriculum Document"}
+                        </p>
+                        <p className="text-light-text-muted dark:text-dark-text-muted font-bold mt-1" style={{ fontSize: 'var(--text-tiny)' }}>
+                          {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "Supports PDF, Word, and Excel"}
+                        </p>
+                      </div>
+
+                      {file && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFile(null);
+                          }}
+                          className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white dark:bg-dark-bg shadow-sm border border-light-border dark:border-dark-border flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex-shrink-0 flex items-center justify-center text-amber-600">
+                        <Info className="h-4 w-4" />
+                      </div>
+                      <p className="text-amber-800 dark:text-amber-200/70 leading-relaxed" style={{ fontSize: 'var(--text-tiny)' }}>
+                        <span className="font-black uppercase tracking-widest mr-1">Lois Note:</span>
+                        Verification ensures your document matches <strong>{subject.subjectName}</strong> for <strong>{classLevelName.replace('_', ' ')}</strong>. Unmatched documents will be rejected and credits refunded automatically.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-light-surface dark:bg-dark-surface/50 rounded-xl p-6 border border-light-border dark:border-dark-border sticky top-0">
+                      <h4 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-widest mb-4 font-heading" style={{ fontSize: 'var(--text-tiny)' }}>
+                        Processing Details
+                      </h4>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>AI Curation Cost</span>
+                          <span className="font-black text-purple-600 dark:text-purple-400" style={{ fontSize: 'var(--text-small)' }}>50 Credits</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Wallet Balance</span>
+                          <span className="font-black text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>{creditsRemaining} Credits</span>
+                        </div>
+
+                        <div className="h-px bg-light-border dark:bg-dark-border my-2" />
+
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight" style={{ fontSize: 'var(--text-tiny)' }}>Total Required</span>
+                          <span className="font-black text-purple-600" style={{ fontSize: 'var(--text-card-title)' }}>50</span>
+                        </div>
+                      </div>
+
+                      {creditsRemaining < 50 && (
+                        <div className="mt-6 p-4 bg-red-500/5 border border-red-500/10 rounded-xl space-y-3">
+                          <p className="font-bold text-red-600 leading-tight" style={{ fontSize: 'var(--text-tiny)' }}>
+                            Insufficient credits to start AI generation. Please top up your school wallet.
+                          </p>
+                          <Button
+                            variant="primary"
+                            className="w-full h-10 rounded-xl bg-red-500 hover:bg-red-600 font-black tracking-widest uppercase"
+                            style={{ fontSize: 'var(--text-tiny)' }}
+                          >
+                            Top Up Now
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}

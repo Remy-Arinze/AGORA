@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { AgoraChat } from './AgoraChat';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -17,6 +18,9 @@ interface AiChatDrawerProps {
 export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ schoolId, isOpen, onClose }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const { theme } = useTheme();
+  const pathname = usePathname();
+  
+  const pageContext = `The user is currently viewing the page at path: ${pathname}. Provide context-aware assistance if they ask about their current screen.`;
 
   return (
     <>
@@ -32,11 +36,12 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ schoolId, isOpen, on
       <div
         className={cn(
           "fixed right-0 bottom-0 z-[100] transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) transform flex flex-col overflow-hidden rounded-t-[3rem] lg:rounded-tr-none lg:rounded-l-[3rem] border-l border-t",
-          "bg-white/80 dark:bg-[#0A0A0B] backdrop-blur-2xl border-gray-200/50 dark:border-white/10 shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.1)] dark:shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.8)]",
+          "bg-white dark:bg-[#0A0A0B] backdrop-blur-2xl border-gray-200/50 dark:border-white/10 shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.1)] dark:shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.8)]",
           isOpen ? "translate-y-0 lg:translate-x-0" : "translate-y-full lg:translate-x-full lg:translate-y-0",
           isMaximized
             ? "w-screen h-screen rounded-none"
-            : "w-full lg:w-[550px] h-[90vh]"
+            : "w-full lg:w-[550px] h-[90vh]",
+          theme === 'dark' ? 'dark' : ''
         )}
       >
         {/* Glow Decor */}
@@ -62,9 +67,9 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ schoolId, isOpen, on
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 relative">
-            <AgoraAssistant schoolId={schoolId} />
+        <div className="flex-1 min-h-0 flex flex-col pt-16">
+          <div className="flex-1 relative overflow-hidden">
+            <AgoraChat schoolId={schoolId} variant="minimal" pageContext={pageContext} />
           </div>
         </div>
       </div>

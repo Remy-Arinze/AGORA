@@ -53,6 +53,7 @@ export default function VerifyOtpPage() {
             accessToken: data.data.accessToken,
             refreshToken: data.data.refreshToken,
             user: data.data.user,
+            tenantId: data.data.user.tenantId, // ✅ Set tenant ID for school context
           })
         );
 

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'accent' | 'white';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   bgColor?: string; // Optional custom background color (hex or tailwind class)
   textColor?: string; // Optional custom text color
@@ -76,6 +76,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       sm: 'px-3 py-2 text-[13px] leading-tight',
       md: 'px-4 py-2.5 text-base leading-tight',
       lg: 'px-6 py-3 text-lg leading-tight',
+      icon: 'h-10 w-10 p-2',
     };
 
     // Custom styles for bgColor/textColor if provided

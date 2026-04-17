@@ -22,6 +22,7 @@ import {
 } from '@/lib/store/api/aiApi';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { SaveAssessmentEditor } from './SaveAssessmentEditor';
 
 interface AgoraAiToolsProps {
     schoolId: string;
@@ -265,32 +266,8 @@ export function AgoraAiTools({
                             </Button>
 
                             {generatedQuiz && (
-                                <div className="mt-4 p-5 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-surface rounded-2xl border border-blue-100 dark:border-blue-900/20 max-h-[300px] overflow-y-auto custom-scrollbar">
-                                    <h3 className="font-bold text-blue-900 dark:text-blue-400 mb-4 flex items-center gap-2">
-                                        <Sparkles className="h-4 w-4 text-amber-500" />
-                                        Interactive Questions
-                                    </h3>
-                                    <div className="space-y-4">
-                                        {generatedQuiz.map((q: any, index: number) => (
-                                            <div key={index} className="text-sm bg-white dark:bg-black/30 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm">
-                                                <p className="font-bold text-blue-950 dark:text-blue-200 mb-3">{index + 1}. {q.question}</p>
-                                                {q.options && (
-                                                    <div className="grid grid-cols-1 gap-2 pl-2">
-                                                        {q.options.map((opt: string, i: number) => (
-                                                            <div key={i} className="text-xs text-blue-800/70 dark:text-blue-400/70 flex items-center gap-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400/40" />
-                                                                {opt}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                <div className="mt-4 pt-3 border-t border-blue-100 dark:border-blue-900/20 flex items-center justify-between">
-                                                    <span className="text-[10px] font-black uppercase text-green-600 dark:text-green-400 tracking-tighter">ANS: {q.correctAnswer}</span>
-                                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2">Refine</Button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                <div className="mt-4 pt-4 border-t border-light-border dark:border-dark-border">
+                                    <SaveAssessmentEditor toolName="generate_quiz" initialData={generatedQuiz} schoolId={schoolId} />
                                 </div>
                             )}
                         </div>

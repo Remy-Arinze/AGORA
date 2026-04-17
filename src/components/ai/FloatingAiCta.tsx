@@ -14,7 +14,7 @@ export const FloatingAiCta: React.FC<FloatingAiCtaProps> = ({ onClick, className
     <button
       onClick={onClick}
       className={cn(
-        "fixed bottom-8 right-8 z-[110] group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A0A0B] text-white shadow-[0_15px_30px_-8px_rgba(0,0,0,0.8)] transition-all duration-500 hover:scale-105 active:scale-95 border-none overflow-hidden isolate",
+        "fixed bottom-8 right-8 z-[90] group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A0A0B] text-white shadow-[0_15px_30px_-8px_rgba(0,0,0,0.8)] transition-all duration-500 hover:scale-105 active:scale-95 border-none overflow-hidden isolate",
         className
       )}
     >
@@ -38,7 +38,7 @@ export const FloatingAiCta: React.FC<FloatingAiCtaProps> = ({ onClick, className
         </div>
         
         <span className="font-heading text-sm font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-          Ask Agora
+          Ask Lois
         </span>
 
         <div className="ml-0.5 p-1 rounded-md bg-white/5 border border-white/10 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all">

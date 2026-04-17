@@ -77,13 +77,13 @@ export default function TeacherCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Get teacher's school and profile
-  const { data: schoolResponse } = useGetMyTeacherSchoolQuery();
-  const { data: teacherResponse } = useGetMyTeacherProfileQuery();
+  const { data: schoolResponse, isLoading: isLoadingSchool, error: schoolError } = useGetMyTeacherSchoolQuery();
+  const { data: teacherResponse, isLoading: isLoadingTeacher, error: teacherError } = useGetMyTeacherProfileQuery();
   const schoolId = schoolResponse?.data?.id;
   const teacherId = teacherResponse?.data?.id; // Database ID
   const { currentType } = useSchoolType();
 
-  const { data: activeSessionResponse } = useGetActiveSessionQuery(
+  const { data: activeSessionResponse, isLoading: isLoadingActiveSession, error: activeSessionError } = useGetActiveSessionQuery(
     { schoolId: schoolId! },
     { skip: !schoolId }
   );
@@ -120,7 +120,7 @@ export default function TeacherCalendarPage() {
   }, [currentDate, view]);
 
   // Get events (includes admin-created and teacher-created events)
-  const { data: eventsResponse } = useGetEventsQuery(
+  const { data: eventsResponse, isLoading: isLoadingEvents, error: eventsError } = useGetEventsQuery(
     {
       schoolId: schoolId!,
       startDate: dateRange.start.toISOString(),
@@ -150,19 +150,38 @@ export default function TeacherCalendarPage() {
   const googleCalendarStatus = googleCalendarStatusResponse?.data;
   const isGoogleCalendarConnected = !!googleCalendarStatus;
 
-  // Check for OAuth callback parameters
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('google_calendar_connected') === 'true') {
-      toast.success('Google Calendar connected successfully!');
-      // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (params.get('google_calendar_error') === 'true') {
-      toast.error('Failed to connect Google Calendar. Please try again.');
-      // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, []);
+  const isLoading = isLoadingSchool || isLoadingTeacher || isLoadingActiveSession || isLoadingEvents;
+  const error = !!(schoolError || teacherError || activeSessionError || eventsError);
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute roles={['TEACHER']}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4 animate-spin" />
+            <p className="text-light-text-secondary dark:text-dark-text-secondary">
+              Loading calendar...
+            </p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute roles={['TEACHER']}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-light-text-secondary dark:text-dark-text-secondary mb-2">
+              Failed to load calendar data. Please try again.
+            </p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   const events = eventsResponse?.data || [];
   // Upcoming events only includes real events (not timetable periods or milestones)

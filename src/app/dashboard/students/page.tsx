@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Alert } from '@/components/ui/Alert';
+import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
 import { useApi } from '@/hooks/useApi';
 import { useState, useEffect } from 'react';
 
@@ -14,6 +15,14 @@ interface Student {
   lastName: string;
   dateOfBirth: string;
   profileLocked: boolean;
+  currentActivity?: {
+    type: string;
+    title: string;
+    location?: string;
+    context?: string;
+    startTime: string;
+    endTime: string;
+  } | null;
 }
 
 export default function StudentsPage() {
@@ -91,7 +100,10 @@ export default function StudentsPage() {
                             {student.uid}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {student.firstName} {student.lastName}
+                            <div>
+                              <p className="font-medium">{student.firstName} {student.lastName}</p>
+                              <LiveStatusBadge activity={student.currentActivity} size="sm" />
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(student.dateOfBirth).toLocaleDateString()}

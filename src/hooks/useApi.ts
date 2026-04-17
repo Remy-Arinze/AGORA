@@ -23,35 +23,17 @@ export function useApi() {
         ...(fetchOptions.headers as Record<string, string>),
       };
 
+      // JWT-first: the token contains the schoolId, no need for x-tenant-id header
       if (requireAuth && token) {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      // Get tenant ID from subdomain or localStorage
-      const getTenantId = (): string | null => {
-        if (typeof window === 'undefined') return null;
-        const stored = localStorage.getItem('tenantId');
-        if (stored) return stored;
-        const hostname = window.location.hostname;
-        const subdomain = hostname.split('.')[0];
-        if (['localhost', 'www', 'api', 'app'].includes(subdomain)) {
-          return null;
-        }
-        return subdomain;
-      };
-
-      const tenantId = getTenantId();
-      if (tenantId) {
-        headers['x-tenant-id'] = tenantId;
-      }
-
       try {
         const baseUrl =
-          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
         const response = await fetch(`${baseUrl}${endpoint}`, {
           ...fetchOptions,
           headers,
-          // Include credentials to send httpOnly cookies (refresh token)
           credentials: 'include',
         });
 
@@ -81,4 +63,3 @@ export function useApi() {
 
   return { apiCall };
 }
-

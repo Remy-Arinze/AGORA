@@ -128,18 +128,26 @@ export interface StudentDashboardData {
     totalGrades: number;
     recentGradesCount: number;
     activeClassesCount: number;
+    subjectBreakdown: Array<{ name: string; percentage: number }>;
   };
   
   // Loading states
   isLoading: boolean;
+  isLoadingProfile: boolean;
+  isLoadingEnrollments: boolean;
+  isLoadingClasses: boolean;
+  isLoadingSession: boolean;
   isLoadingTimetable: boolean;
+  isInitialLoadingTimetable: boolean;
   isLoadingGrades: boolean;
   
   // Error states
   hasError: boolean;
   errorMessage: string | null;
   
-  // Ready state - all essential data is loaded
+  // Ready states
+  isCoreReady: boolean;
+  isStatsReady: boolean;
   isReady: boolean;
 }
 
@@ -151,12 +159,6 @@ export interface StudentDashboardData {
  * 2. DERIVES school type from student's actual enrollment (not localStorage)
  * 3. Fetches the correct active session for that school type
  * 4. Fetches timetable and grades with correct parameters
- * 
- * Benefits:
- * - Single source of truth for all student dashboard data
- * - Correct loading sequence (no race conditions)
- * - School type is derived from actual enrollment data, not stale localStorage
- * - Clean, predictable state for UI components
  */
 export function useStudentDashboard(): StudentDashboardData {
   // Step 1: Fetch student profile
@@ -256,8 +258,6 @@ export function useStudentDashboard(): StudentDashboardData {
   }, [activeClass, activeEnrollment]);
   
   // Step 5: Fetch active session
-  // Pass schoolType if available for correct session, but don't block on it
-  // Backend now handles schoolType derivation as fallback
   const { 
     data: sessionResponse, 
     isLoading: isLoadingSession,
@@ -296,24 +296,39 @@ export function useStudentDashboard(): StudentDashboardData {
     { skip: !termId }
   );
   
-  const grades = gradesResponse?.data || [];
+  const grades = (gradesResponse?.data || []) as any[];
   
   // Filter to only published grades
   const publishedGrades = useMemo(() => {
-    return grades.filter((g: any) => g.isPublished !== false);
+    return grades?.filter((g: any) => g.isPublished !== false) || [];
   }, [grades]);
   
-  // Calculate stats
+  // Calculate stats including subject breakdown
   const stats = useMemo(() => {
     let totalScore = 0;
     let totalMaxScore = 0;
+    const subjectScores: Record<string, { score: number; max: number }> = {};
+    
     publishedGrades.forEach((grade: any) => {
       totalScore += grade.score || 0;
       totalMaxScore += grade.maxScore || 0;
+      
+      const subjectName = grade.subject?.name || grade.course?.name || 'Other';
+      if (!subjectScores[subjectName]) {
+        subjectScores[subjectName] = { score: 0, max: 0 };
+      }
+      subjectScores[subjectName].score += grade.score || 0;
+      subjectScores[subjectName].max += grade.maxScore || 0;
     });
+    
     const averageScore = totalMaxScore > 0 
       ? Math.round((totalScore / totalMaxScore) * 100) 
       : 0;
+      
+    const subjectBreakdown = Object.entries(subjectScores).map(([name, data]) => ({
+      name,
+      percentage: data.max > 0 ? Math.round((data.score / data.max) * 100) : 0
+    })).sort((a, b) => b.percentage - a.percentage);
     
     // Count recent grades (last 7 days)
     const sevenDaysAgo = new Date();
@@ -331,6 +346,7 @@ export function useStudentDashboard(): StudentDashboardData {
       totalGrades: publishedGrades.length,
       recentGradesCount: recentGrades.length,
       activeClassesCount,
+      subjectBreakdown
     };
   }, [publishedGrades, enrollments]);
   
@@ -341,8 +357,10 @@ export function useStudentDashboard(): StudentDashboardData {
     ? 'Failed to load dashboard data. Please try refreshing.'
     : null;
   
-  // Ready when we have essential data
-  const isReady = !isLoading && !!student && !!activeEnrollment;
+  // Ready states for progressive rendering
+  const isCoreReady = !isLoadingProfile && !isLoadingEnrollments && !!student && !!activeEnrollment;
+  const isStatsReady = isCoreReady && !isLoadingGrades;
+  const isReady = isCoreReady && !!activeTerm;
   
   return {
     student: student ? {
@@ -371,10 +389,17 @@ export function useStudentDashboard(): StudentDashboardData {
     publishedGrades,
     stats,
     isLoading,
+    isLoadingProfile,
+    isLoadingEnrollments,
+    isLoadingClasses,
+    isLoadingSession,
     isLoadingTimetable,
+    isInitialLoadingTimetable: isLoadingTimetable,
     isLoadingGrades,
     hasError,
     errorMessage,
+    isCoreReady,
+    isStatsReady,
     isReady,
   };
 }
@@ -382,7 +407,8 @@ export function useStudentDashboard(): StudentDashboardData {
 /**
  * Helper to get today's schedule from timetable
  */
-export function getStudentTodaySchedule(timetable: TimetablePeriod[]): TimetablePeriod[] {
+export function getStudentTodaySchedule(timetable: TimetablePeriod[] | undefined): TimetablePeriod[] {
+  if (!timetable) return [];
   const dayMap: Record<number, string> = {
     0: 'SUNDAY',
     1: 'MONDAY',
@@ -517,4 +543,3 @@ export function useStudentSchoolType(): {
     isLoading: isLoadingEnrollments || isLoadingClasses,
   };
 }
-
