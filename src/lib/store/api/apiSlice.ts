@@ -199,7 +199,16 @@ export const apiSlice = createApi({
       },
       invalidatesTags: ['User'],
     }),
+    // Fetch login sessions for history
+    getLoginSessions: builder.query<{ success: boolean; data: any[] }, void>({
+      query: () => '/auth/login-sessions',
+      providesTags: ['User'],
+    }),
   }),
 });
 
-export const { useChangePasswordMutation, useUploadProfileImageMutation } = apiSlice;
+export const { 
+  useChangePasswordMutation, 
+  useUploadProfileImageMutation,
+  useGetLoginSessionsQuery
+} = apiSlice;
