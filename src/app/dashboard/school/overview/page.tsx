@@ -138,7 +138,7 @@ export default function AdminOverviewPage() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { data: activeSessionResponse, refetch: refetchActiveSession } = useGetActiveSessionQuery(
+  const { data: activeSessionResponse, refetch: refetchActiveSession, isLoading: isLoadingSession } = useGetActiveSessionQuery(
     { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId }
   );
@@ -273,13 +273,13 @@ export default function AdminOverviewPage() {
                   variant={buttonConfig.variant}
                   size="sm"
                   onClick={buttonConfig.onClick}
-                  disabled={isEndingTerm}
-                  className="flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-2 py-2 min-w-fit"
+                  disabled={isEndingTerm || isLoadingSession}
+                  className="flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-2 py-2 min-w-[120px] transition-all"
                 >
-                  {isEndingTerm ? (
+                  {isEndingTerm || isLoadingSession ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Ending {terminology.periodSingular}...
+                      <Loader2 className="h-4 w-4 animate-spin text-current" />
+                      {isEndingTerm ? `Ending...` : `Checking...`}
                     </>
                   ) : (
                     <>

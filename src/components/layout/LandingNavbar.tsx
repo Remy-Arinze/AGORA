@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 export function LandingNavbar() {
     const { theme } = useTheme();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const pathname = usePathname();
     const isHomePage = pathname === '/';
     // Initialize based on pathname to match server render
@@ -180,19 +180,15 @@ export function LandingNavbar() {
                                 </div>
                             )}
                             {isMounted && user && (
-                                <Link href={(() => {
-                                    const roleMap: Record<string, string> = {
-                                        SUPER_ADMIN: '/dashboard/super-admin',
-                                        SCHOOL_ADMIN: '/dashboard/school',
-                                        TEACHER: '/dashboard/teacher',
-                                        STUDENT: '/dashboard/student',
-                                    };
-                                    return roleMap[user.role] || '/dashboard';
-                                })()}>
-                                    <Button variant="primary" size="sm" isFlat className="rounded px-6 font-bold bg-agora-blue text-white">
-                                        Go to dashboard
-                                    </Button>
-                                </Link>
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    isFlat
+                                    onClick={logout}
+                                    className="rounded px-6 font-bold text-white"
+                                >
+                                    Logout
+                                </Button>
                             )}
                             <ThemeToggle />
                         </div>
@@ -265,23 +261,20 @@ export function LandingNavbar() {
                             </>
                         )}
                         {isMounted && user && (
-                            <Link
-                                href={(() => {
-                                    const roleMap: Record<string, string> = {
-                                        SUPER_ADMIN: '/dashboard/super-admin',
-                                        SCHOOL_ADMIN: '/dashboard/school',
-                                        TEACHER: '/dashboard/teacher',
-                                        STUDENT: '/dashboard/student',
-                                    };
-                                    return roleMap[user.role] || '/dashboard';
-                                })()}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="block w-full"
-                            >
-                                <Button variant="primary" size="lg" isFlat className="w-full text-lg font-bold bg-agora-blue text-white">
-                                    Go to Dashboard
+                            <div className="block w-full">
+                                <Button
+                                    variant="primary"
+                                    size="lg"
+                                    isFlat
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        logout();
+                                    }}
+                                    className="w-full text-lg font-bold bg-agora-blue text-white"
+                                >
+                                    Logout
                                 </Button>
-                            </Link>
+                            </div>
                         )}
                     </div>
                 </div>

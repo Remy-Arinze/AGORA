@@ -133,7 +133,7 @@ export interface SubscriptionPlanDto {
   accent: string;
   isPublic: boolean;
   customSchoolId: string | null;
-  customSchool?: { name: string;  } | null;
+  customSchool?: { name: string; } | null;
   maxStudents: number;
   maxTeachers: number;
   maxAdmins: number;
@@ -142,6 +142,7 @@ export interface SubscriptionPlanDto {
 
 // API Slice
 export const subscriptionsApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     // Get current school's subscription
     getMySubscription: builder.query<ResponseDto<SubscriptionDto>, void>({

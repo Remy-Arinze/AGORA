@@ -5,6 +5,7 @@ import { FloatingAiCta } from './FloatingAiCta';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
 import { useParams, usePathname } from 'next/navigation';
+import { useSubscription } from '@/hooks/useSubscription';
 
 // Dynamically import the heavy chat drawer to keep the dashboard layout chunk small
 const AiChatDrawer = lazy(() =>
@@ -34,12 +35,8 @@ export const GlobalAiAssistant: React.FC = () => {
   const pathname = usePathname();
   const schoolId = (params?.schoolId as string) || reduxSchoolId || (user as any)?.schoolId;
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  if (!isHydrated) return null;
-
+  const { summary, isLoading: isLoadingSub } = useSubscription();
+  
   // Define target roles for the floating assistant
   const isAuthorized = 
     user?.role === 'SCHOOL_ADMIN' || 
@@ -54,7 +51,23 @@ export const GlobalAiAssistant: React.FC = () => {
     (pathname?.includes('/assessments/') && pathname.split('/').length > 4) ||
     pathname?.includes('/plugins/agora-ai');
 
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  if (!isHydrated) return null;
+  
+  // Basic validation - if not authorized or on a hidden page, exit immediately
   if (!isAuthorized || !user || !schoolId || isHiddenPage) return null;
+
+  // Verify the school actually has the AI tool in their subscription
+  // For admins, we are more optimistic — we show the button if they are authorized
+  // and handle the access check deeper to avoid "disappearing button" UX issues.
+  const hasAiAccess = !summary ? true : (summary?.tools?.find(t => t.slug === 'agora-ai')?.hasAccess ?? true);
+  
+  // Only hide if we are CERTAIN they don't have access (after loading)
+  if (isLoadingSub) return null; // Wait for subscription data
+  if (!hasAiAccess) return null; // Hide if explicitly denied
 
   // For teachers, wrap in the readiness gate; for other roles, render immediately
   const renderAssistant = (dataReady: boolean) => {
