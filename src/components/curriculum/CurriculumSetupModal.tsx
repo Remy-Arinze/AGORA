@@ -60,7 +60,7 @@ export function CurriculumSetupModal({
 
   // Custom AI State
   const [file, setFile] = useState<File | null>(null);
-  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [selectedGrades, setSelectedGrades] = useState<string[]>([classLevelName]); // Default to current grade
   const [isUploading, setIsUploading] = useState(false);
 
@@ -106,7 +106,7 @@ export function CurriculumSetupModal({
       return;
     }
 
-    if (activeTab === 'CUSTOM' && !selectedSourceId && !file) {
+    if (activeTab === 'CUSTOM' && selectedSourceIds.length === 0 && !file) {
       toast.error('Please select an existing document or upload a new one');
       return;
     }
@@ -137,10 +137,10 @@ export function CurriculumSetupModal({
         body: {
           classLevelId,
           subjectId: subject.subjectId,
-          termId,
+          termId: activeTab === 'AGORA' ? termId : undefined,
           mode: activeTab === 'AGORA' ? 'AGORA_ONLY' : 'SCHOOL_ONLY',
           agoraCurriculumId: activeTab === 'AGORA' ? selectedAgoraId : undefined,
-          schoolCurriculumDocId: activeTab === 'CUSTOM' ? selectedSourceId : undefined,
+          schoolCurriculumDocIds: activeTab === 'CUSTOM' ? selectedSourceIds : undefined,
           forceOverwrite: false
         },
       }).unwrap();
@@ -163,10 +163,10 @@ export function CurriculumSetupModal({
               body: {
                 classLevelId,
                 subjectId: subject.subjectId,
-                termId,
+                termId: activeTab === 'AGORA' ? termId : undefined,
                 mode: activeTab === 'AGORA' ? 'AGORA_ONLY' : 'SCHOOL_ONLY',
                 agoraCurriculumId: activeTab === 'AGORA' ? selectedAgoraId : undefined,
-                schoolCurriculumDocId: activeTab === 'CUSTOM' ? selectedSourceId : undefined,
+                schoolCurriculumDocIds: activeTab === 'CUSTOM' ? selectedSourceIds : undefined,
                 forceOverwrite: true
               },
             }).unwrap();
@@ -236,14 +236,14 @@ export function CurriculumSetupModal({
                   )}
                   style={{ fontSize: 'var(--text-tiny)' }}
                   onClick={handleSetup}
-                  disabled={isSubmitting || isUploadingDoc || (activeTab === 'CUSTOM' && (!file && !selectedSourceId) || creditsRemaining < 50)}
+                  disabled={isSubmitting || isUploadingDoc || (activeTab === 'CUSTOM' && (!file && selectedSourceIds.length === 0)) || creditsRemaining < 50}
                 >
                   {isSubmitting || isUploadingDoc ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : activeTab === 'AGORA' ? (
                     <Plus className="h-4 w-4 mr-2" />
                   ) : <Zap className="h-4 w-4 mr-2" />}
-                  {activeTab === 'AGORA' ? 'Use Template' : file ? 'Scan & Split' : 'Curate'}
+                  {activeTab === 'AGORA' ? 'Use Template' : file ? 'Scan & Split' : '⚡ Compile Academic Year'}
                 </Button>
               )}
 
@@ -420,11 +420,16 @@ export function CurriculumSetupModal({
                            {schoolDocs.map((doc: any) => (
                              <div
                                key={doc.id}
-                               onClick={() => doc.status === 'COMPLETED' && setSelectedSourceId(doc.id)}
+                               onClick={() => {
+                                 if (doc.status !== 'COMPLETED') return;
+                                 setSelectedSourceIds(prev =>
+                                   prev.includes(doc.id) ? prev.filter(id => id !== doc.id) : [...prev, doc.id]
+                                 );
+                               }}
                                className={cn(
                                  "relative p-4 rounded-xl border-2 transition-all group",
                                  doc.status !== 'COMPLETED' ? "opacity-60 cursor-not-allowed grayscale" : "cursor-pointer",
-                                 selectedSourceId === doc.id
+                                 selectedSourceIds.includes(doc.id)
                                    ? "border-purple-500 bg-purple-500/5 shadow-md shadow-purple-500/5"
                                    : "border-light-border dark:border-dark-border hover:border-purple-500/30"
                                )}
@@ -457,7 +462,7 @@ export function CurriculumSetupModal({
                                     </div>
                                   </div>
                                 </div>
-                                {selectedSourceId === doc.id && (
+                                {selectedSourceIds.includes(doc.id) && (
                                   <CheckCircle2 className="absolute top-2 right-[36px] h-4 w-4 text-purple-500 animate-in zoom-in" />
                                 )}
                                 <button
