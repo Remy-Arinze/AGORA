@@ -304,22 +304,24 @@ function LoginContent() {
           <>
             {/* Logo */}
             <div className="flex items-center justify-center mb-8">
-              <Image
-                src="/assets/logos/agora_word_blue.png"
-                alt="Agora"
-                width={100}
-                height={24}
-                className="h-6 w-auto block dark:hidden"
-                priority
-              />
-              <Image
-                src="/assets/logos/agora_worded_white.png"
-                alt="Agora"
-                width={100}
-                height={24}
-                className="h-6 w-auto hidden dark:block"
-                priority
-              />
+              <Link href="/" className="inline-block transition-transform hover:scale-105 active:scale-95 cursor-pointer">
+                <Image
+                  src="/assets/logos/agora_word_blue.png"
+                  alt="Agora"
+                  width={100}
+                  height={24}
+                  className="h-6 w-auto block dark:hidden"
+                  priority
+                />
+                <Image
+                  src="/assets/logos/agora_worded_white.png"
+                  alt="Agora"
+                  width={100}
+                  height={24}
+                  className="h-6 w-auto hidden dark:block"
+                  priority
+                />
+              </Link>
             </div>
 
             {/* Heading */}

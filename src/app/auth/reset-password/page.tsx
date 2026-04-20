@@ -128,7 +128,7 @@ function ResetPasswordContent() {
       <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="w-full max-w-md">
         {/* Agora Logo */}
         <div className="flex items-center justify-center mb-8">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="inline-block transition-transform hover:scale-105 active:scale-95 cursor-pointer">
             <Image
               src="/assets/logos/agora_word_blue.png"
               alt="Agora"
