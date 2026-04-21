@@ -308,10 +308,15 @@ export function CurriculumSetupModal({
                 </div>
 
                 {isLoadingLibrary ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="h-24 rounded-xl bg-light-surface dark:bg-dark-surface/50 animate-pulse" />
-                    ))}
+                  <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                    <div className="relative">
+                      <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+                      <div className="absolute inset-0 h-10 w-10 rounded-full border-4 border-blue-600/10" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-[0.1em] text-[10px]">Consulting Agora Library</p>
+                      <p className="text-light-text-muted dark:text-dark-text-muted font-bold text-[9px] mt-1">Lois is retrieving pre-verified templates...</p>
+                    </div>
                   </div>
                 ) : filteredLibrary.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -406,7 +411,12 @@ export function CurriculumSetupModal({
                   <div className="md:col-span-2 space-y-8">
                     
                     {/* Private Library Section */}
-                    {schoolDocs.length > 0 && (
+                    {isLoadingDocs ? (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                        <p className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-widest text-[9px]">Scanning Private Vault...</p>
+                      </div>
+                    ) : schoolDocs.length > 0 && (
                       <div className="space-y-4">
                          <div className="flex items-center justify-between">
                             <h4 className="font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight font-heading" style={{ fontSize: 'var(--text-small)' }}>
@@ -437,7 +447,7 @@ export function CurriculumSetupModal({
                                 <div className="flex items-center gap-3">
                                   <div className={cn(
                                     "h-10 w-10 rounded-lg flex items-center justify-center transition-colors",
-                                    selectedSourceId === doc.id ? "bg-purple-600 text-white" : "bg-light-surface dark:bg-dark-surface text-light-text-muted"
+                                    selectedSourceIds.includes(doc.id) ? "bg-purple-600 text-white" : "bg-light-surface dark:bg-dark-surface text-light-text-muted"
                                   )}>
                                     {doc.status === 'PARSING' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
                                   </div>

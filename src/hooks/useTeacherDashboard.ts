@@ -224,7 +224,7 @@ export function useTeacherDashboard(): TeacherDashboardData {
       hasSecondary: school.hasSecondary,
       hasTertiary: school.hasTertiary,
     } : null,
-    schoolType: refinedSchoolType,
+    schoolType: derivedSchoolType,
     activeSession: activeSession ? {
       id: activeSession.id,
       name: activeSession.name,

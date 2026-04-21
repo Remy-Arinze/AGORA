@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { 
   useGetSchemesSummaryQuery, 
   useCancelSchemeOfWorkMutation,
+  useDeleteSchemeOfWorkMutation,
   useGetSubscriptionSummaryQuery
 } from '@/lib/store/api/schoolAdminApi';
 import toast from 'react-hot-toast';

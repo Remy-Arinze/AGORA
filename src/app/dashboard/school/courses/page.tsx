@@ -328,9 +328,11 @@ export default function ClassesPage() {
               const primaryTeacher = classItem.teachers?.find((t) => t.isPrimary);
               const teacherName = primaryTeacher
                 ? `${primaryTeacher.firstName} ${primaryTeacher.lastName}`
+                : classItem.type === 'SECONDARY'
+                ? 'No form teacher assigned'
                 : classItem.teachers && classItem.teachers.length > 0
-                  ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
-                  : 'No teacher assigned';
+                ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
+                : 'No teacher assigned';
 
               return (
                 <FadeInUp key={classItem.id} delay={index * 0.05} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
@@ -438,9 +440,11 @@ export default function ClassesPage() {
               const primaryTeacher = classItem.teachers?.find((t) => t.isPrimary);
               const teacherName = primaryTeacher
                 ? `${primaryTeacher.firstName} ${primaryTeacher.lastName}`
+                : classItem.type === 'SECONDARY'
+                ? 'No form teacher assigned'
                 : classItem.teachers && classItem.teachers.length > 0
-                  ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
-                  : 'No teacher assigned';
+                ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
+                : 'No teacher assigned';
 
               return (
                 <FadeInUp key={classItem.id} from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
