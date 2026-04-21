@@ -27,7 +27,13 @@ import {
   Edit,
   UserX,
   User,
+  RefreshCw,
 } from 'lucide-react';
+import { 
+  StudentReassignModal, 
+  StudentAssignToClassModal,
+  StudentAdmissionModal 
+} from '@/components/modals';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import {
   useGetMySchoolQuery,
@@ -82,6 +88,14 @@ export default function ClassDetailPage() {
     resource: null,
   });
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [reassignModalStudent, setReassignModalStudent] = useState<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    currentLevel: string;
+    enrollmentId: string;
+    academicYear: string;
+  } | null>(null);
   const [studentsView, setStudentsView] = useState<'list' | 'grid'>('grid');
   const [studentsPage, setStudentsPage] = useState(1);
 
@@ -103,6 +117,9 @@ export default function ClassDetailPage() {
   );
 
   const classData = classResponse?.data;
+
+  const [showStudentAssignModal, setShowStudentAssignModal] = useState(false);
+  const [showStudentAdmissionModal, setShowStudentAdmissionModal] = useState(false);
 
   // Get active session for timetable - use class's school type
   const { data: sessionResponse } = useGetActiveSessionQuery(
@@ -510,11 +527,25 @@ export default function ClassDetailPage() {
                   </p>
                 </div>
                 <PermissionGate resource={PermissionResource.STUDENTS} type={PermissionType.WRITE}>
-                  <Link href={`/dashboard/school/admissions?new=true`}>
-                    <Button variant="primary" size="sm" className="h-8 text-xs">
-                      Assign Student
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 text-xs border border-light-border dark:border-dark-border"
+                      onClick={() => setShowStudentAssignModal(true)}
+                    >
+                      Assign Existing
                     </Button>
-                  </Link>
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      className="h-8 text-xs"
+                      onClick={() => setShowStudentAdmissionModal(true)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Admit New
+                    </Button>
+                  </div>
                 </PermissionGate>
               </div>
 
@@ -668,35 +699,37 @@ export default function ClassDetailPage() {
                         onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
                       >
                         <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center flex-shrink-0 text-[var(--avatar-placeholder-text)] font-medium border-2 border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                              {student.profileImage ? (
-                                <img src={student.profileImage} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-sm">{student.firstName?.[0]}{student.lastName?.[0]}</span>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-light-text-primary dark:text-white truncate text-base">
-                                {student.firstName} {student.lastName}
-                              </p>
-                              <div className="flex flex-col gap-1 mt-1">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium text-[10px] ${student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                      }`}
-                                  >
-                                    {student.user?.accountStatus || 'Active'}
-                                  </span>
-                                  <span className="text-light-text-secondary dark:text-dark-text-secondary text-[10px] font-mono">
-                                    {student.uid || 'No ID'}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary truncate">
-                                  {student.enrollment?.classLevel || '-'}
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center flex-shrink-0 text-[var(--avatar-placeholder-text)] font-medium border-2 border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                                {student.profileImage ? (
+                                  <img src={student.profileImage} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-sm">{student.firstName?.[0]}{student.lastName?.[0]}</span>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-light-text-primary dark:text-white truncate text-base">
+                                  {student.firstName} {student.lastName}
                                 </p>
+                                <div className="flex flex-col gap-1 mt-1">
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium text-[10px] ${student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                        }`}
+                                    >
+                                      {student.user?.accountStatus || 'Active'}
+                                    </span>
+                                    <span className="text-light-text-secondary dark:text-dark-text-secondary text-[10px] font-mono">
+                                      {student.uid || 'No ID'}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary truncate">
+                                    {student.enrollment?.classLevel || '-'}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1177,6 +1210,32 @@ export default function ClassDetailPage() {
           onUpload={handleFileUpload}
           title="Upload Class Resource"
           isUploading={isUploading}
+        />
+
+        <StudentReassignModal
+          isOpen={!!reassignModalStudent}
+          onClose={() => setReassignModalStudent(null)}
+          student={reassignModalStudent}
+          schoolId={params.id as string}
+          schoolType={classData.type || 'SECONDARY'}
+        />
+
+        <StudentAssignToClassModal
+          isOpen={showStudentAssignModal}
+          onClose={() => setShowStudentAssignModal(false)}
+          schoolId={schoolId as string}
+          targetClassId={classData.id}
+          targetClassArmId={params.id as string} // current class arm
+          targetClassName={classData.name}
+          targetLevelName={classData.classLevel || ''}
+          academicYear={classData.academicYear}
+        />
+
+        <StudentAdmissionModal
+          isOpen={showStudentAdmissionModal}
+          onClose={() => setShowStudentAdmissionModal(false)}
+          preSelectedClassLevel={classData.classLevelId}
+          preSelectedClassArmId={params.id as string}
         />
       </div>
     </ProtectedRoute>

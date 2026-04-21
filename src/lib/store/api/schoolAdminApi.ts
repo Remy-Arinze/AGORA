@@ -1455,6 +1455,14 @@ export interface CreateEventDto {
 }
 
 // RTK Query endpoints for school admin
+export interface ReassignStudentDto {
+  targetClassLevel: string;
+  academicYear: string;
+  targetClassId?: string;
+  targetClassArmId?: string;
+  reason?: string;
+}
+
 export const schoolAdminApi = apiSlice.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
@@ -3658,6 +3666,18 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Curriculum'],
     }),
+    reassignStudent: builder.mutation<ResponseDto<any>, { schoolId: string; studentId: string; reassign: ReassignStudentDto }>({
+      query: ({ schoolId, studentId, reassign }) => ({
+        url: `/schools/${schoolId}/students/${studentId}/reassign`,
+        method: 'POST',
+        body: reassign,
+      }),
+      invalidatesTags: (result, error, { studentId }) => [
+        { type: 'Students', id: 'LIST' },
+        { type: 'Students', id: studentId },
+        { type: 'Classes', id: 'LIST' },
+      ],
+    }),
   }),
 });
 
@@ -3880,5 +3900,6 @@ export const {
   // Subscription hooks
   useGetSubscriptionSummaryQuery,
   useGetAgoraSubjectsQuery,
+  useReassignStudentMutation,
 } = schoolAdminApi;
 
