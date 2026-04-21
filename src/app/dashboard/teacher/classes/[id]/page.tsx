@@ -71,6 +71,7 @@ import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ActivityLog } from '@/components/dashboard/ActivityLog';
+import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
 type TabType = 'overview' | 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'roll-call' | 'scheme-of-work';
 
@@ -137,6 +138,10 @@ export default function ClassDetailPage() {
     { skip: !schoolId }
   );
   const activeSession = activeSessionResponse?.data;
+
+  // Use teacher dashboard hook to determine if this is the teacher's form class
+  const { formClass, teacher: teacherProfile } = useTeacherDashboard();
+  const isFormTeacher = formClass?.id === classId;
 
   // Get all sessions for timetable term selector
   const { data: sessionsResponse } = useGetSessionsQuery(
@@ -448,9 +453,16 @@ export default function ClassDetailPage() {
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-                {classData.name}
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                  {classData.name}
+                </h1>
+                {isFormTeacher && (
+                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider rounded border border-green-200 dark:border-green-800">
+                    My Form
+                  </span>
+                )}
+              </div>
               <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 {classData.code && `${classData.code} • `}
                 {classData.classLevel && `${classData.classLevel} • `}
@@ -638,7 +650,6 @@ export default function ClassDetailPage() {
                         </div>
                       </CardContent>
                     </Card>
-
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg">Instructors</CardTitle>
@@ -662,6 +673,33 @@ export default function ClassDetailPage() {
                         ))}
                       </CardContent>
                     </Card>
+
+                    {isFormTeacher && (
+                      <Card className="bg-green-500/5 border-green-500/20">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Users className="h-5 w-5 text-green-500" />
+                            Form Management
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <p className="text-sm text-light-text-secondary dark:text-gray-400">
+                            As the form teacher, you can manage attendance and pastoral care for this class.
+                          </p>
+                          <div className="grid grid-cols-1 gap-2">
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="w-full justify-start"
+                              onClick={() => setActiveTab('roll-call')}
+                            >
+                              <CheckSquare className="h-4 w-4 mr-2" />
+                              Take Attendance
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1282,7 +1320,7 @@ export default function ClassDetailPage() {
 
 
           {/* Roll Call Tab */}
-          {(activeTab as TabType) === 'rollcall' && schoolId && (
+          {(activeTab as TabType) === 'roll-call' && schoolId && (
             <RollCallView
               schoolId={schoolId}
               classId={classId}
@@ -1309,6 +1347,7 @@ export default function ClassDetailPage() {
           setShowBulkGradeModal(false);
         }}
       />
+
 
       {selectedStudent && (
         <GradeEntryModal

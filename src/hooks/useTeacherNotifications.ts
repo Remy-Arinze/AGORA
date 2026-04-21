@@ -7,12 +7,17 @@ import toast from 'react-hot-toast';
 
 interface NotificationPayload {
     type: string;
-    studentName: string;
-    assessmentTitle: string;
-    subjectName: string;
-    assessmentId: string;
-    submissionId: string;
+    studentName?: string;
+    assessmentTitle?: string;
+    subjectName?: string;
+    assessmentId?: string;
+    submissionId?: string;
     timestamp: string;
+    // Student reassignment fields
+    sourceClassName?: string;
+    targetClassName?: string;
+    sourceClassId?: string;
+    targetClassId?: string;
 }
 
 /**
@@ -70,6 +75,24 @@ export function useTeacherNotifications() {
                             },
                         }
                     );
+                } else if (data.type === 'STUDENT_REASSIGNED') {
+                    const message = data.targetClassName 
+                        ? `🔄 ${data.studentName} reassigned: ${data.sourceClassName} ➡️ ${data.targetClassName}`
+                        : `🔄 ${data.studentName} reassigned from ${data.sourceClassName}`;
+
+                    toast(message, {
+                        duration: 8000,
+                        icon: '🏫',
+                        style: {
+                            borderRadius: '16px',
+                            background: 'var(--light-card)',
+                            color: 'var(--light-text-primary)',
+                            fontWeight: '600',
+                            fontSize: 'var(--text-body)',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                            border: '1px solid var(--light-border)',
+                        },
+                    });
                 }
             } catch {
                 // Ignore malformed events

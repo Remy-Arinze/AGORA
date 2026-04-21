@@ -47,6 +47,9 @@ export interface TeacherDashboardData {
   // Classes the teacher is assigned to (full data from API)
   classes: any[];
   
+  // The class where this teacher is a Form Teacher/Primary Teacher
+  formClass: any | null;
+  
   // Loading states
   isLoading: boolean;
   isLoadingTimetable: boolean;
@@ -187,9 +190,16 @@ export function useTeacherDashboard(): TeacherDashboardData {
   
   const timetable = timetableResponse?.data || [];
   
-  // Use derivedSchoolType directly (no need for refinedSchoolType anymore)
-  const refinedSchoolType = derivedSchoolType;
-  
+  // Step 7: Identify Form Class
+  const formClass = useMemo(() => {
+    if (!teacherId || classes.length === 0) return null;
+    return classes.find((c: any) => 
+      c.classTeachers?.some((ct: any) => 
+        ct.teacherId === teacherId && (ct.isPrimary || ct.isFormTeacher)
+      )
+    );
+  }, [classes, teacherId]);
+
   // Aggregate loading and error states
   const isLoading = isLoadingSchool || isLoadingTeacher || isLoadingSession || isLoadingTimetable || isLoadingClasses;
   const hasError = !!(schoolError || teacherError || sessionError || timetableError || classesError);
@@ -225,6 +235,7 @@ export function useTeacherDashboard(): TeacherDashboardData {
     } : null,
     timetable,
     classes,
+    formClass,
     isLoading,
     isLoadingTimetable,
     isLoadingClasses,

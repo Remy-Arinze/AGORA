@@ -6,6 +6,7 @@ import { RootState } from '@/lib/store/store';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology, Terminology } from '@/lib/utils/terminology';
 import { useCurrentAdminPermissions, PermissionResource } from '@/hooks/usePermissions';
+import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 import {
   LayoutDashboard,
   Building2,
@@ -56,6 +57,9 @@ export function useSidebarConfig(): {
   const user = useSelector((state: RootState) => state.auth.user);
   const { currentType } = useSchoolType();
   const terminology = getTerminology(user?.role === 'SCHOOL_ADMIN' ? currentType : null);
+  
+  // For teachers, we need to know if they are a form teacher
+  const { formClass } = useTeacherDashboard();
 
   const sections = useMemo(() => {
     if (!user) return [];
@@ -122,16 +126,25 @@ export function useSidebarConfig(): {
 
     // Teacher sidebar - Overview available for all teacher types
     if (role === 'TEACHER') {
-      return [
-        {
-          items: [
-            { label: 'Overview', href: '/dashboard/teacher/overview', icon: LayoutDashboard },
-            { label: 'Timetables', href: '/dashboard/teacher/timetables', icon: Clock },
-            { label: 'Classes', href: '/dashboard/teacher/classes', icon: BookOpen },
-            { label: 'Calendar', href: '/dashboard/teacher/calendar', icon: Calendar },
-          ],
-        },
+      const items: NavItem[] = [
+        { label: 'Overview', href: '/dashboard/teacher/overview', icon: LayoutDashboard },
+        { label: 'Timetables', href: '/dashboard/teacher/timetables', icon: Clock },
+        { label: 'Classes', href: '/dashboard/teacher/classes', icon: BookOpen },
       ];
+
+      // Add "My Form" if they are a form teacher
+      if (formClass) {
+        items.push({ 
+          label: 'My Form', 
+          href: `/dashboard/teacher/classes/${formClass.id}`, 
+          icon: UserPlus,
+          badge: 'Form'
+        });
+      }
+
+      items.push({ label: 'Calendar', href: '/dashboard/teacher/calendar', icon: Calendar });
+
+      return [{ items }];
     }
 
     // Student sidebar

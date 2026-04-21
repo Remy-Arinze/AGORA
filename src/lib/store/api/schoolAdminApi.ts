@@ -3575,6 +3575,25 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    deleteSchemeOfWork: builder.mutation<void, { schoolId: string; schemeId: string; classLevelId: string }>({
+      query: ({ schoolId, schemeId }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/${schemeId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { classLevelId }) => [
+        { type: 'Curriculum', id: `SCHEME_SUMMARY_${classLevelId}` },
+        'Curriculum',
+      ],
+    }),
+
+    getSchemeOfWorkById: builder.query<CurriculumDto, { schoolId: string; schemeId: string }>({
+      query: ({ schoolId, schemeId }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/${schemeId}`,
+      }),
+      transformResponse: (response: ResponseDto<CurriculumDto>) => response.data,
+      providesTags: (result, error, { schemeId }) => [{ type: 'Curriculum', id: schemeId }],
+    }),
+
     getAgoraLibrary: builder.query<any[], { schoolId: string; subjectId: string; gradeLevel: string }>({
       query: ({ schoolId, subjectId, gradeLevel }) => ({
         url: `schools/${schoolId}/curriculum/agora-library`,
@@ -3891,6 +3910,8 @@ export const {
   useGetSchemesSummaryQuery,
   useSetupSchemeOfWorkMutation,
   useCancelSchemeOfWorkMutation,
+  useGetSchemeOfWorkByIdQuery,
+  useDeleteSchemeOfWorkMutation,
   useGetAgoraLibraryQuery,
   useGetAgoraCurriculumPreviewQuery,
   // School document library

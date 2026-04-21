@@ -63,6 +63,7 @@ export function SubjectCurriculumList({
   const creditsRemaining = subscriptionSummary?.aiCreditsRemaining ?? 0;
 
   const [cancelGeneration] = useCancelSchemeOfWorkMutation();
+  const [deleteScheme] = useDeleteSchemeOfWorkMutation();
 
   const handleCancelGeneration = async (schemeId: string) => {
     try {
@@ -71,6 +72,17 @@ export function SubjectCurriculumList({
       refetchSchemes();
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to cancel generation');
+    }
+  };
+
+  const handleDeleteScheme = async (schemeId: string) => {
+    try {
+      await deleteScheme({ schoolId, schemeId, classLevelId }).unwrap();
+      toast.success('Curriculum removed successfully.');
+      refetchSchemes();
+      setViewCurriculumId(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to remove curriculum');
     }
   };
 
@@ -177,6 +189,8 @@ export function SubjectCurriculumList({
           curriculumId={viewCurriculumId}
           classId={classId}
           canEdit={canEdit}
+          isScheme={true}
+          onDelete={handleDeleteScheme}
           onUpdate={() => refetchSchemes()}
         />
       )}
