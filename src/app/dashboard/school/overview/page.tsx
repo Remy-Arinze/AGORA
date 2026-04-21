@@ -273,10 +273,10 @@ export default function AdminOverviewPage() {
                   variant={buttonConfig.variant}
                   size="sm"
                   onClick={buttonConfig.onClick}
-                  disabled={isEndingTerm || isLoadingSession}
+                  disabled={isEndingTerm || isLoadingSession || isLoadingSchool}
                   className="flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-2 py-2 min-w-[120px] transition-all"
                 >
-                  {isEndingTerm || isLoadingSession ? (
+                  {isEndingTerm || isLoadingSession || isLoadingSchool || !schoolId ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-current" />
                       {isEndingTerm ? `Ending...` : `Checking...`}

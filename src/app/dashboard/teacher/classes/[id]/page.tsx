@@ -69,8 +69,10 @@ import { AiChatDrawer } from '@/components/ai/AiChatDrawer';
 import { Sparkles } from 'lucide-react';
 import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
 import { ConfirmModal } from '@/components/ui/Modal';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { ActivityLog } from '@/components/dashboard/ActivityLog';
 
-type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'rollcall' | 'scheme-of-work';
+type TabType = 'overview' | 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'roll-call' | 'scheme-of-work';
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -78,7 +80,7 @@ export default function ClassDetailPage() {
   const classId = params.id as string;
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab') as TabType;
-  const [activeTab, setActiveTab] = useState<TabType>(urlTab || 'timetable');
+  const [activeTab, setActiveTab] = useState<TabType>(urlTab || 'overview');
 
   // Sync state with URL changes (for browser back/forward)
   React.useEffect(() => {
@@ -156,7 +158,7 @@ export default function ClassDetailPage() {
       gradeType: gradeTypeFilter || undefined,
       termId: termFilter || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'grades' }
+    { skip: !schoolId || !classId || (activeTab !== 'grades' && activeTab !== 'overview') }
   );
 
   // Get student-grouped grades for the new UI
@@ -167,7 +169,7 @@ export default function ClassDetailPage() {
       gradeType: gradeTypeFilter || undefined,
       termId: termFilter || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'grades' }
+    { skip: !schoolId || !classId || (activeTab !== 'grades' && activeTab !== 'overview') }
   );
 
   // State for expanded student card
@@ -180,7 +182,7 @@ export default function ClassDetailPage() {
       classId,
       termId: assessmentTermFilter || activeSession?.term?.id || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'assessments' }
+    { skip: !schoolId || !classId || (activeTab !== 'assessments' && activeTab !== 'overview') }
   );
 
   const assessments = assessmentsResponse?.data || []; // Use data from ResponseDto
@@ -236,7 +238,7 @@ export default function ClassDetailPage() {
       academicYear: classResponse?.data?.academicYear || activeSession?.session?.name,
       termId: activeSession?.term?.id || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'curriculum' }
+    { skip: !schoolId || !classId || (activeTab !== 'curriculum' && activeTab !== 'overview') }
   );
   const students = studentsResponse?.data || [];
   const allGrades = gradesResponse?.data || [];
@@ -326,16 +328,75 @@ export default function ClassDetailPage() {
     classId,
     activeTab,
   });
+
+  // Logic to synthesize an activity feed from available data
+  const activityItems = useMemo(() => {
+    const items: { type: string; description: string; timestamp: string }[] = [];
+
+    if (gradesResponse?.data) {
+      const recentGrades = [...gradesResponse.data]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+
+      recentGrades.forEach(grade => {
+        items.push({
+          type: 'Graded',
+          description: `${grade.student?.firstName} ${grade.student?.lastName} graded for ${grade.assessmentName || grade.subject}`,
+          timestamp: grade.createdAt
+        });
+      });
+    }
+
+    if (assessmentsResponse?.data) {
+      const recentAssessments = [...assessmentsResponse.data]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 3);
+
+      recentAssessments.forEach(assessment => {
+        items.push({
+          type: 'Assessment Published',
+          description: `New ${assessment.type.toLowerCase()} "${assessment.title}" published`,
+          timestamp: assessment.createdAt
+        });
+      });
+    }
+
+    if (resources) {
+      const recentResources = [...resources]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 3);
+
+      recentResources.forEach(resource => {
+        items.push({
+          type: 'Resource Uploaded',
+          description: `New resource "${resource.name}" uploaded`,
+          timestamp: resource.createdAt
+        });
+      });
+    }
+
+    return items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [gradesResponse, assessmentsResponse, resources]);
+
+  // Determine the next topic in the curriculum
+  const nextCurriculumTopic = useMemo(() => {
+    if (!curriculumResponse?.data?.items) return null;
+    return curriculumResponse.data.items.find((item: any) => 
+      item.status === 'PENDING' || item.status === 'IN_PROGRESS'
+    );
+  }, [curriculumResponse]);
+
   // Build tabs dynamically based on available plugins
   const tabs: { id: TabType; label: string; icon: React.ReactNode; available: boolean }[] = [
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" />, available: true },
     { id: 'timetable', label: 'Timetable', icon: <Clock className="h-4 w-4" />, available: true },
     { id: 'students', label: 'Students', icon: <Users className="h-4 w-4" />, available: true },
     { id: 'grades', label: 'Grades', icon: <Award className="h-4 w-4" />, available: true },
-    { id: 'assessments', label: 'Assessments', icon: <Award className="h-4 w-4" />, available: true },
-    { id: 'rollcall', label: 'Roll Call', icon: <Smartphone className="h-4 w-4" />, available: true },
-    { id: 'scheme-of-work', label: 'Scheme of Work', icon: <Sparkles className="h-4 w-4" />, available: true },
+    { id: 'assessments', label: 'Assessments', icon: <FileCheck className="h-4 w-4" />, available: true },
+    { id: 'roll-call', label: 'Roll Call', icon: <CheckSquare className="h-4 w-4" />, available: true },
+    { id: 'scheme-of-work', label: 'Scheme of Work', icon: <ListChecks className="h-4 w-4" />, available: true },
     { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" />, available: true },
-    { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
+    { id: 'curriculum', label: 'Curriculum', icon: <BookMarked className="h-4 w-4" />, available: true },
   ];
 
   if (isLoading) {
@@ -427,207 +488,288 @@ export default function ClassDetailPage() {
 
         {/* Tab Content */}
         <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
-          {/* Curriculum Tab */}
-          {(activeTab as TabType) === 'curriculum' && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                    Curriculum Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingCurriculum ? (
-                    <div className="flex items-center justify-center py-20">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <div className="mt-6">
+            {activeTab === 'overview' && (
+              <div className="space-y-8 pb-10">
+                {/* Quick Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard
+                    title="Class Enrollment"
+                    value={classData?.studentsCount || 0}
+                    icon={Users}
+                    description="Total students enrolled"
+                    color="blue"
+                  />
+                  <StatCard
+                    title="Academic Progress"
+                    value={`Week ${activeSession?.term?.currentWeek || '1'}`}
+                    icon={Calendar}
+                    description={activeSession?.term ? `${activeSession.term.name}` : 'Current term'}
+                    color="purple"
+                  />
+                  <StatCard
+                    title="Total Resources"
+                    value={resources?.length || 0}
+                    icon={BookOpen}
+                    description="Study materials uploaded"
+                    color="green"
+                  />
+                  <StatCard
+                    title="Assessments"
+                    value={assessments?.length || 0}
+                    icon={FileCheck}
+                    description="Total published assessments"
+                    color="indigo"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Activity Log */}
+                  <div className="lg:col-span-2 space-y-6">
+                    <ActivityLog
+                      activities={activityItems}
+                      onViewAll={() => setActiveTab('grades')}
+                    />
+                    
+                    {/* Secondary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <ListChecks className="h-5 w-5 text-blue-400" />
+                            Next in Curriculum
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {nextCurriculumTopic ? (
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">
+                                  Week {nextCurriculumTopic.weekNumber}
+                                </p>
+                                <h4 className="font-bold text-light-text-primary dark:text-white line-clamp-1">
+                                  {nextCurriculumTopic.topic}
+                                </h4>
+                                <p className="text-xs text-light-text-secondary dark:text-gray-400 mt-1 line-clamp-2">
+                                  {nextCurriculumTopic.learningObjectives || 'No description available'}
+                                </p>
+                              </div>
+                              <Button 
+                                variant="primary" 
+                                size="sm" 
+                                className="w-full justify-between"
+                                onClick={() => setActiveTab('scheme-of-work')}
+                              >
+                                {nextCurriculumTopic.status === 'IN_PROGRESS' ? 'Continue Teaching' : 'Start Teaching'}
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-light-text-secondary dark:text-gray-400 text-sm">
+                                {isLoadingCurriculum ? 'Loading teaching plan...' : 'Your teaching plan is all caught up or not yet set.'}
+                              </p>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="mt-4 w-full justify-between"
+                                onClick={() => setActiveTab('scheme-of-work')}
+                                disabled={isLoadingCurriculum}
+                              >
+                                View Teaching Plan
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <GraduationCap className="h-5 w-5 text-indigo-400" />
+                            Quick Grading
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-light-text-secondary dark:text-gray-400 text-sm">
+                            {assessments?.some(a => (a._count?.submissions ?? 0) > 0) 
+                              ? "You have ungraded submissions waiting for review."
+                              : "No pending submissions to grade at this time."}
+                          </p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="mt-4 w-full justify-between"
+                            onClick={() => setActiveTab('assessments')}
+                          >
+                            Manage Assessments
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </CardContent>
+                      </Card>
                     </div>
-                  ) : curriculumResponse?.data ? (
-                    <div className="space-y-6">
-                      {curriculumResponse.data.items.map((item, index) => (
-                        <div
-                          key={item.id || index}
-                          className="pb-6 border-b border-light-border dark:border-dark-border last:border-0 last:pb-0"
-                        >
-                          <div className="flex items-start gap-4 mb-4">
-                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                              <span className="text-blue-600 dark:text-blue-400 font-bold text-sm text-center leading-tight">
-                                Week {item.week}
+                  </div>
+
+                  {/* Sidebar Info */}
+                  <div className="space-y-6">
+                    <Card className="bg-blue-500/5 border-blue-500/20">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Class Information</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Class Level</span>
+                          <span className="text-sm font-medium">{classData?.classLevel || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Class Code</span>
+                          <span className="text-sm font-medium">{classData?.code || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Academic Year</span>
+                          <span className="text-sm font-medium">{classData?.academicYear || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Type</span>
+                          <span className="text-sm font-medium capitalize font-mono text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                            {classData?.type?.toLowerCase() || 'N/A'}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Instructors</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {classData?.teachers.map((t: any) => (
+                          <div key={t.id} className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                              {t.firstName[0]}{t.lastName[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{t.firstName} {t.lastName}</p>
+                              <p className="text-xs text-light-text-secondary dark:text-gray-400">{t.subject || 'Instructor'}</p>
+                            </div>
+                            {t.isPrimary && (
+                              <span className="ml-auto text-[10px] bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded font-medium">
+                                Form
                               </span>
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-card-title)' }}>
-                                {item.topic}
-                              </h3>
-                              {item.objectives && item.objectives.length > 0 && (
-                                <div className="space-y-2 mb-3">
-                                  <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
-                                    Learning Objectives:
-                                  </p>
-                                  <ul className="list-disc list-inside space-y-1 ml-2">
-                                    {item.objectives.map((objective, objIndex) => (
-                                      <li
-                                        key={objIndex}
-                                        className="text-sm text-light-text-secondary dark:text-dark-text-secondary"
-                                      >
-                                        {objective}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {item.resources && item.resources.length > 0 && (
-                                <div>
-                                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                                    Resources:
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {item.resources.map((resource, resIndex) => (
-                                      <span
-                                        key={resIndex}
-                                        className="px-3 py-1 bg-light-bg dark:bg-dark-surface rounded-md text-xs text-light-text-secondary dark:text-dark-text-secondary"
-                                      >
-                                        {resource}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                            )}
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'timetable' && (
+              <div className="space-y-6">
+                {isLoadingActiveSession ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  </div>
+                ) : timetableTermId ? (
+                  <ClassTimetableView
+                    schoolId={schoolId!}
+                    classId={classId}
+                    termId={timetableTermId}
+                    schoolType={effectiveSchoolType}
+                    allTerms={timetableTerms}
+                    selectedTermId={timetableTermId}
+                    onTermChange={setSelectedTimetableTermId}
+                    activeTermId={activeSession?.term?.id}
+                    terminology={terminology}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-12 pb-12 text-center">
+                      <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                        No active term found. Please select a term to view the timetable.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Students Tab */}
+            {activeTab === 'students' && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                        Students ({filteredStudents.length})
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingStudents ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      </div>
+                    ) : filteredStudents.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                        <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                          {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-4">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                            <Input
+                              placeholder="Search students by name or student ID..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="pl-10"
+                            />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                      <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                        No curriculum available for this class yet.
-                      </p>
-                      <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-                        The curriculum will be created by the school administration.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-light-border dark:border-dark-border">
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Name
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Student ID
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Date of Birth
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Status
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredStudents.map((student: any, index: number) => (
+                                <tr
+                                  key={student.id}
+                                  className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
+                                >
+                                  <td className="py-4 px-4">
+                                    <div>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                        {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
+                                      </p>
+                                      <LiveStatusBadge activity={student.currentActivity} size="sm" />
+                                    </div>
+                                  </td>
 
-          {/* Scheme of Work Tab */}
-          {(activeTab as TabType) === 'scheme-of-work' && (
-            <div className="space-y-6">
-              <SchemeOfWorkView 
-                schoolId={schoolId!} 
-                classId={classId} 
-                role="TEACHER" 
-                terminology={terminology} 
-              />
-            </div>
-          )}
-
-          {/* Timetable Tab */}
-          {(activeTab as TabType) === 'timetable' && (
-            <div className="space-y-6">
-              {isLoadingActiveSession ? (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                </div>
-              ) : timetableTermId ? (
-                <ClassTimetableView
-                  schoolId={schoolId!}
-                  classId={classId}
-                  termId={timetableTermId}
-                  schoolType={effectiveSchoolType}
-                  allTerms={timetableTerms}
-                  selectedTermId={timetableTermId}
-                  onTermChange={setSelectedTimetableTermId}
-                  activeTermId={activeSession?.term?.id}
-                  terminology={terminology}
-                />
-              ) : (
-                <Card>
-                  <CardContent className="pt-12 pb-12 text-center">
-                    <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                      No active term found. Please select a term to view the timetable.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-
-          {/* Students Tab */}
-          {(activeTab as TabType) === 'students' && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                      Students ({filteredStudents.length})
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingStudents ? (
-                    <div className="flex items-center justify-center py-20">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    </div>
-                  ) : filteredStudents.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                      <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                        {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mb-4">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
-                          <Input
-                            placeholder="Search students by name or student ID..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-light-border dark:border-dark-border">
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Name
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Student ID
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Date of Birth
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Status
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredStudents.map((student: StudentWithEnrollment, index: number) => (
-                              <tr
-                                key={student.id}
-                                className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                              >
-                                <td className="py-4 px-4">
-                                  <div>
-                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                      {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
-                                    </p>
-                                    <LiveStatusBadge activity={student.currentActivity} size="sm" />
-                                  </div>
-                                </td>
                                 <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                   {student.uid}
                                 </td>

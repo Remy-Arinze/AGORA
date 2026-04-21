@@ -334,7 +334,7 @@ export default function ClassesPage() {
 
               return (
                 <FadeInUp key={classItem.id} delay={index * 0.05} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
-                  <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
+                  <Card className="hover:bg-light-surface dark:hover:bg-dark-bg hover:shadow-lg transition-all h-full flex flex-col">
                     <CardContent
                       className="pt-6 flex-1 cursor-pointer"
                       onClick={() => handleClassClick(classItem.id)}
@@ -445,7 +445,7 @@ export default function ClassesPage() {
               return (
                 <FadeInUp key={classItem.id} from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                   <Card
-                    className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
+                    className="cursor-pointer hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                     onClick={() => handleClassClick(classItem.id)}
                   >
                     <CardContent className="p-4">

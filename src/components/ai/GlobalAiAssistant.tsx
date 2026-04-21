@@ -30,10 +30,10 @@ export const GlobalAiAssistant: React.FC = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   
   const user = useSelector((state: RootState) => state.auth.user);
-  const reduxSchoolId = useSelector((state: RootState) => (state.auth as any).currentSchoolId);
+  const tenantId = useSelector((state: RootState) => state.auth.tenantId);
   const params = useParams();
   const pathname = usePathname();
-  const schoolId = (params?.schoolId as string) || reduxSchoolId || (user as any)?.schoolId;
+  const schoolId = (params?.schoolId as string) || (params?.id as string) || tenantId || user?.schoolId;
 
   const { summary, isLoading: isLoadingSub } = useSubscription();
   

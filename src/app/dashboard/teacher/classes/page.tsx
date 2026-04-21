@@ -171,7 +171,7 @@ export default function TeacherClassesPage() {
           ) : (
             filteredClasses.map((classItem, index) => (
               <FadeInUp key={classItem.id} delay={index * 0.1} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
-                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(`/dashboard/teacher/classes/${classItem.id}`)}>
+                <Card className="h-full hover:bg-light-surface dark:hover:bg-dark-bg hover:shadow-lg transition-all cursor-pointer" onClick={() => router.push(`/dashboard/teacher/classes/${classItem.id}`)}>
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
                       <div>

@@ -82,7 +82,7 @@ export default function ClassDetailPage() {
     resource: null,
   });
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [studentsView, setStudentsView] = useState<'list' | 'grid'>('list');
+  const [studentsView, setStudentsView] = useState<'list' | 'grid'>('grid');
   const [studentsPage, setStudentsPage] = useState(1);
 
   // Get school ID and type
@@ -505,7 +505,7 @@ export default function ClassDetailPage() {
               {/* Section Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <p className="font-base text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-section-title)' }}>
+                  <p className="font-medium text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider" style={{ fontSize: 'var(--text-small)' }}>
                     Students in Class
                   </p>
                 </div>
@@ -629,7 +629,7 @@ export default function ClassDetailPage() {
                       </table>
                     </div>
                     <div className="pt-4 flex items-center justify-between">
-                      <span className="text-light-text-muted dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
+                      <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
                         Total: {students.length} student{students.length !== 1 ? 's' : ''}
                       </span>
                       <div className="flex items-center gap-2">
@@ -659,75 +659,82 @@ export default function ClassDetailPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {paginatedStudents.map((student) => (
-                        <Link key={student.id} href={`/dashboard/school/students/${student.id}`} className="block">
-                          <div className="p-4 rounded-lg border border-light-border dark:border-dark-border bg-[var(--light-surface)] dark:bg-[var(--dark-surface)] hover:bg-[var(--light-hover)] dark:hover:bg-[var(--dark-hover)] transition-colors cursor-pointer">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center flex-shrink-0 text-[var(--avatar-placeholder-text)] font-medium">
-                                {student.profileImage ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={student.profileImage} alt="" className="w-10 h-10 rounded-full object-cover" />
-                                ) : (
-                                  <span>{student.firstName?.[0]}{student.lastName?.[0]}</span>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-light-text-primary dark:text-dark-text-primary truncate" style={{ fontSize: 'var(--text-body)' }}>
-                                  {student.firstName} {student.lastName}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paginatedStudents.map((student) => (
+                      <Card
+                        key={student.id}
+                        className="cursor-pointer hover:bg-light-surface dark:hover:bg-dark-bg hover:shadow-lg transition-all"
+                        onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-[var(--avatar-placeholder-bg)] flex items-center justify-center flex-shrink-0 text-[var(--avatar-placeholder-text)] font-medium border-2 border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                              {student.profileImage ? (
+                                <img src={student.profileImage} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-sm">{student.firstName?.[0]}{student.lastName?.[0]}</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-light-text-primary dark:text-white truncate text-base">
+                                {student.firstName} {student.lastName}
+                              </p>
+                              <div className="flex flex-col gap-1 mt-1">
+                                <div className="flex items-center gap-2">
                                   <span
-                                    className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium text-[10px] ${student.user?.accountStatus === 'ACTIVE' || !student.user?.accountStatus
                                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                       : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                                       }`}
-                                    style={{ fontSize: 'var(--text-small)' }}
                                   >
                                     {student.user?.accountStatus || 'Active'}
                                   </span>
-                                  <span className="text-light-text-muted dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
-                                    {student.enrollment?.classLevel || '-'}
+                                  <span className="text-light-text-secondary dark:text-dark-text-secondary text-[10px] font-mono">
+                                    {student.uid || 'No ID'}
                                   </span>
                                 </div>
+                                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary truncate">
+                                  {student.enrollment?.classLevel || '-'}
+                                </p>
                               </div>
                             </div>
                           </div>
-                        </Link>
-                      ))}
-                    </div>
-                    <div className="pt-4 flex items-center justify-between">
-                      <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-body)' }}>
-                        Total: {students.length} student{students.length !== 1 ? 's' : ''}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Grid Pagination */}
+                  <div className="flex items-center justify-between pt-6 mt-2">
+                    <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                      Total: {students.length} student{students.length !== 1 ? 's' : ''}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={studentsPage <= 1}
+                        onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
+                        className="h-8 text-xs"
+                      >
+                        Prev
+                      </Button>
+                      <span className="text-light-text-muted dark:text-dark-text-muted text-xs">
+                        Page {studentsPage} / {totalPages}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={studentsPage <= 1}
-                          onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
-                          className="h-8 text-xs"
-                        >
-                          Prev
-                        </Button>
-                        <span className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
-                          Page {studentsPage} / {totalPages}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={studentsPage >= totalPages}
-                          onClick={() => setStudentsPage((p) => Math.min(totalPages, p + 1))}
-                          className="h-8 text-xs"
-                        >
-                          Next
-                        </Button>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={studentsPage >= totalPages}
+                        onClick={() => setStudentsPage((p) => Math.min(totalPages, p + 1))}
+                        className="h-8 text-xs"
+                      >
+                        Next
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -799,7 +806,7 @@ export default function ClassDetailPage() {
                           {timetableTeachers.map((teacher) => (
                             <div
                               key={teacher.teacherId}
-                              className="p-4 rounded-lg border border-light-border dark:border-dark-border bg-[var(--light-surface)] dark:bg-[var(--dark-surface)] hover:bg-[var(--light-hover)] dark:hover:bg-[var(--dark-hover)] transition-colors"
+                              className="p-4 rounded-lg border border-light-border dark:border-dark-border bg-light-card dark:bg-dark-card hover:bg-light-surface dark:hover:bg-dark-bg transition-colors shadow-sm hover:shadow-md"
                             >
                               <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">

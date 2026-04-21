@@ -797,7 +797,7 @@ export default function TransfersPage() {
                             <button
                               type="button"
                               onClick={toggle}
-                              className="w-full flex items-center gap-4 p-4 text-left hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
+                              className="w-full flex items-center gap-4 p-4 text-left hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                             >
                               {/* Avatar */}
                               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center overflow-hidden">

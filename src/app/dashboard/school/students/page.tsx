@@ -433,7 +433,7 @@ function StudentsPageContent() {
                 return (
                   <FadeInUp key={student.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                     <Card
-                      className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col"
+                      className="cursor-pointer hover:bg-light-surface dark:hover:bg-dark-bg hover:shadow-lg transition-all h-full flex flex-col"
                       onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
                     >
                       <CardContent className="p-4 flex-1 flex flex-col" style={{ padding: 'var(--card-padding)' }}>
@@ -489,7 +489,7 @@ function StudentsPageContent() {
                 return (
                   <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                     <Card
-                      className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
+                      className="cursor-pointer hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                       onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
                     >
                       <CardContent className="p-4">

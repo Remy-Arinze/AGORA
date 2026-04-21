@@ -843,7 +843,7 @@ function SubjectCard({
   return (
     <Card
       className={cn(
-        "hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden group",
+        "hover:bg-light-surface dark:hover:bg-dark-bg hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden group",
         isSelected && "ring-2 ring-primary border-primary bg-primary/5 dark:bg-primary/10",
         isSelectionMode && "select-none"
       )}
