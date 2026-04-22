@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { BookOpen, Search, Users, Clock, MapPin, Loader2, AlertCircle } from 'lucide-react';
-import { useGetMyClassesQuery, useGetMyTeacherSchoolQuery, useGetMyTeacherProfileQuery } from '@/lib/store/api/schoolAdminApi';
+import { useGetMyClassesQuery, useGetMyTeacherSchoolQuery, useGetMyTeacherProfileQuery, type SchoolType } from '@/lib/store/api/schoolAdminApi';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
+import { cn } from '@/lib/utils';
 
 export default function TeacherClassesPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function TeacherClassesPage() {
     {
       schoolId: school?.id || '',
       teacherId: teacher?.id || '',
-      type: currentType,
+      type: currentType || undefined,
     },
     {
       skip: !school?.id || !teacher?.id,
@@ -212,9 +213,14 @@ export default function TeacherClassesPage() {
                                   {teacher.subject && (
                                     <span className="font-medium">{teacher.subject}</span>
                                   )}
-                                  {teacher.isPrimary && (
-                                    <span className="ml-2 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 text-xs rounded">
-                                      Primary Teacher
+                                  {(teacher.isPrimary || teacher.isFormTeacher) && (
+                                    <span className={cn(
+                                      "ml-2 px-2 py-0.5 text-xs rounded font-medium",
+                                      currentType === 'SECONDARY' 
+                                        ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800"
+                                        : "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
+                                    )}>
+                                      {currentType === 'SECONDARY' ? 'Form Teacher' : 'Primary Teacher'}
                                     </span>
                                   )}
                                 </div>

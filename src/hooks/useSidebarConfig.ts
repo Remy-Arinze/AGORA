@@ -59,7 +59,7 @@ export function useSidebarConfig(): {
   const terminology = getTerminology(user?.role === 'SCHOOL_ADMIN' ? currentType : null);
   
   // For teachers, we need to know if they are a form teacher
-  const { formClass } = useTeacherDashboard();
+  const { formClasses } = useTeacherDashboard();
 
   const sections = useMemo(() => {
     if (!user) return [];
@@ -132,13 +132,17 @@ export function useSidebarConfig(): {
         { label: 'Classes', href: '/dashboard/teacher/classes', icon: BookOpen },
       ];
 
-      // Add "My Form" if they are a form teacher
-      if (formClass) {
-        items.push({ 
-          label: 'My Form', 
-          href: `/dashboard/teacher/classes/${formClass.id}`, 
-          icon: UserPlus,
-          badge: 'Form'
+      // Add "Form Management" links if they are a form/primary teacher
+      if (formClasses && formClasses.length > 0) {
+        const formLabel = currentType === 'SECONDARY' ? 'My Form' : 'My Class';
+        
+        formClasses.forEach((fc) => {
+          items.push({ 
+            label: formClasses.length > 1 ? `${formLabel} (${fc.name})` : formLabel, 
+            href: `/dashboard/teacher/classes/${fc.id}`, 
+            icon: Users,
+            badge: 'Form'
+          });
         });
       }
 

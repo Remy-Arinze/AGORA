@@ -29,7 +29,16 @@ import {
   QrCode,
   Trash2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  LayoutDashboard,
+  FileCheck,
+  CheckSquare,
+  ListChecks,
+  BookMarked,
+  ChevronRight,
+  Edit,
+  X,
+  GraduationCap
 } from 'lucide-react';
 import {
   useGetClassByIdQuery,
@@ -458,8 +467,13 @@ export default function ClassDetailPage() {
                   {classData.name}
                 </h1>
                 {isFormTeacher && (
-                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider rounded border border-green-200 dark:border-green-800">
-                    My Form
+                  <span className={cn(
+                    "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border",
+                    classType === 'SECONDARY' 
+                      ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800"
+                      : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800"
+                  )}>
+                    {classType === 'SECONDARY' ? 'My Form' : 'My Class'}
                   </span>
                 )}
               </div>
@@ -508,28 +522,28 @@ export default function ClassDetailPage() {
                   <StatCard
                     title="Class Enrollment"
                     value={classData?.studentsCount || 0}
-                    icon={Users}
+                    icon={<Users className="h-5 w-5" />}
                     description="Total students enrolled"
                     color="blue"
                   />
                   <StatCard
                     title="Academic Progress"
                     value={`Week ${activeSession?.term?.currentWeek || '1'}`}
-                    icon={Calendar}
+                    icon={<Calendar className="h-5 w-5" />}
                     description={activeSession?.term ? `${activeSession.term.name}` : 'Current term'}
                     color="purple"
                   />
                   <StatCard
                     title="Total Resources"
                     value={resources?.length || 0}
-                    icon={BookOpen}
+                    icon={<BookOpen className="h-5 w-5" />}
                     description="Study materials uploaded"
                     color="green"
                   />
                   <StatCard
                     title="Assessments"
                     value={assessments?.length || 0}
-                    icon={FileCheck}
+                    icon={<FileCheck className="h-5 w-5" />}
                     description="Total published assessments"
                     color="indigo"
                   />
@@ -563,7 +577,9 @@ export default function ClassDetailPage() {
                                   {nextCurriculumTopic.topic}
                                 </h4>
                                 <p className="text-xs text-light-text-secondary dark:text-gray-400 mt-1 line-clamp-2">
-                                  {nextCurriculumTopic.learningObjectives || 'No description available'}
+                                  {Array.isArray(nextCurriculumTopic.objectives) 
+                                    ? nextCurriculumTopic.objectives.join(', ') 
+                                    : nextCurriculumTopic.objectives || 'No objectives defined'}
                                 </p>
                               </div>
                               <Button 
@@ -675,26 +691,31 @@ export default function ClassDetailPage() {
                     </Card>
 
                     {isFormTeacher && (
-                      <Card className="bg-green-500/5 border-green-500/20">
+                      <Card className={cn(
+                        "border-l-4",
+                        classType === 'SECONDARY' ? "bg-green-500/5 border-green-500/20 border-l-green-500" : "bg-purple-500/5 border-purple-500/20 border-l-purple-500"
+                      )}>
                         <CardHeader>
                           <CardTitle className="text-lg flex items-center gap-2">
-                            <Users className="h-5 w-5 text-green-500" />
-                            Form Management
+                            <Users className={cn("h-5 w-5", classType === 'SECONDARY' ? "text-green-500" : "text-purple-500")} />
+                            {classType === 'SECONDARY' ? 'Form Management' : 'Class Management'}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <p className="text-sm text-light-text-secondary dark:text-gray-400">
-                            As the form teacher, you can manage attendance and pastoral care for this class.
+                            {classType === 'SECONDARY' 
+                              ? "As the form teacher, you manage the overall welfare, attendance, and pastoral care for this class."
+                              : "As the primary class teacher, you manage all activities and attendance for this class."}
                           </p>
                           <div className="grid grid-cols-1 gap-2">
                             <Button 
-                              variant="secondary" 
+                              variant={classType === 'SECONDARY' ? "secondary" : "ghost"} 
                               size="sm" 
                               className="w-full justify-start"
                               onClick={() => setActiveTab('roll-call')}
                             >
                               <CheckSquare className="h-4 w-4 mr-2" />
-                              Take Attendance
+                              Take Daily Roll Call
                             </Button>
                           </div>
                         </CardContent>
@@ -1329,8 +1350,8 @@ export default function ClassDetailPage() {
             />
           )}
 
+          </div>
         </FadeInUp>
-      </div>
 
       {/* Modals */}
       <BulkGradeEntryModal
@@ -1535,6 +1556,7 @@ export default function ClassDetailPage() {
           onClose={() => setShowAiChat(false)}
         />
       )}
+      </div>
     </ProtectedRoute>
   );
 }
@@ -1635,7 +1657,32 @@ function RollCallView({
   const lateCount = attendanceRecords.filter((a: any) => a.status === 'LATE').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 z-10 bg-white/60 dark:bg-dark-bg/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center p-6 text-center">
+        <div className="max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-2xl border border-light-border dark:border-dark-border transform -rotate-1">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-pulse" />
+          </div>
+          <h2 className="text-2xl font-black text-light-text-primary dark:text-white mb-3">
+            Roll Call <span className="text-blue-500">Coming Soon</span>
+          </h2>
+          <p className="text-light-text-secondary dark:text-dark-text-secondary mb-6 leading-relaxed">
+            We are building a powerful, automated attendance system. Soon, you'll be able to mark daily attendance using 
+            <span className="font-bold text-blue-500"> QR code scans</span>, handle bulk marking, and view real-time 
+            attendance insights for your form class.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-500 bg-blue-50 dark:bg-blue-900/10 py-2 px-4 rounded-full w-fit mx-auto">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            Under Development
+          </div>
+        </div>
+      </div>
+
+      <div className="opacity-40 pointer-events-none filter blur-[1px]">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/10 shadow-sm">
           <CardContent className="p-4 flex items-center justify-between">
@@ -1878,7 +1925,8 @@ function RollCallView({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 // Class Timetable View Component

@@ -154,9 +154,16 @@ export function SidebarNew({ hideMobileHeader }: { hideMobileHeader?: boolean })
                   </p>
                 )}
                 {section.items.map((link, idx) => {
+                  // Check if there's an exact match for another link in the sidebar
+                  // If there is, we don't want to highlight parent links (like /classes) 
+                  // when we have a more specific link (like /classes/[id]) active
+                  const hasExactMatchInSidebar = finalSections.some(s => 
+                    s.items.some(i => i.href !== link.href && pathname === i.href)
+                  );
+
                   const isActive =
                     pathname === link.href ||
-                    pathname.startsWith(link.href + '/') ||
+                    (pathname.startsWith(link.href + '/') && !hasExactMatchInSidebar) ||
                     (link.href === '/dashboard/super-admin/overview' &&
                       pathname === '/dashboard/super-admin') ||
                     (link.href === '/dashboard/school/overview' &&

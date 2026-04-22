@@ -1180,6 +1180,7 @@ export default function ClassDetailPage() {
             existingTeachers={classData.teachers.map((t) => ({
               teacherId: t.teacherId,
               subject: t.subject,
+              isPrimary: t.isPrimary,
             }))}
             onSuccess={() => refetchClass()}
           />

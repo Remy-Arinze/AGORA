@@ -47,8 +47,9 @@ export interface TeacherDashboardData {
   // Classes the teacher is assigned to (full data from API)
   classes: any[];
   
-  // The class where this teacher is a Form Teacher/Primary Teacher
+  // The class(es) where this teacher is a Form Teacher/Primary Teacher
   formClass: any | null;
+  formClasses: any[];
   
   // Loading states
   isLoading: boolean;
@@ -190,15 +191,18 @@ export function useTeacherDashboard(): TeacherDashboardData {
   
   const timetable = timetableResponse?.data || [];
   
-  // Step 7: Identify Form Class
-  const formClass = useMemo(() => {
-    if (!teacherId || classes.length === 0) return null;
-    return classes.find((c: any) => 
-      c.classTeachers?.some((ct: any) => 
+  // Step 7: Identify Form Classes
+  const formClasses = useMemo(() => {
+    if (!teacherId || classes.length === 0) return [];
+    return classes.filter((c: any) => {
+      const teachers = c.teachers || c.classTeachers || [];
+      return teachers.some((ct: any) => 
         ct.teacherId === teacherId && (ct.isPrimary || ct.isFormTeacher)
-      )
-    );
+      );
+    });
   }, [classes, teacherId]);
+
+  const formClass = formClasses.length > 0 ? formClasses[0] : null;
 
   // Aggregate loading and error states
   const isLoading = isLoadingSchool || isLoadingTeacher || isLoadingSession || isLoadingTimetable || isLoadingClasses;
@@ -236,6 +240,7 @@ export function useTeacherDashboard(): TeacherDashboardData {
     timetable,
     classes,
     formClass,
+    formClasses,
     isLoading,
     isLoadingTimetable,
     isLoadingClasses,
