@@ -53,6 +53,7 @@ import {
   useGetTimetableForClassQuery,
   useGetSessionsQuery,
   useGetClassAssessmentsQuery,
+  useGetTeacherSubjectsForClassQuery,
   useMarkBulkAttendanceMutation,
   useMarkAttendanceMutation,
   useGetClassAttendanceQuery,
@@ -163,6 +164,27 @@ export default function ClassDetailPage() {
     { schoolId: schoolId!, classId },
     { skip: !schoolId || !classId }
   );
+
+  // Get teacher's subjects and roles for this class to determine permissions
+  const { data: teacherSubjectsResponse } = useGetTeacherSubjectsForClassQuery(
+    { classId },
+    { skip: !classId }
+  );
+
+  const teacherSubjects = teacherSubjectsResponse?.data?.subjects || [];
+  const canGradeAll = teacherSubjectsResponse?.data?.canGradeAllSubjects || false;
+  const isPrimaryTeacher = teacherSubjectsResponse?.data?.isPrimaryTeacher || false;
+
+  // READ-ONLY LOGIC:
+  // In Secondary schools, if a teacher is a Form Teacher but has NO subjects assigned in this class,
+  // they should only have view access to academic materials (assessments, curriculum, etc.)
+  const isReadOnly = useMemo(() => {
+    // If they have "manage all" permissions or are the primary/subject teacher, they are NOT read-only
+    if (canGradeAll || isPrimaryTeacher || teacherSubjects.length > 0) return false;
+    
+    // If they are ONLY the form teacher (identified by dashboard context), they are read-only
+    return isFormTeacher;
+  }, [canGradeAll, isPrimaryTeacher, teacherSubjects.length, isFormTeacher]);
 
   // Get grades for class
   const { data: gradesResponse, isLoading: isLoadingGrades, refetch: refetchGrades } = useGetClassGradesQuery(
@@ -918,14 +940,16 @@ export default function ClassDetailPage() {
                           </select>
                         )}
                       </div>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setShowBulkGradeModal(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Bulk Entry
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setShowBulkGradeModal(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Bulk Entry
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -943,13 +967,15 @@ export default function ClassDetailPage() {
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                           No grades found.
                         </p>
-                        <Button
-                          variant="primary"
-                          onClick={() => setShowBulkGradeModal(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Enter Grades
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            variant="primary"
+                            onClick={() => setShowBulkGradeModal(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Enter Grades
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -1110,10 +1136,12 @@ export default function ClassDetailPage() {
                     ))}
                   </select>
                 </div>
-                <Button onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Assessment
-                </Button>
+                {!isReadOnly && (
+                  <Button onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Assessment
+                  </Button>
+                )}
               </div>
 
               {isLoadingAssessments ? (
@@ -1126,9 +1154,11 @@ export default function ClassDetailPage() {
                     <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No assessments found for this term.</p>
                     <p className="text-sm text-light-text-muted mt-2 mb-6">Create your first assessment or use AI to generate one.</p>
-                    <Button variant="outline" onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
-                      <Plus className="h-4 w-4 mr-2" /> Create First Assessment
-                    </Button>
+                    {!isReadOnly && (
+                      <Button variant="outline" onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
+                        <Plus className="h-4 w-4 mr-2" /> Create First Assessment
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
@@ -1167,16 +1197,18 @@ export default function ClassDetailPage() {
                                     }`} style={{ fontSize: 'var(--text-tiny)' }}>
                                     {assessment.status}
                                   </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setAssessmentToDelete(assessment);
-                                      setShowDeleteAssessmentModal(true);
-                                    }}
-                                    className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-light-text-muted hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
+                                  {!isReadOnly && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAssessmentToDelete(assessment);
+                                        setShowDeleteAssessmentModal(true);
+                                      }}
+                                      className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-light-text-muted hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                               <CardTitle className="mt-2 group-hover:text-blue-600 transition-colors truncate" style={{ fontSize: 'var(--text-card-title)' }}>{assessment.title}</CardTitle>
@@ -1220,14 +1252,16 @@ export default function ClassDetailPage() {
                     <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
                       Class Resources
                     </CardTitle>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setShowUploadResourceModal(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Resource
-                    </Button>
+                    {!isReadOnly && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setShowUploadResourceModal(true)}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Resource
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -1298,19 +1332,21 @@ export default function ClassDetailPage() {
                                 <Download className="h-4 w-4 mr-2" />
                                 Download
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteResource(resource.id)}
-                                disabled={isDeletingResource}
-                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                              >
-                                {isDeletingResource ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  'Delete'
-                                )}
-                              </Button>
+                              {!isReadOnly && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteResource(resource.id)}
+                                  disabled={isDeletingResource}
+                                  className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                >
+                                  {isDeletingResource ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    'Delete'
+                                  )}
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </FadeInUp>
@@ -1325,13 +1361,15 @@ export default function ClassDetailPage() {
                       <p className="text-sm text-light-text-muted dark:text-dark-text-muted mb-4">
                         Upload documents, spreadsheets, and other files for your students.
                       </p>
-                      <Button
-                        variant="primary"
-                        onClick={() => setShowUploadResourceModal(true)}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Your First Resource
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="primary"
+                          onClick={() => setShowUploadResourceModal(true)}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Your First Resource
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -1348,6 +1386,91 @@ export default function ClassDetailPage() {
               classType={classData?.type === 'TERTIARY' ? 'CLASS' : 'CLASS_ARM'}
               students={students}
             />
+          )}
+
+          {/* Scheme of Work Tab */}
+          {(activeTab as TabType) === 'scheme-of-work' && schoolId && (
+            <SchemeOfWorkView
+              schoolId={schoolId}
+              classId={classId}
+              role="TEACHER"
+              terminology={terminology}
+              isReadOnly={isReadOnly}
+            />
+          )}
+
+          {/* Curriculum Tab */}
+          {(activeTab as TabType) === 'curriculum' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                  Curriculum {terminology.courses}
+                </h2>
+                {!isReadOnly && (
+                  <Button variant="outline" size="sm" onClick={() => refetchCurriculum()}>
+                    <Sparkles className="h-4 w-4 mr-2 text-blue-500" />
+                    Sync Curriculum
+                  </Button>
+                )}
+              </div>
+              
+              {isLoadingCurriculum ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+              ) : !curriculumResponse?.data?.items || curriculumResponse.data.items.length === 0 ? (
+                <Card>
+                  <CardContent className="py-20 text-center">
+                    <BookOpen className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
+                    <h3 className="text-lg font-bold">No Curriculum Found</h3>
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary mt-2">
+                      The curriculum for this subject hasn't been set up yet.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {curriculumResponse.data.items.map((item: any, idx: number) => (
+                    <Card key={idx} className={cn(
+                      "transition-all",
+                      item.status === 'COMPLETED' ? "opacity-75 bg-gray-50 dark:bg-dark-surface/50" : ""
+                    )}>
+                      <CardContent className="p-5 flex items-start gap-4">
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm",
+                          item.status === 'COMPLETED' ? "bg-green-100 text-green-600" : 
+                          item.status === 'IN_PROGRESS' ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+                        )}>
+                          {item.weekNumber || (idx + 1)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-light-text-primary dark:text-dark-text-primary">{item.topic}</h4>
+                            {item.status === 'COMPLETED' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                          </div>
+                          {item.subTopics && item.subTopics.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {item.subTopics.map((sub: string, sIdx: number) => (
+                                <li key={sIdx} className="text-xs text-light-text-secondary dark:text-dark-text-secondary flex items-center gap-2">
+                                  <div className="w-1 h-1 rounded-full bg-light-text-muted" />
+                                  {sub}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        <Badge variant={
+                          item.status === 'COMPLETED' ? 'success' : 
+                          item.status === 'IN_PROGRESS' ? 'info' : 'outline'
+                        }>
+                          {item.status}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           </div>
