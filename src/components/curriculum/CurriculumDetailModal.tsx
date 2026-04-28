@@ -21,7 +21,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { CurriculumStatusBadge } from './CurriculumStatusBadge';
 import { CurriculumProgressBar } from './CurriculumProgressBar';
-import { useGetCurriculumByIdQuery } from '@/lib/store/api/schoolAdminApi';
+import { useGetCurriculumByIdQuery, useGetSchemeOfWorkByIdQuery } from '@/lib/store/api/schoolAdminApi';
 import { useCurriculum } from '@/hooks/useCurriculum';
 import type { WeekStatus, CurriculumItem } from '@/lib/store/api/schoolAdminApi';
 
@@ -32,6 +32,7 @@ interface CurriculumDetailModalProps {
   curriculumId: string;
   classId?: string;
   canEdit?: boolean;
+  isScheme?: boolean;
   onUpdate?: () => void;
   onDelete?: (curriculumId: string) => void;
 }
@@ -43,6 +44,7 @@ export function CurriculumDetailModal({
   curriculumId,
   classId,
   canEdit = false,
+  isScheme = false,
   onUpdate,
   onDelete,
 }: CurriculumDetailModalProps) {
@@ -50,19 +52,20 @@ export function CurriculumDetailModal({
   const [markingWeek, setMarkingWeek] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
 
-  const { data: curriculumResponse, isLoading, refetch } = useGetCurriculumByIdQuery(
+  // Choose the appropriate query hook based on whether it's a curriculum or a scheme
+  const { data: curriculumData, isLoading: isLoadingCurriculum, refetch: refetchCurriculum } = useGetCurriculumByIdQuery(
     { schoolId, curriculumId },
-    { skip: !curriculumId }
+    { skip: !curriculumId || isScheme }
   );
 
-  const {
-    handleSubmit,
-    handleMarkWeekComplete,
-    handleMarkWeekInProgress,
-    isMutating,
-  } = useCurriculum({ schoolId });
+  const { data: schemeData, isLoading: isLoadingScheme, refetch: refetchScheme } = useGetSchemeOfWorkByIdQuery(
+    { schoolId, schemeId: curriculumId },
+    { skip: !curriculumId || !isScheme }
+  );
 
-  const curriculum = curriculumResponse?.data;
+  const isLoading = isScheme ? isLoadingScheme : isLoadingCurriculum;
+  const curriculum = isScheme ? schemeData : curriculumData?.data;
+  const refetch = isScheme ? refetchScheme : refetchCurriculum;
 
   const handleMarkComplete = async (weekNumber: number) => {
     setMarkingWeek(weekNumber);
@@ -155,10 +158,10 @@ export function CurriculumDetailModal({
               {curriculum.termName || curriculum.academicYear}
             </p>
           </div>
-          {curriculum.isNerdcBased && (
+          {curriculum.isAgoraBased && (
             <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
               <Sparkles className="h-4 w-4" />
-              <span className="text-sm">NERDC Based</span>
+              <span className="text-sm">Agora Based</span>
             </div>
           )}
           <div className="ml-auto">

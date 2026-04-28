@@ -63,7 +63,7 @@ export default function ClassesPage() {
   const terminology = getTerminology(currentType);
 
   // Get school data
-  const { data: schoolResponse } = useGetMySchoolQuery();
+  const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
 
   // Get active session
@@ -165,11 +165,14 @@ export default function ClassesPage() {
     setEditModal({ isOpen: false, classId: '', currentName: '' });
   };
 
-  if (isLoadingClasses) {
+  if (isLoadingClasses || isLoadingSchool) {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+          <p className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+            Loading {terminology.courses.toLowerCase()}...
+          </p>
         </div>
       </ProtectedRoute>
     );
@@ -325,13 +328,15 @@ export default function ClassesPage() {
               const primaryTeacher = classItem.teachers?.find((t) => t.isPrimary);
               const teacherName = primaryTeacher
                 ? `${primaryTeacher.firstName} ${primaryTeacher.lastName}`
+                : classItem.type === 'SECONDARY'
+                ? 'No form teacher assigned'
                 : classItem.teachers && classItem.teachers.length > 0
-                  ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
-                  : 'No teacher assigned';
+                ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
+                : 'No teacher assigned';
 
               return (
                 <FadeInUp key={classItem.id} delay={index * 0.05} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
-                  <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
+                  <Card className="hover:bg-light-surface dark:hover:bg-dark-bg hover:shadow-lg transition-all h-full flex flex-col">
                     <CardContent
                       className="pt-6 flex-1 cursor-pointer"
                       onClick={() => handleClassClick(classItem.id)}
@@ -435,14 +440,16 @@ export default function ClassesPage() {
               const primaryTeacher = classItem.teachers?.find((t) => t.isPrimary);
               const teacherName = primaryTeacher
                 ? `${primaryTeacher.firstName} ${primaryTeacher.lastName}`
+                : classItem.type === 'SECONDARY'
+                ? 'No form teacher assigned'
                 : classItem.teachers && classItem.teachers.length > 0
-                  ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
-                  : 'No teacher assigned';
+                ? `${classItem.teachers.length} ${terminology.staff.toLowerCase()}`
+                : 'No teacher assigned';
 
               return (
                 <FadeInUp key={classItem.id} from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                   <Card
-                    className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
+                    className="cursor-pointer hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                     onClick={() => handleClassClick(classItem.id)}
                   >
                     <CardContent className="p-4">

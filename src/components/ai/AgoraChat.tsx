@@ -471,7 +471,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
       setMessages([
         {
           role: 'assistant',
-          content: `Hello ${firstName}! I'm Lois, your dedicated Agora School Space AI Assistant. ${greetingDesc}`,
+          content: `Hello ${firstName}! I'm Lois, your dedicated Agora Open Schools AI Assistant. ${greetingDesc}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);

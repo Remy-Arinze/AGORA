@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FadeInUp } from '@/components/ui/FadeInUp';
+import { cn } from '@/lib/utils';
 import {
   Clock,
   Calendar,
@@ -58,6 +59,8 @@ export default function TeacherOverviewPage() {
     activeTerm,
     timetable,
     classes,
+    formClasses,
+    schoolType,
     isLoading,
     hasError,
     errorMessage,
@@ -370,18 +373,87 @@ export default function TeacherOverviewPage() {
           </Card>
         </FadeInUp>
 
+        {/* Form Management / Managed Classes */}
+        {formClasses && formClasses.length > 0 && (
+          <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
+            <Card className={cn(
+              "border-l-4",
+              schoolType === 'SECONDARY' ? "bg-green-500/5 border-green-500/20 border-l-green-600" : "bg-purple-500/5 border-purple-500/20 border-l-purple-600"
+            )}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
+                    <Users className={cn("h-5 w-5", schoolType === 'SECONDARY' ? "text-green-600" : "text-purple-600")} />
+                    {schoolType === 'SECONDARY' ? 'My Form Classes' : 'My Primary Classes'}
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {formClasses.map((cls) => (
+                    <div
+                      key={cls.id}
+                      onClick={() => router.push(`/dashboard/teacher/classes/${cls.id}`)}
+                      className={cn(
+                        "flex items-center justify-between p-4 rounded-xl border border-light-border dark:border-dark-border cursor-pointer transition-all hover:shadow-md",
+                        schoolType === 'SECONDARY' ? "hover:border-green-500/50" : "hover:border-purple-500/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center font-bold",
+                          schoolType === 'SECONDARY' ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-purple-100 dark:bg-purple-900/30 text-purple-600"
+                        )}>
+                          {cls.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-light-text-primary dark:text-dark-text-primary">
+                            {cls.name}
+                          </p>
+                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                            {cls.studentsCount || 0} Students assigned
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={cn(
+                          "px-2 py-0.5 text-[10px] font-bold uppercase rounded",
+                          schoolType === 'SECONDARY' ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"
+                        )}>
+                          Form
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 px-2 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/dashboard/teacher/classes/${cls.id}?tab=roll-call`);
+                          }}
+                        >
+                          Roll Call
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </FadeInUp>
+        )}
+
         {/* My Classes */}
         <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 font-semibold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-card-title)' }}>
-                  <BookOpen className="h-5 w-5 text-[var(--agora-blue)]" />
-                  My Classes
+                  <BookOpen className="h-5 w-5 text-[#2490FD]" />
+                  My Subjects
                 </CardTitle>
                 <button
                   onClick={() => router.push('/dashboard/teacher/classes')}
-                  className="text-white hover:text-white/80 transition-colors flex items-center"
+                  className="text-[#2490FD] hover:text-[#2490FD]/80 transition-colors flex items-center font-medium"
                   style={{ fontSize: 'var(--text-body)' }}
                 >
                   View All

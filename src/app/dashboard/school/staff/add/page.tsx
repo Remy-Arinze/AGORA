@@ -31,6 +31,7 @@ import {
   useGetMySchoolQuery,
   useGetClassArmsQuery,
   useGetClassLevelsQuery,
+  useGetSubjectsQuery,
   useGenerateDefaultClassesMutation
 } from '@/lib/store/api/schoolAdminApi';
 import { isPrincipalRole, isSchoolOwnerRole } from '@/lib/constants/roles';
@@ -92,6 +93,16 @@ export default function AddStaffPage() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [uploadTeacherImage] = useUploadTeacherImageMutation();
   const [uploadAdminImage] = useUploadAdminImageMutation();
+
+  // Get subjects for all school types
+  const {
+    data: subjectsResponse,
+    isLoading: isLoadingSubjects,
+  } = useGetSubjectsQuery(
+    { schoolId: schoolId!, schoolType: currentType },
+    { skip: !schoolId || !currentType }
+  );
+  const subjects = subjectsResponse?.data || [];
 
   // Get ClassArms for PRIMARY schools
   const isPrimary = currentType === 'PRIMARY';
@@ -301,31 +312,22 @@ export default function AddStaffPage() {
           schoolType: currentType || undefined,
         };
 
-        // For SECONDARY schools, use subjectIds for multi-subject support
-        if (currentType === 'SECONDARY' && formData.subjectIds.length > 0) {
+        // Use subjectIds for all school types that have subject selection
+        if (formData.subjectIds.length > 0) {
           teacherData.subjectIds = formData.subjectIds;
-        } else if (currentType === 'PRIMARY' && formData.classArmId) {
-          // For PRIMARY, send classArmId so the backend creates the ClassTeacher assignment
+        }
+        
+        // For PRIMARY schools, also send classArmId if selected
+        if (currentType === 'PRIMARY' && formData.classArmId) {
           teacherData.classArmId = formData.classArmId;
-          // Also set subject for display purposes
+          // Also set subject for display purposes (backward compatibility)
           const selectedArm = classArms.find(arm => arm.id === formData.classArmId);
           if (selectedArm) {
             teacherData.subject = `${selectedArm.classLevelName} ${selectedArm.name}`;
           }
-        } else if (formData.subject.trim()) {
-          // For TERTIARY or if no classArmId/subjectIds, use single subject
-          teacherData.subject = capitalizeWords(formData.subject);
         }
 
         const result = await addTeacher(teacherData);
-
-        // Show warning if class assignment was skipped (class already has a teacher)
-        if (result?.classAssignmentSkipped) {
-          toast(result.classAssignmentReason || 'Class assignment was skipped — the class already has a teacher.', {
-            icon: '⚠️',
-            duration: 5000,
-          });
-        }
 
         // Upload image after creation if we have a file but no URL
         if (selectedImageFile && result?.data?.id && schoolId) {
@@ -692,6 +694,23 @@ export default function AddStaffPage() {
                     Teaching Information
                   </h3>
 
+                  {/* For PRIMARY schools - Subject selection */}
+                  {currentType === 'PRIMARY' && schoolId && (
+                    <div className="mb-4 relative">
+                      <SubjectMultiSelect
+                        schoolId={schoolId}
+                        selectedSubjectIds={formData.subjectIds}
+                        onChange={(ids) => setFormData({ ...formData, subjectIds: ids })}
+                        schoolType="PRIMARY"
+                        label="Subject Teacher Can Teach"
+                        helperText="Optional: Select subject this teacher is qualified to teach."
+                        error={errors.subject}
+                        disabled={isLoadingState}
+                        maxSelections={1} // Primary schools typically have one subject per teacher
+                      />
+                    </div>
+                  )}
+
                   {/* For SECONDARY schools - Multi-subject selection */}
                   {currentType === 'SECONDARY' && schoolId && (
                     <div className="mb-4 relative">
@@ -705,6 +724,46 @@ export default function AddStaffPage() {
                         error={errors.subject}
                         disabled={isLoadingState}
                       />
+                    </div>
+                  )}
+
+                  {/* For TERTIARY schools - Subject selection */}
+                  {currentType === 'TERTIARY' && schoolId && (
+                    <div className="mb-4 relative">
+                      <SubjectMultiSelect
+                        schoolId={schoolId}
+                        selectedSubjectIds={formData.subjectIds}
+                        onChange={(ids) => setFormData({ ...formData, subjectIds: ids })}
+                        schoolType="TERTIARY"
+                        label="Subject Teacher Can Teach"
+                        helperText="Optional: Select subject this teacher is qualified to teach."
+                        error={errors.subject}
+                        disabled={isLoadingState}
+                        maxSelections={1} // Tertiary schools typically have one subject per teacher
+                      />
+                    </div>
+                  )}
+
+                  {/* Show message if no subjects are available */}
+                  {schoolId && subjects.length === 0 && (
+                    <div className="mb-4">
+                      <div className="p-4 border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg space-y-2">
+                        <p className="text-yellow-700 dark:text-yellow-400 text-sm font-medium">
+                          ⚠️ No subjects found for your {currentType?.toLowerCase()} school section.
+                        </p>
+                        <p className="text-yellow-600 dark:text-yellow-500 text-xs">
+                          You must generate subjects before you can assign them to teachers. You can generate standard subjects from the Subjects page.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push('/dashboard/school/subjects')}
+                          className="mt-2"
+                        >
+                          Go to Subjects Page
+                        </Button>
+                      </div>
                     </div>
                   )}
 
@@ -784,31 +843,7 @@ export default function AddStaffPage() {
                     </div>
                   )}
 
-                  {/* For TERTIARY - Single subject input */}
-                  {currentType === 'TERTIARY' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        label="Subject"
-                        name="subject"
-                        value={formData.subject}
-                        onChange={(e) => {
-                          setFormData({ ...formData, subject: e.target.value });
-                          if (errors.subject) {
-                            setErrors({ ...errors, subject: undefined });
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const capitalized = capitalizeWords(e.target.value);
-                          if (capitalized !== e.target.value) {
-                            setFormData({ ...formData, subject: capitalized });
-                          }
-                        }}
-                        placeholder="e.g., Mathematics, English"
-                        error={errors.subject}
-                      />
-                    </div>
-                  )}
-
+                  
                   {/* Temporary staff checkbox - applies to all school types */}
                   <div className="flex items-center gap-3 mt-4">
                     <input
@@ -852,7 +887,17 @@ export default function AddStaffPage() {
                     Cancel
                   </Button>
                 </Link>
-                <Button type="submit" isLoading={isLoadingState}>
+                <Button 
+                  type="submit" 
+                  isLoading={isLoadingState}
+                  disabled={
+                    !formData.firstName.trim() ||
+                    !formData.lastName.trim() ||
+                    !formData.email.trim() ||
+                    !formData.phone.trim() ||
+                    (staffType === 'admin' && !adminRole.trim())
+                  }
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Continue
                 </Button>

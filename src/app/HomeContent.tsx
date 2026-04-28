@@ -30,6 +30,112 @@ const formatNumber = (num: number): string => {
   return num.toString() + '+';
 };
 
+// Color classes for the timetable mini-grid cells
+const TIMETABLE_CELL_CLASSES = Array.from({ length: 20 }).map((_, i) => {
+  if ([2, 5, 8, 11, 14, 17].includes(i)) return 'bg-agora-blue/20';
+  if ([3, 7, 13, 19].includes(i)) return 'bg-agora-success/15';
+  if ([6, 12].includes(i)) return 'bg-agora-accent/15';
+  return 'bg-white/[0.04]';
+});
+
+// Grid dimensions: 5 cols × 4 rows, cell 32×20, gap 6
+const TT_W = 32, TT_H = 20, TT_GAP = 6;
+const TT_COLS = 5, TT_ROWS = 4;
+const TT_TOTAL_W = TT_COLS * TT_W + (TT_COLS - 1) * TT_GAP; // 184
+const TT_TOTAL_H = TT_ROWS * TT_H + (TT_ROWS - 1) * TT_GAP; // 98
+
+// Build a serpentine SVG path tracing each cell's top border L→R, then R→L
+const buildTimetablePath = () => {
+  const segments: string[] = [];
+  for (let row = 0; row < TT_ROWS; row++) {
+    const y = row * (TT_H + TT_GAP) + 1; // 1px inside top border
+    const ltr = row % 2 === 0;
+    for (let col = 0; col < TT_COLS; col++) {
+      const c = ltr ? col : TT_COLS - 1 - col;
+      const x1 = c * (TT_W + TT_GAP);
+      const x2 = x1 + TT_W;
+      if (row === 0 && col === 0) {
+        segments.push(`M ${x1} ${y}`);
+      } else if (col === 0) {
+        // drop down from previous row
+        const prevY = (row - 1) * (TT_H + TT_GAP) + 1;
+        segments.push(`L ${ltr ? x1 : x2} ${prevY}`);
+        segments.push(`L ${ltr ? x1 : x2} ${y}`);
+      }
+      segments.push(ltr ? `L ${x2} ${y}` : `L ${x1} ${y}`);
+    }
+  }
+  return segments.join(' ');
+};
+
+const TIMETABLE_PATH = buildTimetablePath();
+
+function TimetableGlowGrid() {
+  const pathRef = useRef<SVGPathElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const path = pathRef.current;
+    const wrapper = wrapperRef.current;
+    if (!path || !wrapper) return;
+
+    const totalLength = path.getTotalLength();
+    const segmentLength = totalLength * 0.12; // short glowing segment
+
+    path.style.strokeDasharray = `${segmentLength} ${totalLength}`;
+    path.style.strokeDashoffset = `${totalLength}`;
+
+    const ctx = gsap.context(() => {
+      gsap.to(path, {
+        strokeDashoffset: -totalLength,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: wrapper,
+          start: 'top 85%',
+          end: 'bottom 40%',
+          scrub: 1,
+        },
+      });
+    }, wrapper);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="hidden md:grid grid-cols-5 gap-1.5 flex-shrink-0 relative">
+      {TIMETABLE_CELL_CLASSES.map((cls, i) => (
+        <div key={`tt-${i}`} className={`w-8 h-5 rounded-md ${cls}`} />
+      ))}
+      {/* SVG overlay for the traveling border light */}
+      <svg
+        className="absolute inset-0 pointer-events-none z-10"
+        width={TT_TOTAL_W}
+        height={TT_TOTAL_H}
+        viewBox={`0 0 ${TT_TOTAL_W} ${TT_TOTAL_H}`}
+        fill="none"
+      >
+        <defs>
+          <filter id="tt-glow">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <path
+          ref={pathRef}
+          d={TIMETABLE_PATH}
+          stroke="rgba(36,144,253,0.5)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          filter="url(#tt-glow)"
+        />
+      </svg>
+    </div>
+  );
+}
+
 export default function HomeContent() {
   const { theme } = useTheme();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -125,13 +231,13 @@ export default function HomeContent() {
         <div className="max-w-4xl mx-auto mt-12 md:mt-16 z-10">
           <FadeInUp from={{ opacity: 0, y: 30 }} to={{ opacity: 1, y: 0 }} delay={0.1} duration={0.8}>
             <h1 className="text-5xl md:text-[4rem] font-bold text-[var(--dark-text-primary)] leading-tight mb-8 tracking-tight font-heading">
-              The Way We Manage Schools Can Be Better
+              The way we manage schools can be smarter
             </h1>
           </FadeInUp>
 
           <FadeInUp from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} delay={0.3} duration={0.8}>
             <p className="text-lg md:text-xl text-[var(--dark-text-secondary)] mb-12 max-w-2xl mx-auto leading-relaxed">
-              Agora bridges the gap between fragmented data across schools, help manage activities, and facilitate transfer of students and their data across schools with a single click.
+              Agora uses AI to generate curriculums, auto-grade assessments, build timetables, and predict student performance — so your team can focus on what matters most: teaching.
             </p>
           </FadeInUp>
 
@@ -271,182 +377,6 @@ export default function HomeContent() {
         */}
       </section>
 
-      {/* Command Center Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
-            <AnimateInView className="max-w-2xl px-4 md:px-0">
-              <span className="inline-block px-4 py-1.5 bg-agora-blue/10 text-agora-blue rounded-full text-[10px] md:text-xs font-bold mb-4 uppercase tracking-wider">
-                Management
-              </span>
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-[var(--dark-text-primary)] mb-6 font-heading tracking-tight leading-[1.1]">
-                The Command Center <br /> for Modern Education.
-              </h2>
-              <p className="text-base md:text-lg text-[var(--dark-text-secondary)] leading-relaxed font-light">
-                A comprehensive suite of tools designed to manage every aspect of your institution with surgical precision.
-              </p>
-            </AnimateInView>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Institutional Dashboard - Large Card */}
-            <AnimateInView delay={0.1} className="lg:col-span-2 bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 rounded-[2.5rem] p-8 md:p-12 relative group overflow-hidden">
-              <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-agora-blue/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-agora-blue/20 transition-colors duration-700" />
-
-              <div className="relative z-10">
-                <div className="mb-10 md:mb-12">
-                  <h3 className="text-2xl md:text-3xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">Institutional Dashboard</h3>
-                  <p className="text-[var(--dark-text-secondary)] max-w-xl text-base md:text-lg font-light leading-relaxed">
-                    Get a 360-degree view of your school's health. Monitor attendance, academic performance, and financial status in real-time.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-                  <div className="p-6 md:p-8 rounded-3xl bg-[var(--dark-bg)]/20 border border-[var(--dark-border)] backdrop-blur-md">
-                    <p className="text-xs md:text-sm text-[var(--dark-text-muted)] mb-2 font-medium">Active Students</p>
-                    <p className="text-3xl md:text-4xl font-bold text-agora-blue tracking-tighter">2,450</p>
-                    <div className="mt-4 h-1 w-full bg-agora-blue/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-agora-blue w-[85%] rounded-full" />
-                    </div>
-                  </div>
-
-                  <div className="p-6 md:p-8 rounded-3xl bg-[var(--dark-bg)]/20 border border-[var(--dark-border)] backdrop-blur-md">
-                    <p className="text-xs md:text-sm text-[var(--dark-text-muted)] mb-2 font-medium">Teacher Retention</p>
-                    <p className="text-3xl md:text-4xl font-bold text-agora-success tracking-tighter">98%</p>
-                    <div className="mt-4 h-1 w-full bg-agora-success/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-agora-success w-[98%] rounded-full" />
-                    </div>
-                  </div>
-
-                  <div className="p-6 md:p-8 rounded-3xl bg-[var(--dark-bg)]/20 border border-[var(--dark-border)] backdrop-blur-md">
-                    <p className="text-xs md:text-sm text-[var(--dark-text-muted)] mb-2 font-medium">Avg. Performance</p>
-                    <p className="text-3xl md:text-4xl font-bold text-agora-accent tracking-tighter">A-</p>
-                    <div className="mt-4 h-1 w-full bg-agora-accent/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-agora-accent w-[92%] rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </AnimateInView>
-
-            <div className="flex flex-col gap-8">
-              {/* Smart Scheduling */}
-              <AnimateInView delay={0.2} className="flex-1 bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 hover:bg-[var(--dark-surface)]/50 transition-colors group">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                  <svg className="w-6 h-6 md:w-7 md:h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h4 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">Smart Scheduling</h4>
-                <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
-                  Automated timetable generation that resolves teacher and room conflicts instantly using advanced algorithms.
-                </p>
-              </AnimateInView>
-
-              {/* Financial & Term Management */}
-              <AnimateInView delay={0.3} className="flex-1 bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 hover:bg-[var(--dark-surface)]/50 transition-colors group">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-agora-success/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                  <svg className="w-6 h-6 md:w-7 md:h-7 text-agora-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h4 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">Manage terms and Session</h4>
-                <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
-                  Orchestrate academic sessions and fiscal cycles in total synchronization. Automate term transitions.
-                </p>
-              </AnimateInView>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Protocol Stream Section */}
-      <section data-navbar-light="true" className="py-32 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <AnimateInView className="text-center mb-16 md:mb-24 px-4">
-            <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
-              System_Protocol_v2.0
-            </span>
-            <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tighter leading-[1.1]">
-              Unified Data <br /> Infrastructure
-            </h2>
-            <p className="text-base md:text-xl text-[var(--dark-text-secondary)] max-w-2xl mx-auto leading-relaxed font-light">
-              Agora removes the administrative walls between institutions. Transfer students, their grades, and their entire legacy across the globe as fast as a single click securely.
-            </p>
-          </AnimateInView>
-
-          {/* Protocol Stream Animation */}
-          <div className="mb-32">
-            <TransferVisual />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <AnimateInView delay={0.1} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-blue/20 transition-all duration-500 group relative overflow-hidden">
-              <div className="flex justify-between items-start mb-6 md:mb-8">
-                <div className="text-[10px] font-mono text-agora-blue uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity">
-                  PRTCL_MGR_01
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-agora-blue/5 flex items-center justify-center border border-agora-blue/10">
-                  <svg className="w-4 h-4 text-agora-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Data In-Motion</h3>
-              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
-                Academic history, verified credentials, and institutional records flow through an encrypted, high-availability backbone.
-              </p>
-              <div className="mt-8 pt-6 border-t border-[var(--dark-border)] flex gap-2">
-                <div className="w-1 h-1 rounded-full bg-agora-blue animate-pulse" />
-                <div className="text-[9px] font-mono text-[var(--dark-text-muted)] uppercase">Status: Latency_Optimized</div>
-              </div>
-            </AnimateInView>
-
-            <AnimateInView delay={0.2} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-success/20 transition-all duration-500 group relative overflow-hidden">
-              <div className="flex justify-between items-start mb-6 md:mb-8">
-                <div className="text-[10px] font-mono text-agora-success uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity">
-                  AUTH_NODE_02
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-agora-success/5 flex items-center justify-center border border-agora-success/10">
-                  <svg className="w-4 h-4 text-agora-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Smart Verification</h3>
-              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
-                Enforce zero-trust financial clearance and automated academic auditing before any data transition is authorized.
-              </p>
-              <div className="mt-8 pt-6 border-t border-[var(--dark-border)] flex gap-2">
-                <div className="w-1 h-1 rounded-full bg-agora-success animate-pulse" />
-                <div className="text-[9px] font-mono text-[var(--dark-text-muted)] uppercase">Status: Checksum_Verified</div>
-              </div>
-            </AnimateInView>
-
-            <AnimateInView delay={0.3} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-accent/20 transition-all duration-500 group relative overflow-hidden">
-              <div className="flex justify-between items-start mb-6 md:mb-8">
-                <div className="text-[10px] font-mono text-agora-accent uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity">
-                  CONSENSUS_03
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-agora-accent/5 flex items-center justify-center border border-agora-accent/10">
-                  <svg className="w-4 h-4 text-agora-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16m-7 6h7" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Protocol Governance</h3>
-              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
-                Multi-institution consensus protocols ensure that both schools mutually acknowledge and secure the transfer process.
-              </p>
-              <div className="mt-8 pt-6 border-t border-[var(--dark-border)] flex gap-2">
-                <div className="w-1 h-1 rounded-full bg-agora-accent animate-pulse" />
-                <div className="text-[9px] font-mono text-[var(--dark-text-muted)] uppercase">Status: Protocol_Synced</div>
-              </div>
-            </AnimateInView>
-          </div>
-        </div>
-      </section>
-
       {/* Agora AI Section */}
       <section data-navbar-light="true" className="py-24 relative">
         <div className="absolute inset-0 pointer-events-none">
@@ -456,78 +386,66 @@ export default function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <AnimateInView from={{ opacity: 0, x: -30 }} to={{ opacity: 1, x: 0 }}>
-              <div className="inline-flex items-center gap-2 px-4 py-2 text-blue-400 text-sm font-semibold mb-6">
-                {/* <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg> */}
-                Introducing Agora AI
+              <div className="inline-flex items-center gap-2 text-agora-lois text-sm font-bold mb-6 uppercase tracking-wider">
+                Introducing LOIS
               </div>
               <h2 className="text-3xl md:text-5xl font-bold text-[var(--dark-text-primary)] mb-6 leading-tight font-heading tracking-tight">
                 Empower Teachers <br className="hidden md:block" />
-                with Agora Ai
+                with AI
               </h2>
               <p className="text-lg text-[var(--dark-text-secondary)] mb-10 leading-relaxed font-light">
-                Agora AI is an orchestral intelligence layer designed to remove cognitive load from educators.
+                LOIS is an orchestral intelligence layer designed to remove cognitive load from educators.
                 Transition from manual overhead to high-precision pedagogical oversight.
               </p>
 
               <div className="grid grid-cols-1 gap-6">
                 {[
                   {
-                    label: 'Assessment_Gen',
-                    title: 'Generate math assessments in seconds',
+                    title: 'Generate assessments in seconds',
                     desc: 'AI-driven question banking that adapts to curriculum standards and difficulty levels instantly.',
                     icon: (
-                      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-agora-lois" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     ),
-                    color: 'blue'
                   },
                   {
-                    label: 'Neural_Grade',
                     title: 'Auto-grade essay submissions',
                     desc: 'Deep linguistic analysis providing students with instant, high-fidelity feedback and rubric-based scores.',
                     icon: (
-                      <svg className="w-5 h-5 text-agora-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-agora-lois" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     ),
-                    color: 'success'
                   },
                   {
-                    label: 'Predictive_Ops',
                     title: 'Predict student performance trends',
                     desc: 'Machine learning models that identify students at risk and forecast academic outcomes across cohorts.',
                     icon: (
-                      <svg className="w-5 h-5 text-agora-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-agora-lois" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
                     ),
-                    color: 'accent'
                   },
                   {
-                    label: 'Path_Optimization',
                     title: 'Personalize learning paths',
-                    desc: 'Dynamically reconfigure curriculum delivery based on individual student mastery and velocity.',
+                    desc: 'Students falling behind are automatically recommended personalized learning paths to get back on track.',
                     icon: (
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-agora-lois" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
                     ),
-                    color: 'indigo'
                   }
                 ].map((item, idx) => (
-                  <div key={idx} className="flex gap-5 group p-4 rounded-2xl hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5">
-                    <div className={`w-12 h-12 rounded-xl bg-${item.color}-500/10 flex items-center justify-center shrink-0 border border-${item.color}-500/20 group-hover:scale-110 transition-transform duration-500`}>
+                  <div key={idx} className="flex gap-5 group p-4 rounded-2xl hover:bg-agora-lois/[0.03] dark:hover:bg-white/[0.02] transition-colors border border-transparent hover:border-agora-lois/20 dark:hover:border-white/5">
+                    <div className="w-12 h-12 rounded-xl bg-agora-lois/10 flex items-center justify-center shrink-0 border border-agora-lois/20 group-hover:scale-110 transition-transform duration-500">
                       {item.icon}
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-1">
-                        <h4 className="text-[var(--dark-text-primary)] font-bold text-base font-heading">{item.title}</h4>
-                        <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase tracking-tighter pt-0.5">{item.label}</span>
+                        <h4 className="text-gray-900 dark:text-[var(--dark-text-primary)] font-bold text-base font-heading">{item.title}</h4>
                       </div>
-                      <p className="text-[var(--dark-text-secondary)] leading-relaxed text-sm font-light">{item.desc}</p>
+                      <p className="text-gray-600 dark:text-[var(--dark-text-secondary)] leading-relaxed text-sm font-light">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -564,13 +482,13 @@ export default function HomeContent() {
                   {/* Mock UI for AI Generation */}
                   <div className="bg-[var(--dark-surface)] rounded-xl p-4 border border-[var(--dark-border)] shadow-lg transform rotate-2 hover:rotate-0 transition-transform duration-300 ml-8">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400 mt-1 shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-agora-lois/20 flex items-center justify-center text-agora-lois mt-1 shrink-0">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-[var(--dark-text-primary)] block mb-1">Agora AI Assistant</span>
+                        <span className="text-sm font-medium text-[var(--dark-text-primary)] block mb-1">LOIS Assistant</span>
                         <p className="text-xs text-[var(--dark-text-secondary)] bg-[var(--dark-bg)] p-3 rounded-lg border border-[var(--dark-border)] leading-relaxed">
                           "Based on recent test scores, I recommend focusing next week's lesson on quadratic equations. Here is a generated lesson plan draft..."
                         </p>
@@ -584,6 +502,243 @@ export default function HomeContent() {
         </div>
       </section>
 
+      {/* Command Center Section */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+            <AnimateInView className="max-w-2xl px-4 md:px-0">
+              <span className="inline-block px-4 py-1.5 bg-agora-blue/10 text-agora-blue rounded-full text-[10px] md:text-xs font-bold mb-4 uppercase tracking-wider">
+                AI Does the Heavy Lifting
+              </span>
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-[var(--dark-text-primary)] mb-6 font-heading tracking-tight leading-[1.1]">
+                Every Tool, Powered <br /> by Intelligence.
+              </h2>
+              <p className="text-base md:text-lg text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                From AI-parsed curriculums to auto-graded assessments — Agora doesn't just automate your school, it thinks alongside you.
+              </p>
+            </AnimateInView>
+          </div>
+
+          {/* Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            {/* 1. Curriculum Engine — Featured (spans 2 cols) */}
+            <AnimateInView delay={0.05} className="md:col-span-2 bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06] rounded-3xl p-7 md:p-9 relative group overflow-hidden hover:border-white/[0.1] transition-all duration-500">
+              <div className="absolute top-0 right-0 -translate-y-1/3 translate-x-1/4 w-72 h-72 bg-agora-blue/8 rounded-full blur-[80px] pointer-events-none group-hover:bg-agora-blue/15 transition-colors duration-700" />
+              <div className="relative z-10">
+                <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div className="flex items-center gap-3 mb-3">
+                  <h3 className="text-xl md:text-2xl font-bold text-[var(--dark-text-primary)] font-heading">Curriculum Engine</h3>
+                  <span className="px-2 py-0.5 text-[9px] font-bold text-blue-400 bg-blue-500/10 rounded-full border border-blue-500/20">✦ AI</span>
+                </div>
+                <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light mb-6 max-w-lg">
+                  Browse a library of vetted, standards-aligned curriculums — including the national NERDC framework — and adopt one for your school in a single click. Prefer your own? Upload your documents and let AI transform them into structured, week-by-week teaching plans instantly.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['Vetted Curriculums', 'NERDC Ready', 'Custom Upload', 'AI-Powered Plans'].map((tag) => (
+                    <span key={tag} className="px-3 py-1 text-[10px] font-medium text-white/50 bg-white/[0.04] rounded-full border border-white/[0.06]">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </AnimateInView>
+
+            {/* 2. Scheme of Work */}
+            <AnimateInView delay={0.1} className="bg-[var(--dark-surface)]/20 border border-white/[0.06] rounded-3xl p-7 hover:border-white/[0.1] transition-all duration-500 group">
+              <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <h4 className="text-lg font-bold text-[var(--dark-text-primary)] font-heading">Scheme of Work</h4>
+                <span className="px-2 py-0.5 text-[9px] font-bold text-blue-400 bg-blue-500/10 rounded-full border border-blue-500/20">✦ AI</span>
+              </div>
+              <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                AI-generated weekly teaching plans with topic tracking. Teachers mark delivery status in real-time.
+              </p>
+            </AnimateInView>
+
+            {/* 3. Smart Assessments */}
+            <AnimateInView delay={0.15} className="bg-[var(--dark-surface)]/20 border border-white/[0.06] rounded-3xl p-7 hover:border-white/[0.1] transition-all duration-500 group">
+              <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <h4 className="text-lg font-bold text-[var(--dark-text-primary)] font-heading">Smart Assessments</h4>
+                <span className="px-2 py-0.5 text-[9px] font-bold text-blue-400 bg-blue-500/10 rounded-full border border-blue-500/20">✦ AI</span>
+              </div>
+              <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                Create timed exams with integrity monitoring. AI auto-grades MCQs and short answers instantly.
+              </p>
+            </AnimateInView>
+
+            {/* 4. AI-Powered Grading */}
+            <AnimateInView delay={0.2} className="bg-[var(--dark-surface)]/20 border border-white/[0.06] rounded-3xl p-7 hover:border-white/[0.1] transition-all duration-500 group">
+              <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <h4 className="text-lg font-bold text-[var(--dark-text-primary)] font-heading">AI-Powered Grading</h4>
+                <span className="px-2 py-0.5 text-[9px] font-bold text-blue-400 bg-blue-500/10 rounded-full border border-blue-500/20">✦ AI</span>
+              </div>
+              <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                Let AI handle the heavy lifting. It creates assessments, grades answers instantly, and gives teachers hours back in their day.
+              </p>
+            </AnimateInView>
+
+            {/* 5. Student Transfers */}
+            <AnimateInView delay={0.25} className="bg-[var(--dark-surface)]/20 border border-white/[0.06] rounded-3xl p-7 hover:border-white/[0.1] transition-all duration-500 group">
+              <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-bold text-[var(--dark-text-primary)] mb-2 font-heading">Student Transfers</h4>
+              <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                Transfer students across schools with a secure TAC code. Grades, health records, and history migrate automatically.
+              </p>
+            </AnimateInView>
+
+            {/* 6. Attendance Tracking */}
+            <AnimateInView delay={0.3} className="bg-[var(--dark-surface)]/20 border border-white/[0.06] rounded-3xl p-7 hover:border-white/[0.1] transition-all duration-500 group">
+              <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-bold text-[var(--dark-text-primary)] mb-2 font-heading">Attendance Tracking</h4>
+              <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                Mark attendance individually or in bulk. Generate summaries showing present, absent, and late trends.
+              </p>
+            </AnimateInView>
+
+            {/* 7. Timetable Generation — Featured (spans 2 cols) */}
+            <AnimateInView delay={0.35} className="md:col-span-2 bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06] rounded-3xl p-7 md:p-9 relative group overflow-hidden hover:border-white/[0.1] transition-all duration-500">
+              <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/4 w-64 h-64 bg-agora-accent/8 rounded-full blur-[80px] pointer-events-none group-hover:bg-agora-accent/15 transition-colors duration-700" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+                <div className="flex-1">
+                  <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                    <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading">Timetable Generation</h3>
+                  <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light max-w-md">
+                    Automated scheduling that resolves teacher and room conflicts. Assign subjects, set periods, and manage breaks — all conflict-free.
+                  </p>
+                </div>
+                {/* Mini timetable visual — scroll-triggered glow */}
+                <TimetableGlowGrid />
+              </div>
+            </AnimateInView>
+
+            {/* 8. Session & Term Management */}
+            <AnimateInView delay={0.4} className="bg-[var(--dark-surface)]/20 border border-white/[0.06] rounded-3xl p-7 hover:border-white/[0.1] transition-all duration-500 group">
+              <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-bold text-[var(--dark-text-primary)] mb-2 font-heading">Session Management</h4>
+              <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                Orchestrate academic sessions and terms with automated transitions. Keep your entire school calendar in sync.
+              </p>
+            </AnimateInView>
+
+            {/* 9. Teacher & Student Dashboards */}
+            <AnimateInView delay={0.45} className="bg-[var(--dark-surface)]/20 border border-white/[0.06] rounded-3xl p-7 hover:border-white/[0.1] transition-all duration-500 group">
+              <div className="w-9 h-9 bg-white/[0.06] rounded-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500">
+                <svg className="w-[18px] h-[18px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm10 0a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-bold text-[var(--dark-text-primary)] mb-2 font-heading">Dedicated Dashboards</h4>
+              <p className="text-[var(--dark-text-secondary)] text-sm leading-relaxed font-light">
+                Teachers and students each get their own workspace. Track academic progress, spot at-risk students early, and celebrate growth.
+              </p>
+            </AnimateInView>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Protocol Stream Section */}
+      <section data-navbar-light="true" className="py-32 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <AnimateInView className="text-center mb-16 md:mb-24 px-4">
+            <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+              System_Protocol_v2.0
+            </span>
+            <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tighter leading-[1.1]">
+              Unified Data <br /> Infrastructure
+            </h2>
+            <p className="text-base md:text-xl text-[var(--dark-text-secondary)] max-w-2xl mx-auto leading-relaxed font-light">
+              Agora removes the administrative walls between institutions. Transfer students, their grades, and their entire legacy across schools as fast as a single click securely.
+            </p>
+          </AnimateInView>
+
+          {/* Protocol Stream Animation */}
+          <div className="mb-32">
+            <TransferVisual />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <AnimateInView delay={0.1} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-lois/20 transition-all duration-500 group relative overflow-hidden">
+              <div className="mb-6 md:mb-8">
+                <div className="w-12 h-12 rounded-xl bg-agora-lois/10 flex items-center justify-center shrink-0 border border-agora-lois/20 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-5 h-5 text-agora-lois" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Data In-Motion</h3>
+              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                Academic history, verified credentials, and institutional records flow through an encrypted, high-availability backbone.
+              </p>
+            </AnimateInView>
+
+            <AnimateInView delay={0.2} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-lois/20 transition-all duration-500 group relative overflow-hidden">
+              <div className="mb-6 md:mb-8">
+                <div className="w-12 h-12 rounded-xl bg-agora-lois/10 flex items-center justify-center shrink-0 border border-agora-lois/20 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-5 h-5 text-agora-lois" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Smart Verification</h3>
+              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                Enforce zero-trust financial clearance and automated academic auditing before any data transition is authorized.
+              </p>
+            </AnimateInView>
+
+            <AnimateInView delay={0.3} className="p-6 md:p-8 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] hover:border-agora-lois/20 transition-all duration-500 group relative overflow-hidden">
+              <div className="mb-6 md:mb-8">
+                <div className="w-12 h-12 rounded-xl bg-agora-lois/10 flex items-center justify-center shrink-0 border border-agora-lois/20 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-5 h-5 text-agora-lois" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-[var(--dark-text-primary)] mb-3 font-heading tracking-tight">Protocol Governance</h3>
+              <p className="text-sm text-[var(--dark-text-secondary)] leading-relaxed font-light">
+                Multi-institution consensus protocols ensure that both schools mutually acknowledge and secure the transfer process.
+              </p>
+            </AnimateInView>
+          </div>
+        </div>
+      </section>
+
+
       {/* Pricing Plans Section */}
       <section id="pricing" data-navbar-light="true" className="py-24 relative">
         <div className="absolute inset-0 pointer-events-none">
@@ -593,10 +748,10 @@ export default function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16">
             <span className="inline-block px-4 py-2 bg-indigo-900/50 text-indigo-400 rounded-full text-xs font-semibold mb-4">
-              Flexible Pricing
+              Pricing
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
-              Simple, transparent pricing
+              Choose Your School Management Plan
             </h2>
             <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto">
               Choose the plan that best fits your institution's needs
@@ -716,18 +871,18 @@ export default function HomeContent() {
               Final_Protocol_Handshake
             </span>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-[var(--dark-text-primary)] mb-8 leading-[1.05] tracking-tight font-heading">
-              Ready to Transform <br className="hidden md:block" /> Education in Africa?
+              Experience the Future of <br className="hidden md:block" /> School Management
             </h2>
             <p className="text-lg md:text-2xl text-[var(--dark-text-secondary)] mb-14 max-w-3xl mx-auto leading-relaxed font-light">
               Join schools, parents, and students building the future of digital education identity.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Button
-                size="lg"
+                size="md"
                 variant="primary"
                 isFlat
                 onClick={handleGetStarted}
-                className="rounded-lg px-16 py-8 text-xl hover:scale-105 font-bold transition-all shadow-[0_0_30px_rgba(36,144,253,0.3)] bg-agora-blue hover:bg-agora-blue/90"
+                className="rounded-lg hover:scale-105 font-bold transition-all shadow-[0_0_30px_rgba(36,144,253,0.3)] bg-agora-blue hover:bg-agora-blue/90"
               >
                 {isLoggedIn ? 'Go to Dashboard' : 'Get Started Free'}
               </Button>

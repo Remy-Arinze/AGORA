@@ -360,7 +360,7 @@ export interface CreateClassResourceDto {
 // NERDC Curriculum Types
 // ============================================
 
-export interface NerdcSubject {
+export interface AgoraSubject {
   id: string;
   name: string;
   code: string;
@@ -370,7 +370,7 @@ export interface NerdcSubject {
   isActive: boolean;
 }
 
-export interface NerdcCurriculumWeek {
+export interface AgoraCurriculumWeek {
   id: string;
   weekNumber: number;
   topic: string;
@@ -382,13 +382,35 @@ export interface NerdcCurriculumWeek {
   duration: string | null;
 }
 
-export interface NerdcCurriculum {
+export interface AgoraCurriculumTemplate {
   id: string;
   classLevel: string;
   term: number;
   description: string | null;
-  subject: NerdcSubject;
-  weeks: NerdcCurriculumWeek[];
+  subject: AgoraSubject;
+  weeks: AgoraCurriculumWeek[];
+}
+
+// ============================================
+// School Curriculum Document Types
+// ============================================
+
+export interface SchoolCurriculumDoc {
+  id: string;
+  schoolId: string;
+  subjectId: string;
+  gradeLevel: string;
+  termNumber: number | null;
+  sourceType: 'MANUAL' | 'FILE_UPLOAD';
+  fileName: string | null;
+  fileUrl: string | null;
+  fileType: string | null;
+  status: 'PENDING_PARSE' | 'PARSING' | 'COMPLETED' | 'FAILED';
+  parsedData: any | null;
+  parseErrors: string | null;
+  uploadedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================
@@ -439,9 +461,9 @@ export interface Curriculum {
   academicYear: string;
   termId: string | null;
   termName?: string;
-  // NERDC Integration
-  nerdcCurriculumId: string | null;
-  isNerdcBased: boolean;
+  // Agora Integration
+  agoraCurriculumTemplateId: string | null;
+  isAgoraBased: boolean;
   customizations: number;
   // Status & Approval
   status: CurriculumStatus;
@@ -474,7 +496,7 @@ export interface CurriculumSummary {
   teacherName: string | null;
   weeksTotal: number;
   weeksCompleted: number;
-  isNerdcBased: boolean;
+  isAgoraBased: boolean;
   periodsPerWeek: number;
   teachers?: { id: string; name: string }[];
 }
@@ -509,7 +531,7 @@ export interface CreateCurriculumDto {
   subject?: string;
   academicYear: string;
   termId: string;
-  nerdcCurriculumId?: string;
+  agoraCurriculumTemplateId?: string;
   items: CreateCurriculumItemDto[];
 }
 
@@ -1058,6 +1080,10 @@ export interface Subject {
     name: string;
   } | null;
   description?: string;
+  agoraSubjectId?: string;
+  levelStream?: 'JUNIOR' | 'SENIOR' | 'ALL';
+  isAgoraStandard: boolean;
+  category?: string;
   isActive: boolean;
   teachers?: TeacherWithWorkload[];
 }
@@ -1190,7 +1216,7 @@ export interface SubjectClassAssignments {
 
 export interface ClassAssignmentEntry {
   classArmId: string;
-  teacherId?: string;
+  teacherId?: string | null;
 }
 
 export interface BulkClassSubjectAssignment {
@@ -1202,17 +1228,27 @@ export interface CreateSubjectDto {
   name: string;
   code?: string;
   schoolType?: 'PRIMARY' | 'SECONDARY' | 'TERTIARY';
-  classLevelId?: string;
+  classLevelId?: string | null;
   description?: string;
+  agoraSubjectId?: string;
+  levelStream?: 'JUNIOR' | 'SENIOR' | 'ALL';
+  category?: string;
+  isAgoraStandard?: boolean;
+  assignments?: ClassAssignmentEntry[];
 }
 
 export interface UpdateSubjectDto {
   name?: string;
   code?: string;
   schoolType?: 'PRIMARY' | 'SECONDARY' | 'TERTIARY';
-  classLevelId?: string;
+  classLevelId?: string | null;
   description?: string;
+  agoraSubjectId?: string;
+  levelStream?: 'JUNIOR' | 'SENIOR' | 'ALL';
+  category?: string;
+  isAgoraStandard?: boolean;
   isActive?: boolean;
+  assignments?: ClassAssignmentEntry[];
 }
 
 export interface Room {
@@ -1379,10 +1415,6 @@ export interface CreateClassArmDto {
   classLevelId: string;
 }
 
-export interface CreateSubjectDto {
-  name: string;
-  code?: string;
-}
 
 export interface CreateRoomDto {
   name: string;
@@ -1423,6 +1455,14 @@ export interface CreateEventDto {
 }
 
 // RTK Query endpoints for school admin
+export interface ReassignStudentDto {
+  targetClassLevel: string;
+  academicYear: string;
+  targetClassId?: string;
+  targetClassArmId?: string;
+  reason?: string;
+}
+
 export const schoolAdminApi = apiSlice.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
@@ -2206,6 +2246,14 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Timetable', 'Subject'],
     }),
+    bulkDeleteSubjects: builder.mutation<ResponseDto<{ deleted: number; message: string }>, { schoolId: string; subjectIds: string[] }>({
+      query: ({ schoolId, subjectIds }) => ({
+        url: `/schools/${schoolId}/timetable/subjects`,
+        method: 'DELETE',
+        body: { subjectIds },
+      }),
+      invalidatesTags: ['Timetable', 'Subject'],
+    }),
     assignTeacherToSubject: builder.mutation<ResponseDto<Subject>, { schoolId: string; subjectId: string; teacherId: string }>({
       query: ({ schoolId, subjectId, teacherId }) => ({
         url: `/schools/${schoolId}/timetable/subjects/${subjectId}/teachers`,
@@ -2639,24 +2687,12 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       providesTags: ['Student'],
     }),
     // ============================================
-    // NERDC Curriculum Endpoints
+    // Agora Curriculum Endpoints
     // ============================================
 
-    getNerdcSubjects: builder.query<
-      ResponseDto<NerdcSubject[]>,
-      { schoolId: string; schoolType?: string; category?: string }
-    >({
-      query: ({ schoolId, schoolType, category }) => {
-        const queryParams = new URLSearchParams();
-        if (schoolType) queryParams.append('schoolType', schoolType);
-        if (category) queryParams.append('category', category);
-        const queryString = queryParams.toString();
-        return `/schools/${schoolId}/curriculum/nerdc/subjects${queryString ? `?${queryString}` : ''}`;
-      },
-    }),
 
-    getNerdcTemplate: builder.query<
-      ResponseDto<NerdcCurriculum | null>,
+    getAgoraTemplate: builder.query<
+      ResponseDto<AgoraCurriculumTemplate | null>,
       { schoolId: string; subjectCode: string; classLevel: string; schoolType: string; term: number }
     >({
       query: ({ schoolId, subjectCode, classLevel, schoolType, term }) => {
@@ -2665,7 +2701,7 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         queryParams.append('classLevel', classLevel);
         queryParams.append('schoolType', schoolType);
         queryParams.append('term', term.toString());
-        return `/schools/${schoolId}/curriculum/nerdc/template?${queryParams.toString()}`;
+        return `/schools/${schoolId}/curriculum/agora/template?${queryParams.toString()}`;
       },
     }),
 
@@ -3539,6 +3575,25 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    deleteSchemeOfWork: builder.mutation<void, { schoolId: string; schemeId: string; classLevelId: string }>({
+      query: ({ schoolId, schemeId }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/${schemeId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { classLevelId }) => [
+        { type: 'Curriculum', id: `SCHEME_SUMMARY_${classLevelId}` },
+        'Curriculum',
+      ],
+    }),
+
+    getSchemeOfWorkById: builder.query<CurriculumDto, { schoolId: string; schemeId: string }>({
+      query: ({ schoolId, schemeId }) => ({
+        url: `schools/${schoolId}/curriculum/schemes/${schemeId}`,
+      }),
+      transformResponse: (response: ResponseDto<CurriculumDto>) => response.data,
+      providesTags: (result, error, { schemeId }) => [{ type: 'Curriculum', id: schemeId }],
+    }),
+
     getAgoraLibrary: builder.query<any[], { schoolId: string; subjectId: string; gradeLevel: string }>({
       query: ({ schoolId, subjectId, gradeLevel }) => ({
         url: `schools/${schoolId}/curriculum/agora-library`,
@@ -3547,9 +3602,100 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       transformResponse: (response: ResponseDto<any[]>) => response.data,
     }),
 
+    getAgoraCurriculumPreview: builder.query<any, { schoolId: string; curriculumId: string }>({
+      query: ({ schoolId, curriculumId }) => ({
+        url: `schools/${schoolId}/curriculum/agora/${curriculumId}/preview`,
+      }),
+      transformResponse: (response: ResponseDto<any>) => response.data,
+      providesTags: (result, error, { curriculumId }) => [{ type: 'Curriculum', id: `PREVIEW_${curriculumId}` }],
+    }),
+
     getSubscriptionSummary: builder.query<SubscriptionSummaryDto, void>({
       query: () => 'subscriptions/summary',
       transformResponse: (response: ResponseDto<SubscriptionSummaryDto>) => response.data,
+    }),
+    // Agora Subject Bank
+    getAgoraSubjects: builder.query<ResponseDto<AgoraSubject[]>, { schoolId: string; schoolType?: string; category?: string }>({
+      query: ({ schoolId, schoolType, category }) => ({
+        url: `/schools/${schoolId}/curriculum/agora/subjects`,
+        params: { schoolType, category },
+      }),
+      providesTags: ['Curriculum'],
+    }),
+    // ============================================
+    // School Private Source Library
+    // ============================================
+    getSchoolCurriculumDocs: builder.query<ResponseDto<SchoolCurriculumDoc[]>, { schoolId: string; subjectId?: string }>({
+      query: ({ schoolId, subjectId }) => ({
+        url: `/schools/${schoolId}/curriculum/documents`,
+        params: { subjectId },
+      }),
+      providesTags: (result) => 
+        result 
+          ? [...(result.data || []).map(({ id }) => ({ type: 'Curriculum' as const, id })), 'Curriculum']
+          : ['Curriculum'],
+    }),
+
+    uploadSchoolCurriculumDoc: builder.mutation<ResponseDto<SchoolCurriculumDoc>, { schoolId: string; subjectId: string; gradeLevel: string; termNumber?: number; file: File }>({
+      queryFn: async ({ schoolId, subjectId, gradeLevel, termNumber, file }, _api, _extraOptions, baseQuery) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('subjectId', subjectId);
+        formData.append('gradeLevel', gradeLevel);
+        formData.append('sourceType', 'FILE_UPLOAD');
+        if (termNumber) formData.append('termNumber', termNumber.toString());
+
+        const state = _api.getState() as { auth: { token?: string | null } };
+        const token = state?.auth?.token;
+
+        const envUrl = typeof process !== 'undefined' && (process.env.NEXT_PUBLIC_API_URL || (process as any).env.NEXT_PUBLIC_API_URL);
+        const baseUrl = envUrl || 'http://localhost:4000';
+        const url = `${baseUrl}/schools/${schoolId}/curriculum/documents/upload`;
+
+        const headers: HeadersInit = {};
+        if (token) {
+          headers['authorization'] = `Bearer ${token}`;
+        }
+
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+            return { error: { status: response.status, data: error } };
+          }
+
+          const data = await response.json();
+          return { data };
+        } catch (error: any) {
+          return { error: { status: 'FETCH_ERROR', error: error.message } };
+        }
+      },
+      invalidatesTags: ['Curriculum'],
+    }),
+
+    deleteSchoolCurriculumDoc: builder.mutation<void, { schoolId: string; docId: string }>({
+      query: ({ schoolId, docId }) => ({
+        url: `/schools/${schoolId}/curriculum/documents/${docId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    reassignStudent: builder.mutation<ResponseDto<any>, { schoolId: string; studentId: string; reassign: ReassignStudentDto }>({
+      query: ({ schoolId, studentId, reassign }) => ({
+        url: `/schools/${schoolId}/students/${studentId}/reassign`,
+        method: 'POST',
+        body: reassign,
+      }),
+      invalidatesTags: (result, error, { studentId }) => [
+        { type: 'Students', id: 'LIST' },
+        { type: 'Students', id: studentId },
+        { type: 'Classes', id: 'LIST' },
+      ],
     }),
   }),
 });
@@ -3634,6 +3780,7 @@ export const {
   useCreateSubjectMutation,
   useUpdateSubjectMutation,
   useDeleteSubjectMutation,
+  useBulkDeleteSubjectsMutation,
   useAssignTeacherToSubjectMutation,
   useRemoveTeacherFromSubjectMutation,
   useAutoGenerateSubjectsMutation,
@@ -3660,9 +3807,8 @@ export const {
   useGetClassResourcesQuery,
   useUploadClassResourceMutation,
   useDeleteClassResourceMutation,
-  // NERDC Curriculum hooks
-  useGetNerdcSubjectsQuery,
-  useGetNerdcTemplateQuery,
+  // Agora Curriculum hooks
+  useGetAgoraTemplateQuery,
   // Timetable-Driven Curriculum hooks
   useGetSubjectsFromTimetableQuery,
   useGetCurriculaSummaryQuery,
@@ -3764,8 +3910,17 @@ export const {
   useGetSchemesSummaryQuery,
   useSetupSchemeOfWorkMutation,
   useCancelSchemeOfWorkMutation,
+  useGetSchemeOfWorkByIdQuery,
+  useDeleteSchemeOfWorkMutation,
   useGetAgoraLibraryQuery,
+  useGetAgoraCurriculumPreviewQuery,
+  // School document library
+  useGetSchoolCurriculumDocsQuery,
+  useUploadSchoolCurriculumDocMutation,
+  useDeleteSchoolCurriculumDocMutation,
   // Subscription hooks
   useGetSubscriptionSummaryQuery,
+  useGetAgoraSubjectsQuery,
+  useReassignStudentMutation,
 } = schoolAdminApi;
 

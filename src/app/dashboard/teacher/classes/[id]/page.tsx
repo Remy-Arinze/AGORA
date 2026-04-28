@@ -29,7 +29,16 @@ import {
   QrCode,
   Trash2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  LayoutDashboard,
+  FileCheck,
+  CheckSquare,
+  ListChecks,
+  BookMarked,
+  ChevronRight,
+  Edit,
+  X,
+  GraduationCap
 } from 'lucide-react';
 import {
   useGetClassByIdQuery,
@@ -44,6 +53,7 @@ import {
   useGetTimetableForClassQuery,
   useGetSessionsQuery,
   useGetClassAssessmentsQuery,
+  useGetTeacherSubjectsForClassQuery,
   useMarkBulkAttendanceMutation,
   useMarkAttendanceMutation,
   useGetClassAttendanceQuery,
@@ -69,8 +79,11 @@ import { AiChatDrawer } from '@/components/ai/AiChatDrawer';
 import { Sparkles } from 'lucide-react';
 import { LiveStatusBadge } from '@/components/ui/LiveStatusBadge';
 import { ConfirmModal } from '@/components/ui/Modal';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { ActivityLog } from '@/components/dashboard/ActivityLog';
+import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
-type TabType = 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'rollcall' | 'scheme-of-work';
+type TabType = 'overview' | 'curriculum' | 'students' | 'grades' | 'timetable' | 'resources' | 'assessments' | 'roll-call' | 'scheme-of-work';
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -78,7 +91,7 @@ export default function ClassDetailPage() {
   const classId = params.id as string;
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab') as TabType;
-  const [activeTab, setActiveTab] = useState<TabType>(urlTab || 'timetable');
+  const [activeTab, setActiveTab] = useState<TabType>(urlTab || 'overview');
 
   // Sync state with URL changes (for browser back/forward)
   React.useEffect(() => {
@@ -136,6 +149,10 @@ export default function ClassDetailPage() {
   );
   const activeSession = activeSessionResponse?.data;
 
+  // Use teacher dashboard hook to determine if this is the teacher's form class
+  const { formClass, teacher: teacherProfile } = useTeacherDashboard();
+  const isFormTeacher = formClass?.id === classId;
+
   // Get all sessions for timetable term selector
   const { data: sessionsResponse } = useGetSessionsQuery(
     { schoolId: schoolId! },
@@ -148,6 +165,27 @@ export default function ClassDetailPage() {
     { skip: !schoolId || !classId }
   );
 
+  // Get teacher's subjects and roles for this class to determine permissions
+  const { data: teacherSubjectsResponse } = useGetTeacherSubjectsForClassQuery(
+    { classId },
+    { skip: !classId }
+  );
+
+  const teacherSubjects = teacherSubjectsResponse?.data?.subjects || [];
+  const canGradeAll = teacherSubjectsResponse?.data?.canGradeAllSubjects || false;
+  const isPrimaryTeacher = teacherSubjectsResponse?.data?.isPrimaryTeacher || false;
+
+  // READ-ONLY LOGIC:
+  // In Secondary schools, if a teacher is a Form Teacher but has NO subjects assigned in this class,
+  // they should only have view access to academic materials (assessments, curriculum, etc.)
+  const isReadOnly = useMemo(() => {
+    // If they have "manage all" permissions or are the primary/subject teacher, they are NOT read-only
+    if (canGradeAll || isPrimaryTeacher || teacherSubjects.length > 0) return false;
+    
+    // If they are ONLY the form teacher (identified by dashboard context), they are read-only
+    return isFormTeacher;
+  }, [canGradeAll, isPrimaryTeacher, teacherSubjects.length, isFormTeacher]);
+
   // Get grades for class
   const { data: gradesResponse, isLoading: isLoadingGrades, refetch: refetchGrades } = useGetClassGradesQuery(
     {
@@ -156,7 +194,7 @@ export default function ClassDetailPage() {
       gradeType: gradeTypeFilter || undefined,
       termId: termFilter || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'grades' }
+    { skip: !schoolId || !classId || (activeTab !== 'grades' && activeTab !== 'overview') }
   );
 
   // Get student-grouped grades for the new UI
@@ -167,7 +205,7 @@ export default function ClassDetailPage() {
       gradeType: gradeTypeFilter || undefined,
       termId: termFilter || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'grades' }
+    { skip: !schoolId || !classId || (activeTab !== 'grades' && activeTab !== 'overview') }
   );
 
   // State for expanded student card
@@ -180,7 +218,7 @@ export default function ClassDetailPage() {
       classId,
       termId: assessmentTermFilter || activeSession?.term?.id || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'assessments' }
+    { skip: !schoolId || !classId || (activeTab !== 'assessments' && activeTab !== 'overview') }
   );
 
   const assessments = assessmentsResponse?.data || []; // Use data from ResponseDto
@@ -236,7 +274,7 @@ export default function ClassDetailPage() {
       academicYear: classResponse?.data?.academicYear || activeSession?.session?.name,
       termId: activeSession?.term?.id || undefined,
     },
-    { skip: !schoolId || !classId || activeTab !== 'curriculum' }
+    { skip: !schoolId || !classId || (activeTab !== 'curriculum' && activeTab !== 'overview') }
   );
   const students = studentsResponse?.data || [];
   const allGrades = gradesResponse?.data || [];
@@ -326,16 +364,75 @@ export default function ClassDetailPage() {
     classId,
     activeTab,
   });
+
+  // Logic to synthesize an activity feed from available data
+  const activityItems = useMemo(() => {
+    const items: { type: string; description: string; timestamp: string }[] = [];
+
+    if (gradesResponse?.data) {
+      const recentGrades = [...gradesResponse.data]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+
+      recentGrades.forEach(grade => {
+        items.push({
+          type: 'Graded',
+          description: `${grade.student?.firstName} ${grade.student?.lastName} graded for ${grade.assessmentName || grade.subject}`,
+          timestamp: grade.createdAt
+        });
+      });
+    }
+
+    if (assessmentsResponse?.data) {
+      const recentAssessments = [...assessmentsResponse.data]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 3);
+
+      recentAssessments.forEach(assessment => {
+        items.push({
+          type: 'Assessment Published',
+          description: `New ${assessment.type.toLowerCase()} "${assessment.title}" published`,
+          timestamp: assessment.createdAt
+        });
+      });
+    }
+
+    if (resources) {
+      const recentResources = [...resources]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 3);
+
+      recentResources.forEach(resource => {
+        items.push({
+          type: 'Resource Uploaded',
+          description: `New resource "${resource.name}" uploaded`,
+          timestamp: resource.createdAt
+        });
+      });
+    }
+
+    return items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [gradesResponse, assessmentsResponse, resources]);
+
+  // Determine the next topic in the curriculum
+  const nextCurriculumTopic = useMemo(() => {
+    if (!curriculumResponse?.data?.items) return null;
+    return curriculumResponse.data.items.find((item: any) => 
+      item.status === 'PENDING' || item.status === 'IN_PROGRESS'
+    );
+  }, [curriculumResponse]);
+
   // Build tabs dynamically based on available plugins
   const tabs: { id: TabType; label: string; icon: React.ReactNode; available: boolean }[] = [
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" />, available: true },
     { id: 'timetable', label: 'Timetable', icon: <Clock className="h-4 w-4" />, available: true },
     { id: 'students', label: 'Students', icon: <Users className="h-4 w-4" />, available: true },
     { id: 'grades', label: 'Grades', icon: <Award className="h-4 w-4" />, available: true },
-    { id: 'assessments', label: 'Assessments', icon: <Award className="h-4 w-4" />, available: true },
-    { id: 'rollcall', label: 'Roll Call', icon: <Smartphone className="h-4 w-4" />, available: true },
-    { id: 'scheme-of-work', label: 'Scheme of Work', icon: <Sparkles className="h-4 w-4" />, available: true },
+    { id: 'assessments', label: 'Assessments', icon: <FileCheck className="h-4 w-4" />, available: true },
+    { id: 'roll-call', label: 'Roll Call', icon: <CheckSquare className="h-4 w-4" />, available: true },
+    { id: 'scheme-of-work', label: 'Scheme of Work', icon: <ListChecks className="h-4 w-4" />, available: true },
     { id: 'resources', label: 'Resources', icon: <FileText className="h-4 w-4" />, available: true },
-    { id: 'curriculum', label: 'Curriculum', icon: <BookOpen className="h-4 w-4" />, available: true },
+    { id: 'curriculum', label: 'Curriculum', icon: <BookMarked className="h-4 w-4" />, available: true },
   ];
 
   if (isLoading) {
@@ -387,9 +484,21 @@ export default function ClassDetailPage() {
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
-                {classData.name}
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                  {classData.name}
+                </h1>
+                {isFormTeacher && (
+                  <span className={cn(
+                    "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border",
+                    classType === 'SECONDARY' 
+                      ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800"
+                      : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800"
+                  )}>
+                    {classType === 'SECONDARY' ? 'My Form' : 'My Class'}
+                  </span>
+                )}
+              </div>
               <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 {classData.code && `${classData.code} • `}
                 {classData.classLevel && `${classData.classLevel} • `}
@@ -427,207 +536,321 @@ export default function ClassDetailPage() {
 
         {/* Tab Content */}
         <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
-          {/* Curriculum Tab */}
-          {(activeTab as TabType) === 'curriculum' && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                    Curriculum Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingCurriculum ? (
-                    <div className="flex items-center justify-center py-20">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <div className="mt-6">
+            {activeTab === 'overview' && (
+              <div className="space-y-8 pb-10">
+                {/* Quick Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard
+                    title="Class Enrollment"
+                    value={classData?.studentsCount || 0}
+                    icon={<Users className="h-5 w-5" />}
+                    description="Total students enrolled"
+                    color="blue"
+                  />
+                  <StatCard
+                    title="Academic Progress"
+                    value={`Week ${activeSession?.term?.currentWeek || '1'}`}
+                    icon={<Calendar className="h-5 w-5" />}
+                    description={activeSession?.term ? `${activeSession.term.name}` : 'Current term'}
+                    color="purple"
+                  />
+                  <StatCard
+                    title="Total Resources"
+                    value={resources?.length || 0}
+                    icon={<BookOpen className="h-5 w-5" />}
+                    description="Study materials uploaded"
+                    color="green"
+                  />
+                  <StatCard
+                    title="Assessments"
+                    value={assessments?.length || 0}
+                    icon={<FileCheck className="h-5 w-5" />}
+                    description="Total published assessments"
+                    color="indigo"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Activity Log */}
+                  <div className="lg:col-span-2 space-y-6">
+                    <ActivityLog
+                      activities={activityItems}
+                      onViewAll={() => setActiveTab('grades')}
+                    />
+                    
+                    {/* Secondary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <ListChecks className="h-5 w-5 text-blue-400" />
+                            Next in Curriculum
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {nextCurriculumTopic ? (
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">
+                                  Week {nextCurriculumTopic.weekNumber}
+                                </p>
+                                <h4 className="font-bold text-light-text-primary dark:text-white line-clamp-1">
+                                  {nextCurriculumTopic.topic}
+                                </h4>
+                                <p className="text-xs text-light-text-secondary dark:text-gray-400 mt-1 line-clamp-2">
+                                  {Array.isArray(nextCurriculumTopic.objectives) 
+                                    ? nextCurriculumTopic.objectives.join(', ') 
+                                    : nextCurriculumTopic.objectives || 'No objectives defined'}
+                                </p>
+                              </div>
+                              <Button 
+                                variant="primary" 
+                                size="sm" 
+                                className="w-full justify-between"
+                                onClick={() => setActiveTab('scheme-of-work')}
+                              >
+                                {nextCurriculumTopic.status === 'IN_PROGRESS' ? 'Continue Teaching' : 'Start Teaching'}
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-light-text-secondary dark:text-gray-400 text-sm">
+                                {isLoadingCurriculum ? 'Loading teaching plan...' : 'Your teaching plan is all caught up or not yet set.'}
+                              </p>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="mt-4 w-full justify-between"
+                                onClick={() => setActiveTab('scheme-of-work')}
+                                disabled={isLoadingCurriculum}
+                              >
+                                View Teaching Plan
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <GraduationCap className="h-5 w-5 text-indigo-400" />
+                            Quick Grading
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-light-text-secondary dark:text-gray-400 text-sm">
+                            {assessments?.some(a => (a._count?.submissions ?? 0) > 0) 
+                              ? "You have ungraded submissions waiting for review."
+                              : "No pending submissions to grade at this time."}
+                          </p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="mt-4 w-full justify-between"
+                            onClick={() => setActiveTab('assessments')}
+                          >
+                            Manage Assessments
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </CardContent>
+                      </Card>
                     </div>
-                  ) : curriculumResponse?.data ? (
-                    <div className="space-y-6">
-                      {curriculumResponse.data.items.map((item, index) => (
-                        <div
-                          key={item.id || index}
-                          className="pb-6 border-b border-light-border dark:border-dark-border last:border-0 last:pb-0"
-                        >
-                          <div className="flex items-start gap-4 mb-4">
-                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                              <span className="text-blue-600 dark:text-blue-400 font-bold text-sm text-center leading-tight">
-                                Week {item.week}
+                  </div>
+
+                  {/* Sidebar Info */}
+                  <div className="space-y-6">
+                    <Card className="bg-blue-500/5 border-blue-500/20">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Class Information</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Class Level</span>
+                          <span className="text-sm font-medium">{classData?.classLevel || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Class Code</span>
+                          <span className="text-sm font-medium">{classData?.code || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Academic Year</span>
+                          <span className="text-sm font-medium">{classData?.academicYear || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-sm text-light-text-secondary dark:text-gray-400">Type</span>
+                          <span className="text-sm font-medium capitalize font-mono text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                            {classData?.type?.toLowerCase() || 'N/A'}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Instructors</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {classData?.teachers.map((t: any) => (
+                          <div key={t.id} className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                              {t.firstName[0]}{t.lastName[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{t.firstName} {t.lastName}</p>
+                              <p className="text-xs text-light-text-secondary dark:text-gray-400">{t.subject || 'Instructor'}</p>
+                            </div>
+                            {t.isPrimary && (
+                              <span className="ml-auto text-[10px] bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded font-medium">
+                                Form
                               </span>
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-2" style={{ fontSize: 'var(--text-card-title)' }}>
-                                {item.topic}
-                              </h3>
-                              {item.objectives && item.objectives.length > 0 && (
-                                <div className="space-y-2 mb-3">
-                                  <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-body)' }}>
-                                    Learning Objectives:
-                                  </p>
-                                  <ul className="list-disc list-inside space-y-1 ml-2">
-                                    {item.objectives.map((objective, objIndex) => (
-                                      <li
-                                        key={objIndex}
-                                        className="text-sm text-light-text-secondary dark:text-dark-text-secondary"
-                                      >
-                                        {objective}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {item.resources && item.resources.length > 0 && (
-                                <div>
-                                  <p className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary mb-2">
-                                    Resources:
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {item.resources.map((resource, resIndex) => (
-                                      <span
-                                        key={resIndex}
-                                        className="px-3 py-1 bg-light-bg dark:bg-dark-surface rounded-md text-xs text-light-text-secondary dark:text-dark-text-secondary"
-                                      >
-                                        {resource}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                            )}
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+
+                    {isFormTeacher && (
+                      <Card className={cn(
+                        "border-l-4",
+                        classType === 'SECONDARY' ? "bg-green-500/5 border-green-500/20 border-l-green-500" : "bg-purple-500/5 border-purple-500/20 border-l-purple-500"
+                      )}>
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Users className={cn("h-5 w-5", classType === 'SECONDARY' ? "text-green-500" : "text-purple-500")} />
+                            {classType === 'SECONDARY' ? 'Form Management' : 'Class Management'}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <p className="text-sm text-light-text-secondary dark:text-gray-400">
+                            {classType === 'SECONDARY' 
+                              ? "As the form teacher, you manage the overall welfare, attendance, and pastoral care for this class."
+                              : "As the primary class teacher, you manage all activities and attendance for this class."}
+                          </p>
+                          <div className="grid grid-cols-1 gap-2">
+                            <Button 
+                              variant={classType === 'SECONDARY' ? "secondary" : "ghost"} 
+                              size="sm" 
+                              className="w-full justify-start"
+                              onClick={() => setActiveTab('roll-call')}
+                            >
+                              <CheckSquare className="h-4 w-4 mr-2" />
+                              Take Daily Roll Call
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'timetable' && (
+              <div className="space-y-6">
+                {isLoadingActiveSession ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  </div>
+                ) : timetableTermId ? (
+                  <ClassTimetableView
+                    schoolId={schoolId!}
+                    classId={classId}
+                    termId={timetableTermId}
+                    schoolType={effectiveSchoolType}
+                    allTerms={timetableTerms}
+                    selectedTermId={timetableTermId}
+                    onTermChange={setSelectedTimetableTermId}
+                    activeTermId={activeSession?.term?.id}
+                    terminology={terminology}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-12 pb-12 text-center">
+                      <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                      <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                        No active term found. Please select a term to view the timetable.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Students Tab */}
+            {activeTab === 'students' && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
+                        Students ({filteredStudents.length})
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingStudents ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      </div>
+                    ) : filteredStudents.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
+                        <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
+                          {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-4">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
+                            <Input
+                              placeholder="Search students by name or student ID..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="pl-10"
+                            />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                      <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                        No curriculum available for this class yet.
-                      </p>
-                      <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-                        The curriculum will be created by the school administration.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-light-border dark:border-dark-border">
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Name
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Student ID
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Date of Birth
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Status
+                                </th>
+                                <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredStudents.map((student: any, index: number) => (
+                                <tr
+                                  key={student.id}
+                                  className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
+                                >
+                                  <td className="py-4 px-4">
+                                    <div>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
+                                        {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
+                                      </p>
+                                      <LiveStatusBadge activity={student.currentActivity} size="sm" />
+                                    </div>
+                                  </td>
 
-          {/* Scheme of Work Tab */}
-          {(activeTab as TabType) === 'scheme-of-work' && (
-            <div className="space-y-6">
-              <SchemeOfWorkView 
-                schoolId={schoolId!} 
-                classId={classId} 
-                role="TEACHER" 
-                terminology={terminology} 
-              />
-            </div>
-          )}
-
-          {/* Timetable Tab */}
-          {(activeTab as TabType) === 'timetable' && (
-            <div className="space-y-6">
-              {isLoadingActiveSession ? (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                </div>
-              ) : timetableTermId ? (
-                <ClassTimetableView
-                  schoolId={schoolId!}
-                  classId={classId}
-                  termId={timetableTermId}
-                  schoolType={effectiveSchoolType}
-                  allTerms={timetableTerms}
-                  selectedTermId={timetableTermId}
-                  onTermChange={setSelectedTimetableTermId}
-                  activeTermId={activeSession?.term?.id}
-                  terminology={terminology}
-                />
-              ) : (
-                <Card>
-                  <CardContent className="pt-12 pb-12 text-center">
-                    <Clock className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
-                      No active term found. Please select a term to view the timetable.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-
-          {/* Students Tab */}
-          {(activeTab as TabType) === 'students' && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
-                      Students ({filteredStudents.length})
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingStudents ? (
-                    <div className="flex items-center justify-center py-20">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    </div>
-                  ) : filteredStudents.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Users className="h-12 w-12 text-light-text-muted dark:text-dark-text-muted mx-auto mb-4" />
-                      <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
-                        {searchQuery ? 'No students found matching your search.' : 'No students enrolled in this class yet.'}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mb-4">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-light-text-muted dark:text-dark-text-muted" />
-                          <Input
-                            placeholder="Search students by name or student ID..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-light-border dark:border-dark-border">
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Name
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Student ID
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Date of Birth
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Status
-                              </th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredStudents.map((student: StudentWithEnrollment, index: number) => (
-                              <tr
-                                key={student.id}
-                                className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[var(--dark-hover)] transition-colors"
-                              >
-                                <td className="py-4 px-4">
-                                  <div>
-                                    <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                      {student.firstName} {student.middleName ? `${student.middleName} ` : ''}{student.lastName}
-                                    </p>
-                                    <LiveStatusBadge activity={student.currentActivity} size="sm" />
-                                  </div>
-                                </td>
                                 <td className="py-4 px-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
                                   {student.uid}
                                 </td>
@@ -717,14 +940,16 @@ export default function ClassDetailPage() {
                           </select>
                         )}
                       </div>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setShowBulkGradeModal(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Bulk Entry
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setShowBulkGradeModal(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Bulk Entry
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -742,13 +967,15 @@ export default function ClassDetailPage() {
                         <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4">
                           No grades found.
                         </p>
-                        <Button
-                          variant="primary"
-                          onClick={() => setShowBulkGradeModal(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Enter Grades
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            variant="primary"
+                            onClick={() => setShowBulkGradeModal(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Enter Grades
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -909,10 +1136,12 @@ export default function ClassDetailPage() {
                     ))}
                   </select>
                 </div>
-                <Button onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Assessment
-                </Button>
+                {!isReadOnly && (
+                  <Button onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Assessment
+                  </Button>
+                )}
               </div>
 
               {isLoadingAssessments ? (
@@ -925,9 +1154,11 @@ export default function ClassDetailPage() {
                     <FileText className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
                     <p className="text-light-text-secondary dark:text-dark-text-secondary text-lg font-medium">No assessments found for this term.</p>
                     <p className="text-sm text-light-text-muted mt-2 mb-6">Create your first assessment or use AI to generate one.</p>
-                    <Button variant="outline" onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
-                      <Plus className="h-4 w-4 mr-2" /> Create First Assessment
-                    </Button>
+                    {!isReadOnly && (
+                      <Button variant="outline" onClick={() => router.push(`/dashboard/teacher/assessments/new?source=manual&classId=${classId}`)}>
+                        <Plus className="h-4 w-4 mr-2" /> Create First Assessment
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
@@ -966,16 +1197,18 @@ export default function ClassDetailPage() {
                                     }`} style={{ fontSize: 'var(--text-tiny)' }}>
                                     {assessment.status}
                                   </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setAssessmentToDelete(assessment);
-                                      setShowDeleteAssessmentModal(true);
-                                    }}
-                                    className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-light-text-muted hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
+                                  {!isReadOnly && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAssessmentToDelete(assessment);
+                                        setShowDeleteAssessmentModal(true);
+                                      }}
+                                      className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-light-text-muted hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                               <CardTitle className="mt-2 group-hover:text-blue-600 transition-colors truncate" style={{ fontSize: 'var(--text-card-title)' }}>{assessment.title}</CardTitle>
@@ -1019,14 +1252,16 @@ export default function ClassDetailPage() {
                     <CardTitle className="text-light-text-primary dark:text-dark-text-primary">
                       Class Resources
                     </CardTitle>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setShowUploadResourceModal(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Resource
-                    </Button>
+                    {!isReadOnly && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setShowUploadResourceModal(true)}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Resource
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -1097,19 +1332,21 @@ export default function ClassDetailPage() {
                                 <Download className="h-4 w-4 mr-2" />
                                 Download
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteResource(resource.id)}
-                                disabled={isDeletingResource}
-                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                              >
-                                {isDeletingResource ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  'Delete'
-                                )}
-                              </Button>
+                              {!isReadOnly && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteResource(resource.id)}
+                                  disabled={isDeletingResource}
+                                  className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                >
+                                  {isDeletingResource ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    'Delete'
+                                  )}
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </FadeInUp>
@@ -1124,13 +1361,15 @@ export default function ClassDetailPage() {
                       <p className="text-sm text-light-text-muted dark:text-dark-text-muted mb-4">
                         Upload documents, spreadsheets, and other files for your students.
                       </p>
-                      <Button
-                        variant="primary"
-                        onClick={() => setShowUploadResourceModal(true)}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Your First Resource
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="primary"
+                          onClick={() => setShowUploadResourceModal(true)}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Your First Resource
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -1140,7 +1379,7 @@ export default function ClassDetailPage() {
 
 
           {/* Roll Call Tab */}
-          {(activeTab as TabType) === 'rollcall' && schoolId && (
+          {(activeTab as TabType) === 'roll-call' && schoolId && (
             <RollCallView
               schoolId={schoolId}
               classId={classId}
@@ -1149,8 +1388,93 @@ export default function ClassDetailPage() {
             />
           )}
 
+          {/* Scheme of Work Tab */}
+          {(activeTab as TabType) === 'scheme-of-work' && schoolId && (
+            <SchemeOfWorkView
+              schoolId={schoolId}
+              classId={classId}
+              role="TEACHER"
+              terminology={terminology}
+              isReadOnly={isReadOnly}
+            />
+          )}
+
+          {/* Curriculum Tab */}
+          {(activeTab as TabType) === 'curriculum' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                  Curriculum {terminology.courses}
+                </h2>
+                {!isReadOnly && (
+                  <Button variant="outline" size="sm" onClick={() => refetchCurriculum()}>
+                    <Sparkles className="h-4 w-4 mr-2 text-blue-500" />
+                    Sync Curriculum
+                  </Button>
+                )}
+              </div>
+              
+              {isLoadingCurriculum ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+              ) : !curriculumResponse?.data?.items || curriculumResponse.data.items.length === 0 ? (
+                <Card>
+                  <CardContent className="py-20 text-center">
+                    <BookOpen className="h-16 w-16 mx-auto mb-4 text-light-text-muted opacity-20" />
+                    <h3 className="text-lg font-bold">No Curriculum Found</h3>
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary mt-2">
+                      The curriculum for this subject hasn't been set up yet.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {curriculumResponse.data.items.map((item: any, idx: number) => (
+                    <Card key={idx} className={cn(
+                      "transition-all",
+                      item.status === 'COMPLETED' ? "opacity-75 bg-gray-50 dark:bg-dark-surface/50" : ""
+                    )}>
+                      <CardContent className="p-5 flex items-start gap-4">
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm",
+                          item.status === 'COMPLETED' ? "bg-green-100 text-green-600" : 
+                          item.status === 'IN_PROGRESS' ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+                        )}>
+                          {item.weekNumber || (idx + 1)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-light-text-primary dark:text-dark-text-primary">{item.topic}</h4>
+                            {item.status === 'COMPLETED' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                          </div>
+                          {item.subTopics && item.subTopics.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {item.subTopics.map((sub: string, sIdx: number) => (
+                                <li key={sIdx} className="text-xs text-light-text-secondary dark:text-dark-text-secondary flex items-center gap-2">
+                                  <div className="w-1 h-1 rounded-full bg-light-text-muted" />
+                                  {sub}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        <Badge variant={
+                          item.status === 'COMPLETED' ? 'success' : 
+                          item.status === 'IN_PROGRESS' ? 'info' : 'outline'
+                        }>
+                          {item.status}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          </div>
         </FadeInUp>
-      </div>
 
       {/* Modals */}
       <BulkGradeEntryModal
@@ -1167,6 +1491,7 @@ export default function ClassDetailPage() {
           setShowBulkGradeModal(false);
         }}
       />
+
 
       {selectedStudent && (
         <GradeEntryModal
@@ -1354,6 +1679,7 @@ export default function ClassDetailPage() {
           onClose={() => setShowAiChat(false)}
         />
       )}
+      </div>
     </ProtectedRoute>
   );
 }
@@ -1454,7 +1780,32 @@ function RollCallView({
   const lateCount = attendanceRecords.filter((a: any) => a.status === 'LATE').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 z-10 bg-white/60 dark:bg-dark-bg/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center p-6 text-center">
+        <div className="max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-2xl border border-light-border dark:border-dark-border transform -rotate-1">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-pulse" />
+          </div>
+          <h2 className="text-2xl font-black text-light-text-primary dark:text-white mb-3">
+            Roll Call <span className="text-blue-500">Coming Soon</span>
+          </h2>
+          <p className="text-light-text-secondary dark:text-dark-text-secondary mb-6 leading-relaxed">
+            We are building a powerful, automated attendance system. Soon, you'll be able to mark daily attendance using 
+            <span className="font-bold text-blue-500"> QR code scans</span>, handle bulk marking, and view real-time 
+            attendance insights for your form class.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-500 bg-blue-50 dark:bg-blue-900/10 py-2 px-4 rounded-full w-fit mx-auto">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            Under Development
+          </div>
+        </div>
+      </div>
+
+      <div className="opacity-40 pointer-events-none filter blur-[1px]">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/10 shadow-sm">
           <CardContent className="p-4 flex items-center justify-between">
@@ -1697,7 +2048,8 @@ function RollCallView({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 // Class Timetable View Component

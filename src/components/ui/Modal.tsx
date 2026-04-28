@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: ReactNode;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   showCloseButton?: boolean;
@@ -118,7 +118,7 @@ interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void | Promise<void>;
-  title: string;
+  title: ReactNode;
   message: string;
   confirmText?: string;
   cancelText?: string;

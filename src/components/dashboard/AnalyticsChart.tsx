@@ -44,11 +44,13 @@ export function AnalyticsChart({
 }: AnalyticsChartProps) {
   const chartConfig = {
     text: {
-      fill: '#94a3b8',
-      fontSize: 12,
+      fill: 'currentColor',
+      fontSize: 10,
+      opacity: 0.5,
     },
     grid: {
-      stroke: '#1a2f5c',
+      stroke: 'currentColor',
+      opacity: 0.1,
     },
   };
 
@@ -166,7 +168,7 @@ export function AnalyticsChart({
             data={data}
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a2f5c" />
+            <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
             <XAxis type="number" {...chartConfig} />
             <YAxis dataKey="name" type="category" {...chartConfig} width={80} />
             <Tooltip
@@ -201,7 +203,7 @@ export function AnalyticsChart({
                 );
               })}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a1f2e" opacity={0.2} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.05} vertical={false} />
             <XAxis
               dataKey="name"
               tick={{ fill: '#6b7280', fontSize: 11 }}
@@ -218,12 +220,12 @@ export function AnalyticsChart({
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#151a23',
-                border: 'none',
+                backgroundColor: 'var(--light-card)',
+                border: '1px solid var(--light-border)',
                 borderRadius: '8px',
                 padding: '8px 12px',
-                color: '#e5e7eb',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+                color: 'var(--light-text-primary)',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
               }}
               labelStyle={{ color: '#9ca3af', fontSize: 11, marginBottom: '4px' }}
               cursor={{ stroke: colors[0], strokeWidth: 1, strokeDasharray: '5 5' }}
@@ -245,7 +247,7 @@ export function AnalyticsChart({
       default:
         return (
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a2f5c" />
+            <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
             <XAxis dataKey="name" {...chartConfig} />
             <YAxis {...chartConfig} />
             <Tooltip
@@ -284,8 +286,8 @@ export function AnalyticsChart({
         )}
       </CardHeader>
       <CardContent className="overflow-hidden">
-        <div className="w-full" style={{ minHeight: '220px', maxHeight: '220px' }}>
-          <ResponsiveContainer width="100%" height={220}>
+        <div className="w-full" style={{ minHeight: '260px', maxHeight: '260px' }}>
+          <ResponsiveContainer width="100%" height={260}>
             {renderChart()}
           </ResponsiveContainer>
         </div>

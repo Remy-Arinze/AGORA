@@ -26,13 +26,13 @@ export function BackButton({
   const router = useRouter();
 
   const handleBack = () => {
-    // Check if there's history to go back to (history.length includes the current page)
-    if (typeof window !== 'undefined' && window.history.length > 2) {
+    // If there is history (length > 1), go back. Otherwise use fallback.
+    if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else if (fallbackUrl) {
       router.push(fallbackUrl);
     } else {
-      router.back();
+      router.back(); // Final effort
     }
   };
 

@@ -19,9 +19,17 @@ interface StudentAdmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   fromTransferId?: string | null;
+  preSelectedClassLevel?: string;
+  preSelectedClassArmId?: string;
 }
 
-export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: StudentAdmissionModalProps) {
+export function StudentAdmissionModal({ 
+  isOpen, 
+  onClose, 
+  fromTransferId,
+  preSelectedClassLevel,
+  preSelectedClassArmId
+}: StudentAdmissionModalProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -141,7 +149,13 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
 
   // Reset form when modal opens/closes
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        classLevel: preSelectedClassLevel || '',
+        classArmId: preSelectedClassArmId || '',
+      }));
+    } else {
       setSubmitError(null);
       setErrors({});
       setProfileImage(null);
@@ -172,7 +186,7 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
         medicalNotes: '',
       });
     }
-  }, [isOpen]);
+  }, [isOpen, preSelectedClassLevel, preSelectedClassArmId]);
 
   const handleNameChange = (field: 'firstName' | 'lastName' | 'middleName' | 'parentName', value: string) => {
     const capitalized = capitalizeWords(value);
@@ -258,7 +272,7 @@ export function StudentAdmissionModal({ isOpen, onClose, fromTransferId }: Stude
       formData.gender &&
       formData.email?.trim() &&
       formData.phone?.trim() &&
-      formData.classLevel &&
+      (formData.classLevel || formData.classArmId) &&
       formData.parentName?.trim() &&
       formData.parentPhone?.trim() &&
       formData.parentRelationship?.trim() &&

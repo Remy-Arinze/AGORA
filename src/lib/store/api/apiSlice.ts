@@ -38,6 +38,20 @@ const baseQueryWithReauth: BaseQueryFn<
 
   let result = await baseQuery(args, api, extraOptions);
 
+  // SANITIZE & HUMANIZE ERRORS
+  // This prevents technical leaks (like localhost:4000) and provides better UX for throttles
+  if (result.error) {
+    if (result.error.status === 'FETCH_ERROR') {
+      (result.error as any).data = {
+        message: "We're having trouble connecting to Agora services. Please check your internet connection or the server status."
+      };
+    } else if (result.error.status === 429) {
+      (result.error as any).data = {
+        message: "Too many requests. Please wait a moment before trying again."
+      };
+    }
+  }
+
   // If we get an error (except 401 which is handled below), report to Sentry
   if (result.error && result.error.status !== 401 && result.error.status !== 404) {
     const error = result.error;
@@ -131,7 +145,7 @@ const staggeredBaseQuery = retry(
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: staggeredBaseQuery,
-  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Grades', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory', 'Attendance', 'SchemeOfWork', 'AgoraCurriculum', 'AgoraCurriculumSource', 'NerdcSubject'],
+  tagTypes: ['Student', 'School', 'User', 'Timetable', 'Event', 'Session', 'ClassLevel', 'ClassArm', 'Subject', 'Room', 'Class', 'ClassResource', 'StudentResource', 'Permission', 'Curriculum', 'Grade', 'Grades', 'Transfer', 'Subscription', 'SubscriptionPlan', 'TeacherSubject', 'Faculty', 'Department', 'SchoolErrors', 'Error', 'ErrorStats', 'TeacherWorkload', 'Assessments', 'Submissions', 'AiHistory', 'Attendance', 'SchemeOfWork', 'AgoraCurriculum', 'AgoraCurriculumSource', 'AgoraSubject'],
   endpoints: (builder) => ({
     changePassword: builder.mutation<
       { success: boolean; message: string },
@@ -185,7 +199,16 @@ export const apiSlice = createApi({
       },
       invalidatesTags: ['User'],
     }),
+    // Fetch login sessions for history
+    getLoginSessions: builder.query<{ success: boolean; data: any[] }, void>({
+      query: () => '/auth/login-sessions',
+      providesTags: ['User'],
+    }),
   }),
 });
 
-export const { useChangePasswordMutation, useUploadProfileImageMutation } = apiSlice;
+export const { 
+  useChangePasswordMutation, 
+  useUploadProfileImageMutation,
+  useGetLoginSessionsQuery
+} = apiSlice;

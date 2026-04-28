@@ -106,7 +106,7 @@ function StudentsPageContent() {
   };
 
   // Get school ID and school type
-  const { data: schoolResponse } = useGetMySchoolQuery();
+  const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
   const { currentType } = useSchoolType();
 
@@ -223,11 +223,14 @@ function StudentsPageContent() {
     }
   };
 
-  if (isLoading && !students.length) {
+  if ((isLoading || isLoadingSchool) && !students.length) {
     return (
       <ProtectedRoute roles={['SCHOOL_ADMIN']}>
-        <div className="w-full flex items-center justify-center min-h-[400px]">
-          <LoadingSpinner size="lg" />
+        <div className="w-full flex flex-col items-center justify-center min-h-[400px]">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+          <p className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+            Loading students...
+          </p>
         </div>
       </ProtectedRoute>
     );
@@ -430,7 +433,7 @@ function StudentsPageContent() {
                 return (
                   <FadeInUp key={student.id} from={{ opacity: 0, y: 20 }} to={{ opacity: 1, y: 0 }} duration={0.5}>
                     <Card
-                      className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col"
+                      className="cursor-pointer hover:bg-light-surface dark:hover:bg-dark-bg hover:shadow-lg transition-all h-full flex flex-col"
                       onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
                     >
                       <CardContent className="p-4 flex-1 flex flex-col" style={{ padding: 'var(--card-padding)' }}>
@@ -486,7 +489,7 @@ function StudentsPageContent() {
                 return (
                   <FadeInUp from={{ opacity: 0, x: -20 }} to={{ opacity: 1, x: 0 }} duration={0.5}>
                     <Card
-                      className="cursor-pointer hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
+                      className="cursor-pointer hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                       onClick={() => router.push(`/dashboard/school/students/${student.id}`)}
                     >
                       <CardContent className="p-4">

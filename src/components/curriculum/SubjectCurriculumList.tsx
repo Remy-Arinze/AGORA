@@ -10,11 +10,13 @@ import {
 import { Button } from '@/components/ui/Button';
 import { SubjectCurriculumCard } from './SubjectCurriculumCard';
 import { CurriculumSetupModal } from './CurriculumSetupModal';
+import { CurriculumDetailModal } from './CurriculumDetailModal';
 import { NoTimetableMessage } from './NoTimetableMessage';
 import { cn } from '@/lib/utils';
 import { 
   useGetSchemesSummaryQuery, 
   useCancelSchemeOfWorkMutation,
+  useDeleteSchemeOfWorkMutation,
   useGetSubscriptionSummaryQuery
 } from '@/lib/store/api/schoolAdminApi';
 import toast from 'react-hot-toast';
@@ -41,6 +43,7 @@ export function SubjectCurriculumList({
 }: SubjectCurriculumListProps) {
   const router = useRouter();
   const [setupSubject, setSetupSubject] = useState<any | null>(null);
+  const [viewCurriculumId, setViewCurriculumId] = useState<string | null>(null);
 
   // Fetch schemes summary (status-driven)
   const { 
@@ -61,6 +64,7 @@ export function SubjectCurriculumList({
   const creditsRemaining = subscriptionSummary?.aiCreditsRemaining ?? 0;
 
   const [cancelGeneration] = useCancelSchemeOfWorkMutation();
+  const [deleteScheme] = useDeleteSchemeOfWorkMutation();
 
   const handleCancelGeneration = async (schemeId: string) => {
     try {
@@ -69,6 +73,17 @@ export function SubjectCurriculumList({
       refetchSchemes();
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to cancel generation');
+    }
+  };
+
+  const handleDeleteScheme = async (schemeId: string) => {
+    try {
+      await deleteScheme({ schoolId, schemeId, classLevelId }).unwrap();
+      toast.success('Curriculum removed successfully.');
+      refetchSchemes();
+      setViewCurriculumId(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to remove curriculum');
     }
   };
 
@@ -143,8 +158,8 @@ export function SubjectCurriculumList({
             key={subj.subjectId}
             subject={subj}
             onSetup={() => setSetupSubject(subj)}
-            onView={(id) => router.push(`/dashboard/school/curriculum/${id}`)}
-            onEdit={(id) => router.push(`/dashboard/school/curriculum/${id}/edit`)}
+            onView={(id) => setViewCurriculumId(id)}
+            onEdit={(id) => setViewCurriculumId(id)}
             onCancel={() => subj.schemeId && handleCancelGeneration(subj.schemeId)}
             canEdit={canEdit}
           />
@@ -164,6 +179,20 @@ export function SubjectCurriculumList({
           classLevelName={classLevelName}
           termId={termId}
           creditsRemaining={creditsRemaining}
+        />
+      )}
+
+      {viewCurriculumId && (
+        <CurriculumDetailModal
+          isOpen={!!viewCurriculumId}
+          onClose={() => setViewCurriculumId(null)}
+          schoolId={schoolId}
+          curriculumId={viewCurriculumId}
+          classId={classId}
+          canEdit={canEdit}
+          isScheme={true}
+          onDelete={handleDeleteScheme}
+          onUpdate={() => refetchSchemes()}
         />
       )}
     </div>
