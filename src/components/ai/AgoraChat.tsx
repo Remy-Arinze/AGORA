@@ -443,7 +443,9 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
   const { theme } = useTheme();
   const user = useSelector((state: RootState) => state.auth.user);
   const token = useSelector((state: RootState) => state.auth.token);
-  const { data: profileResponse } = useGetMyTeacherProfileQuery();
+  const { data: profileResponse } = useGetMyTeacherProfileQuery(undefined, {
+    skip: user?.role !== 'TEACHER'
+  });
   const firstName = profileResponse?.data?.firstName || user?.firstName || 'Teacher';
 
   const [messages, setMessages] = useState<Message[]>([]);
