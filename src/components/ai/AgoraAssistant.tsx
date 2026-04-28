@@ -38,7 +38,9 @@ interface AgoraAssistantProps {
 export const AgoraAssistant: React.FC<AgoraAssistantProps> = ({ schoolId }) => {
   const { theme } = useTheme();
   const user = useSelector((state: RootState) => state.auth.user);
-  const { data: profileResponse } = useGetMyTeacherProfileQuery();
+  const { data: profileResponse } = useGetMyTeacherProfileQuery(undefined, {
+    skip: user?.role !== 'TEACHER'
+  });
   const firstName = profileResponse?.data?.firstName || user?.firstName || 'Teacher';
   
   const [messages, setMessages] = useState<Message[]>([]);
