@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface AuthState {
+export interface AuthState {
   token: string | null;
   // Note: refreshToken is now stored in httpOnly cookie for security
   // This field is kept for backwards compatibility but should not be used
