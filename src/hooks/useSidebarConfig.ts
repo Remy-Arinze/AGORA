@@ -25,6 +25,7 @@ import {
   Library,
   User,
   LucideIcon,
+  Megaphone,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -77,6 +78,7 @@ export function useSidebarConfig(): {
             { label: 'Curriculum', href: '/dashboard/super-admin/curriculum', icon: BookOpen },
             { label: 'Analytics', href: '/dashboard/super-admin/analytics', icon: BarChart3 },
             { label: 'Plans', href: '/dashboard/super-admin/plans', icon: CreditCard },
+            { label: 'Campaigns', href: '/dashboard/super-admin/campaigns', icon: Megaphone },
             { label: 'Plugins', href: '/dashboard/super-admin/plugins', icon: Puzzle },
             { label: 'Profile', href: '/dashboard/profile', icon: User },
           ],
