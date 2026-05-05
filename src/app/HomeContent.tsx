@@ -749,7 +749,7 @@ export default function HomeContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16">
-            <span className="inline-block px-4 py-2 bg-indigo-900/50 text-indigo-400 rounded-full text-xs font-semibold mb-4">
+            <span className="inline-block px-4 py-2 bg-blue-600 text-white rounded-full text-xs font-semibold mb-4">
               Pricing
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">

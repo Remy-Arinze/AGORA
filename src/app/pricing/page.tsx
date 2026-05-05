@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { LandingNavbar } from '@/components/layout/LandingNavbar';
 import { PricingTable } from '@/components/subscriptions/PricingTable';
 import { FadeInUp } from '@/components/ui/FadeInUp';
@@ -40,7 +41,9 @@ export default function PricingPage() {
           </FadeInUp>
         </div>
 
-        <PricingTable showInstitutionPlanCard className="px-0" />
+        <Suspense fallback={<div className="animate-pulse bg-light-card dark:bg-dark-surface h-[600px] rounded-3xl border border-light-border dark:border-dark-border" />}>
+          <PricingTable showInstitutionPlanCard className="px-0" />
+        </Suspense>
       </main>
     </div>
   );
