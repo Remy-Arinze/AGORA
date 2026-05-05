@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { OtpVerification } from '@/components/auth/OtpVerification';
+import { getReturnToParameter, getRoleBasedRedirect } from '@/utils/security/redirect-validator';
 
 function LoginContent() {
   const router = useRouter();
@@ -30,6 +31,9 @@ function LoginContent() {
   const sessionExpired = searchParams?.get('expired') === 'true';
   const intendedPlan = searchParams?.get('plan');
 
+  // Get secure return-to parameter
+  const returnTo = getReturnToParameter();
+
   useEffect(() => {
     if (intendedPlan) {
       sessionStorage.setItem('intendedPlan', intendedPlan);
@@ -41,6 +45,29 @@ function LoginContent() {
       setError('Your session has expired. Please log in again to continue.');
     }
   }, [sessionExpired]);
+
+  // Helper function to handle post-login redirect
+  const handlePostLoginRedirect = (user: any) => {
+    // Priority 1: Return-to parameter (from email links)
+    if (returnTo) {
+      console.log('Redirecting to return-to URL:', returnTo);
+      router.push(returnTo);
+      return;
+    }
+
+    // Priority 2: Plan parameter (for subscription flow)
+    const storedPlan = sessionStorage.getItem('intendedPlan');
+    if (storedPlan && user.role === 'SCHOOL_ADMIN') {
+      sessionStorage.removeItem('intendedPlan');
+      router.push(`/?plan=${storedPlan}`);
+      return;
+    }
+
+    // Priority 3: Role-based default redirect
+    const roleRedirect = getRoleBasedRedirect(user.role);
+    console.log('Redirecting to role-based URL:', roleRedirect);
+    router.push(roleRedirect);
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -119,20 +146,8 @@ function LoginContent() {
             localStorage.setItem('tenantId', data.data.user.tenantId);
           }
 
-          const roleMap: Record<string, string> = {
-            SUPER_ADMIN: '/dashboard/super-admin',
-            SCHOOL_ADMIN: '/dashboard/school',
-            TEACHER: '/dashboard/teacher',
-            STUDENT: '/dashboard/student',
-          };
-
-          const storedPlan = sessionStorage.getItem('intendedPlan');
-          if (storedPlan && data.data.user.role === 'SCHOOL_ADMIN') {
-            sessionStorage.removeItem('intendedPlan');
-            router.push(`/?plan=${storedPlan}`);
-          } else {
-            router.push(roleMap[data.data.user.role] || '/dashboard');
-          }
+          // Handle secure post-login redirect
+          handlePostLoginRedirect(data.data.user);
         } else {
           console.error('Unexpected login response structure:', data);
           setError('Unexpected response from server. Please try again.');
@@ -204,20 +219,8 @@ function LoginContent() {
           localStorage.setItem('tenantId', data.data.user.tenantId);
         }
 
-        const roleMap: Record<string, string> = {
-          SUPER_ADMIN: '/dashboard/super-admin',
-          SCHOOL_ADMIN: '/dashboard/school',
-          TEACHER: '/dashboard/teacher',
-          STUDENT: '/dashboard/student',
-        };
-
-        const storedPlan = sessionStorage.getItem('intendedPlan');
-        if (storedPlan && data.data.user.role === 'SCHOOL_ADMIN') {
-          sessionStorage.removeItem('intendedPlan');
-          router.push(`/?plan=${storedPlan}`);
-        } else {
-          router.push(roleMap[data.data.user.role] || '/dashboard');
-        }
+        // Handle secure post-login redirect
+        handlePostLoginRedirect(data.data.user);
       }
     } catch (err) {
       if (err instanceof TypeError && (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource')) {

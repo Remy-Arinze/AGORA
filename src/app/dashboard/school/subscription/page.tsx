@@ -259,11 +259,11 @@ export default function SubscriptionPage() {
               {[
                 {
                   q: 'What happens when I upgrade?',
-                  a: 'Your new plan activates immediately. You get instant access to the Agora AI engine and your AI credits will be instantly topped up to the new tier\'s allowance (e.g., 5,000 credits for Pro).'
+                  a: 'Your new plan activates immediately. You get instant access to the Agora AI engine and your AI credits align to the new tier\'s allowance (e.g., 10,000 Agora credits on Pro), with any unused balance from the prior paid period rolled in on renewal where applicable.'
                 },
                 {
                   q: 'How do AI Credits work?',
-                  a: 'Every time a teacher generates a lesson plan, quiz, or grades an essay, a few tokens are consumed. For context, 5,000 tokens per month is enough to automatically grade thousands of handwritten essays.'
+                  a: 'Every time a teacher generates a lesson plan, quiz, or grades an essay, Agora credits are consumed based on model usage. Higher tiers include larger monthly credit pools (e.g., 25,000 on Pro+).'
                 },
                 {
                   q: 'What if we run out of tokens mid-month?',

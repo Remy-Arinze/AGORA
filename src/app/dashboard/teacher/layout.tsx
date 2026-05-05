@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
+import { TeacherBillingStrip } from '@/components/billing/TeacherBillingStrip';
 
 export default function TeacherDashboardLayout({ children }: { children: ReactNode }) {
     useEffect(() => {
@@ -22,6 +23,7 @@ export default function TeacherDashboardLayout({ children }: { children: ReactNo
 
             {/* Content wrapper */}
             <div className="relative z-10 w-full h-full teacher-glass-content">
+                <TeacherBillingStrip />
                 {children}
             </div>
         </div>

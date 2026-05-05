@@ -56,12 +56,22 @@ export interface SubscriptionDto {
   toolAccess: SchoolToolAccessDto[];
 }
 
+export type SubscriptionBillingPhase = 'OK' | 'GRACE_PERIOD' | 'ADMIN_ACTION_REQUIRED';
+
+export interface SubscriptionBillingSummaryDto {
+  phase: SubscriptionBillingPhase;
+  graceEndsAt: string | null;
+  paidPeriodEndDate: string | null;
+}
+
 export interface SubscriptionSummaryDto {
   tier: SubscriptionTier;
   isActive: boolean;
   aiCredits: number;        // -1 = unlimited
   aiCreditsUsed: number;
   aiCreditsRemaining: number;
+  /** When false, paid period has ended — AI is off even if credits remain (they roll over on renewal). */
+  aiPeriodActive?: boolean;
   limits: {
     maxStudents: number;    // -1 = unlimited
     maxTeachers: number;    // -1 = unlimited
@@ -73,6 +83,46 @@ export interface SubscriptionSummaryDto {
     status: ToolStatus;
     hasAccess: boolean;
   }[];
+  billing?: SubscriptionBillingSummaryDto;
+}
+
+export interface BillingUiFlagsDto {
+  showGraceBanner: boolean;
+  blockAdminDashboard: boolean;
+  /** @deprecated use teacherBillingLimited */
+  teacherReadOnlyMode?: boolean;
+  teacherBillingLimited?: boolean;
+}
+
+export interface AdminBillingStateDto {
+  phase: SubscriptionBillingPhase;
+  tier: SubscriptionTier;
+  paidEndDate: string | null;
+  graceEndsAt: string | null;
+  operationalStudentCount: number;
+  freeTierStudentCap: number;
+  graceDaysTotal: number;
+}
+
+export interface DowngradePreviewEnrollmentDto {
+  enrollmentId: string;
+  studentId: string;
+  name: string;
+  publicId: string | null;
+  enrollmentDate: string;
+}
+
+export interface DowngradePreviewDto {
+  operationalStudentCount: number;
+  freeMaxStudents: number;
+  freeMaxTeachers: number;
+  freeMaxAdmins: number;
+  studentsToLockIfNoSelection: number;
+  teachersToSuspendIfNoAction: number;
+  adminsToSuspendIfNoAction: number;
+  enrollments: DowngradePreviewEnrollmentDto[];
+  requiresStudentPick: boolean;
+  pickExactly: number;
 }
 
 export interface ToolAccessResultDto {
@@ -106,6 +156,10 @@ export interface AiCreditsResultDto {
 export interface UseAiCreditsRequest {
   credits: number;
   action?: string;
+}
+
+export interface TopUpAiCreditsRequest {
+  credits: number;
 }
 
 // Response wrapper
@@ -156,6 +210,30 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       providesTags: ['Subscription'],
     }),
 
+    getBillingUiFlags: builder.query<ResponseDto<BillingUiFlagsDto | null>, void>({
+      query: () => '/subscriptions/billing/ui-flags',
+      providesTags: ['Subscription'],
+    }),
+
+    getAdminBillingState: builder.query<ResponseDto<AdminBillingStateDto | null>, void>({
+      query: () => '/subscriptions/billing/admin-state',
+      providesTags: ['Subscription'],
+    }),
+
+    getDowngradePreview: builder.query<ResponseDto<DowngradePreviewDto | null>, void>({
+      query: () => '/subscriptions/billing/downgrade-preview',
+      providesTags: ['Subscription'],
+    }),
+
+    downgradeToFree: builder.mutation<ResponseDto<{ message: string }>, { keepEnrollmentIds: string[] }>({
+      query: (body) => ({
+        url: '/subscriptions/billing/downgrade-to-free',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Subscription'],
+    }),
+
     // Check tool access
     checkToolAccess: builder.query<ResponseDto<ToolAccessResultDto>, string>({
       query: (toolSlug) => `/subscriptions/tools/${toolSlug}/access`,
@@ -178,6 +256,15 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
     useAiCredits: builder.mutation<ResponseDto<AiCreditsResultDto>, UseAiCreditsRequest>({
       query: (body) => ({
         url: '/subscriptions/ai-credits/use',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Subscription'],
+    }),
+
+    topUpAiCredits: builder.mutation<ResponseDto<AiCreditsResultDto>, TopUpAiCreditsRequest>({
+      query: (body) => ({
+        url: '/subscriptions/ai-credits/top-up',
         method: 'POST',
         body,
       }),
@@ -238,10 +325,15 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
 export const {
   useGetMySubscriptionQuery,
   useGetSubscriptionSummaryQuery,
+  useGetBillingUiFlagsQuery,
+  useGetAdminBillingStateQuery,
+  useGetDowngradePreviewQuery,
+  useDowngradeToFreeMutation,
   useCheckToolAccessQuery,
   useGetAllToolsQuery,
   useGetMyToolsQuery,
   useUseAiCreditsMutation,
+  useTopUpAiCreditsMutation,
   useGetPublicPlansQuery,
   useGetPlansForSchoolQuery,
   useGetAllPlansAdminQuery,

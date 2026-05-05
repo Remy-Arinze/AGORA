@@ -42,6 +42,9 @@
     /* Main accent blue */
     --agora-success: #059669;
     /* emerald-600 for better contrast in light mode */
+     --agora-accent: #f0a500;
+    /* Sky blue — info, links, secondary accents */
+    --agora-info: #3b9eff;
     /* Success/green color */
     --agora-text: #02173D;
     /* Primary text color */

@@ -90,13 +90,16 @@ export function useSubscription(): SubscriptionManagement {
   const canUpgradeTo = useCallback((tier: SubscriptionTier): boolean => {
     if (!subscription) return true;
 
-    const tierOrder = {
+    const tierOrder: Partial<Record<SubscriptionTier, number>> = {
       [SubscriptionTier.FREE]: 0,
       [SubscriptionTier.PRO]: 1,
       [SubscriptionTier.PRO_PLUS]: 2,
+      [SubscriptionTier.CUSTOM]: 3,
     };
 
-    return tierOrder[tier] > tierOrder[subscription.tier];
+    const current = tierOrder[subscription.tier] ?? 0;
+    const target = tierOrder[tier] ?? -1;
+    return target > current;
   }, [subscription]);
 
   /**
@@ -143,14 +146,14 @@ export function useSubscription(): SubscriptionManagement {
    */
   const getFeatureComparison = useCallback((): FeatureComparison[] => {
     return [
-      { feature: 'Students', free: '100', pro: '500', proPlus: '2,000' },
-      { feature: 'Teachers', free: '10', pro: '50', proPlus: '200' },
-      { feature: 'Admins', free: '2', pro: '10', proPlus: '25' },
+      { feature: 'Students', free: '100', pro: '800', proPlus: '2,000' },
+      { feature: 'Teachers', free: '10', pro: '80', proPlus: '150' },
+      { feature: 'Admins', free: '2', pro: '20', proPlus: '35' },
       { feature: 'Core Platform', free: true, pro: true, proPlus: true },
       { feature: 'Agora AI Generation', free: false, pro: true, proPlus: true },
       { feature: 'RollCall', free: false, pro: false, proPlus: true },
       { feature: 'Bursary Pro', free: 'Basic', pro: 'Full', proPlus: 'Full' },
-      { feature: 'AI Credits/Month', free: '0', pro: '5,000', proPlus: '20,000' },
+      { feature: 'AI Credits/Month', free: '0', pro: '10,000', proPlus: '25,000' },
       { feature: 'Support', free: 'Community', pro: 'Email', proPlus: 'Priority' },
     ];
   }, []);

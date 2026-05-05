@@ -25,9 +25,11 @@ interface UseToolAccessReturn {
 export function useToolAccess(): UseToolAccessReturn {
   const { summary } = useSubscription();
 
-  // Get AI credits from subscription summary
+  const aiPeriodActive = summary?.aiPeriodActive !== false;
+
+  // Get AI credits from subscription summary (remaining is not spendable when the billing period has ended)
   const aiCredits: AICredits = {
-    remaining: summary?.aiCreditsRemaining ?? 0,
+    remaining: summary && !aiPeriodActive ? 0 : summary?.aiCreditsRemaining ?? 0,
     total: summary?.aiCredits ?? 0,
   };
 

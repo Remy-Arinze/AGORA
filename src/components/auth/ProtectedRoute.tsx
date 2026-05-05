@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useRouter, usePathname } from 'next/navigation';
 import { RootState } from '@/lib/store/store';
 import { logout } from '@/lib/store/slices/authSlice';
+import { createReturnToUrl } from '@/utils/security/redirect-validator';
 
 // Helper to decode JWT and check if it has expired 
 const isTokenExpired = (token: string | null) => {
@@ -46,7 +47,9 @@ export function ProtectedRoute({
     // Only proceed if hydrated
     if (isHydrated) {
       if (!user) {
-        router.push(redirectTo);
+        // Create secure return-to URL for post-login redirect
+        const loginUrl = createReturnToUrl(pathname);
+        router.push(loginUrl);
         return;
       }
       
@@ -59,7 +62,7 @@ export function ProtectedRoute({
         }
       }
     }
-  }, [user, token, refreshToken, router, redirectTo, isHydrated, pathname, dispatch]);
+  }, [user, token, refreshToken, router, pathname, isHydrated, dispatch]);
 
   // Show loading while hydrating
   if (!isHydrated) {
