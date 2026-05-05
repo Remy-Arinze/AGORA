@@ -141,6 +141,7 @@ export default function HomeContent() {
   const user = useSelector((state: RootState) => state.auth.user);
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
 
   // Ensure component is mounted before using persisted auth state
   useEffect(() => {
@@ -199,6 +200,17 @@ export default function HomeContent() {
       });
     }
   }
+
+  // Auto-rotate featured school every 4 seconds
+  useEffect(() => {
+    if (!schools || schools.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentFeaturedIndex((prevIndex) => (prevIndex + 1) % schools.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [schools]);
 
   // Only use user state after hydration to avoid mismatch
   const isLoggedIn = isMounted && !!user;
@@ -678,7 +690,7 @@ export default function HomeContent() {
       <section data-navbar-light="true" className="py-32 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16 md:mb-24 px-4">
-            <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
               System_Protocol_v2.0
             </span>
             <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tighter leading-[1.1]">
@@ -744,12 +756,12 @@ export default function HomeContent() {
       {/* Pricing Plans Section */}
       <section id="pricing" data-navbar-light="true" className="py-24 relative">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-agora-blue/5 rounded-full blur-[120px] pointer-events-none" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16">
-            <span className="inline-block px-4 py-2 bg-blue-600 text-white rounded-full text-xs font-semibold mb-4">
+            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
               Pricing
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
@@ -799,19 +811,20 @@ export default function HomeContent() {
               ) : schools && schools.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto auto-rows-[minmax(96px,auto)]">
                   {(() => {
-                    const [featured, ...others] = schools;
+                    const featured = schools[currentFeaturedIndex];
+                    const others = schools.filter((_, index) => index !== currentFeaturedIndex);
                     return (
                       <>
                         <div
                           key={featured.id}
-                          className="col-span-2 row-span-2 group rounded-2xl bg-[var(--dark-surface)]/25 border border-[var(--dark-border)] backdrop-blur-xl p-6 md:p-8 flex flex-col justify-between min-h-[220px] hover:border-agora-blue/35 hover:bg-[var(--dark-surface)]/40 transition-all duration-500"
+                          className="col-span-2 row-span-2 group rounded-2xl bg-[var(--dark-surface)]/25 border border-[var(--dark-border)] backdrop-blur-xl p-6 md:p-8 flex flex-col justify-between min-h-[220px] hover:border-agora-blue/35 hover:bg-[var(--dark-surface)]/40 transition-all duration-1000 ease-[cubic-bezier(0.4,0.0,0.2,1)] transform"
                         >
                           <div>
                             <span className="text-[10px] font-mono text-agora-blue/80 uppercase tracking-[0.25em] mb-3 block">
                               Featured network node
                             </span>
                             <div className="flex items-start gap-5">
-                              <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-2 shrink-0 shadow-xl group-hover:scale-[1.02] transition-transform duration-500">
+                              <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-2 shrink-0 group-hover:scale-[1.02] transition-transform duration-500">
                                 {featured.logo ? (
                                   <Image
                                     src={featured.logo}
@@ -833,25 +846,26 @@ export default function HomeContent() {
                                   </h3>
                                   <span className="w-2 h-2 rounded-full bg-agora-success shrink-0 animate-pulse" />
                                 </div>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <span className="text-xs font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
+                                    {featured.state || 'Nigeria'}
+                                  </span>
+                                  <span className="text-xs text-[var(--dark-text-muted)]">•</span>
+                                  <span className="text-xs font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
+                                    {featured.type}
+                                  </span>
+                                </div>
                                 <p className="text-sm text-[var(--dark-text-secondary)] font-light leading-relaxed">
-                                  Live on the Agora network — identity, records, and school operations in one chain-of-trust stack.
+                                  Leading digital transformation in education with comprehensive school management solutions.
                                 </p>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center justify-between pt-4 mt-4 border-t border-[var(--dark-border)]/60">
-                            <span className="text-[10px] font-mono text-[var(--dark-text-muted)] uppercase tracking-widest">
-                              NODE_PRIMARY
-                            </span>
-                            <span className="text-[10px] font-mono text-agora-blue/70 group-hover:text-agora-blue transition-colors">
-                              CONNECTED
-                            </span>
                           </div>
                         </div>
                         {others.map((school, idx) => (
                           <div
                             key={school.id}
-                            className="group rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl p-4 md:p-5 flex flex-col justify-between min-h-[112px] hover:border-agora-blue/30 hover:bg-[var(--dark-surface)]/35 transition-all duration-500"
+                            className="group rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl p-4 md:p-5 flex flex-col justify-between min-h-[112px] hover:border-agora-blue/30 hover:bg-[var(--dark-surface)]/35 transition-all duration-1000 ease-[cubic-bezier(0.4,0.0,0.2,1)] transform"
                           >
                             <div className="flex items-center gap-3">
                               <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-1.5 shrink-0 group-hover:scale-105 transition-transform duration-500">
@@ -870,18 +884,19 @@ export default function HomeContent() {
                                 )}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs md:text-sm font-bold text-[var(--dark-text-primary)] truncate font-heading">
+                                <p className="text-xs md:text-sm font-bold text-[var(--dark-text-primary)] truncate font-heading mb-1">
                                   {school.name}
                                 </p>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
+                                    {school.state || 'NG'}
+                                  </span>
+                                  <span className="text-[8px] text-[var(--dark-text-muted)]">•</span>
+                                  <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase">
+                                    {school.type}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center justify-between mt-3 pt-2 border-t border-[var(--dark-border)]/50">
-                              <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase tracking-widest">
-                                NODE_{(idx + 1).toString(16).padStart(3, '0').toUpperCase()}
-                              </span>
-                              <span className="text-[8px] font-mono text-agora-blue/45 group-hover:text-agora-blue transition-colors">
-                                OK
-                              </span>
                             </div>
                           </div>
                         ))}
