@@ -13,6 +13,7 @@ import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
+import { ShareRegistrationLinkModal } from '@/components/modals/ShareRegistrationLinkModal';
 import {
   CheckCircle2,
   XCircle,
@@ -440,6 +441,7 @@ export default function ApplicationsPage() {
   const [showCompleteModal, setShowCompleteModal] = useState<string | null>(null);
   const [showApproveApplicationModal, setShowApproveApplicationModal] = useState<any | null>(null);
   const [showHistoricalGradesModal, setShowHistoricalGradesModal] = useState<string | null>(null);
+  const [showRegistrationLinkModal, setShowRegistrationLinkModal] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [studentSearchQuery, setStudentSearchQuery] = useState('');
   const [tacFormData, setTacFormData] = useState({ tac: '', studentId: '' });
@@ -454,6 +456,11 @@ export default function ApplicationsPage() {
   // Get school ID
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
+  const schoolName = schoolResponse?.data?.name;
+  const registrationLink =
+    schoolId && typeof window !== 'undefined'
+      ? `${window.location.origin}/admission/${schoolId}`
+      : '';
 
   // Get school type
   const { currentType } = useSchoolType();
@@ -748,12 +755,9 @@ export default function ApplicationsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const link = `${window.location.origin}/admission/${schoolId}`;
-                  navigator.clipboard.writeText(link);
-                  toast.success('Admission link copied to clipboard');
-                }}
+                onClick={() => setShowRegistrationLinkModal(true)}
                 className="h-9"
+                disabled={!schoolId}
               >
                 <Copy className="h-4 w-4 mr-2" />
                 Copy Admission Link
@@ -1715,6 +1719,23 @@ export default function ApplicationsPage() {
             </div>
           </Modal>
         )}
+
+        <ShareRegistrationLinkModal
+          isOpen={showRegistrationLinkModal}
+          onClose={() => setShowRegistrationLinkModal(false)}
+          url={registrationLink}
+          title="Share Admission Link"
+          urlLabel="Admission URL"
+          description="Share this admission link so parents and guardians can apply directly to your school."
+          shareMessage={
+            schoolName
+              ? `Hello, applications are open for ${schoolName}. You can apply using the link below.`
+              : 'Hello, applications are open. You can apply using the link below.'
+          }
+          shareMessageLabel="Message to share"
+          emailSubject="School admission link"
+          copySuccessMessage="Admission link copied to clipboard"
+        />
       </div>
     </ProtectedRoute>
   );

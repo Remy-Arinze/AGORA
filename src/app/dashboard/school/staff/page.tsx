@@ -125,7 +125,20 @@ export default function StaffPage() {
   const staffList = staffResponse?.data;
   const staff = staffList?.items || [];
   const meta = staffList?.meta;
-  const availableRoles = staffList?.availableRoles || [];
+  const availableRoles = useMemo(() => {
+    const seen = new Set<string>();
+
+    return (staffList?.availableRoles || []).filter((role) => {
+      const normalizedRole = role.trim().toLowerCase();
+
+      if (!normalizedRole || normalizedRole === 'all' || seen.has(normalizedRole)) {
+        return false;
+      }
+
+      seen.add(normalizedRole);
+      return true;
+    });
+  }, [staffList?.availableRoles]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -311,7 +324,7 @@ export default function StaffPage() {
           <PermissionGate resource={PermissionResource.STAFF} type={PermissionType.WRITE}>
             <div className="flex items-center gap-3">
               <Link href="/dashboard/school/staff/add">
-                <Button variant="primary" size="sm" className="bg-[#f97316] hover:bg-[#ea580c] text-white">
+                <Button variant="primary" size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Staff
                 </Button>

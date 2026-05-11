@@ -326,6 +326,7 @@ export default function AddSchoolPage() {
                       label="Country"
                       value={formData.country}
                       onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                      scope="west-africa"
                       placeholder="Select country"
                     />
                   </div>

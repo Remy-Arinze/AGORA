@@ -17,6 +17,7 @@ import { Select } from '@/components/ui';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { StudentImportModal } from '@/components/modals/StudentImportModal';
 import { StudentAdmissionModal } from '@/components/modals/StudentAdmissionModal';
+import { ShareRegistrationLinkModal } from '@/components/modals/ShareRegistrationLinkModal';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
@@ -75,6 +76,7 @@ function StudentsPageContent() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
+  const [showRegistrationLinkModal, setShowRegistrationLinkModal] = useState(false);
   const [transferId, setTransferId] = useState<string | null>(null);
   const [resendingStudentId, setResendingStudentId] = useState<string | null>(null);
 
@@ -108,7 +110,12 @@ function StudentsPageContent() {
   // Get school ID and school type
   const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
+  const schoolName = schoolResponse?.data?.name;
   const { currentType } = useSchoolType();
+  const registrationLink =
+    schoolId && typeof window !== 'undefined'
+      ? `${window.location.origin}/admission/${schoolId}`
+      : '';
 
   // Resend invitation mutation
   const [resendInvitation] = useResendPasswordResetForStudentMutation();
@@ -278,12 +285,9 @@ function StudentsPageContent() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const link = `${window.location.origin}/admission/${schoolId}`;
-                  navigator.clipboard.writeText(link);
-                  toast.success('Registration link copied to clipboard');
-                }}
+                onClick={() => setShowRegistrationLinkModal(true)}
                 className="h-9"
+                disabled={!schoolId}
               >
                 <Copy className="h-4 w-4 mr-2" />
                 Copy Registration Link
@@ -576,7 +580,24 @@ function StudentsPageContent() {
         <StudentAdmissionModal
           isOpen={showAdmissionModal}
           onClose={handleAdmissionModalClose}
+          onRequestShareRegistrationLink={() => setShowRegistrationLinkModal(true)}
           fromTransferId={transferId}
+        />
+
+        <ShareRegistrationLinkModal
+          isOpen={showRegistrationLinkModal}
+          onClose={() => setShowRegistrationLinkModal(false)}
+          url={registrationLink}
+          title="Share Registration Link"
+          description="Send this registration link to parents and guardians so they can submit student applications online."
+          shareMessage={
+            schoolName
+              ? `Hello, you can complete your child${"'"}s registration for ${schoolName} using the link below.`
+              : 'Hello, you can complete your child\'s registration using the link below.'
+          }
+          shareMessageLabel="Message to share"
+          emailSubject="Student registration link"
+          copySuccessMessage="Registration link copied to clipboard"
         />
       </div>
     </ProtectedRoute>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { Loader2, UserPlus, AlertCircle, User, Heart, GraduationCap } from 'lucide-react';
+import { Loader2, UserPlus, AlertCircle, User, Heart, GraduationCap, Copy } from 'lucide-react';
 import { useGetMySchoolQuery, useAdmitStudentMutation, useGetClassesQuery, useGetClassArmsQuery, useGetClassLevelsQuery, useGenerateDefaultClassesMutation, useUploadStudentImageMutation, type AddStudentDto } from '@/lib/store/api/schoolAdminApi';
 import { studentAdmissionFormSchema } from '@/lib/validations/school-forms';
 import { useSchoolType } from '@/hooks/useSchoolType';
@@ -14,10 +14,12 @@ import toast from 'react-hot-toast';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { CountrySelector } from '@/components/ui/CountrySelector';
 
 interface StudentAdmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onRequestShareRegistrationLink?: () => void;
   fromTransferId?: string | null;
   preSelectedClassLevel?: string;
   preSelectedClassArmId?: string;
@@ -26,6 +28,7 @@ interface StudentAdmissionModalProps {
 export function StudentAdmissionModal({ 
   isOpen, 
   onClose, 
+  onRequestShareRegistrationLink,
   fromTransferId,
   preSelectedClassLevel,
   preSelectedClassArmId
@@ -129,7 +132,7 @@ export function StudentAdmissionModal({
     email: '',
     phone: '',
     address: '',
-    nationality: '',
+    nationality: 'Nigeria',
     state: '',
     classLevel: '',
     classArmId: '', 
@@ -152,6 +155,7 @@ export function StudentAdmissionModal({
     if (isOpen) {
       setFormData(prev => ({
         ...prev,
+        nationality: prev.nationality || 'Nigeria',
         classLevel: preSelectedClassLevel || '',
         classArmId: preSelectedClassArmId || '',
       }));
@@ -170,7 +174,7 @@ export function StudentAdmissionModal({
         email: '',
         phone: '',
         address: '',
-        nationality: '',
+        nationality: 'Nigeria',
         state: '',
         classLevel: '',
         classArmId: '',
@@ -434,6 +438,22 @@ export function StudentAdmissionModal({
       title={fromTransferId ? 'Complete Transfer Application' : 'New Admission Application'}
       size="xl"
     >
+      <div className="mb-4 flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            onClose();
+            onRequestShareRegistrationLink?.();
+          }}
+          disabled={!schoolId}
+        >
+          <Copy className="h-4 w-4 mr-2" />
+          Share Registration Link
+        </Button>
+      </div>
+
       {submitError && (
         <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
           <div className="flex items-start gap-3">
@@ -582,16 +602,18 @@ export function StudentAdmissionModal({
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               className="md:col-span-2"
             />
-            <Input
-              label="Nationality *"
+            <CountrySelector
+              label="Nationality"
               value={formData.nationality}
-              onChange={(e) => {
-                setFormData({ ...formData, nationality: e.target.value });
+              onChange={(value) => {
+                setFormData({ ...formData, nationality: value });
                 if (errors.nationality) setErrors({ ...errors, nationality: undefined });
               }}
+              scope="west-africa"
               required
               error={errors.nationality}
-              placeholder="e.g. Nigerian, Ghanaian"
+              placeholder="Select nationality"
+              disabled={isLoading || isAdmitting}
             />
             <Input
               label="State *"
@@ -925,6 +947,7 @@ export function StudentAdmissionModal({
           </Button>
         </div>
       </form>
+
     </Modal>
   );
 }

@@ -202,6 +202,7 @@ export default function RegisterSchoolPage() {
                                 <CountrySelector
                                     value={formData.country}
                                     onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                                    scope="west-africa"
                                     placeholder="Select country"
                                 />
                             </div>
