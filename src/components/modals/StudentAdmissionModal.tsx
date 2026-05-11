@@ -271,7 +271,6 @@ export function StudentAdmissionModal({
       formData.dateOfBirth &&
       formData.gender &&
       formData.email?.trim() &&
-      formData.phone?.trim() &&
       (formData.classLevel || formData.classArmId) &&
       formData.parentName?.trim() &&
       formData.parentPhone?.trim() &&
@@ -306,6 +305,7 @@ export function StudentAdmissionModal({
         middleName: sanitized.middleName ? capitalizeWords(sanitized.middleName) : undefined,
         lastName: capitalizeWords(sanitized.lastName),
         dateOfBirth: sanitized.dateOfBirth,
+        gender: sanitized.gender,
         email: sanitized.email,
         phone: sanitized.phone,
         address: sanitized.address,
@@ -566,13 +566,12 @@ export function StudentAdmissionModal({
               error={errors.email}
             />
             <PhoneInput
-              label="Phone *"
+              label="Phone"
               value={formData.phone}
               onChange={(e164) => {
                 setFormData({ ...formData, phone: e164 });
                 if (errors.phone) setErrors({ ...errors, phone: undefined });
               }}
-              required
               error={errors.phone}
               disabled={isLoading || isAdmitting}
               defaultCountryCode="NG"

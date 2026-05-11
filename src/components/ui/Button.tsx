@@ -25,7 +25,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       bgColor,
       textColor,
-      isFlat = false,
+      isFlat = true,
       style,
       ...props
     },

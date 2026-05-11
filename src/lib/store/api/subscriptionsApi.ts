@@ -62,6 +62,8 @@ export interface SubscriptionBillingSummaryDto {
   phase: SubscriptionBillingPhase;
   graceEndsAt: string | null;
   paidPeriodEndDate: string | null;
+  isRecurring?: boolean;
+  paystackSubscriptionCode?: string | null;
 }
 
 export interface SubscriptionSummaryDto {

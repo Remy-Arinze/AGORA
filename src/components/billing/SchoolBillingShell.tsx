@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { usePathname } from 'next/navigation';
 import { RootState } from '@/lib/store/store';
 import {
   useGetSubscriptionSummaryQuery,
@@ -11,43 +12,56 @@ import {
 import { X } from 'lucide-react';
 import { isPrincipalRole } from '@/lib/constants/roles';
 
+// Pages where the blocking modal must not appear so the user can act on their subscription
+const SUBSCRIPTION_ROUTES = [
+  '/dashboard/school/subscription',
+  '/dashboard/school/subscription/downgrade',
+  '/dashboard/school/subscription/callback',
+];
+
 const graceDismissKey = (schoolId: string) => `agora_billing_grace_dismissed_${schoolId}`;
 
 export function SchoolBillingShell() {
   const user = useSelector((s: RootState) => s.auth.user);
   const tenantId = useSelector((s: RootState) => s.auth.tenantId);
   const schoolId = tenantId;
+  const pathname = usePathname();
   const isPrincipalAdmin =
     user?.role === 'SCHOOL_ADMIN' && isPrincipalRole(user?.adminRole ?? null);
+
+  const onSubscriptionPage = SUBSCRIPTION_ROUTES.some((route) =>
+    pathname?.startsWith(route),
+  );
 
   const { data: summaryRes } = useGetSubscriptionSummaryQuery(undefined, {
     skip: !isPrincipalAdmin || !schoolId,
   });
   const { data: flagsRes } = useGetBillingUiFlagsQuery(undefined, {
     skip: !isPrincipalAdmin || !schoolId,
+    // Poll every 30 s so the modal clears automatically after a successful payment
+    // without requiring a manual page refresh.
+    pollingInterval: 30_000,
   });
 
-  const phase = summaryRes?.data?.billing?.phase ?? 'OK';
   const flags = flagsRes?.data;
 
   const [graceDismissed, setGraceDismissed] = useState(false);
 
   const readGraceDismissed = useCallback(() => {
     if (!schoolId || typeof window === 'undefined') return false;
-    return sessionStorage.getItem(graceDismissKey(schoolId)) === '1';
+    return localStorage.getItem(graceDismissKey(schoolId)) === '1';
   }, [schoolId]);
 
   const showGrace =
     isPrincipalAdmin &&
     (flags?.showGraceBanner ?? false) &&
-    phase === 'GRACE_PERIOD' &&
     !graceDismissed &&
     !readGraceDismissed();
 
-  const blockAdmin = isPrincipalAdmin && (flags?.blockAdminDashboard ?? false);
+  const blockAdmin = isPrincipalAdmin && (flags?.blockAdminDashboard ?? false) && !onSubscriptionPage;
 
   const dismissGrace = () => {
-    if (schoolId) sessionStorage.setItem(graceDismissKey(schoolId), '1');
+    if (schoolId) localStorage.setItem(graceDismissKey(schoolId), '1');
     setGraceDismissed(true);
   };
 

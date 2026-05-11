@@ -11,7 +11,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Pagination } from '@/components/ui/Pagination';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { GraduationCap, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, CheckCircle, Clock, Ban, Mail, Loader2, Users, ChevronDown } from 'lucide-react';
+import { GraduationCap, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, CheckCircle, Clock, Ban, Mail, Loader2, Users, ChevronDown, Copy } from 'lucide-react';
 import { useGetStudentsQuery, useGetMySchoolQuery, useResendPasswordResetForStudentMutation } from '@/lib/store/api/schoolAdminApi';
 import { Select } from '@/components/ui';
 import { useSchoolType } from '@/hooks/useSchoolType';
@@ -274,6 +274,19 @@ function StudentsPageContent() {
               <Button variant="secondary" size="sm" onClick={() => setShowImportModal(true)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 Import CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const link = `${window.location.origin}/admission/${schoolId}`;
+                  navigator.clipboard.writeText(link);
+                  toast.success('Registration link copied to clipboard');
+                }}
+                className="h-9"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Registration Link
               </Button>
             </div>
           </PermissionGate>

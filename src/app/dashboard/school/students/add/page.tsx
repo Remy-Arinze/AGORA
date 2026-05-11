@@ -109,9 +109,12 @@ export default function AddStudentPage() {
     middleName: '',
     lastName: '',
     dateOfBirth: '',
+    gender: '',
     email: '',
     phone: '',
     address: '',
+    nationality: '',
+    state: '',
     classLevel: '',
     classArmId: '',
     parentName: '',
@@ -187,9 +190,12 @@ export default function AddStudentPage() {
         middleName: sanitized.middleName,
         lastName: sanitized.lastName,
         dateOfBirth: sanitized.dateOfBirth,
+        gender: sanitized.gender,
         email: sanitized.email,
         phone: sanitized.phone,
         address: sanitized.address,
+        nationality: sanitized.nationality,
+        state: sanitized.state,
         classLevel: sanitized.classArmId ? undefined : sanitized.classLevel, // Only send if no ClassArm
         classArmId: sanitized.classArmId,
         academicYear: sanitized.academicYear, // Will be auto-determined by backend if undefined
@@ -234,6 +240,8 @@ export default function AddStudentPage() {
           parentRelationship: 'Relationship',
           emergencyContact: 'Emergency Contact',
           emergencyContactPhone: 'Emergency Contact Phone',
+          nationality: 'Nationality',
+          state: 'State',
         };
         
         error.data.forEach((err: any) => {
@@ -340,6 +348,29 @@ export default function AddStudentPage() {
                     error={errors.firstName}
                     required
                   />
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                      Gender *
+                    </label>
+                    <select
+                      className={`w-full h-10 px-3 rounded-lg border border-light-border dark:border-dark-border bg-white dark:bg-dark-bg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                        errors.gender ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+                      }`}
+                      value={formData.gender}
+                      onChange={(e) => {
+                        setFormData({ ...formData, gender: e.target.value });
+                        if (errors.gender) setErrors({ ...errors, gender: '' });
+                      }}
+                      required
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="MALE">Male</option>
+                      <option value="FEMALE">Female</option>
+                    </select>
+                    {errors.gender && (
+                      <p className="text-xs text-red-500 mt-1">{errors.gender}</p>
+                    )}
+                  </div>
                   <Input
                     label="Middle Name"
                     name="middleName"
@@ -369,7 +400,7 @@ export default function AddStudentPage() {
                     error={errors.email}
                   />
                   <Input
-                    label="Phone *"
+                    label="Phone"
                     name="phone"
                     type="tel"
                     value={formData.phone}
@@ -378,7 +409,6 @@ export default function AddStudentPage() {
                       if (errors.phone) setErrors({ ...errors, phone: '' });
                     }}
                     error={errors.phone}
-                    required
                   />
                   <DatePicker
                     label="Date of Birth *"
@@ -395,6 +425,30 @@ export default function AddStudentPage() {
                     name="address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
+                  <Input
+                    label="Nationality *"
+                    name="nationality"
+                    value={formData.nationality}
+                    onChange={(e) => {
+                      setFormData({ ...formData, nationality: e.target.value });
+                      if (errors.nationality) setErrors({ ...errors, nationality: '' });
+                    }}
+                    error={errors.nationality}
+                    required
+                    placeholder="e.g. Nigerian, Ghanaian"
+                  />
+                  <Input
+                    label="State *"
+                    name="state"
+                    value={formData.state}
+                    onChange={(e) => {
+                      setFormData({ ...formData, state: e.target.value });
+                      if (errors.state) setErrors({ ...errors, state: '' });
+                    }}
+                    error={errors.state}
+                    required
+                    placeholder="e.g. Lagos, Abuja"
                   />
                 </div>
               </div>

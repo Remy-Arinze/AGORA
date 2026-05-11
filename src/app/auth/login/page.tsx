@@ -410,6 +410,11 @@ function LoginContent() {
                 variant="primary"
                 className="w-full py-3.5"
                 isLoading={isLoading}
+                isFlat={!(
+                  formData.password &&
+                  formData.password.length >= 8 &&
+                  formData.emailOrPublicId
+                )}
                 disabled={
                   !formData.password ||
                   formData.password.length < 8 ||

@@ -142,6 +142,9 @@ export default function HomeContent() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
+  const featuredCardRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Ensure component is mounted before using persisted auth state
   useEffect(() => {
@@ -201,16 +204,60 @@ export default function HomeContent() {
     }
   }
 
-  // Auto-rotate featured school every 4 seconds
+  // Auto-rotate featured school every 4 seconds with sliding animations
   useEffect(() => {
     if (!schools || schools.length <= 1) return;
 
-    const interval = setInterval(() => {
-      setCurrentFeaturedIndex((prevIndex) => (prevIndex + 1) % schools.length);
-    }, 4000);
+    const animateRotation = () => {
+      const nextIndex = (currentFeaturedIndex + 1) % schools.length;
+      const gridElement = gridRef.current;
+      
+      if (gridElement) {
+        // Animate the entire grid container
+        gsap.to(gridElement, {
+          x: -100, // Slide to reveal next card
+          duration: 0.6,
+          ease: "power2.inOut",
+          onComplete: () => {
+            // Update index after slide
+            setCurrentFeaturedIndex(nextIndex);
+            
+            // Slide back to center with new content
+            setTimeout(() => {
+              gsap.to(gridElement, {
+                x: 0,
+                duration: 0.6,
+                ease: "power2.out"
+              });
+            }, 50);
+          }
+        });
+      } else {
+        // Fallback for initial load
+        setCurrentFeaturedIndex(nextIndex);
+      }
+    };
 
+    const interval = setInterval(animateRotation, 4000);
     return () => clearInterval(interval);
-  }, [schools]);
+  }, [schools, currentFeaturedIndex]);
+
+  // Initial entrance animation for featured card
+  useEffect(() => {
+    if (featuredCardRef.current && schools && schools.length > 0) {
+      gsap.fromTo(featuredCardRef.current,
+        { scale: 0.9, opacity: 0, y: 30 },
+        { 
+          scale: 1, 
+          opacity: 1, 
+          y: 0,
+          duration: 1.2,
+          ease: "power3.out",
+          delay: 0.3
+        }
+      );
+    }
+  }, [currentFeaturedIndex, schools]);
 
   // Only use user state after hydration to avoid mismatch
   const isLoggedIn = isMounted && !!user;
@@ -809,15 +856,16 @@ export default function HomeContent() {
                   ))}
                 </div>
               ) : schools && schools.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto auto-rows-[minmax(96px,auto)]">
+                <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto auto-rows-[minmax(96px,auto)]">
                   {(() => {
                     const featured = schools[currentFeaturedIndex];
                     const others = schools.filter((_, index) => index !== currentFeaturedIndex);
                     return (
                       <>
                         <div
+                          ref={featuredCardRef}
                           key={featured.id}
-                          className="col-span-2 row-span-2 group rounded-2xl bg-[var(--dark-surface)]/25 border border-[var(--dark-border)] backdrop-blur-xl p-6 md:p-8 flex flex-col justify-between min-h-[220px] hover:border-agora-blue/35 hover:bg-[var(--dark-surface)]/40 transition-all duration-1000 ease-[cubic-bezier(0.4,0.0,0.2,1)] transform"
+                          className="col-span-2 row-span-2 group rounded-2xl bg-[var(--dark-surface)]/25 border border-[var(--dark-border)] backdrop-blur-xl p-6 md:p-8 flex flex-col justify-between min-h-[220px] hover:border-agora-blue/35 hover:bg-[var(--dark-surface)]/40"
                         >
                           <div>
                             <span className="text-[10px] font-mono text-agora-blue/80 uppercase tracking-[0.25em] mb-3 block">
@@ -864,8 +912,9 @@ export default function HomeContent() {
                         </div>
                         {others.map((school, idx) => (
                           <div
+                            ref={(el) => { cardRefs.current[idx] = el; }}
                             key={school.id}
-                            className="group rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl p-4 md:p-5 flex flex-col justify-between min-h-[112px] hover:border-agora-blue/30 hover:bg-[var(--dark-surface)]/35 transition-all duration-1000 ease-[cubic-bezier(0.4,0.0,0.2,1)] transform"
+                            className="group rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl p-4 md:p-5 flex flex-col justify-between min-h-[112px] hover:border-agora-blue/30 hover:bg-[var(--dark-surface)]/35"
                           >
                             <div className="flex items-center gap-3">
                               <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-1.5 shrink-0 group-hover:scale-105 transition-transform duration-500">
