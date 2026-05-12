@@ -649,7 +649,7 @@ export interface AddStudentDto {
   lastName: string;
   dateOfBirth: string;
   email: string;
-  phone: string;
+  phone?: string;
   address?: string;
   nationality: string;
   state: string;
@@ -2653,6 +2653,29 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         { type: 'Class', id: 'LIST' },
       ],
     }),
+    // Get admission applications
+    getAdmissionApplications: builder.query<ResponseDto<any[]>, { schoolId: string; status?: string }>({
+      query: ({ schoolId, status }) => `/schools/${schoolId}/admissions/applications${status ? `?status=${status}` : ''}`,
+      providesTags: (result, error, { schoolId }) => [{ type: 'School', id: schoolId }, 'Student'],
+    }),
+    // Approve admission application
+    approveAdmissionApplication: builder.mutation<ResponseDto<any>, { schoolId: string; applicationId: string; classLevel?: string; classArmId?: string; academicYear?: string }>({
+      query: ({ schoolId, applicationId, ...body }) => ({
+        url: `/schools/${schoolId}/admissions/applications/${applicationId}/approve`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (result, error, { schoolId }) => [{ type: 'School', id: schoolId }, 'Student', 'Class'],
+    }),
+    // Reject admission application
+    rejectAdmissionApplication: builder.mutation<ResponseDto<any>, { schoolId: string; applicationId: string; reason: string }>({
+      query: ({ schoolId, applicationId, reason }) => ({
+        url: `/schools/${schoolId}/admissions/applications/${applicationId}/reject`,
+        method: 'POST',
+        body: { reason },
+      }),
+      invalidatesTags: (result, error, { schoolId }) => [{ type: 'School', id: schoolId }],
+    }),
     // Get students list
     getStudents: builder.query<ResponseDto<PaginatedResponse<StudentWithEnrollment>>, { schoolId: string; page?: number; limit?: number; schoolType?: string }>({
       query: ({ schoolId, ...params }) => {
@@ -3862,6 +3885,9 @@ export const {
   useGetMyStudentDashboardStatsQuery,
   // Student Admission hooks
   useAdmitStudentMutation,
+  useGetAdmissionApplicationsQuery,
+  useApproveAdmissionApplicationMutation,
+  useRejectAdmissionApplicationMutation,
   // Student hooks
   useGetStudentsQuery,
   useGetStudentByIdQuery,

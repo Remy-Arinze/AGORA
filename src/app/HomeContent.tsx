@@ -141,6 +141,10 @@ export default function HomeContent() {
   const user = useSelector((state: RootState) => state.auth.user);
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
+  const featuredCardRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Ensure component is mounted before using persisted auth state
   useEffect(() => {
@@ -200,6 +204,61 @@ export default function HomeContent() {
     }
   }
 
+  // Auto-rotate featured school every 4 seconds with sliding animations
+  useEffect(() => {
+    if (!schools || schools.length <= 1) return;
+
+    const animateRotation = () => {
+      const nextIndex = (currentFeaturedIndex + 1) % schools.length;
+      const gridElement = gridRef.current;
+      
+      if (gridElement) {
+        // Animate the entire grid container
+        gsap.to(gridElement, {
+          x: -100, // Slide to reveal next card
+          duration: 0.6,
+          ease: "power2.inOut",
+          onComplete: () => {
+            // Update index after slide
+            setCurrentFeaturedIndex(nextIndex);
+            
+            // Slide back to center with new content
+            setTimeout(() => {
+              gsap.to(gridElement, {
+                x: 0,
+                duration: 0.6,
+                ease: "power2.out"
+              });
+            }, 50);
+          }
+        });
+      } else {
+        // Fallback for initial load
+        setCurrentFeaturedIndex(nextIndex);
+      }
+    };
+
+    const interval = setInterval(animateRotation, 4000);
+    return () => clearInterval(interval);
+  }, [schools, currentFeaturedIndex]);
+
+  // Initial entrance animation for featured card
+  useEffect(() => {
+    if (featuredCardRef.current && schools && schools.length > 0) {
+      gsap.fromTo(featuredCardRef.current,
+        { scale: 0.9, opacity: 0, y: 30 },
+        { 
+          scale: 1, 
+          opacity: 1, 
+          y: 0,
+          duration: 1.2,
+          ease: "power3.out",
+          delay: 0.3
+        }
+      );
+    }
+  }, [currentFeaturedIndex, schools]);
+
   // Only use user state after hydration to avoid mismatch
   const isLoggedIn = isMounted && !!user;
 
@@ -218,9 +277,11 @@ export default function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[var(--dark-bg)] text-gray-900 dark:text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden relative">
+    <>
+      {/* Navbar outside overflow-x-hidden so fixed nav links are never clipped (e.g. Pricing). */}
       <LandingNavbar />
 
+      <div className="min-h-screen bg-white dark:bg-[var(--dark-bg)] text-gray-900 dark:text-[var(--dark-text-primary)] transition-colors duration-300 overflow-x-hidden relative">
       {/* Global Background Grid */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-0"
         style={{ backgroundImage: 'radial-gradient(circle, var(--agora-blue) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
@@ -676,7 +737,7 @@ export default function HomeContent() {
       <section data-navbar-light="true" className="py-32 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16 md:mb-24 px-4">
-            <span className="inline-block px-4 py-1.5 bg-[var(--dark-surface)] border border-[var(--dark-border)] text-[var(--dark-text-muted)] rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
               System_Protocol_v2.0
             </span>
             <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tighter leading-[1.1]">
@@ -742,19 +803,19 @@ export default function HomeContent() {
       {/* Pricing Plans Section */}
       <section id="pricing" data-navbar-light="true" className="py-24 relative">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-agora-blue/5 rounded-full blur-[120px] pointer-events-none" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16">
-            <span className="inline-block px-4 py-2 bg-indigo-900/50 text-indigo-400 rounded-full text-xs font-semibold mb-4">
+            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
               Pricing
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
               Choose Your School Management Plan
             </h2>
             <p className="text-base md:text-lg text-[var(--dark-text-secondary)] max-w-2xl mx-auto">
-              Choose the plan that best fits your institution's needs
+              Choose the plan that best fits your institution&apos;s needs.
             </p>
           </AnimateInView>
 
@@ -783,69 +844,122 @@ export default function HomeContent() {
             </p>
           </AnimateInView>
 
-          <AnimateInView delay={0.2} className="relative overflow-hidden">
-            {/* Infinite Technical Marquee */}
-            <div className="relative py-12">
-              {/* Technical fade masks */}
-              <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[var(--dark-bg)] to-transparent z-10 pointer-events-none hidden md:block" />
-              <div className="absolute inset-y-0 right-0 w-48 bg-gradient-to-l from-[var(--dark-bg)] to-transparent z-10 pointer-events-none hidden md:block" />
-
-              <div className="flex gap-6 animate-scroll mask-fade-out items-center">
-                {schools && schools.length > 0 ? (
-                  <>
-                    {[...schools, ...schools].map((school, idx) => (
-                      <div
-                        key={`${school.id}-${idx}`}
-                        className="flex-shrink-0 group"
-                      >
-                        <div className="relative p-6 rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl group-hover:border-agora-blue/30 group-hover:bg-[var(--dark-surface)]/40 transition-all duration-700 min-w-[240px] md:min-w-[280px]">
-                          <div className="flex items-center gap-5">
-                            {/* School Identifier */}
-                            <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-2 group-hover:scale-110 transition-transform duration-500 shadow-xl">
-                              {school.logo ? (
-                                <Image
-                                  src={school.logo}
-                                  alt={school.name}
-                                  width={48}
-                                  height={48}
-                                  className="w-full h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                                />
-                              ) : (
-                                <span className="text-agora-blue font-bold text-xl font-heading">
-                                  {school.name.substring(0, 2).toUpperCase()}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Node Metadata */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs md:text-sm font-bold text-[var(--dark-text-primary)] truncate block font-heading">
-                                  {school.name}
-                                </span>
-                                <div className="w-1.5 h-1.5 rounded-full bg-agora-success animate-pulse shrink-0" />
+          <AnimateInView delay={0.2} className="relative">
+            <div className="relative py-6 md:py-10">
+              {schoolsLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto auto-rows-[minmax(100px,auto)]">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className={`rounded-2xl bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] animate-pulse ${i === 1 ? 'col-span-2 row-span-2 min-h-[220px]' : 'min-h-[100px]'}`}
+                    />
+                  ))}
+                </div>
+              ) : schools && schools.length > 0 ? (
+                <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto auto-rows-[minmax(96px,auto)]">
+                  {(() => {
+                    const featured = schools[currentFeaturedIndex];
+                    const others = schools.filter((_, index) => index !== currentFeaturedIndex);
+                    return (
+                      <>
+                        <div
+                          ref={featuredCardRef}
+                          key={featured.id}
+                          className="col-span-2 row-span-2 group rounded-2xl bg-[var(--dark-surface)]/25 border border-[var(--dark-border)] backdrop-blur-xl p-6 md:p-8 flex flex-col justify-between min-h-[220px] hover:border-agora-blue/35 hover:bg-[var(--dark-surface)]/40"
+                        >
+                          <div>
+                            <span className="text-[10px] font-mono text-agora-blue/80 uppercase tracking-[0.25em] mb-3 block">
+                              Featured network node
+                            </span>
+                            <div className="flex items-start gap-5">
+                              <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-2 shrink-0 group-hover:scale-[1.02] transition-transform duration-500">
+                                {featured.logo ? (
+                                  <Image
+                                    src={featured.logo}
+                                    alt={featured.name}
+                                    width={80}
+                                    height={80}
+                                    className="w-full h-full object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                                  />
+                                ) : (
+                                  <span className="text-agora-blue font-bold text-2xl font-heading">
+                                    {featured.name.substring(0, 2).toUpperCase()}
+                                  </span>
+                                )}
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-[9px] md:text-[10px] font-mono text-[var(--dark-text-muted)] uppercase tracking-widest">
-                                  NODE_{idx.toString(16).padStart(3, '0').toUpperCase()}
-                                </span>
-                                <span className="text-[8px] font-mono text-agora-blue/50 group-hover:text-agora-blue transition-colors">
-                                  CONNECTED
-                                </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="text-lg md:text-2xl font-bold text-[var(--dark-text-primary)] font-heading leading-tight truncate">
+                                    {featured.name}
+                                  </h3>
+                                  <span className="w-2 h-2 rounded-full bg-agora-success shrink-0 animate-pulse" />
+                                </div>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <span className="text-xs font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
+                                    {featured.state || 'Nigeria'}
+                                  </span>
+                                  <span className="text-xs text-[var(--dark-text-muted)]">•</span>
+                                  <span className="text-xs font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
+                                    {featured.type}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-[var(--dark-text-secondary)] font-light leading-relaxed">
+                                  Leading digital transformation in education with comprehensive school management solutions.
+                                </p>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  // Skeleton state
-                  [1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="w-64 h-24 rounded-2xl bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] animate-pulse shrink-0" />
-                  ))
-                )}
-              </div>
+                        {others.map((school, idx) => (
+                          <div
+                            ref={(el) => { cardRefs.current[idx] = el; }}
+                            key={school.id}
+                            className="group rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl p-4 md:p-5 flex flex-col justify-between min-h-[112px] hover:border-agora-blue/30 hover:bg-[var(--dark-surface)]/35"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-1.5 shrink-0 group-hover:scale-105 transition-transform duration-500">
+                                {school.logo ? (
+                                  <Image
+                                    src={school.logo}
+                                    alt={school.name}
+                                    width={44}
+                                    height={44}
+                                    className="w-full h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                                  />
+                                ) : (
+                                  <span className="text-agora-blue font-bold text-sm font-heading">
+                                    {school.name.substring(0, 2).toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs md:text-sm font-bold text-[var(--dark-text-primary)] truncate font-heading mb-1">
+                                  {school.name}
+                                </p>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
+                                    {school.state || 'NG'}
+                                  </span>
+                                  <span className="text-[8px] text-[var(--dark-text-muted)]">•</span>
+                                  <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase">
+                                    {school.type}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div className="max-w-xl mx-auto text-center rounded-2xl border border-[var(--dark-border)] bg-[var(--dark-surface)]/15 px-6 py-10">
+                  <p className="text-sm text-[var(--dark-text-secondary)] font-light">
+                    Partner schools will appear here as they join the network.
+                  </p>
+                </div>
+              )}
             </div>
           </AnimateInView>
         </div>
@@ -912,6 +1026,7 @@ export default function HomeContent() {
               <ul className="space-y-4 text-gray-600 dark:text-[var(--dark-text-secondary)] text-sm font-light">
                 <li><Link href="#features" className="hover:text-agora-blue transition-colors">Features</Link></li>
                 <li><Link href="/products" className="hover:text-agora-blue transition-colors">Solutions</Link></li>
+                <li><Link href="/pricing" className="hover:text-agora-blue transition-colors">Pricing</Link></li>
               </ul>
             </div>
             <div>
@@ -937,6 +1052,7 @@ export default function HomeContent() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }

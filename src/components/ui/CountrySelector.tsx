@@ -1,11 +1,29 @@
 'use client';
 
 import { CountryDropdown } from 'react-country-region-selector';
-import { Select } from './Select';
+
+const COUNTRY_SCOPES = {
+  africa: [
+    'DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CV', 'CM', 'CF', 'TD',
+    'KM', 'CD', 'CG', 'CI', 'DJ', 'EG', 'GQ', 'ER', 'SZ', 'ET',
+    'GA', 'GM', 'GH', 'GN', 'GW', 'KE', 'LS', 'LR', 'LY', 'MG',
+    'MW', 'ML', 'MR', 'MU', 'MA', 'MZ', 'NA', 'NE', 'NG', 'RW',
+    'ST', 'SN', 'SC', 'SL', 'SO', 'ZA', 'SS', 'SD', 'TZ', 'TG',
+    'TN', 'UG', 'ZM', 'ZW',
+  ],
+  'west-africa': [
+    'BJ', 'BF', 'CV', 'CI', 'GM', 'GH', 'GN', 'GW',
+    'LR', 'ML', 'MR', 'NE', 'NG', 'SN', 'SL', 'TG',
+  ],
+} as const;
+
+export type CountrySelectorScope = keyof typeof COUNTRY_SCOPES;
 
 export interface CountrySelectorProps {
   value: string;
   onChange: (countryName: string) => void;
+  scope?: CountrySelectorScope;
+  whitelist?: readonly string[];
   label?: string;
   error?: string;
   required?: boolean;
@@ -23,6 +41,8 @@ export interface CountrySelectorProps {
 export function CountrySelector({
   value,
   onChange,
+  scope = 'africa',
+  whitelist,
   label,
   error,
   required,
@@ -32,6 +52,8 @@ export function CountrySelector({
   className,
   wrapperClassName,
 }: CountrySelectorProps) {
+  const resolvedWhitelist = whitelist ? [...whitelist] : [...COUNTRY_SCOPES[scope]];
+
   return (
     <div className={wrapperClassName}>
       {label && (
@@ -49,6 +71,7 @@ export function CountrySelector({
           value={value}
           onChange={(val) => onChange(val)}
           disabled={disabled}
+          whitelist={resolvedWhitelist}
           className={className}
           id={id}
           defaultOptionLabel={placeholder}

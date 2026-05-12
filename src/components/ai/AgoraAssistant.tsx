@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
+import { streamErrorFromRtk, toastTextFromStreamError } from '@/lib/ai-chat-errors';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -72,18 +73,21 @@ export const AgoraAssistant: React.FC<AgoraAssistantProps> = ({ schoolId }) => {
     try {
       const response = await askAi({
         schoolId,
-        prompt: text,
+        body: {
+          messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
+        },
       }).unwrap();
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.answer,
+        content: response.response,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to get AI response");
+    } catch (error: unknown) {
+      const payload = streamErrorFromRtk(error);
+      toast.error(toastTextFromStreamError(payload), { duration: 8000 });
     }
   };
 

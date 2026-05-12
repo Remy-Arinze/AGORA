@@ -1,4 +1,11 @@
 import { apiSlice } from './apiSlice';
+import {
+    normalizeSseErrorData,
+    streamErrorPayloadFromHttp,
+    type AiChatStreamErrorPayload,
+} from '@/lib/ai-chat-errors';
+
+export type { AiChatStreamErrorPayload };
 
 export const aiApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -145,7 +152,7 @@ export interface SSEToolResultEvent {
 }
 
 export interface SSEDoneEvent {
-    conversationId: string;
+    conversationId?: string;
     usage?: any;
 }
 
@@ -158,7 +165,7 @@ export interface SSECallbacks {
     onThinking: (message: string) => void;
     onConversationId: (id: string) => void;
     onDone: (data: SSEDoneEvent) => void;
-    onError: (message: string) => void;
+    onError: (payload: AiChatStreamErrorPayload) => void;
 }
 
 /**
@@ -205,95 +212,121 @@ export async function streamAiChat(
 
     if (!response.ok) {
         const errorText = await response.text();
-        let errorMessage = 'Failed to connect to AI stream';
-        try {
-            const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.message || errorMessage;
-        } catch {
-            // not JSON
-        }
-        callbacks.onError(errorMessage);
+        callbacks.onError(streamErrorPayloadFromHttp(response.status, errorText));
         return;
     }
 
     const reader = response.body?.getReader();
     if (!reader) {
-        callbacks.onError('Stream not available');
+        callbacks.onError({
+            code: 'LOIS_PROVIDER',
+            title: 'Stream unavailable',
+            message: 'Your browser could not open the reply stream. Try refreshing the page.',
+        });
         return;
     }
 
     const decoder = new TextDecoder();
     let buffer = '';
+    let sawTerminalEvent = false;
+    let conversationIdFromStream = '';
+
+    const parseSseBuffer = (): void => {
+        const lines = buffer.split('\n');
+        buffer = '';
+
+        let currentEvent = '';
+        let currentData = '';
+
+        for (const line of lines) {
+            if (line.startsWith('event: ')) {
+                currentEvent = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+                currentData = line.slice(6).trim();
+            } else if (line === '' && currentEvent && currentData) {
+                try {
+                    const parsed = JSON.parse(currentData);
+
+                    switch (currentEvent as SSEEventType) {
+                        case 'token':
+                            callbacks.onToken(parsed.token);
+                            break;
+                        case 'tool_start':
+                            callbacks.onToolStart(parsed);
+                            break;
+                        case 'tool_result':
+                            callbacks.onToolResult(parsed);
+                            break;
+                        case 'thinking':
+                            callbacks.onThinking(parsed.message);
+                            break;
+                        case 'conversation_id':
+                            if (parsed.conversationId) {
+                                conversationIdFromStream = parsed.conversationId;
+                            }
+                            callbacks.onConversationId(parsed.conversationId);
+                            break;
+                        case 'done':
+                            sawTerminalEvent = true;
+                            callbacks.onDone(parsed);
+                            break;
+                        case 'error':
+                            sawTerminalEvent = true;
+                            callbacks.onError(normalizeSseErrorData(parsed));
+                            break;
+                    }
+                } catch {
+                    // Skip malformed events
+                }
+                currentEvent = '';
+                currentData = '';
+            } else if (line !== '' && !line.startsWith('event:') && !line.startsWith('data:')) {
+                buffer = line;
+            }
+        }
+
+        if (currentEvent || currentData) {
+            if (currentEvent) buffer += `event: ${currentEvent}\n`;
+            if (currentData) buffer += `data: ${currentData}\n`;
+        }
+    };
 
     try {
         while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+                buffer += decoder.decode(new Uint8Array(0), { stream: false });
+                parseSseBuffer();
+                break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
-            
-            // Parse SSE events from buffer
-            const lines = buffer.split('\n');
-            buffer = ''; // Reset buffer
-
-            let currentEvent = '';
-            let currentData = '';
-
-            for (const line of lines) {
-                if (line.startsWith('event: ')) {
-                    currentEvent = line.slice(7).trim();
-                } else if (line.startsWith('data: ')) {
-                    currentData = line.slice(6).trim();
-                } else if (line === '' && currentEvent && currentData) {
-                    // Empty line = end of SSE event
-                    try {
-                        const parsed = JSON.parse(currentData);
-                        
-                        switch (currentEvent as SSEEventType) {
-                            case 'token':
-                                callbacks.onToken(parsed.token);
-                                break;
-                            case 'tool_start':
-                                callbacks.onToolStart(parsed);
-                                break;
-                            case 'tool_result':
-                                callbacks.onToolResult(parsed);
-                                break;
-                            case 'thinking':
-                                callbacks.onThinking(parsed.message);
-                                break;
-                            case 'conversation_id':
-                                callbacks.onConversationId(parsed.conversationId);
-                                break;
-                            case 'done':
-                                callbacks.onDone(parsed);
-                                break;
-                            case 'error':
-                                callbacks.onError(parsed.message);
-                                break;
-                        }
-                    } catch (e) {
-                        // Skip malformed events
-                    }
-                    currentEvent = '';
-                    currentData = '';
-                } else if (line !== '' && !line.startsWith('event:') && !line.startsWith('data:')) {
-                    // Continuation of previous incomplete event — put back in buffer
-                    buffer = line;
-                }
-            }
-
-            // If we have a partial event at the end, keep it in buffer
-            if (currentEvent || currentData) {
-                if (currentEvent) buffer += `event: ${currentEvent}\n`;
-                if (currentData) buffer += `data: ${currentData}\n`;
-            }
+            parseSseBuffer();
         }
-    } catch (error: any) {
-        if (error.name === 'AbortError') {
-            // User cancelled — this is fine
+
+        if (!sawTerminalEvent) {
+            callbacks.onDone({ conversationId: conversationIdFromStream || '' });
+        }
+    } catch (error: unknown) {
+        const err = error as { name?: string; message?: string };
+        if (err?.name === 'AbortError') {
             return;
         }
-        callbacks.onError(error.message || 'Stream interrupted');
+        if (!sawTerminalEvent) {
+            const msg = err?.message || '';
+            const lower = msg.toLowerCase();
+            const networkish =
+                lower.includes('fetch') ||
+                lower.includes('network') ||
+                lower.includes('failed to fetch') ||
+                lower.includes('load failed');
+            callbacks.onError({
+                code: networkish ? 'LOIS_NETWORK' : 'LOIS_UNKNOWN',
+                title: networkish ? 'Connection' : 'Interrupted',
+                message: networkish
+                    ? "We could not reach Agora. Check your connection and try again."
+                    : 'The reply was interrupted. Try sending your message again.',
+            });
+        }
     }
 }

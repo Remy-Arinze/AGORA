@@ -118,7 +118,7 @@ export function useSidebarConfig(): {
         { label: currentType === 'TERTIARY' ? 'Courses' : 'Subjects', href: '/dashboard/school/subjects', icon: BookMarked, permission: PermissionResource.SUBJECTS },
         { label: 'Timetables', href: '/dashboard/school/timetables', icon: Clock, permission: PermissionResource.TIMETABLES },
         { label: 'Calendar', href: '/dashboard/school/calendar', icon: Calendar, permission: PermissionResource.CALENDAR },
-        { label: 'Transfers', href: '/dashboard/school/transfers', icon: ArrowRightLeft, permission: PermissionResource.ADMISSIONS }, // Transfers use same permission as admissions
+        { label: 'Applications', href: '/dashboard/school/applications', icon: ArrowRightLeft, permission: PermissionResource.ADMISSIONS }, // Transfers/Applications use same permission as admissions
         { label: 'Subscription', href: '/dashboard/school/subscription', icon: CreditCard, permission: PermissionResource.SUBSCRIPTIONS, principalOnly: true },
         { label: 'Profile', href: '/dashboard/profile', icon: User }
       );
@@ -165,7 +165,7 @@ export function useSidebarConfig(): {
             { label: 'Calendar', href: '/dashboard/student/calendar', icon: Calendar },
             { label: 'Resources', href: '/dashboard/student/resources', icon: FileText },
             { label: 'History', href: '/dashboard/student/history', icon: GraduationCap },
-            { label: 'Transfers', href: '/dashboard/student/transfers', icon: ArrowRightLeft },
+            { label: 'Applications', href: '/dashboard/student/applications', icon: ArrowRightLeft },
           ],
         },
       ];

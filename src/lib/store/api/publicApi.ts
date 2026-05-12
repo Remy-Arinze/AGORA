@@ -92,8 +92,19 @@ export const publicApi = createApi({
         },
       }),
     }),
+    getPublicSchool: builder.query<any, string>({
+      query: (id) => `/public/schools/${id}`,
+      transformResponse: (response: ResponseDto<any>) => response.data,
+    }),
+    submitAdmissionApplication: builder.mutation<ResponseDto<any>, { schoolId: string; application: any }>({
+      query: ({ schoolId, application }) => ({
+        url: `/public/schools/${schoolId}/apply`,
+        method: 'POST',
+        body: application,
+      }),
+    }),
   }),
 });
 
-export const { useGetPublicSchoolsQuery, useGetPlatformStatsQuery, useRegisterSchoolMutation } = publicApi;
+export const { useGetPublicSchoolsQuery, useGetPlatformStatsQuery, useRegisterSchoolMutation, useGetPublicSchoolQuery, useSubmitAdmissionApplicationMutation } = publicApi;
 

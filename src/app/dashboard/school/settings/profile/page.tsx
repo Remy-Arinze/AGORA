@@ -311,6 +311,7 @@ export default function SchoolProfilePage() {
                     label="Country"
                     value={formData.country || 'Nigeria'}
                     onChange={(val) => handleInputChange('country', val)}
+                    scope="west-africa"
                     disabled={isUpdating}
                   />
                 </div>

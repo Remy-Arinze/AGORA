@@ -86,7 +86,14 @@ export const AiUsageHistory: React.FC = () => {
                 </span>
             </div>
 
-            <div className="grid gap-3">
+            <div
+                className="grid gap-3 overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden"
+                style={{
+                    maxHeight: '520px',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                }}
+            >
                 {logs.map((log, index) => {
                     const Icon = actionIcons[log.action] || actionIcons.unknown;
                     const actionName = actionNames[log.action] || log.action;

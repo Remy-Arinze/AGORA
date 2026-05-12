@@ -202,6 +202,7 @@ export default function RegisterSchoolPage() {
                                 <CountrySelector
                                     value={formData.country}
                                     onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                                    scope="west-africa"
                                     placeholder="Select country"
                                 />
                             </div>
@@ -302,6 +303,16 @@ export default function RegisterSchoolPage() {
                             variant="primary"
                             className="w-full py-3 text-sm"
                             isLoading={isLoading}
+                            isFlat={!(
+                                formData.name.trim() &&
+                                formData.email.trim() &&
+                                formData.phone.trim() &&
+                                (formData.hasPrimary || formData.hasSecondary || formData.hasTertiary) &&
+                                formData.ownerFirstName.trim() &&
+                                formData.ownerLastName.trim() &&
+                                formData.ownerEmail.trim() &&
+                                formData.ownerPhone.trim()
+                            )}
                             disabled={
                                 !formData.name.trim() ||
                                 !formData.email.trim() ||

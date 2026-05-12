@@ -173,6 +173,7 @@ export default function ForgotPasswordPage() {
                     variant="primary"
                     className="w-full"
                     isLoading={isSubmitting}
+                    isFlat={!email}
                     disabled={isSubmitting || !email}
                   >
                     {isSubmitting ? 'Sending...' : 'Send Reset Link'}

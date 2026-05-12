@@ -96,6 +96,7 @@ export function LandingNavbar() {
     const navLinks = [
         { href: '/', label: 'Home' },
         { href: '/products', label: 'Products' },
+        { href: '/pricing', label: 'Pricing' },
         { href: '/about', label: 'About' },
     ];
 
@@ -145,7 +146,7 @@ export function LandingNavbar() {
                                 className="h-8 w-auto flex-shrink-0 transition-opacity duration-300"
                             />
                         </Link>
-                        <div className="hidden md:flex items-center ml-10 space-x-8">
+                        <div className="hidden md:flex flex-wrap items-center ml-8 lg:ml-10 gap-x-6 gap-y-1">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}

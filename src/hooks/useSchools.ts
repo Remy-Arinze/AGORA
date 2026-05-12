@@ -31,6 +31,7 @@ import {
   SchoolAdmin,
   Teacher,
 } from '@/lib/store/api/schoolsApi';
+import { safeApiParams, getErrorMessage } from '@/utils/common/safety-utils';
 
 // Re-export types for convenience
 export type { School, SchoolAdmin, Teacher, CreateSchoolDto, AddAdminDto, AddTeacherDto, UpdateAdminDto, UpdateTeacherDto, UpdatePrincipalDto };
@@ -44,7 +45,8 @@ export function useSchools(params?: {
   search?: string;
   filter?: 'all' | 'active' | 'inactive';
 }) {
-  const { data, isLoading, error, refetch } = useGetSchoolsQuery(params);
+  const safeParams = safeApiParams(params || {});
+  const { data, isLoading, error, refetch } = useGetSchoolsQuery(safeParams);
 
   return {
     schools: data?.data?.data || [],
@@ -118,8 +120,7 @@ export function useCreateSchool() {
           throw new Error(result.message || 'Failed to create school');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to create school';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -156,8 +157,7 @@ export function useUpdateSchool() {
           throw new Error(result.message || 'Failed to update school');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to update school';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -212,8 +212,7 @@ export function useAddAdmin(schoolId: string | null) {
           throw new Error(result.message || 'Failed to add administrator');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to add administrator';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -253,8 +252,7 @@ export function useUpdateAdmin(schoolId: string | null) {
           throw new Error(result.message || 'Failed to update administrator');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to update administrator';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -309,8 +307,7 @@ export function useAddTeacher(schoolId: string | null) {
           throw new Error(result.message || 'Failed to add teacher');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to add teacher';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -350,8 +347,7 @@ export function useUpdateTeacher(schoolId: string | null) {
           throw new Error(result.message || 'Failed to update teacher');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to update teacher';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -390,8 +386,7 @@ export function useDeleteTeacher(schoolId: string | null) {
           throw new Error(result.message || 'Failed to delete teacher');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to delete teacher';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -430,8 +425,7 @@ export function useDeleteAdmin(schoolId: string | null) {
           throw new Error(result.message || 'Failed to delete administrator');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to delete administrator';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -471,8 +465,7 @@ export function useDeletePrincipal(schoolId: string | null) {
           throw new Error(result.message || 'Failed to delete principal');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to delete principal';
+        const errorMessage = getErrorMessage(error);
 
         // Provide more specific error messages for principal deletion
         if (errorMessage.includes('active principal')) {
@@ -526,8 +519,7 @@ export function useUpdatePrincipal(schoolId: string | null) {
           throw new Error(result.message || 'Failed to update principal');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to update principal';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -567,8 +559,7 @@ export function useMakePrincipal(schoolId: string | null) {
           throw new Error(result.message || 'Failed to make administrator principal');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to make administrator principal';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -610,8 +601,7 @@ export function useConvertTeacherToAdmin(schoolId: string | null) {
           throw new Error(result.message || 'Failed to convert teacher to administrator');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to convert teacher to administrator';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -642,8 +632,7 @@ export function useVerifySchool() {
           throw new Error(result.message || 'Failed to verify school');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to verify school';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -674,8 +663,7 @@ export function useRejectSchool() {
           throw new Error(result.message || 'Failed to reject school');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to reject school';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -706,8 +694,7 @@ export function useActivateSchool() {
           throw new Error(result.message || 'Failed to activate school');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to activate school';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -738,8 +725,7 @@ export function useDeactivateSchool() {
           throw new Error(result.message || 'Failed to deactivate school');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to deactivate school';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }
@@ -770,8 +756,7 @@ export function useDeleteSchool() {
           throw new Error(result.message || 'Failed to delete school');
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.data?.message || error?.message || 'Failed to delete school';
+        const errorMessage = getErrorMessage(error);
         toast.error(errorMessage);
         throw error;
       }

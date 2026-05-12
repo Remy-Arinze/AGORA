@@ -11,12 +11,13 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Pagination } from '@/components/ui/Pagination';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { FadeInUp } from '@/components/ui/FadeInUp';
-import { GraduationCap, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, CheckCircle, Clock, Ban, Mail, Loader2, Users, ChevronDown } from 'lucide-react';
+import { GraduationCap, Plus, FileSpreadsheet, Search, Grid3x3, List, MoreVertical, CheckCircle, Clock, Ban, Mail, Loader2, Users, ChevronDown, Copy } from 'lucide-react';
 import { useGetStudentsQuery, useGetMySchoolQuery, useResendPasswordResetForStudentMutation } from '@/lib/store/api/schoolAdminApi';
 import { Select } from '@/components/ui';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { StudentImportModal } from '@/components/modals/StudentImportModal';
 import { StudentAdmissionModal } from '@/components/modals/StudentAdmissionModal';
+import { ShareRegistrationLinkModal } from '@/components/modals/ShareRegistrationLinkModal';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
@@ -75,6 +76,7 @@ function StudentsPageContent() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
+  const [showRegistrationLinkModal, setShowRegistrationLinkModal] = useState(false);
   const [transferId, setTransferId] = useState<string | null>(null);
   const [resendingStudentId, setResendingStudentId] = useState<string | null>(null);
 
@@ -108,7 +110,12 @@ function StudentsPageContent() {
   // Get school ID and school type
   const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
+  const schoolName = schoolResponse?.data?.name;
   const { currentType } = useSchoolType();
+  const registrationLink =
+    schoolId && typeof window !== 'undefined'
+      ? `${window.location.origin}/admission/${schoolId}`
+      : '';
 
   // Resend invitation mutation
   const [resendInvitation] = useResendPasswordResetForStudentMutation();
@@ -274,6 +281,16 @@ function StudentsPageContent() {
               <Button variant="secondary" size="sm" onClick={() => setShowImportModal(true)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 Import CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRegistrationLinkModal(true)}
+                className="h-9"
+                disabled={!schoolId}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Registration Link
               </Button>
             </div>
           </PermissionGate>
@@ -563,7 +580,24 @@ function StudentsPageContent() {
         <StudentAdmissionModal
           isOpen={showAdmissionModal}
           onClose={handleAdmissionModalClose}
+          onRequestShareRegistrationLink={() => setShowRegistrationLinkModal(true)}
           fromTransferId={transferId}
+        />
+
+        <ShareRegistrationLinkModal
+          isOpen={showRegistrationLinkModal}
+          onClose={() => setShowRegistrationLinkModal(false)}
+          url={registrationLink}
+          title="Share Registration Link"
+          description="Send this registration link to parents and guardians so they can submit student applications online."
+          shareMessage={
+            schoolName
+              ? `Hello, you can complete your child${"'"}s registration for ${schoolName} using the link below.`
+              : 'Hello, you can complete your child\'s registration using the link below.'
+          }
+          shareMessageLabel="Message to share"
+          emailSubject="Student registration link"
+          copySuccessMessage="Registration link copied to clipboard"
         />
       </div>
     </ProtectedRoute>

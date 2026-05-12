@@ -14,6 +14,7 @@ import { Alert } from '@/components/ui/Alert';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { CountrySelector } from '@/components/ui/CountrySelector';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { UserPlus, Users } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
@@ -80,7 +81,7 @@ export default function AddStaffPage() {
     email: '',
     phone: '',
     dateOfBirth: '',
-    nationality: '',
+    nationality: 'Nigeria',
     state: '',
     subject: '',
     subjectIds: [] as string[], // For SECONDARY schools - multiple subjects
@@ -602,14 +603,15 @@ export default function AddStaffPage() {
                     disabled={isLoadingState}
                     defaultCountryCode="NG"
                   />
-                  <Input
+                  <CountrySelector
                     label="Nationality"
-                    name="nationality"
                     value={formData.nationality}
-                    onChange={(e) => {
-                      setFormData({ ...formData, nationality: e.target.value });
+                    onChange={(value) => {
+                      setFormData({ ...formData, nationality: value });
                     }}
-                    placeholder="e.g. Nigerian, Ghanaian"
+                    scope="west-africa"
+                    placeholder="Select nationality"
+                    disabled={isLoadingState}
                   />
                   <Input
                     label="State"

@@ -27,4 +27,8 @@ npm run generate-client
 
 ## Architecture
 
-See [`FRONTEND_ARCHITECTURE.md`](./FRONTEND_ARCHITECTURE.md) for the full documentation.
+See [`../backend/docs/frontend-architecture.md`](../backend/docs/frontend-architecture.md) for the frontend architecture documentation.
+
+## Architecture Decisions
+
+- [`ADR-0001 Country Selector Regional Scoping`](../backend/docs/adr/ADR-0001-country-selector-regional-scoping.md)

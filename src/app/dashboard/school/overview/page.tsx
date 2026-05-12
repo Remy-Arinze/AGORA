@@ -13,6 +13,7 @@ import { GraduationCap, Users, BookOpen, UserPlus, Loader2, AlertCircle, Calenda
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { useRouter } from 'next/navigation';
 import { useGetSchoolAdminDashboardQuery, useGetActiveSessionQuery, useGetMySchoolQuery, useEndTermMutation, useUploadSchoolLogoMutation } from '@/lib/store/api/schoolAdminApi';
+import type { SchoolAdmin } from '@/lib/store/api/schoolsApi';
 import { EndTermModal, EditTermDatesModal } from '@/components/modals';
 import type { Term } from '@/lib/store/api/schoolAdminApi';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
@@ -23,6 +24,8 @@ import { getTerminology } from '@/lib/utils/terminology';
 import { useAuth } from '@/hooks/useAuth';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { isPrincipalRole, isSchoolOwnerRole } from '@/lib/constants/roles';
+import { safeGet, safeArrayFind, safeGetUserName, getErrorMessage } from '@/utils/common/safety-utils';
+import { cn } from '@/lib/utils';
 
 // Helper function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -116,21 +119,32 @@ export default function AdminOverviewPage() {
   // Get user's name for welcome message
   // If school_owner, show school name; if other principal, use principal's name; otherwise user's first name
   const userName = useMemo(() => {
-    const role = school?.currentAdmin?.role;
-    if (isSchoolOwnerRole(role) && school?.name) {
-      return school.name;
+    const role = safeGet(school, 'currentAdmin.role', null);
+    const schoolName = safeGet(school, 'name', null);
+    
+    if (isSchoolOwnerRole(role) && schoolName) {
+      return schoolName;
     }
-    if (isPrincipalRole(role) && school?.admins && school?.currentAdmin?.id) {
-      const principal = school.admins.find(
-        (admin) => admin.id === school.currentAdmin?.id
-      );
-      if (principal) {
-        const principalName = `${principal.firstName} ${principal.lastName}`.trim();
-        return principalName || principal.firstName || 'there';
+    
+    if (isPrincipalRole(role)) {
+      const currentAdminId = safeGet(school, 'currentAdmin.id', null);
+      const admins = safeGet(school, 'admins', []);
+      
+      if (currentAdminId && admins.length > 0) {
+        const principal = safeArrayFind(
+          admins,
+          (admin: SchoolAdmin) => admin && admin.id === currentAdminId,
+          null
+        );
+        
+        if (principal) {
+          return safeGetUserName(principal, 'there');
+        }
       }
     }
-    return user?.firstName || 'there';
-  }, [school?.currentAdmin?.role, school?.currentAdmin?.id, school?.admins, school?.name, user?.firstName]);
+    
+    return safeGetUserName(user, 'there');
+  }, [school, user]);
   const schoolId = school?.id;
   const [uploadSchoolLogo, { isLoading: isUploadingLogo }] = useUploadSchoolLogoMutation();
   const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
@@ -244,11 +258,14 @@ export default function AdminOverviewPage() {
       refetchActiveSession();
       refetch();
     } catch (error: any) {
-      toast.error(error?.data?.message || `Failed to end ${terminology.periodSingular.toLowerCase()}`);
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage || `Failed to end ${terminology.periodSingular.toLowerCase()}`);
     }
   };
 
   const buttonConfig = getButtonConfig();
+  const isHeaderDestructive = buttonConfig.variant === 'danger';
+  const HeaderActionIcon = buttonConfig.icon;
 
   // Extract dashboard data
   const dashboard = data?.data;
@@ -270,11 +287,16 @@ export default function AdminOverviewPage() {
             <div className="order-3 lg:order-2 w-full lg:w-auto flex justify-start lg:justify-end">
               <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
                 <Button
-                  variant={buttonConfig.variant}
+                  variant={isHeaderDestructive ? 'ghost' : buttonConfig.variant}
+                  isFlat={isHeaderDestructive}
                   size="sm"
                   onClick={buttonConfig.onClick}
                   disabled={isEndingTerm || isLoadingSession || isLoadingSchool}
-                  className="flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-2 py-2 min-w-[120px] transition-all"
+                  className={cn(
+                    'flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-2 py-2 min-w-[120px] transition-all',
+                    isHeaderDestructive &&
+                      'border border-red-600/45 dark:border-red-500/50 text-red-600 dark:text-red-400 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] shadow-none hover:bg-red-500/10 dark:hover:bg-red-500/15'
+                  )}
                 >
                   {isEndingTerm || isLoadingSession || isLoadingSchool || !schoolId ? (
                     <>
@@ -283,6 +305,9 @@ export default function AdminOverviewPage() {
                     </>
                   ) : (
                     <>
+                      {isHeaderDestructive ? (
+                        <HeaderActionIcon className="h-4 w-4 shrink-0" aria-hidden />
+                      ) : null}
                       {buttonConfig.text}
                     </>
                   )}
@@ -380,7 +405,8 @@ export default function AdminOverviewPage() {
                         }
                         refetchSchool();
                       } catch (error: any) {
-                        toast.error(error?.data?.message || 'Failed to upload logo');
+                        const errorMessage = getErrorMessage(error);
+                        toast.error(errorMessage || 'Failed to upload logo');
                       }
                     }}
                     disabled={isUploadingLogo}
@@ -526,9 +552,7 @@ export default function AdminOverviewPage() {
                 <div>
                   <p className="font-semibold">Failed to load dashboard data</p>
                   <p className="mt-1" style={{ fontSize: 'var(--text-body)' }}>
-                    {error && 'data' in error
-                      ? (error.data as any)?.message || 'An error occurred while loading dashboard data'
-                      : 'An error occurred while loading dashboard data'}
+                    {getErrorMessage(error)}
                   </p>
                   <Button
                     variant="ghost"

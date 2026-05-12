@@ -54,6 +54,7 @@ import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology } from '@/lib/utils/terminology';
 import { AssignTeacherToClassModal } from '@/components/modals/AssignTeacherToClassModal';
 import { FileUploadModal } from '@/components/modals/FileUploadModal';
+import { ShareRegistrationLinkModal } from '@/components/modals/ShareRegistrationLinkModal';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { BackButton } from '@/components/ui/BackButton';
 import { SubjectCurriculumList } from '@/components/curriculum';
@@ -104,8 +105,13 @@ export default function ClassDetailPage() {
   // Get school ID and type
   const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
+  const schoolName = schoolResponse?.data?.name;
   const { currentType: schoolType } = useSchoolType();
   const terminology = getTerminology(schoolType || 'SECONDARY');
+  const registrationLink =
+    schoolId && typeof window !== 'undefined'
+      ? `${window.location.origin}/admission/${schoolId}`
+      : '';
 
   // Get class data first (to know the school type for session query)
   const {
@@ -122,6 +128,7 @@ export default function ClassDetailPage() {
 
   const [showStudentAssignModal, setShowStudentAssignModal] = useState(false);
   const [showStudentAdmissionModal, setShowStudentAdmissionModal] = useState(false);
+  const [showRegistrationLinkModal, setShowRegistrationLinkModal] = useState(false);
 
   // Get active session for timetable - use class's school type
   const { data: sessionResponse } = useGetActiveSessionQuery(
@@ -1247,8 +1254,25 @@ export default function ClassDetailPage() {
         <StudentAdmissionModal
           isOpen={showStudentAdmissionModal}
           onClose={() => setShowStudentAdmissionModal(false)}
+          onRequestShareRegistrationLink={() => setShowRegistrationLinkModal(true)}
           preSelectedClassLevel={classData.classLevelId}
           preSelectedClassArmId={params.id as string}
+        />
+
+        <ShareRegistrationLinkModal
+          isOpen={showRegistrationLinkModal}
+          onClose={() => setShowRegistrationLinkModal(false)}
+          url={registrationLink}
+          title="Share Registration Link"
+          description="Send this registration link to parents and guardians so they can submit student applications online."
+          shareMessage={
+            schoolName
+              ? `Hello, you can complete your child${"'"}s registration for ${schoolName} using the link below.`
+              : 'Hello, you can complete your child\'s registration using the link below.'
+          }
+          shareMessageLabel="Message to share"
+          emailSubject="Student registration link"
+          copySuccessMessage="Registration link copied to clipboard"
         />
       </div>
     </ProtectedRoute>

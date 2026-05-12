@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect } from 'react';
 import { ProtectedSchoolRoute } from '@/components/permissions/ProtectedSchoolRoute';
+import { SchoolBillingShell } from '@/components/billing/SchoolBillingShell';
 
 /**
  * Layout for school admin pages
@@ -22,6 +23,7 @@ export default function SchoolAdminLayout({
 
   return (
     <ProtectedSchoolRoute>
+      <SchoolBillingShell />
       {children}
     </ProtectedSchoolRoute>
   );
