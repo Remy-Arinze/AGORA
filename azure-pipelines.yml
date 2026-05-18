@@ -78,4 +78,4 @@ stages:
         appType: 'webAppLinux'
         appName: $(webAppName)
         package: '$(Build.ArtifactStagingDirectory)/web.zip'
-        startUpCommand: 'node server.js'
+        startUpCommand: 'HOSTNAME=0.0.0.0 node server.js'
