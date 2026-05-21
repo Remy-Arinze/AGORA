@@ -73,9 +73,12 @@ stages:
         replaceExistingArchive: true
 
     - task: AzureWebApp@1
+      displayName: 'Deploy to Azure'
       inputs:
         azureSubscription: $(azureSubscription)
         appType: 'webAppLinux'
         appName: $(webAppName)
         package: '$(Build.ArtifactStagingDirectory)/web.zip'
+        # --- ADD THESE TWO LINES ---
+        deploymentMethod: 'runFromPackage'
         startUpCommand: 'HOSTNAME=0.0.0.0 node server.js'
