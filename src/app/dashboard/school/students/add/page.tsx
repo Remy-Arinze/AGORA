@@ -23,7 +23,6 @@ import { useSchoolType } from '@/hooks/useSchoolType';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { CountrySelector } from '@/components/ui/CountrySelector';
 
 export default function AddStudentPage() {
   const router = useRouter();
@@ -114,7 +113,7 @@ export default function AddStudentPage() {
     email: '',
     phone: '',
     address: '',
-    nationality: 'Nigeria',
+    nationality: 'Nigerian',
     state: '',
     classLevel: '',
     classArmId: '',
@@ -410,6 +409,7 @@ export default function AddStudentPage() {
                       if (errors.phone) setErrors({ ...errors, phone: '' });
                     }}
                     error={errors.phone}
+                    placeholder="e.g. 08012345678"
                   />
                   <DatePicker
                     label="Date of Birth *"
@@ -427,17 +427,16 @@ export default function AddStudentPage() {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   />
-                  <CountrySelector
+                  <Input
                     label="Nationality"
+                    name="nationality"
                     value={formData.nationality}
-                    onChange={(value) => {
-                      setFormData({ ...formData, nationality: value });
+                    onChange={(e) => {
+                      setFormData({ ...formData, nationality: e.target.value });
                       if (errors.nationality) setErrors({ ...errors, nationality: '' });
                     }}
-                    scope="west-africa"
                     error={errors.nationality}
-                    required
-                    placeholder="Select nationality"
+                    placeholder="e.g. Nigerian, Ghanaian"
                   />
                   <Input
                     label="State *"
