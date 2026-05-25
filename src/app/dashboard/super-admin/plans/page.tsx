@@ -9,7 +9,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { PlanFormModal } from '@/components/modals/PlanFormModal';
 import { useGetAllPlansAdminQuery, useDeletePlanAdminMutation, SubscriptionPlanDto } from '@/lib/store/api/subscriptionsApi';
-import { Plus, Edit2, Trash2, Check, X, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Edit2, Trash2, Check, X, ShieldAlert, ExternalLink } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
@@ -76,13 +77,17 @@ export default function PlansPage() {
         <ProtectedRoute roles={['SUPER_ADMIN']}>
             <div className="w-full space-y-6">
                 {/* Header Section */}
-                <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex items-start justify-between">
+                <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="font-bold text-light-text-primary dark:text-white mb-2" style={{ fontSize: 'var(--text-page-title)' }}>
                             Subscription Plans
                         </h1>
                         <p className="text-light-text-secondary dark:text-[#9ca3af]" style={{ fontSize: 'var(--text-page-subtitle)' }}>
-                            Manage pricing tiers, custom school plans, and plan features.
+                            Manage pricing tiers, custom school plans, and plan features. Schools above 2,000 students typically start from the public{' '}
+                            <Link href="/pricing" className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
+                                Pricing page <ExternalLink className="w-3.5 h-3.5" />
+                            </Link>{' '}
+                            — create a non-public CUSTOM plan here and attach it to the school after pricing is agreed.
                         </p>
                     </div>
                     <Button onClick={handleCreate} variant="primary" size="md">

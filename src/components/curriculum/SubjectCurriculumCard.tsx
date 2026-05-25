@@ -10,7 +10,8 @@ import {
   ChevronRight,
   PlusCircle,
   MoreVertical,
-  XCircle
+  XCircle,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +33,11 @@ export function SubjectCurriculumCard({
   canEdit = false,
 }: SubjectCurriculumCardProps) {
   const status = (subject.status as string) || 'NOT_SET_UP';
-  const hasScheme = !!subject.schemeId && status !== 'NOT_SET_UP' && status !== 'CANCELLED';
+  const hasScheme = !!subject.schemeId && 
+                    status !== 'NOT_SET_UP' && 
+                    status !== 'CANCELLED' && 
+                    status !== 'FAILED' && 
+                    status !== 'REJECTED';
 
   const handleClick = () => {
     if (status === 'GENERATING') return;
@@ -90,25 +95,128 @@ export function SubjectCurriculumCard({
           </div>
         );
       case 'PUBLISHED':
+        const isImported = !!subject.agoraCurriculumTemplateId || !!subject.isAgoraBased;
         return (
-          <div className="flex flex-col space-y-3 pt-2">
-            <div className="flex items-center justify-between text-[9px]">
-              <span className="font-black text-light-text-muted dark:text-dark-text-muted uppercase tracking-widest font-heading">Syllabus Completion</span>
-              <span className="font-black text-agora-success font-heading tracking-tight">85%</span>
+          <div className="flex flex-col space-y-3">
+            <div className="mt-2 flex flex-col space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-[9px]">
+                <span className={cn(
+                  "font-black uppercase tracking-widest font-heading",
+                  isImported ? "text-blue-600 dark:text-blue-400" : "text-agora-success"
+                )}>
+                  {isImported ? 'Central Strategy' : 'Strategy Live'}
+                </span>
+                <span className={cn(
+                  "font-black font-heading tracking-tight",
+                  isImported ? "text-blue-600/70 dark:text-blue-400/70" : "text-agora-success"
+                )}>
+                  {isImported ? 'Imported' : 'Active'}
+                </span>
+              </div>
+              <div className={cn(
+                "h-1.5 w-full rounded-full overflow-hidden",
+                isImported ? "bg-blue-600/10 dark:bg-blue-600/5" : "bg-agora-success/10 dark:bg-agora-success/5"
+              )}>
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all duration-1000",
+                    isImported ? "bg-blue-600 dark:bg-blue-400" : "bg-agora-success"
+                  )}
+                  style={{ width: '100%' }}
+                />
+              </div>
             </div>
-            <div className="h-1.5 w-full bg-light-border dark:bg-dark-border rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-agora-success rounded-full transition-all duration-1000" 
-                style={{ width: '85%' }}
-              />
+            {canEdit && (
+              <div className="flex gap-2">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onSetup(); }}
+                  className="flex-1 text-[8px] font-extrabold text-light-text-muted hover:text-agora-blue uppercase tracking-widest border border-light-border dark:border-dark-border rounded-lg px-2 py-2 hover:bg-agora-blue/5 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Change
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onView(subject.schemeId); }}
+                  className={cn(
+                    "flex-1 text-[8px] font-extrabold uppercase tracking-widest rounded-lg px-2 py-2 transition-all flex items-center justify-center gap-1.5",
+                    isImported 
+                      ? "text-[#2490FD] bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100" 
+                      : "text-white bg-agora-blue hover:bg-blue-600"
+                  )}
+                >
+                   <ChevronRight className="h-3 w-3" />
+                   Review
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      case 'APPROVED':
+        return (
+          <div className="flex flex-col space-y-3">
+            <div className="mt-2 flex flex-col space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-[9px]">
+                <span className="font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest font-heading">Approved</span>
+                <span className="font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight italic">Ready</span>
+              </div>
+              <div className="h-1.5 w-full bg-blue-600/10 dark:bg-blue-600/5 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-600 rounded-full transition-all duration-1000" 
+                  style={{ width: '100%' }}
+                />
+              </div>
             </div>
+            {canEdit && (
+              <div className="flex gap-2">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onSetup(); }}
+                  className="flex-1 text-[8px] font-extrabold text-light-text-muted hover:text-agora-blue uppercase tracking-widest border border-light-border dark:border-dark-border rounded-lg px-2 py-2 hover:bg-agora-blue/5 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Change
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onView(subject.schemeId); }}
+                  className="flex-1 text-[8px] font-extrabold text-white bg-blue-600 hover:bg-blue-500 uppercase tracking-widest rounded-lg px-2 py-2 shadow-sm transition-all flex items-center justify-center gap-1.5"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                  Details
+                </button>
+              </div>
+            )}
           </div>
         );
       case 'DRAFT':
         return (
-          <div className="mt-2 flex items-center justify-center gap-2 py-4 bg-light-surface dark:bg-dark-surface/30 border border-light-border dark:border-dark-border rounded-xl">
-            <Clock className="h-3 w-3 text-amber-600" />
-            <span className="text-[9px] font-black text-amber-700 dark:text-amber-300 uppercase tracking-[0.15em] font-heading">Review in progress</span>
+          <div className="flex flex-col space-y-3">
+            <div className="mt-2 flex items-center justify-center gap-2 py-4 bg-light-surface dark:bg-dark-surface/30 border border-light-border dark:border-dark-border rounded-xl">
+              <Clock className="h-3 w-3 text-amber-600" />
+              <span className="text-[9px] font-black text-amber-700 dark:text-amber-300 uppercase tracking-[0.15em] font-heading">Draft in review</span>
+            </div>
+            {canEdit && (
+              <div className="flex gap-2">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSetup();
+                  }}
+                  className="flex-1 text-[8px] font-extrabold text-light-text-muted hover:text-agora-blue uppercase tracking-widest border border-light-border dark:border-dark-border rounded-lg px-2 py-2 hover:bg-agora-blue/5 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Change
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onView(subject.schemeId);
+                  }}
+                   className="flex-1 text-[8px] font-extrabold text-white bg-agora-blue hover:bg-blue-600 uppercase tracking-widest rounded-lg px-2 py-2 shadow-sm transition-all flex items-center justify-center gap-1.5"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                  Details
+                </button>
+              </div>
+            )}
           </div>
         );
       default:
@@ -139,9 +247,20 @@ export function SubjectCurriculumCard({
           </h3>
           <div className="flex items-center gap-1.5 pt-1">
             {status === 'PUBLISHED' ? (
-              <span className="text-[8px] font-black text-agora-success uppercase tracking-widest flex items-center gap-1 font-heading">
-                <div className="h-1 w-1 rounded-full bg-agora-success animate-pulse" />
-                Live Strategy
+              <span className={cn(
+                "text-[8px] font-black uppercase tracking-widest flex items-center gap-1 font-heading",
+                (!!subject.agoraCurriculumTemplateId || !!subject.isAgoraBased) ? "text-blue-600 dark:text-blue-400" : "text-agora-success"
+              )}>
+                <div className={cn(
+                  "h-1 w-1 rounded-full animate-pulse",
+                  (!!subject.agoraCurriculumTemplateId || !!subject.isAgoraBased) ? "bg-blue-600" : "bg-agora-success"
+                )} />
+                {(!!subject.agoraCurriculumTemplateId || !!subject.isAgoraBased) ? 'Imported Central Strategy' : 'Live Strategy'}
+              </span>
+            ) : status === 'APPROVED' ? (
+              <span className="text-[8px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1 font-heading">
+                <CheckCircle className="h-2 w-2" />
+                Approved
               </span>
             ) : status === 'GENERATING' ? (
               <span className="text-[8px] font-black text-agora-blue uppercase tracking-widest flex items-center gap-1 font-heading">

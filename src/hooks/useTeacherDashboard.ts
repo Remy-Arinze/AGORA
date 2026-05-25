@@ -47,6 +47,10 @@ export interface TeacherDashboardData {
   // Classes the teacher is assigned to (full data from API)
   classes: any[];
   
+  // The class(es) where this teacher is a Form Teacher/Primary Teacher
+  formClass: any | null;
+  formClasses: any[];
+  
   // Loading states
   isLoading: boolean;
   isLoadingTimetable: boolean;
@@ -187,9 +191,19 @@ export function useTeacherDashboard(): TeacherDashboardData {
   
   const timetable = timetableResponse?.data || [];
   
-  // Use derivedSchoolType directly (no need for refinedSchoolType anymore)
-  const refinedSchoolType = derivedSchoolType;
-  
+  // Step 7: Identify Form Classes
+  const formClasses = useMemo(() => {
+    if (!teacherId || classes.length === 0) return [];
+    return classes.filter((c: any) => {
+      const teachers = c.teachers || c.classTeachers || [];
+      return teachers.some((ct: any) => 
+        ct.teacherId === teacherId && (ct.isPrimary || ct.isFormTeacher)
+      );
+    });
+  }, [classes, teacherId]);
+
+  const formClass = formClasses.length > 0 ? formClasses[0] : null;
+
   // Aggregate loading and error states
   const isLoading = isLoadingSchool || isLoadingTeacher || isLoadingSession || isLoadingTimetable || isLoadingClasses;
   const hasError = !!(schoolError || teacherError || sessionError || timetableError || classesError);
@@ -214,7 +228,7 @@ export function useTeacherDashboard(): TeacherDashboardData {
       hasSecondary: school.hasSecondary,
       hasTertiary: school.hasTertiary,
     } : null,
-    schoolType: refinedSchoolType,
+    schoolType: derivedSchoolType,
     activeSession: activeSession ? {
       id: activeSession.id,
       name: activeSession.name,
@@ -225,6 +239,8 @@ export function useTeacherDashboard(): TeacherDashboardData {
     } : null,
     timetable,
     classes,
+    formClass,
+    formClasses,
     isLoading,
     isLoadingTimetable,
     isLoadingClasses,

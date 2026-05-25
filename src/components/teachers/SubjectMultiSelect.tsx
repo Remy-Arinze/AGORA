@@ -369,11 +369,22 @@ export function SubjectMultiSelect({
                           <p className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary truncate">
                             {subject.name}
                           </p>
-                          {subject.code && (
-                            <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                              {subject.code}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {subject.code && (
+                              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                                {subject.code}
+                              </p>
+                            )}
+                            {subject.agoraSubjectId ? (
+                              <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-1 rounded">
+                                Standard
+                              </span>
+                            ) : (
+                              <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 px-1 rounded">
+                                Custom
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

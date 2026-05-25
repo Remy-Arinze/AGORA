@@ -46,6 +46,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store/store';
 import { SaveAssessmentEditor } from './SaveAssessmentEditor';
+import { inlineAssistantErrorNote, toastTextFromStreamError } from '@/lib/ai-chat-errors';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -443,7 +444,9 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
   const { theme } = useTheme();
   const user = useSelector((state: RootState) => state.auth.user);
   const token = useSelector((state: RootState) => state.auth.token);
-  const { data: profileResponse } = useGetMyTeacherProfileQuery();
+  const { data: profileResponse } = useGetMyTeacherProfileQuery(undefined, {
+    skip: user?.role !== 'TEACHER'
+  });
   const firstName = profileResponse?.data?.firstName || user?.firstName || 'Teacher';
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -471,7 +474,7 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
       setMessages([
         {
           role: 'assistant',
-          content: `Hello ${firstName}! I'm Lois, your dedicated Agora School Space AI Assistant. ${greetingDesc}`,
+          content: `Hello ${firstName}! I'm Lois, your dedicated Agora Open Schools AI Assistant. ${greetingDesc}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -648,17 +651,20 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
             });
             setIsStreaming(false);
           },
-          onError: (message) => {
-            toast.error(message || 'Failed to get response from AI');
+          onError: (payload) => {
+            toast.error(toastTextFromStreamError(payload), { duration: 8000 });
             setMessages(prev => {
               const updated = [...prev];
               const last = updated[updated.length - 1];
-              if (last && last.role === 'assistant' && !last.content) {
-                // Remove empty streaming message
-                return updated.slice(0, -1);
-              }
               if (last && last.role === 'assistant') {
-                return [...updated.slice(0, -1), { ...last, isStreaming: false }];
+                const note = inlineAssistantErrorNote(payload);
+                const merged = last.content?.trim()
+                  ? `${last.content}\n\n${note}`
+                  : note;
+                return [
+                  ...updated.slice(0, -1),
+                  { ...last, content: merged, isStreaming: false, toolEvents: last.toolEvents },
+                ];
               }
               return updated;
             });
@@ -669,10 +675,22 @@ export const AgoraChat: React.FC<AgoraChatProps> = ({
         abortController.signal,
         token || undefined
       );
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
-        toast.error('Connection to AI failed');
+    } catch (error: unknown) {
+      const err = error as { name?: string };
+      if (err?.name !== 'AbortError') {
+        toast.error('Connection to AI failed. Check your network and try again.', { duration: 8000 });
         setIsStreaming(false);
+        setMessages(prev => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last && last.role === 'assistant') {
+            const note =
+              'Sorry — we could not finish this reply. Check your connection and try sending your message again.';
+            const merged = last.content?.trim() ? `${last.content}\n\n${note}` : note;
+            return [...updated.slice(0, -1), { ...last, content: merged, isStreaming: false }];
+          }
+          return updated;
+        });
       }
     }
   }, [inputValue, isStreaming, messages, schoolId, currentConversationId, token]);

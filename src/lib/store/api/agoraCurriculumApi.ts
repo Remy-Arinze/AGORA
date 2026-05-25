@@ -1,12 +1,30 @@
 import { apiSlice } from './apiSlice';
 
-export interface NerdcSubject {
+export interface AgoraSubjectDto {
   id: string;
   name: string;
-  code?: string;
-  schoolType?: string;
+  code: string;
+  schoolTypes: string[];
   category?: string;
   description?: string;
+  isActive: boolean;
+}
+
+export interface CreateAgoraSubjectDto {
+  name: string;
+  code: string;
+  category?: string;
+  schoolTypes: string[];
+  description?: string;
+}
+
+export interface UpdateAgoraSubjectDto {
+  name?: string;
+  code?: string;
+  category?: string;
+  schoolTypes?: string[];
+  description?: string;
+  isActive?: boolean;
 }
 
 export interface AgoraCurriculumSource {
@@ -25,7 +43,9 @@ export interface AgoraCurriculumSource {
   approvedAt?: string;
   createdAt: string;
   updatedAt: string;
-  subject?: NerdcSubject;
+  subject?: AgoraSubjectDto;
+  jobProgress?: any;
+  queuePosition?: number;
 }
 
 export interface AgoraCurriculumTopic {
@@ -44,6 +64,7 @@ export interface AgoraCurriculumTopic {
   assessmentGuidance?: string;
   duration?: string;
   order: number;
+  term: number;
 }
 
 export interface AgoraCurriculum {
@@ -58,7 +79,7 @@ export interface AgoraCurriculum {
   publishedBy?: string;
   createdAt: string;
   updatedAt: string;
-  subject?: NerdcSubject;
+  subject?: AgoraSubjectDto;
   topics?: AgoraCurriculumTopic[];
 }
 
@@ -83,12 +104,14 @@ export interface PublishCurriculumDto {
 }
 
 export const agoraCurriculumApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
-    getAgoraNerdcSubjects: builder.query<NerdcSubject[], { schoolType?: string; category?: string } | void>({
+    getAgoraSubjectRegistry: builder.query<AgoraSubjectDto[], { schoolType?: string; category?: string; search?: string } | void>({
       query: (params) => {
         const urlParams = new URLSearchParams();
         if (params?.schoolType) urlParams.append('schoolType', params.schoolType);
         if (params?.category) urlParams.append('category', params.category);
+        if (params?.search) urlParams.append('search', params.search);
         const queryString = urlParams.toString();
         
         return {
@@ -97,7 +120,36 @@ export const agoraCurriculumApi = apiSlice.injectEndpoints({
         };
       },
       transformResponse: (response: any) => response.data,
-      providesTags: ['NerdcSubject'],
+      providesTags: ['AgoraSubject'],
+    }),
+
+    createAgoraSubject: builder.mutation<AgoraSubjectDto, CreateAgoraSubjectDto>({
+      query: (data) => ({
+        url: '/agora-curriculum/subjects',
+        method: 'POST',
+        body: data,
+      }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ['AgoraSubject'],
+    }),
+
+    updateAgoraSubject: builder.mutation<AgoraSubjectDto, { id: string; data: UpdateAgoraSubjectDto }>({
+      query: ({ id, data }) => ({
+        url: `/agora-curriculum/subjects/${id}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ['AgoraSubject'],
+    }),
+
+    deleteAgoraSubject: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/agora-curriculum/subjects/${id}`,
+        method: 'DELETE',
+      }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ['AgoraSubject'],
     }),
 
     getAgoraCurriculumSources: builder.query<AgoraCurriculumSource[], { subjectId?: string; gradeLevel?: string } | void>({
@@ -133,6 +185,37 @@ export const agoraCurriculumApi = apiSlice.injectEndpoints({
         body: data,
       }),
       transformResponse: (response: any) => response.data,
+      invalidatesTags: ['AgoraCurriculumSource'],
+    }),
+
+    uploadMultipleAgoraCurriculumSources: builder.mutation<AgoraCurriculumSource[], FormData>({
+      query: (data) => ({
+        url: '/agora-curriculum/sources/upload-multiple',
+        method: 'POST',
+        body: data,
+      }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ['AgoraCurriculumSource'],
+    }),
+
+    getSourceStatus: builder.query<any, string>({
+      query: (id) => `/agora-curriculum/sources/${id}/status`,
+      transformResponse: (response: any) => response.data,
+    }),
+
+    deleteAgoraCurriculumSource: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/agora-curriculum/sources/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['AgoraCurriculumSource'],
+    }),
+
+    cancelAgoraCurriculumProcessing: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/agora-curriculum/sources/${id}/cancel`,
+        method: 'POST',
+      }),
       invalidatesTags: ['AgoraCurriculumSource'],
     }),
 
@@ -184,16 +267,61 @@ export const agoraCurriculumApi = apiSlice.injectEndpoints({
         'AgoraCurriculum', // To refresh lists
       ],
     }),
+
+    deleteAgoraCurriculum: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/agora-curriculum/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['AgoraCurriculum'],
+    }),
+
+    updateAgoraCurriculumTopic: builder.mutation<AgoraCurriculumTopic, { topicId: string; data: Partial<AgoraCurriculumTopic> }>({
+      query: ({ topicId, data }) => ({
+        url: `/agora-curriculum/topics/${topicId}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: ['AgoraCurriculum'],
+    }),
+
+    addAgoraCurriculumTopic: builder.mutation<AgoraCurriculumTopic, { curriculumId: string; data: Partial<AgoraCurriculumTopic> }>({
+      query: ({ curriculumId, data }) => ({
+        url: `/agora-curriculum/${curriculumId}/topics`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['AgoraCurriculum'],
+    }),
+
+    deleteAgoraCurriculumTopic: builder.mutation<void, string>({
+      query: (topicId) => ({
+        url: `/agora-curriculum/topics/${topicId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['AgoraCurriculum'],
+    }),
   }),
 });
 
 export const {
-  useGetAgoraNerdcSubjectsQuery,
+  useGetAgoraSubjectRegistryQuery,
+  useCreateAgoraSubjectMutation,
+  useUpdateAgoraSubjectMutation,
+  useDeleteAgoraSubjectMutation,
   useGetAgoraCurriculumSourcesQuery,
   useCreateAgoraCurriculumSourceMutation,
   useUploadAgoraCurriculumSourceMutation,
+  useUploadMultipleAgoraCurriculumSourcesMutation,
+  useGetSourceStatusQuery,
+  useDeleteAgoraCurriculumSourceMutation,
+  useCancelAgoraCurriculumProcessingMutation,
   useGetAgoraCurriculaQuery,
   useGetAgoraCurriculumQuery,
   useConsolidateAgoraCurriculumMutation,
   usePublishAgoraCurriculumMutation,
+  useDeleteAgoraCurriculumMutation,
+  useUpdateAgoraCurriculumTopicMutation,
+  useAddAgoraCurriculumTopicMutation,
+  useDeleteAgoraCurriculumTopicMutation,
 } = agoraCurriculumApi;

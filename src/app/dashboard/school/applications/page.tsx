@@ -13,6 +13,7 @@ import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { PermissionResource, PermissionType } from '@/hooks/usePermissions';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
+import { ShareRegistrationLinkModal } from '@/components/modals/ShareRegistrationLinkModal';
 import {
   CheckCircle2,
   XCircle,
@@ -42,6 +43,9 @@ import {
   useCompleteTransferMutation,
   useRejectTransferMutation,
   useGetClassesQuery,
+  useGetAdmissionApplicationsQuery,
+  useApproveAdmissionApplicationMutation,
+  useRejectAdmissionApplicationMutation,
 } from '@/lib/store/api/schoolAdminApi';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import toast from 'react-hot-toast';
@@ -421,9 +425,9 @@ function TransferEnrollmentsDisplay({ enrollments, grades }: { enrollments?: any
   );
 }
 
-export default function TransfersPage() {
+export default function ApplicationsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'recently-accepted' | 'outgoing'>('recently-accepted');
+  const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAcceptTransferModal, setShowAcceptTransferModal] = useState(false);
   const [showGenerateTacModal, setShowGenerateTacModal] = useState(false);
@@ -435,7 +439,9 @@ export default function TransfersPage() {
   } | null>(null);
   const [showTransferPreview, setShowTransferPreview] = useState<any>(null);
   const [showCompleteModal, setShowCompleteModal] = useState<string | null>(null);
+  const [showApproveApplicationModal, setShowApproveApplicationModal] = useState<any | null>(null);
   const [showHistoricalGradesModal, setShowHistoricalGradesModal] = useState<string | null>(null);
+  const [showRegistrationLinkModal, setShowRegistrationLinkModal] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [studentSearchQuery, setStudentSearchQuery] = useState('');
   const [tacFormData, setTacFormData] = useState({ tac: '', studentId: '' });
@@ -450,6 +456,11 @@ export default function TransfersPage() {
   // Get school ID
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
+  const schoolName = schoolResponse?.data?.name;
+  const registrationLink =
+    schoolId && typeof window !== 'undefined'
+      ? `${window.location.origin}/admission/${schoolId}`
+      : '';
 
   // Get school type
   const { currentType } = useSchoolType();
@@ -461,7 +472,7 @@ export default function TransfersPage() {
   );
   const students = studentsResponse?.data?.items || [];
 
-  // Get classes for transfer completion
+  // Get classes for transfer/application approval
   const { data: classesResponse } = useGetClassesQuery(
     { schoolId: schoolId!, type: currentType || undefined },
     { skip: !schoolId }
@@ -478,11 +489,16 @@ export default function TransfersPage() {
   // Recently accepted (completed) transfers to this school
   const { data: recentlyAcceptedResponse, refetch: refetchRecentlyAccepted, isLoading: isLoadingRecentlyAccepted } = useGetRecentlyAcceptedTransfersQuery(
     { schoolId: schoolId!, page: 1, limit: 50 },
-    { skip: !schoolId || activeTab !== 'recently-accepted' }
+    { skip: !schoolId || activeTab !== 'incoming' }
   );
-  const recentlyAcceptedData = recentlyAcceptedResponse?.data;
-  const recentlyAcceptedItems = recentlyAcceptedData?.items ?? [];
-  const recentlyAcceptedMeta = recentlyAcceptedData?.meta;
+  const recentlyAcceptedItems = recentlyAcceptedResponse?.data?.items ?? [];
+
+  // Admission applications
+  const { data: applicationsResponse, refetch: refetchApplications, isLoading: isLoadingApplications } = useGetAdmissionApplicationsQuery(
+    { schoolId: schoolId!, status: 'PENDING' },
+    { skip: !schoolId || activeTab !== 'incoming' }
+  );
+  const admissionApplications = applicationsResponse?.data || [];
 
   // Mutations
   const [generateTac, { isLoading: isGeneratingTac }] = useGenerateTacMutation();
@@ -490,19 +506,38 @@ export default function TransfersPage() {
   const [initiateTransfer, { isLoading: isInitiating }] = useInitiateTransferMutation();
   const [completeTransfer, { isLoading: isCompleting }] = useCompleteTransferMutation();
   const [rejectTransfer, { isLoading: isRejecting }] = useRejectTransferMutation();
+  const [approveApplication, { isLoading: isApprovingApp }] = useApproveAdmissionApplicationMutation();
+  const [rejectApplication, { isLoading: isRejectingApp }] = useRejectAdmissionApplicationMutation();
 
-  // Filter students for TAC generation
-  const filteredStudents = useMemo(() => {
-    if (!studentSearchQuery) return students;
-    const query = studentSearchQuery.toLowerCase();
-    return students.filter(
-      (s: any) =>
-        s.firstName?.toLowerCase().includes(query) ||
-        s.lastName?.toLowerCase().includes(query) ||
-        s.uid?.toLowerCase().includes(query) ||
-        `${s.firstName} ${s.lastName}`.toLowerCase().includes(query)
+  // Combined incoming list (transfers + applications)
+  const combinedIncoming = useMemo(() => {
+    const apps = (admissionApplications || []).map((app: any) => ({
+      ...app,
+      type: 'APPLICATION',
+    }));
+    const transfers = (recentlyAcceptedItems || []).map((item: any) => ({
+      ...item,
+      type: 'TRANSFER',
+    }));
+    return [...apps, ...transfers].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-  }, [students, studentSearchQuery]);
+  }, [admissionApplications, recentlyAcceptedItems]);
+
+  // Filter combined incoming
+  const filteredIncoming = useMemo(() => {
+    if (!searchQuery) return combinedIncoming;
+    const query = searchQuery.toLowerCase();
+    return combinedIncoming.filter(
+      (item: any) => {
+        const name = item.type === 'APPLICATION' 
+          ? `${item.firstName} ${item.lastName}` 
+          : `${item.student?.firstName} ${item.student?.lastName}`;
+        const uid = item.type === 'APPLICATION' ? item.email : item.student?.uid;
+        return name.toLowerCase().includes(query) || (uid && uid.toLowerCase().includes(query));
+      }
+    );
+  }, [combinedIncoming, searchQuery]);
 
   // Filter transfers
   const filteredOutgoing = useMemo(() => {
@@ -517,17 +552,57 @@ export default function TransfersPage() {
     );
   }, [outgoingTransfers, searchQuery]);
 
-  const filteredRecentlyAccepted = useMemo(() => {
-    if (!searchQuery) return recentlyAcceptedItems;
-    const query = searchQuery.toLowerCase();
-    return recentlyAcceptedItems.filter(
-      (item: any) =>
-        item.student?.firstName?.toLowerCase().includes(query) ||
-        item.student?.lastName?.toLowerCase().includes(query) ||
-        item.student?.uid?.toLowerCase().includes(query) ||
-        item.fromSchool?.name?.toLowerCase().includes(query)
+  const handleApproveApplication = async () => {
+    if (!showApproveApplicationModal || !completeFormData.targetClassLevel || !completeFormData.academicYear) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await approveApplication({
+        schoolId: schoolId!,
+        applicationId: showApproveApplicationModal.id,
+        ...completeFormData,
+      }).unwrap();
+
+      setShowApproveApplicationModal(null);
+      setCompleteFormData({ targetClassLevel: '', academicYear: '', classId: '', classArmId: '' });
+      refetchApplications();
+      toast.success('Application approved and student admitted');
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to approve application');
+    }
+  };
+
+  const handleRejectApplication = async (applicationId: string) => {
+    if (!confirm('Are you sure you want to decline this application?')) return;
+
+    try {
+      await rejectApplication({
+        schoolId: schoolId!,
+        applicationId,
+        reason: 'Declined by school administration',
+      }).unwrap();
+
+      refetchApplications();
+      toast.success('Application declined');
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to decline application');
+    }
+  };
+
+  // Filter students for TAC generation
+  const filteredStudents = useMemo(() => {
+    if (!studentSearchQuery) return students;
+    const query = studentSearchQuery.toLowerCase();
+    return students.filter(
+      (s: any) =>
+        s.firstName?.toLowerCase().includes(query) ||
+        s.lastName?.toLowerCase().includes(query) ||
+        s.uid?.toLowerCase().includes(query) ||
+        `${s.firstName} ${s.lastName}`.toLowerCase().includes(query)
     );
-  }, [recentlyAcceptedItems, searchQuery]);
+  }, [students, studentSearchQuery]);
 
   const handleGenerateTac = async () => {
     if (!selectedStudentId) {
@@ -670,11 +745,23 @@ export default function TransfersPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
-                Student Transfers
+                Student Applications
               </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
-                Manage outgoing transfers and view recently accepted students
+                Manage student applications, incoming transfers and outgoing transfers
               </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRegistrationLinkModal(true)}
+                className="h-9"
+                disabled={!schoolId}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Admission Link
+              </Button>
             </div>
           </div>
         </FadeInUp>
@@ -683,14 +770,14 @@ export default function TransfersPage() {
         <div className="mb-6 border-b border-light-border dark:border-dark-border">
           <div className="flex space-x-1">
             <button
-              onClick={() => setActiveTab('recently-accepted')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'recently-accepted'
+              onClick={() => setActiveTab('incoming')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'incoming'
                   ? 'border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                   : 'text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
                 }`}
             >
               <CheckCircle2 className="h-4 w-4" />
-              Recently accepted
+              Incoming Applications
             </button>
             <button
               onClick={() => setActiveTab('outgoing')}
@@ -707,15 +794,15 @@ export default function TransfersPage() {
 
         {/* Tab Content */}
         <FadeInUp from={{ opacity: 0, y: 10 }} to={{ opacity: 1, y: 0 }} duration={0.2}>
-          {activeTab === 'recently-accepted' && (
+          {activeTab === 'incoming' && (
             <div className="space-y-6">
-              {/* Accept new transfer + Recently accepted list */}
+              {/* Accept new transfer + Incoming list */}
               <Card>
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <CardTitle className="text-lg sm:text-xl font-bold text-light-text-primary dark:text-dark-text-primary flex items-center gap-2">
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      Recently accepted
+                      Incoming Applications
                     </CardTitle>
                     <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
                       <SearchInput
@@ -740,36 +827,26 @@ export default function TransfersPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingRecentlyAccepted ? (
+                  {isLoadingRecentlyAccepted || isLoadingApplications ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
                       <span className="ml-3 text-light-text-secondary dark:text-dark-text-secondary">Loading...</span>
                     </div>
-                  ) : filteredRecentlyAccepted.length === 0 ? (
+                  ) : filteredIncoming.length === 0 ? (
                     <div className="text-center py-12">
                       <EmptyStateIcon type="person_outline" />
                       <p className="text-light-text-secondary dark:text-dark-text-secondary mt-2">
-                        No recently accepted transfers yet.
+                        No recently accepted transfers or pending applications yet.
                       </p>
                       <p className="text-sm text-light-text-muted dark:text-dark-text-muted mt-1 max-w-md mx-auto">
-                        Use &quot;Accept new transfer&quot; to complete an incoming transfer with a TAC from the student&apos;s previous school.
+                        Use &quot;Accept new transfer&quot; to complete an incoming transfer with a TAC from the student&apos;s previous school. New applications from your public admission link will also appear here.
                       </p>
-                      <PermissionGate resource={PermissionResource.TRANSFERS} type={PermissionType.WRITE}>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="mt-4"
-                          onClick={() => setShowAcceptTransferModal(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Accept new transfer
-                        </Button>
-                      </PermissionGate>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {filteredRecentlyAccepted.map((item: any) => {
+                      {filteredIncoming.map((item: any) => {
                         const isExpanded = expandedAcceptedIds.has(item.id);
+                        const isApplication = item.type === 'APPLICATION';
                         const toggle = () => {
                           setExpandedAcceptedIds((prev) => {
                             const next = new Set(prev);
@@ -778,16 +855,21 @@ export default function TransfersPage() {
                             return next;
                           });
                         };
-                        const fullName = [item.student?.firstName, item.student?.middleName, item.student?.lastName].filter(Boolean).join(' ');
-                        const initials = (item.student?.firstName?.[0] || '') + (item.student?.lastName?.[0] || '') || '?';
+                        const fullName = isApplication 
+                          ? `${item.firstName} ${item.middleName ? item.middleName + ' ' : ''}${item.lastName}`
+                          : [item.student?.firstName, item.student?.middleName, item.student?.lastName].filter(Boolean).join(' ');
+                        const initials = isApplication 
+                          ? (item.firstName?.[0] || '') + (item.lastName?.[0] || '')
+                          : (item.student?.firstName?.[0] || '') + (item.student?.lastName?.[0] || '') || '?';
                         const targetLabel = item.targetEnrollment
                           ? [item.targetEnrollment.classLevel, item.targetEnrollment.classArmName].filter(Boolean).join(' • ')
-                          : '—';
-                        const sourceLabel = item.sourceEnrollment
+                          : isApplication ? (item.classLevel || 'Not specified') : '—';
+                        const sourceLabel = !isApplication && item.sourceEnrollment
                           ? `${item.sourceEnrollment.classLevel} (${item.sourceEnrollment.academicYear})`
+                          : isApplication ? 'New Admission' : '—';
+                        const completedDate = item.completedAt || item.createdAt 
+                          ? new Date(item.completedAt || item.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) 
                           : '—';
-                        const perf = item.performanceSummary;
-                        const completedDate = item.completedAt ? new Date(item.completedAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
 
                         return (
                           <div
@@ -797,13 +879,13 @@ export default function TransfersPage() {
                             <button
                               type="button"
                               onClick={toggle}
-                              className="w-full flex items-center gap-4 p-4 text-left hover:bg-light-hover dark:hover:bg-[#1f2937] transition-colors"
+                              className="w-full flex items-center gap-4 p-4 text-left hover:bg-light-surface dark:hover:bg-dark-bg transition-colors"
                             >
                               {/* Avatar */}
                               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center overflow-hidden">
-                                {item.student?.profileImage ? (
+                                {(isApplication ? item.profileImage : item.student?.profileImage) ? (
                                   <img
-                                    src={item.student.profileImage}
+                                    src={isApplication ? item.profileImage : item.student.profileImage}
                                     alt=""
                                     className="w-full h-full object-cover"
                                   />
@@ -814,17 +896,28 @@ export default function TransfersPage() {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-light-text-primary dark:text-dark-text-primary truncate">
-                                  {fullName}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold text-light-text-primary dark:text-dark-text-primary truncate">
+                                    {fullName}
+                                  </p>
+                                  {isApplication ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 font-medium">
+                                      Application
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">
+                                      Transfer
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary truncate">
-                                  {item.student?.uid}
+                                  {isApplication ? item.email : item.student?.uid}
                                 </p>
                               </div>
                               <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
-                                {perf?.averagePercentage != null && (
+                                {!isApplication && item.performanceSummary?.averagePercentage != null && (
                                   <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400">
-                                    {perf.averagePercentage}% avg
+                                    {item.performanceSummary.averagePercentage}% avg
                                   </p>
                                 )}
                                 <p className="text-[10px] sm:text-xs text-light-text-muted dark:text-dark-text-muted">
@@ -842,59 +935,83 @@ export default function TransfersPage() {
                               <div className={`min-h-0 overflow-hidden transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                                 <div className="border-t border-light-border dark:border-dark-border px-4 py-4 bg-light-surface dark:bg-dark-bg space-y-4">
                                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                                    {isApplication ? (
+                                      <>
+                                        <div>
+                                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Parent/Guardian</p>
+                                          <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.parentName}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Parent Phone</p>
+                                          <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.parentPhone}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Nationality</p>
+                                          <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.nationality}</p>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div>
+                                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">From school</p>
+                                          <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.fromSchool?.name || '—'}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Previous class</p>
+                                          <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{sourceLabel}</p>
+                                        </div>
+                                      </>
+                                    )}
                                     <div>
-                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">From school</p>
-                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.fromSchool?.name || '—'}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Previous class</p>
-                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{sourceLabel}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Admitted to</p>
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">{isApplication ? 'Requested Class' : 'Admitted to'}</p>
                                       <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{targetLabel}</p>
                                     </div>
-                                    {item.student?.email && (
-                                      <div>
-                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Email</p>
-                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.email}</p>
-                                      </div>
-                                    )}
-                                    {item.student?.phone && (
-                                      <div>
-                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Phone</p>
-                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{item.student.phone}</p>
-                                      </div>
-                                    )}
-                                    {item.student?.dateOfBirth && (
-                                      <div>
-                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Date of birth</p>
-                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                          {new Date(item.student.dateOfBirth).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                                        </p>
-                                      </div>
-                                    )}
-                                    {perf && (
-                                      <div>
-                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Performance (previous school)</p>
-                                        <p className="font-medium text-light-text-primary dark:text-dark-text-primary">
-                                          {perf.averagePercentage != null ? `${perf.averagePercentage}% average` : '—'} ({perf.gradeCount} grades)
-                                        </p>
-                                      </div>
-                                    )}
+                                    <div className="col-span-2">
+                                      <p className="text-xs text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Address</p>
+                                      <p className="font-medium text-light-text-primary dark:text-dark-text-primary">{isApplication ? item.address : item.student?.address || '—'}</p>
+                                    </div>
                                   </div>
-                                  <div className="pt-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        router.push(`/dashboard/school/students/${item.student?.id}`);
-                                      }}
-                                    >
-                                      <Eye className="h-4 w-4 mr-2" />
-                                      View student profile
-                                    </Button>
+                                  <div className="pt-2 flex flex-wrap gap-2">
+                                    {isApplication ? (
+                                      <PermissionGate resource={PermissionResource.TRANSFERS} type={PermissionType.WRITE}>
+                                        <Button
+                                          variant="primary"
+                                          size="sm"
+                                          onClick={() => {
+                                            setShowApproveApplicationModal(item);
+                                            setCompleteFormData({
+                                              targetClassLevel: item.classLevel || '',
+                                              academicYear: '',
+                                              classId: '',
+                                              classArmId: item.classArmId || '',
+                                            });
+                                          }}
+                                        >
+                                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                                          Approve Application
+                                        </Button>
+                                        <Button
+                                          variant="danger"
+                                          size="sm"
+                                          onClick={() => handleRejectApplication(item.id)}
+                                        >
+                                          <XCircle className="h-4 w-4 mr-2" />
+                                          Decline
+                                        </Button>
+                                      </PermissionGate>
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          router.push(`/dashboard/school/students/${item.student?.id}`);
+                                        }}
+                                      >
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        View student profile
+                                      </Button>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1152,6 +1269,90 @@ export default function TransfersPage() {
                 </Button>
               </div>
             </form>
+          </Modal>
+        )}
+
+        {/* Approve Application Modal */}
+        {showApproveApplicationModal && (
+          <Modal
+            isOpen={true}
+            onClose={() => setShowApproveApplicationModal(null)}
+            title="Approve Student Application"
+          >
+            <div className="space-y-6">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  You are about to approve the application for <strong>{showApproveApplicationModal.firstName} {showApproveApplicationModal.lastName}</strong>. 
+                  This will create a student account and enroll them in your school.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                    Academic Year *
+                  </label>
+                  <Input
+                    placeholder="e.g. 2024/2025"
+                    value={completeFormData.academicYear}
+                    onChange={(e) => setCompleteFormData({ ...completeFormData, academicYear: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                    Class Level *
+                  </label>
+                  <select
+                    className="w-full h-10 px-3 rounded-lg border border-light-border dark:border-dark-border bg-white dark:bg-dark-bg text-sm"
+                    value={completeFormData.targetClassLevel}
+                    onChange={(e) => setCompleteFormData({ ...completeFormData, targetClassLevel: e.target.value })}
+                  >
+                    <option value="">Select Level</option>
+                    {/* Add options based on school type */}
+                    {currentType === 'PRIMARY' && ['Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'].map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                    {currentType === 'SECONDARY' && ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3'].map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+                    Class Arm (Optional)
+                  </label>
+                  <select
+                    className="w-full h-10 px-3 rounded-lg border border-light-border dark:border-dark-border bg-white dark:bg-dark-bg text-sm"
+                    value={completeFormData.classArmId}
+                    onChange={(e) => setCompleteFormData({ ...completeFormData, classArmId: e.target.value })}
+                  >
+                    <option value="">No specific arm</option>
+                    {classes
+                      .filter((c: any) => !completeFormData.targetClassLevel || c.classLevel === completeFormData.targetClassLevel)
+                      .map((c: any) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-light-border dark:border-dark-border">
+                <Button variant="ghost" onClick={() => setShowApproveApplicationModal(null)}>
+                  Cancel
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={handleApproveApplication}
+                  isLoading={isApprovingApp}
+                  disabled={!completeFormData.academicYear || !completeFormData.targetClassLevel}
+                >
+                  Approve & Admit
+                </Button>
+              </div>
+            </div>
           </Modal>
         )}
 
@@ -1518,6 +1719,23 @@ export default function TransfersPage() {
             </div>
           </Modal>
         )}
+
+        <ShareRegistrationLinkModal
+          isOpen={showRegistrationLinkModal}
+          onClose={() => setShowRegistrationLinkModal(false)}
+          url={registrationLink}
+          title="Share Admission Link"
+          urlLabel="Admission URL"
+          description="Share this admission link so parents and guardians can apply directly to your school."
+          shareMessage={
+            schoolName
+              ? `Hello, applications are open for ${schoolName}. You can apply using the link below.`
+              : 'Hello, applications are open. You can apply using the link below.'
+          }
+          shareMessageLabel="Message to share"
+          emailSubject="School admission link"
+          copySuccessMessage="Admission link copied to clipboard"
+        />
       </div>
     </ProtectedRoute>
   );

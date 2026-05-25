@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - master
+      - dev
       - staging
 
 pool:
@@ -11,16 +11,16 @@ pool:
 # Conditional variables: set targets based on branch
 # ──────────────────────────────────────────────
 variables:
-  azureSubscription: 'agora-current-sc'
-
-  # Dev environment (master branch)
-  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+  # Dev environment (dev branch)
+  ${{ if eq(variables['Build.SourceBranchName'], 'dev') }}:
+    azureSubscription: 'agora-current-sc'
     webAppName: 'agora-web-dev'
     NEXT_PUBLIC_API_URL: 'https://agora-api-dev.azurewebsites.net'
     environmentName: 'Dev'
 
   # Staging environment (staging branch)
   ${{ if eq(variables['Build.SourceBranchName'], 'staging') }}:
+    azureSubscription: 'agora-current-sc-stg'
     webAppName: 'agora-web-stg'
     NEXT_PUBLIC_API_URL: 'https://agora-api-stg.azurewebsites.net'
     environmentName: 'Staging'
@@ -73,9 +73,12 @@ stages:
         replaceExistingArchive: true
 
     - task: AzureWebApp@1
+      displayName: 'Deploy to Azure'
       inputs:
         azureSubscription: $(azureSubscription)
         appType: 'webAppLinux'
         appName: $(webAppName)
         package: '$(Build.ArtifactStagingDirectory)/web.zip'
-        startUpCommand: 'node server.js'
+        # --- ADD THESE TWO LINES ---
+        deploymentMethod: 'runFromPackage'
+        startUpCommand: 'HOSTNAME=0.0.0.0 node server.js'

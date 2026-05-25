@@ -84,13 +84,30 @@ export default function SubscriptionPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
 
               <div className="max-w-xl space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-light-bg dark:bg-dark-bg text-light-text-secondary dark:text-dark-text-secondary border border-light-border dark:border-dark-border" style={{ fontSize: 'var(--text-small)' }}>
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  Subscription active
-                </div>
+                {(() => {
+                  const phase = summary?.billing?.phase;
+                  const isExpired = phase === 'ADMIN_ACTION_REQUIRED';
+                  const isGrace = phase === 'GRACE_PERIOD';
+                  return (
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                      isExpired
+                        ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                        : isGrace
+                        ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                        : 'bg-light-bg dark:bg-dark-bg text-light-text-secondary dark:text-dark-text-secondary border-light-border dark:border-dark-border'
+                    }`} style={{ fontSize: 'var(--text-small)' }}>
+                      <span className="relative flex h-2 w-2">
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                          isExpired ? 'bg-red-400' : isGrace ? 'bg-amber-400' : 'bg-emerald-400'
+                        }`}></span>
+                        <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                          isExpired ? 'bg-red-500' : isGrace ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}></span>
+                      </span>
+                      {isExpired ? 'Subscription expired' : isGrace ? 'Grace period active' : 'Subscription active'}
+                    </div>
+                  );
+                })()}
                 <h1 className="font-extrabold tracking-tight text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
                   Billing & Plans
                 </h1>
@@ -113,11 +130,38 @@ export default function SubscriptionPage() {
                   </div>
                 </div>
 
-                {subscription?.endDate && (
-                  <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-6" style={{ fontSize: 'var(--text-small)' }}>
-                    Renews on <span className="font-bold">{new Date(subscription.endDate).toLocaleDateString()}</span>
-                  </p>
-                )}
+                {subscription?.endDate && (() => {
+                  const endDate = new Date(subscription.endDate);
+                  const isExpired = endDate.getTime() < Date.now();
+                  const isRecurring = summary?.billing?.isRecurring;
+                  const formattedDate = endDate.toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  });
+                  return (
+                    <div className="space-y-2 mb-6">
+                      <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-small)' }}>
+                        {isExpired ? (
+                          <span className="text-red-600 dark:text-red-400 font-semibold">
+                            Expired on {formattedDate}
+                          </span>
+                        ) : (
+                          <>
+                            {isRecurring ? 'Next charge on' : 'Renews on'}{' '}
+                            <span className="font-bold">{formattedDate}</span>
+                          </>
+                        )}
+                      </p>
+                      {isRecurring && (
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 text-[10px] font-bold uppercase tracking-wider">
+                          <Zap className="w-3 h-3" />
+                          Auto-Renew On
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="space-y-4 pt-4 border-t border-light-border dark:border-dark-border">
                   <div className="flex justify-between items-center" style={{ fontSize: 'var(--text-body)' }}>
@@ -259,11 +303,11 @@ export default function SubscriptionPage() {
               {[
                 {
                   q: 'What happens when I upgrade?',
-                  a: 'Your new plan activates immediately. You get instant access to the Agora AI engine and your AI credits will be instantly topped up to the new tier\'s allowance (e.g., 5,000 credits for Pro).'
+                  a: 'Your new plan activates immediately. You get instant access to the Agora AI engine and your AI credits align to the new tier\'s allowance (e.g., 10,000 Agora credits on Pro), with any unused balance from the prior paid period rolled in on renewal where applicable.'
                 },
                 {
                   q: 'How do AI Credits work?',
-                  a: 'Every time a teacher generates a lesson plan, quiz, or grades an essay, a few tokens are consumed. For context, 5,000 tokens per month is enough to automatically grade thousands of handwritten essays.'
+                  a: 'Every time a teacher generates a lesson plan, quiz, or grades an essay, Agora credits are consumed based on model usage. Higher tiers include larger monthly credit pools (e.g., 25,000 on Pro+).'
                 },
                 {
                   q: 'What if we run out of tokens mid-month?',

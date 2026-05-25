@@ -13,6 +13,7 @@ import { GraduationCap, Users, BookOpen, UserPlus, Loader2, AlertCircle, Calenda
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { useRouter } from 'next/navigation';
 import { useGetSchoolAdminDashboardQuery, useGetActiveSessionQuery, useGetMySchoolQuery, useEndTermMutation, useUploadSchoolLogoMutation } from '@/lib/store/api/schoolAdminApi';
+import type { SchoolAdmin } from '@/lib/store/api/schoolsApi';
 import { EndTermModal, EditTermDatesModal } from '@/components/modals';
 import type { Term } from '@/lib/store/api/schoolAdminApi';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
@@ -23,6 +24,8 @@ import { getTerminology } from '@/lib/utils/terminology';
 import { useAuth } from '@/hooks/useAuth';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
 import { isPrincipalRole, isSchoolOwnerRole } from '@/lib/constants/roles';
+import { safeGet, safeArrayFind, safeGetUserName, getErrorMessage } from '@/utils/common/safety-utils';
+import { cn } from '@/lib/utils';
 
 // Helper function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -110,27 +113,38 @@ export default function AdminOverviewPage() {
   const terminology = getTerminology(currentType);
 
   // Get school and active session
-  const { data: schoolResponse, refetch: refetchSchool } = useGetMySchoolQuery();
+  const { data: schoolResponse, refetch: refetchSchool, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const school = schoolResponse?.data;
 
   // Get user's name for welcome message
   // If school_owner, show school name; if other principal, use principal's name; otherwise user's first name
   const userName = useMemo(() => {
-    const role = school?.currentAdmin?.role;
-    if (isSchoolOwnerRole(role) && school?.name) {
-      return school.name;
+    const role = safeGet(school, 'currentAdmin.role', null);
+    const schoolName = safeGet(school, 'name', null);
+    
+    if (isSchoolOwnerRole(role) && schoolName) {
+      return schoolName;
     }
-    if (isPrincipalRole(role) && school?.admins && school?.currentAdmin?.id) {
-      const principal = school.admins.find(
-        (admin) => admin.id === school.currentAdmin?.id
-      );
-      if (principal) {
-        const principalName = `${principal.firstName} ${principal.lastName}`.trim();
-        return principalName || principal.firstName || 'there';
+    
+    if (isPrincipalRole(role)) {
+      const currentAdminId = safeGet(school, 'currentAdmin.id', null);
+      const admins = safeGet(school, 'admins', []);
+      
+      if (currentAdminId && admins.length > 0) {
+        const principal = safeArrayFind(
+          admins,
+          (admin: SchoolAdmin) => admin && admin.id === currentAdminId,
+          null
+        );
+        
+        if (principal) {
+          return safeGetUserName(principal, 'there');
+        }
       }
     }
-    return user?.firstName || 'there';
-  }, [school?.currentAdmin?.role, school?.currentAdmin?.id, school?.admins, school?.name, user?.firstName]);
+    
+    return safeGetUserName(user, 'there');
+  }, [school, user]);
   const schoolId = school?.id;
   const [uploadSchoolLogo, { isLoading: isUploadingLogo }] = useUploadSchoolLogoMutation();
   const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
@@ -138,7 +152,7 @@ export default function AdminOverviewPage() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { data: activeSessionResponse, refetch: refetchActiveSession } = useGetActiveSessionQuery(
+  const { data: activeSessionResponse, refetch: refetchActiveSession, isLoading: isLoadingSession } = useGetActiveSessionQuery(
     { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId }
   );
@@ -244,11 +258,14 @@ export default function AdminOverviewPage() {
       refetchActiveSession();
       refetch();
     } catch (error: any) {
-      toast.error(error?.data?.message || `Failed to end ${terminology.periodSingular.toLowerCase()}`);
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage || `Failed to end ${terminology.periodSingular.toLowerCase()}`);
     }
   };
 
   const buttonConfig = getButtonConfig();
+  const isHeaderDestructive = buttonConfig.variant === 'danger';
+  const HeaderActionIcon = buttonConfig.icon;
 
   // Extract dashboard data
   const dashboard = data?.data;
@@ -270,19 +287,27 @@ export default function AdminOverviewPage() {
             <div className="order-3 lg:order-2 w-full lg:w-auto flex justify-start lg:justify-end">
               <PermissionGate resource={PermissionResource.SESSIONS} type={PermissionType.WRITE}>
                 <Button
-                  variant={buttonConfig.variant}
+                  variant={isHeaderDestructive ? 'ghost' : buttonConfig.variant}
+                  isFlat={isHeaderDestructive}
                   size="sm"
                   onClick={buttonConfig.onClick}
-                  disabled={isEndingTerm}
-                  className="flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-2 py-2 min-w-fit"
+                  disabled={isEndingTerm || isLoadingSession || isLoadingSchool}
+                  className={cn(
+                    'flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-2 py-2 min-w-[120px] transition-all',
+                    isHeaderDestructive &&
+                      'border border-red-600/45 dark:border-red-500/50 text-red-600 dark:text-red-400 bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] shadow-none hover:bg-red-500/10 dark:hover:bg-red-500/15'
+                  )}
                 >
-                  {isEndingTerm ? (
+                  {isEndingTerm || isLoadingSession || isLoadingSchool || !schoolId ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Ending {terminology.periodSingular}...
+                      <Loader2 className="h-4 w-4 animate-spin text-current" />
+                      {isEndingTerm ? `Ending...` : `Checking...`}
                     </>
                   ) : (
                     <>
+                      {isHeaderDestructive ? (
+                        <HeaderActionIcon className="h-4 w-4 shrink-0" aria-hidden />
+                      ) : null}
                       {buttonConfig.text}
                     </>
                   )}
@@ -380,7 +405,8 @@ export default function AdminOverviewPage() {
                         }
                         refetchSchool();
                       } catch (error: any) {
-                        toast.error(error?.data?.message || 'Failed to upload logo');
+                        const errorMessage = getErrorMessage(error);
+                        toast.error(errorMessage || 'Failed to upload logo');
                       }
                     }}
                     disabled={isUploadingLogo}
@@ -526,9 +552,7 @@ export default function AdminOverviewPage() {
                 <div>
                   <p className="font-semibold">Failed to load dashboard data</p>
                   <p className="mt-1" style={{ fontSize: 'var(--text-body)' }}>
-                    {error && 'data' in error
-                      ? (error.data as any)?.message || 'An error occurred while loading dashboard data'
-                      : 'An error occurred while loading dashboard data'}
+                    {getErrorMessage(error)}
                   </p>
                   <Button
                     variant="ghost"
@@ -546,19 +570,21 @@ export default function AdminOverviewPage() {
 
         {/* Loading State */}
         {
-          isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
-              <span className="ml-3 text-light-text-secondary dark:text-dark-text-secondary">
-                Loading dashboard data...
-              </span>
+          (isLoading || isLoadingSchool) && (
+            <div className="flex items-center justify-center py-24">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+                <span className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+                  Loading dashboard data...
+                </span>
+              </div>
             </div>
           )
         }
 
         {/* Dashboard Content */}
         {
-          !isLoading && !error && stats && (
+          !isLoading && !isLoadingSchool && !error && stats && (
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">

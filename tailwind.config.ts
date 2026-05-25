@@ -27,6 +27,7 @@ const config: Config = {
         'agora-success': 'var(--agora-success)',
         'agora-text': '#02173D',
         'agora-accent': '#FF532A',
+        'agora-lois': '#6366f1',
 
         // Light Mode - using CSS variables from globals.css
         'light-bg': 'var(--light-bg)',

@@ -6,6 +6,7 @@ import { RootState } from '@/lib/store/store';
 import { useSchoolType } from '@/hooks/useSchoolType';
 import { getTerminology, Terminology } from '@/lib/utils/terminology';
 import { useCurrentAdminPermissions, PermissionResource } from '@/hooks/usePermissions';
+import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 import {
   LayoutDashboard,
   Building2,
@@ -24,6 +25,7 @@ import {
   Library,
   User,
   LucideIcon,
+  Megaphone,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -56,6 +58,9 @@ export function useSidebarConfig(): {
   const user = useSelector((state: RootState) => state.auth.user);
   const { currentType } = useSchoolType();
   const terminology = getTerminology(user?.role === 'SCHOOL_ADMIN' ? currentType : null);
+  
+  // For teachers, we need to know if they are a form teacher
+  const { formClasses } = useTeacherDashboard();
 
   const sections = useMemo(() => {
     if (!user) return [];
@@ -69,9 +74,11 @@ export function useSidebarConfig(): {
           items: [
             { label: 'Overview', href: '/dashboard/super-admin/overview', icon: LayoutDashboard },
             { label: 'Schools', href: '/dashboard/super-admin/schools', icon: Building2 },
+            { label: 'Subjects', href: '/dashboard/super-admin/subjects', icon: BookMarked },
+            { label: 'Curriculum', href: '/dashboard/super-admin/curriculum', icon: BookOpen },
             { label: 'Analytics', href: '/dashboard/super-admin/analytics', icon: BarChart3 },
             { label: 'Plans', href: '/dashboard/super-admin/plans', icon: CreditCard },
-            { label: 'Curriculum', href: '/dashboard/super-admin/curriculum', icon: BookOpen },
+            { label: 'Campaigns', href: '/dashboard/super-admin/campaigns', icon: Megaphone },
             { label: 'Plugins', href: '/dashboard/super-admin/plugins', icon: Puzzle },
             { label: 'Profile', href: '/dashboard/profile', icon: User },
           ],
@@ -111,7 +118,7 @@ export function useSidebarConfig(): {
         { label: currentType === 'TERTIARY' ? 'Courses' : 'Subjects', href: '/dashboard/school/subjects', icon: BookMarked, permission: PermissionResource.SUBJECTS },
         { label: 'Timetables', href: '/dashboard/school/timetables', icon: Clock, permission: PermissionResource.TIMETABLES },
         { label: 'Calendar', href: '/dashboard/school/calendar', icon: Calendar, permission: PermissionResource.CALENDAR },
-        { label: 'Transfers', href: '/dashboard/school/transfers', icon: ArrowRightLeft, permission: PermissionResource.ADMISSIONS }, // Transfers use same permission as admissions
+        { label: 'Applications', href: '/dashboard/school/applications', icon: ArrowRightLeft, permission: PermissionResource.ADMISSIONS }, // Transfers/Applications use same permission as admissions
         { label: 'Subscription', href: '/dashboard/school/subscription', icon: CreditCard, permission: PermissionResource.SUBSCRIPTIONS, principalOnly: true },
         { label: 'Profile', href: '/dashboard/profile', icon: User }
       );
@@ -121,16 +128,29 @@ export function useSidebarConfig(): {
 
     // Teacher sidebar - Overview available for all teacher types
     if (role === 'TEACHER') {
-      return [
-        {
-          items: [
-            { label: 'Overview', href: '/dashboard/teacher/overview', icon: LayoutDashboard },
-            { label: 'Timetables', href: '/dashboard/teacher/timetables', icon: Clock },
-            { label: 'Classes', href: '/dashboard/teacher/classes', icon: BookOpen },
-            { label: 'Calendar', href: '/dashboard/teacher/calendar', icon: Calendar },
-          ],
-        },
+      const items: NavItem[] = [
+        { label: 'Overview', href: '/dashboard/teacher/overview', icon: LayoutDashboard },
+        { label: 'Timetables', href: '/dashboard/teacher/timetables', icon: Clock },
+        { label: 'Classes', href: '/dashboard/teacher/classes', icon: BookOpen },
       ];
+
+      // Add "Form Management" links if they are a form/primary teacher
+      if (formClasses && formClasses.length > 0) {
+        const formLabel = currentType === 'SECONDARY' ? 'My Form' : 'My Class';
+        
+        formClasses.forEach((fc) => {
+          items.push({ 
+            label: formClasses.length > 1 ? `${formLabel} (${fc.name})` : formLabel, 
+            href: `/dashboard/teacher/classes/${fc.id}`, 
+            icon: Users,
+            badge: 'Form'
+          });
+        });
+      }
+
+      items.push({ label: 'Calendar', href: '/dashboard/teacher/calendar', icon: Calendar });
+
+      return [{ items }];
     }
 
     // Student sidebar
@@ -145,7 +165,7 @@ export function useSidebarConfig(): {
             { label: 'Calendar', href: '/dashboard/student/calendar', icon: Calendar },
             { label: 'Resources', href: '/dashboard/student/resources', icon: FileText },
             { label: 'History', href: '/dashboard/student/history', icon: GraduationCap },
-            { label: 'Transfers', href: '/dashboard/student/transfers', icon: ArrowRightLeft },
+            { label: 'Applications', href: '/dashboard/student/applications', icon: ArrowRightLeft },
           ],
         },
       ];

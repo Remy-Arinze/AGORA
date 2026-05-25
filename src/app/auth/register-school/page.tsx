@@ -96,22 +96,24 @@ export default function RegisterSchoolPage() {
         <div className="min-h-screen flex items-center justify-center bg-[var(--light-bg)] dark:bg-[var(--dark-bg)] transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-2xl">
                 <div className="flex items-center justify-center mb-8">
-                    <Image
-                        src="/assets/logos/agora_word_blue.png"
-                        alt="Agora"
-                        width={120}
-                        height={30}
-                        className="h-8 w-auto block dark:hidden"
-                        priority
-                    />
-                    <Image
-                        src="/assets/logos/agora_worded_white.png"
-                        alt="Agora"
-                        width={120}
-                        height={30}
-                        className="h-8 w-auto hidden dark:block"
-                        priority
-                    />
+                    <Link href="/" className="inline-block transition-transform hover:scale-105 active:scale-95 cursor-pointer">
+                        <Image
+                            src="/assets/logos/agora_word_blue.png"
+                            alt="Agora"
+                            width={120}
+                            height={30}
+                            className="h-8 w-auto block dark:hidden"
+                            priority
+                        />
+                        <Image
+                            src="/assets/logos/agora_worded_white.png"
+                            alt="Agora"
+                            width={120}
+                            height={30}
+                            className="h-8 w-auto hidden dark:block"
+                            priority
+                        />
+                    </Link>
                 </div>
 
                 <h1 className="text-3xl font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-3 text-center">
@@ -200,6 +202,7 @@ export default function RegisterSchoolPage() {
                                 <CountrySelector
                                     value={formData.country}
                                     onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                                    scope="west-africa"
                                     placeholder="Select country"
                                 />
                             </div>
@@ -300,6 +303,26 @@ export default function RegisterSchoolPage() {
                             variant="primary"
                             className="w-full py-3 text-sm"
                             isLoading={isLoading}
+                            isFlat={!(
+                                formData.name.trim() &&
+                                formData.email.trim() &&
+                                formData.phone.trim() &&
+                                (formData.hasPrimary || formData.hasSecondary || formData.hasTertiary) &&
+                                formData.ownerFirstName.trim() &&
+                                formData.ownerLastName.trim() &&
+                                formData.ownerEmail.trim() &&
+                                formData.ownerPhone.trim()
+                            )}
+                            disabled={
+                                !formData.name.trim() ||
+                                !formData.email.trim() ||
+                                !formData.phone.trim() ||
+                                !(formData.hasPrimary || formData.hasSecondary || formData.hasTertiary) ||
+                                !formData.ownerFirstName.trim() ||
+                                !formData.ownerLastName.trim() ||
+                                !formData.ownerEmail.trim() ||
+                                !formData.ownerPhone.trim()
+                            }
                         >
                             Submit Registration
                         </Button>

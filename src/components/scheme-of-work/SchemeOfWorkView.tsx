@@ -35,9 +35,10 @@ interface SchemeOfWorkViewProps {
   classId: string;
   role: 'TEACHER' | 'STUDENT' | 'SCHOOL_ADMIN';
   terminology?: any;
+  isReadOnly?: boolean;
 }
 
-export function SchemeOfWorkView({ schoolId, classId, role, terminology }: SchemeOfWorkViewProps) {
+export function SchemeOfWorkView({ schoolId, classId, role, terminology, isReadOnly }: SchemeOfWorkViewProps) {
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
   
   // Fetch class-specific Scheme of Work
@@ -59,7 +60,7 @@ export function SchemeOfWorkView({ schoolId, classId, role, terminology }: Schem
   }, [weeks]);
 
   const handleToggleDelivery = async (weekId: string, currentStatus: boolean) => {
-    if (role === 'STUDENT') return;
+    if (role === 'STUDENT' || isReadOnly) return;
     
     try {
       await updateWeek({
@@ -242,7 +243,7 @@ export function SchemeOfWorkView({ schoolId, classId, role, terminology }: Schem
                     </div>
 
                     <div className="flex items-center gap-4 ml-4">
-                      {role !== 'STUDENT' && (
+                      {role !== 'STUDENT' && !isReadOnly && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

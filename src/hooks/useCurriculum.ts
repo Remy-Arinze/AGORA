@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import {
-  useGetNerdcSubjectsQuery,
+  useGetAgoraSubjectsQuery,
   useGetSubjectsFromTimetableQuery,
   useGetCurriculaSummaryQuery,
   useGetCurriculumByIdQuery,
@@ -42,12 +42,12 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
   // Queries
   // ============================================
 
-  // Get NERDC subjects for the school type
+  // Get Agora subjects for the school type
   const {
-    data: nerdcSubjectsResponse,
-    isLoading: isLoadingNerdcSubjects,
-    refetch: refetchNerdcSubjects,
-  } = useGetNerdcSubjectsQuery(
+    data: agoraSubjectsResponse,
+    isLoading: isLoadingAgoraSubjects,
+    refetch: refetchAgoraSubjects,
+  } = useGetAgoraSubjectsQuery(
     { schoolId: schoolId || '', schoolType },
     { skip: !schoolId }
   );
@@ -103,9 +103,9 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
   // Computed Values
   // ============================================
 
-  const nerdcSubjects = useMemo(() =>
-    nerdcSubjectsResponse?.data || [],
-    [nerdcSubjectsResponse]
+  const agoraSubjects = useMemo(() =>
+    agoraSubjectsResponse?.data || [],
+    [agoraSubjectsResponse]
   );
 
   const timetableSubjects = useMemo(() =>
@@ -130,9 +130,9 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     const approved = curriculaSummary.filter(s => s.status === 'APPROVED' || s.status === 'ACTIVE').length;
     const pending = curriculaSummary.filter(s => s.status === 'SUBMITTED').length;
     const draft = curriculaSummary.filter(s => s.status === 'DRAFT').length;
-    const nerdcBased = curriculaSummary.filter(s => s.isNerdcBased).length;
+    const agoraBased = curriculaSummary.filter(s => s.isAgoraBased).length;
 
-    return { total, created, approved, pending, draft, nerdcBased };
+    return { total, created, approved, pending, draft, agoraBased };
   }, [curriculaSummary]);
 
   // ============================================
@@ -157,7 +157,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
 
     try {
       const result = await generateCurriculum({ schoolId, data }).unwrap();
-      toast.success('Curriculum generated from NERDC template');
+      toast.success('Curriculum generated from Agora template');
       return result.data;
     } catch (error: any) {
       toast.error(error?.data?.message || 'Failed to generate curriculum');
@@ -173,10 +173,10 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
       const { created, failed } = result.data;
 
       if (created.length > 0) {
-        toast.success(`Generated ${created.length} curricula from NERDC templates`);
+        toast.success(`Generated ${created.length} curricula from Agora templates`);
       }
       if (failed.length > 0) {
-        toast.warning(`${failed.length} curricula failed to generate`);
+        toast(`${failed.length} curricula failed to generate`, { icon: '⚠️' });
       }
 
       return result.data;
@@ -343,7 +343,7 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
 
   return {
     // Data
-    nerdcSubjects,
+    agoraSubjects,
     timetableSubjects,
     curriculaSummary,
     selectedCurriculum,
@@ -354,14 +354,14 @@ export function useCurriculum(options: UseCurriculumOptions = {}) {
     setSelectedCurriculumId,
 
     // Loading states
-    isLoading: isLoadingNerdcSubjects || isLoadingTimetableSubjects || isLoadingCurriculaSummary,
+    isLoading: isLoadingAgoraSubjects || isLoadingTimetableSubjects || isLoadingCurriculaSummary,
     isLoadingCurriculum: isLoadingSelectedCurriculum,
     isMutating: isCreating || isGenerating || isBulkGenerating || isUpdating || isDeleting ||
       isSubmitting || isApproving || isRejecting || isActivating ||
       isMarkingComplete || isMarkingInProgress || isSkipping,
-
+ 
     // Refetch functions
-    refetchNerdcSubjects,
+    refetchAgoraSubjects,
     refetchTimetableSubjects,
     refetchCurriculaSummary,
     refetchSelectedCurriculum,

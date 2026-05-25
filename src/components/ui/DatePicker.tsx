@@ -236,7 +236,7 @@ function DropdownPortal({ children, triggerRef }: { children: React.ReactNode, t
         position: 'absolute', 
         top: `${coords.top + 4}px`, 
         left: `${coords.left}px`,
-        zIndex: 9999,
+        zIndex: 10001,
         pointerEvents: 'none'
       }}
     >

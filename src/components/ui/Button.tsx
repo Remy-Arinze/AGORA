@@ -7,6 +7,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'accent' | 'white';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
+  fullWidth?: boolean;
   bgColor?: string; // Optional custom background color (hex or tailwind class)
   textColor?: string; // Optional custom text color
   isFlat?: boolean; // If true, removes the 3D effect (shadows, translate on active, border-t)
@@ -19,11 +20,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = 'primary',
       size = 'sm',
       isLoading = false,
+      fullWidth = false,
       disabled,
       children,
       bgColor,
       textColor,
-      isFlat = false,
+      isFlat = true,
       style,
       ...props
     },
@@ -97,6 +99,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           baseStyles,
           !bgColor && variants[variant],
           sizes[size],
+          fullWidth && 'w-full',
           tailwindBg,
           tailwindText,
           // Add inner highlight for 3D effect on primary, accent, white, and danger variants (only when not disabled and not flat)
@@ -108,11 +111,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         {...props}
       >
-        <span className="relative z-10 flex items-center justify-center whitespace-nowrap">
+        <span className="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap">
           {isLoading ? (
             <>
               <svg
-                className="animate-spin mr-2 h-4 w-4 flex-shrink-0"
+                className="animate-spin h-4 w-4 flex-shrink-0"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"

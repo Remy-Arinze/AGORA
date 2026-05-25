@@ -97,10 +97,10 @@ export const studentAdmissionFormSchema = z.object({
     ),
   phone: z
     .string()
-    .min(1, 'Phone number is required')
-    .transform((val) => sanitizePhone(val))
-    .refine((val) => val.length >= 10, { message: 'Phone number must be at least 10 characters' })
-    .refine((val) => /^\+?\d{10,15}$/.test(val) && /^\+?[1-9]/.test(val), { message: 'Invalid phone format' }),
+    .optional()
+    .transform((val) => (val ? sanitizePhone(val) : undefined))
+    .refine((val) => !val || val.length >= 10, { message: 'Phone number must be at least 10 characters' })
+    .refine((val) => !val || (/^\+?\d{10,15}$/.test(val) && /^\+?[1-9]/.test(val)), { message: 'Invalid phone format' }),
   address: z
     .string()
     .optional()

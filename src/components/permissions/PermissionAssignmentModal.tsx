@@ -97,6 +97,11 @@ const RESOURCE_INFO: Record<PermissionResource, { label: string; description: st
     description: 'Create and manage curricula, lesson plans, and teaching schedules.',
     icon: '📖',
   },
+  SCHEME_OF_WORK: {
+    label: 'Scheme of Work',
+    description: 'Manage schemes of work.',
+    icon: '📋',
+  },
   RESOURCES: {
     label: 'Class Resources',
     description: 'Upload, manage, and share educational materials and resources for classes.',

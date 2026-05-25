@@ -136,7 +136,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={montserrat.className}>
+      <body className={montserrat.className} suppressHydrationWarning={true}>
         <ThemeProvider>
           <StoreProvider>
             <Sentry.ErrorBoundary fallback={<div className="min-h-screen flex items-center justify-center p-4 bg-[var(--dark-bg)] text-white text-center">

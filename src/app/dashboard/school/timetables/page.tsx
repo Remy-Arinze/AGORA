@@ -76,11 +76,11 @@ export default function TimetablesPage() {
   const [newTimetableClassId, setNewTimetableClassId] = useState<string>('');
   const [newTimetableTermId, setNewTimetableTermId] = useState<string>('');
 
-  const { data: schoolResponse } = useGetMySchoolQuery();
+  const { data: schoolResponse, isLoading: isLoadingSchool } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
   const { currentType } = useSchoolType();
 
-  const { data: activeSessionResponse } = useGetActiveSessionQuery(
+  const { data: activeSessionResponse, isLoading: isLoadingActiveSession } = useGetActiveSessionQuery(
     { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId }
   );
@@ -111,7 +111,7 @@ export default function TimetablesPage() {
   );
 
   // Get all timetables for current school type
-  const { data: timetablesResponse, refetch: refetchTimetables } = useGetTimetablesForSchoolTypeQuery(
+  const { data: timetablesResponse, refetch: refetchTimetables, isLoading: isLoadingTimetables } = useGetTimetablesForSchoolTypeQuery(
     {
       schoolId: schoolId!,
       schoolType: currentType || undefined,
@@ -805,9 +805,9 @@ export default function TimetablesPage() {
                   <Button
                     variant="primary"
                     onClick={() => setShowCreateModal(true)}
-                    className="flex-1 sm:w-auto h-9 text-[10px] sm:text-xs"
+                    className="flex-1 md:w-auto h-9 px-4 text-[10px] sm:text-xs whitespace-nowrap shrink-0 min-w-fit"
                   >
-                    <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+                    <Plus className="h-4 w-4 mr-1 md:mr-2" />
                     <span className="hidden sm:inline">Create Timetable</span>
                     <span className="sm:hidden">Create</span>
                   </Button>
@@ -817,7 +817,14 @@ export default function TimetablesPage() {
         </FadeInUp>
 
         {/* Timetables List */}
-        {selectedTermId ? (
+        {isLoadingSchool || isLoadingActiveSession || (selectedTermId && isLoadingTimetables) ? (
+          <div className="py-24 flex flex-col items-center justify-center">
+            <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
+            <p className="text-light-text-secondary dark:text-dark-text-secondary font-medium animate-pulse">
+              Loading timetables...
+            </p>
+          </div>
+        ) : selectedTermId ? (
           <>
             {showHistory && (
               <div className="flex justify-end mb-4">
@@ -916,6 +923,19 @@ export default function TimetablesPage() {
                   </Card>
                 );
               })}
+              {classesWithTimetables.length === 0 && (
+                <div className="col-span-full">
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <EmptyStateIcon type="statistics" />
+                      <p className="text-light-text-secondary dark:text-dark-text-secondary mb-4" style={{ fontSize: 'var(--text-body)' }}>
+                        No timetables created yet for {selectedTerm?.sessionName} - {selectedTerm?.name}
+                      </p>
+                        {/* Removed redundant Create Button because it's available at the top right */}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -959,6 +979,7 @@ export default function TimetablesPage() {
                       variant="primary"
                       size="sm"
                       onClick={() => setIsEditMode(true)}
+                      className="px-4 min-w-fit"
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Timetable
@@ -973,7 +994,7 @@ export default function TimetablesPage() {
                           termId: selectedTermId,
                         });
                       }}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 min-w-fit"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete Timetable
@@ -983,6 +1004,7 @@ export default function TimetablesPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => router.push(`/dashboard/school/courses/${selectedClassId}`)}
+                    className="px-4 min-w-fit"
                   >
                     View Class Details
                   </Button>
@@ -1004,9 +1026,13 @@ export default function TimetablesPage() {
                     No timetable periods found for {selectedClass?.name}.
                   </p>
                   <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
-                    <Button onClick={() => setShowCreateModal(true)}>
+                    <Button 
+                      onClick={() => setShowCreateModal(true)} 
+                      className="whitespace-nowrap px-4 min-w-fit"
+                    >
                       <Plus className="h-4 w-4 mr-2" />
-                      Create Timetable
+                      <span className="hidden sm:inline">Create Timetable</span>
+                      <span className="sm:hidden">Create</span>
                     </Button>
                   </PermissionGate>
                 </div>

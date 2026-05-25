@@ -4,6 +4,7 @@ import storage from 'redux-persist/lib/storage';
 import { apiSlice } from './api/apiSlice';
 import { publicApi } from './api/publicApi';
 import authReducer from './slices/authSlice';
+import type { AuthState } from './slices/authSlice';
 
 const persistConfig = {
   key: 'auth', // Key for localStorage
@@ -30,6 +31,8 @@ export const makeStore = () => {
 };
 
 export type AppStore = ReturnType<typeof makeStore>;
-export type RootState = ReturnType<AppStore['getState']>;
+// Override the `auth` slice type to strip redux-persist's PersistPartial wrapper,
+// which would otherwise make all auth fields appear as `| undefined` to TypeScript.
+export type RootState = Omit<ReturnType<AppStore['getState']>, 'auth'> & { auth: AuthState };
 export type AppDispatch = AppStore['dispatch'];
 

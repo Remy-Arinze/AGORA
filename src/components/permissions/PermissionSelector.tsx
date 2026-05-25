@@ -93,9 +93,14 @@ const RESOURCE_INFO: Record<PermissionResource, { label: string; description: st
     icon: '💯',
   },
   CURRICULUM: {
-    label: 'Curriculum Management',
-    description: 'Create and manage curricula.',
+    label: 'Academics & Curriculum',
+    description: 'Create and manage curricula, schemes of work, and lesson planning.',
     icon: '📖',
+  },
+  SCHEME_OF_WORK: {
+    label: 'Scheme of Work',
+    description: 'Manage schemes of work.',
+    icon: '📋',
   },
   RESOURCES: {
     label: 'Class Resources',
@@ -208,16 +213,21 @@ export function PermissionSelector({
         if (type === PermissionType.READ) {
           // Removing READ also removes WRITE and ADMIN (they require READ)
           newPermissions = newPermissions.filter((p) => 
-            !(p.resource === resource && (p.type === PermissionType.READ || p.type === PermissionType.WRITE || p.type === PermissionType.ADMIN))
+            !(p.resource === resource && (p.type === PermissionType.READ || p.type === PermissionType.WRITE || p.type === PermissionType.ADMIN)) &&
+            !(resource === PermissionResource.CURRICULUM && p.resource === PermissionResource.SCHEME_OF_WORK && (p.type === PermissionType.READ || p.type === PermissionType.WRITE || p.type === PermissionType.ADMIN))
           );
         } else if (type === PermissionType.WRITE) {
           // Removing WRITE also removes ADMIN (it requires WRITE)
           newPermissions = newPermissions.filter((p) => 
-            !(p.resource === resource && (p.type === PermissionType.WRITE || p.type === PermissionType.ADMIN))
+            !(p.resource === resource && (p.type === PermissionType.WRITE || p.type === PermissionType.ADMIN)) &&
+            !(resource === PermissionResource.CURRICULUM && p.resource === PermissionResource.SCHEME_OF_WORK && (p.type === PermissionType.WRITE || p.type === PermissionType.ADMIN))
           );
         } else {
           // Removing ADMIN only removes ADMIN
-          newPermissions = newPermissions.filter((p) => !(p.resource === resource && p.type === type));
+          newPermissions = newPermissions.filter((p) => 
+            !(p.resource === resource && p.type === type) &&
+            !(resource === PermissionResource.CURRICULUM && p.resource === PermissionResource.SCHEME_OF_WORK && p.type === type)
+          );
         }
         onChange(newPermissions);
       } else {
@@ -242,6 +252,9 @@ export function PermissionSelector({
         permissionsToAdd.forEach((t) => {
           if (!hasPermission(resource, t)) {
             newPermissions.push({ resource: resource as string, type: t as string });
+          }
+          if (resource === PermissionResource.CURRICULUM && !hasPermission(PermissionResource.SCHEME_OF_WORK, t)) {
+            newPermissions.push({ resource: PermissionResource.SCHEME_OF_WORK as string, type: t as string });
           }
         });
         onChange(newPermissions);

@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/Input';
 import toast from 'react-hot-toast';
 import { ProfileAvatarUpload } from '@/components/profile/ProfileAvatarUpload';
+import { SessionLogsModal } from '@/components/profile/SessionLogsModal';
 
 // Mock data - will be replaced with API calls later
 const teachingHistory = [
@@ -146,7 +147,8 @@ function ProfilePageContent() {
   const router = useRouter();
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null);
   const [expandedYear, setExpandedYear] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'personal' | 'school'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'security' | 'school'>('personal');
+  const [showSessionLogs, setShowSessionLogs] = useState(false);
 
   // Password change state
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -165,6 +167,14 @@ function ProfilePageContent() {
   }>({});
 
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
+
+  const hasPasswordErrors = 
+    !!passwordErrors.currentPassword || 
+    !!passwordErrors.newPassword || 
+    !!passwordErrors.confirmPassword ||
+    !passwordForm.currentPassword || 
+    !passwordForm.newPassword || 
+    !passwordForm.confirmPassword;
 
   // Fetch school data for school admins
   const { data: schoolResponse } = useGetMySchoolQuery(undefined, {
@@ -402,26 +412,107 @@ function ProfilePageContent() {
           </div>
         </FadeInUp>
 
-        {/* Super Admin Profile - Special Design */}
-        {isSuperAdmin && (
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <div className="flex flex-col-reverse md:flex-row gap-8">
-                {/* Left: Personal Information */}
-                <div className="flex-1 space-y-6">
-                  {/* Personal Information Section */}
+        {/* Profile Tabs Navigation */}
+        <div className="mb-6 border-b border-light-border dark:border-[#1a1f2e]">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('personal')}
+              className={cn(
+                'px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-[2px]',
+                activeTab === 'personal'
+                  ? 'border-[#2490FD] text-[#2490FD] dark:text-[#2490FD] bg-[#2490FD]/5'
+                  : 'border-transparent text-light-text-secondary dark:text-[#9ca3af] hover:text-[#2490FD] hover:bg-gray-50 dark:hover:bg-gray-800/50'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Personal Info
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('security')}
+              className={cn(
+                'px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-[2px]',
+                activeTab === 'security'
+                  ? 'border-[#2490FD] text-[#2490FD] dark:text-[#2490FD] bg-[#2490FD]/5'
+                  : 'border-transparent text-light-text-secondary dark:text-[#9ca3af] hover:text-[#2490FD] hover:bg-gray-50 dark:hover:bg-gray-800/50'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Security
+              </div>
+            </button>
+
+            {user?.role === 'SCHOOL_ADMIN' && (
+              <button
+                onClick={() => setActiveTab('school')}
+                className={cn(
+                  'px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-[2px]',
+                  activeTab === 'school'
+                    ? 'border-[#2490FD] text-[#2490FD] dark:text-[#2490FD] bg-[#2490FD]/5'
+                    : 'border-transparent text-light-text-secondary dark:text-[#9ca3af] hover:text-[#2490FD] hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  School Details
+                </div>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Super Admin Profile - Personal Info Tab */}
+        {isSuperAdmin && activeTab === 'personal' && (
+          <Card className="mb-6 overflow-hidden border-none shadow-premium bg-white dark:bg-[#151a23]">
+            <CardContent className="p-0">
+              <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-light-border dark:divide-dark-border">
+                {/* Left: Avatar and Basic Info */}
+                <div className="flex flex-col items-center justify-center p-10 bg-gray-50/50 dark:bg-gray-800/10 md:w-80">
+                  <ProfileAvatarUpload
+                    currentImage={user?.profileImage || null}
+                    firstName={user?.firstName || null}
+                    lastName={user?.lastName || null}
+                    size="lg"
+                    onImageUpdate={(url) => {
+                      // Update Redux state if needed
+                    }}
+                  />
+                  <div className="mt-6 text-center">
+                    <h2 className="text-2xl font-bold text-light-text-primary dark:text-white">
+                      {user?.firstName && user?.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user?.email || 'Super Admin'}
+                    </h2>
+                    <div className="mt-2 flex items-center justify-center gap-2">
+                      <span className="px-3 py-1 bg-[#2490FD]/10 text-[#2490FD] text-xs font-bold uppercase tracking-wider rounded-full">
+                        Super Admin
+                      </span>
+                      <span className="px-3 py-1 bg-green-500/10 text-green-500 text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Verified
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Personal Information Fields */}
+                <div className="flex-1 p-10 space-y-8">
                   <div>
-                    <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                      Personal Information
+                    <h3 className="text-lg font-bold text-light-text-primary dark:text-white mb-6 flex items-center gap-2">
+                      <User className="h-5 w-5 text-[#2490FD]" />
+                      Personal Details
                     </h3>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                       {/* First Name */}
-                      <div>
-                        <label className="block text-[0.875rem] font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                           First Name
                         </label>
                         {editingFirstName ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 pt-1">
                             <Input
                               value={firstNameValue}
                               onChange={(e) => setFirstNameValue(e.target.value)}
@@ -432,7 +523,6 @@ function ProfilePageContent() {
                               size="sm"
                               variant="primary"
                               onClick={() => {
-                                // TODO: Save firstName
                                 setEditingFirstName(false);
                                 toast.success('First name updated');
                               }}
@@ -447,32 +537,31 @@ function ProfilePageContent() {
                                 setEditingFirstName(false);
                               }}
                             >
-                              Cancel
+                              ✕
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <p className="text-[1rem] text-light-text-primary dark:text-dark-text-primary flex-1">
+                          <div className="flex items-center group">
+                            <p className="text-base font-medium text-light-text-primary dark:text-white">
                               {user?.firstName || 'Not set'}
                             </p>
-                            <Button
-                              size="sm"
-                              variant="ghost"
+                            <button
                               onClick={() => setEditingFirstName(true)}
+                              className="ml-2 p-1 text-light-text-muted hover:text-[#2490FD] opacity-0 group-hover:opacity-100 transition-all"
                             >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         )}
                       </div>
 
                       {/* Last Name */}
-                      <div>
-                        <label className="block text-[0.875rem] font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                           Last Name
                         </label>
                         {editingLastName ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 pt-1">
                             <Input
                               value={lastNameValue}
                               onChange={(e) => setLastNameValue(e.target.value)}
@@ -483,7 +572,6 @@ function ProfilePageContent() {
                               size="sm"
                               variant="primary"
                               onClick={() => {
-                                // TODO: Save lastName
                                 setEditingLastName(false);
                                 toast.success('Last name updated');
                               }}
@@ -498,173 +586,58 @@ function ProfilePageContent() {
                                 setEditingLastName(false);
                               }}
                             >
-                              Cancel
+                              ✕
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <p className="text-[1rem] text-light-text-primary dark:text-dark-text-primary flex-1">
+                          <div className="flex items-center group">
+                            <p className="text-base font-medium text-light-text-primary dark:text-white">
                               {user?.lastName || 'Not set'}
                             </p>
-                            <Button
-                              size="sm"
-                              variant="ghost"
+                            <button
                               onClick={() => setEditingLastName(true)}
+                              className="ml-2 p-1 text-light-text-muted hover:text-[#2490FD] opacity-0 group-hover:opacity-100 transition-all"
                             >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         )}
                       </div>
 
-                      {/* Email (Read-only) */}
-                      <div>
-                        <label className="block text-[0.875rem] font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                          Email
+                      {/* Email */}
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
+                          Email Address
                         </label>
-                        <p className="text-[1rem] text-light-text-primary dark:text-dark-text-primary">
+                        <p className="text-base font-medium text-light-text-primary dark:text-white pt-1">
                           {user?.email || 'Not set'}
+                        </p>
+                      </div>
+
+                      {/* Phone (Placeholder as Super Admin doesn't have it in mock) */}
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
+                          Phone Number
+                        </label>
+                        <p className="text-base font-medium text-light-text-muted dark:text-dark-text-muted pt-1 italic">
+                          Not verified
                         </p>
                       </div>
                     </div>
                   </div>
-
-                  {/* Password Section */}
-                  <div className="pt-6 border-t border-light-border dark:border-dark-border">
-                    <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
-                      Password
-                    </h3>
-                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                  
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/20">
+                    <div className="flex gap-3">
+                      <div className="shrink-0 p-2 bg-blue-600 rounded-lg">
+                        <Globe className="h-4 w-4 text-white" />
+                      </div>
                       <div>
-                        <Input
-                          label="Current Password"
-                          type={showCurrentPassword ? 'text' : 'password'}
-                          value={passwordForm.currentPassword}
-                          onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                          error={passwordErrors.currentPassword}
-                          required
-                          rightAddon={
-                            <button
-                              type="button"
-                              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                              className="text-light-text-muted dark:text-dark-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary"
-                            >
-                              {showCurrentPassword ? (
-                                <EyeOff className="h-5 w-5" />
-                              ) : (
-                                <Eye className="h-5 w-5" />
-                              )}
-                            </button>
-                          }
-                        />
+                        <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">Global Account</h4>
+                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          You have elevated administrative privileges. Any changes to your account security will propagate across all Agora services.
+                        </p>
                       </div>
-
-                      <div>
-                        <Input
-                          label="New Password"
-                          type={showNewPassword ? 'text' : 'password'}
-                          value={passwordForm.newPassword}
-                          onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                          error={passwordErrors.newPassword}
-                          required
-                          rightAddon={
-                            <button
-                              type="button"
-                              onClick={() => setShowNewPassword(!showNewPassword)}
-                              className="text-light-text-muted dark:text-dark-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary"
-                            >
-                              {showNewPassword ? (
-                                <EyeOff className="h-5 w-5" />
-                              ) : (
-                                <Eye className="h-5 w-5" />
-                              )}
-                            </button>
-                          }
-                        />
-                      </div>
-
-                      <div>
-                        <Input
-                          label="Confirm New Password"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={passwordForm.confirmPassword}
-                          onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                          error={passwordErrors.confirmPassword}
-                          required
-                          rightAddon={
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="text-light-text-muted dark:text-dark-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary"
-                            >
-                              {showConfirmPassword ? (
-                                <EyeOff className="h-5 w-5" />
-                              ) : (
-                                <Eye className="h-5 w-5" />
-                              )}
-                            </button>
-                          }
-                        />
-                      </div>
-
-                      {passwordForm.confirmPassword &&
-                        passwordForm.newPassword === passwordForm.confirmPassword &&
-                        !passwordErrors.confirmPassword && (
-                          <div className="mt-2 flex items-center gap-1 text-xs text-green-500">
-                            <CheckCircle2 className="h-3 w-3" />
-                            <span>Passwords match</span>
-                          </div>
-                        )}
-
-                      <div className="flex items-center gap-3 pt-2">
-                        <Button
-                          type="submit"
-                          variant="primary"
-                          isLoading={isChangingPassword}
-                          disabled={isChangingPassword || !!passwordErrors.currentPassword || !!passwordErrors.newPassword || !!passwordErrors.confirmPassword}
-                        >
-                          {isChangingPassword ? 'Changing...' : 'Change Password'}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setPasswordForm({
-                              currentPassword: '',
-                              newPassword: '',
-                              confirmPassword: '',
-                            });
-                            setPasswordErrors({});
-                          }}
-                          disabled={isChangingPassword}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-
-                {/* Right: Avatar */}
-                <div className="flex flex-col items-center justify-start shrink-0 lg:w-48 lg:border-l lg:border-light-border lg:dark:border-dark-border lg:pl-8">
-                  <ProfileAvatarUpload
-                    currentImage={user?.profileImage || null}
-                    firstName={user?.firstName || null}
-                    lastName={user?.lastName || null}
-                    size="lg"
-                    onImageUpdate={(url) => {
-                      // Update Redux state if needed
-                    }}
-                  />
-                  <div className="mt-4 text-center">
-                    <h2 className="text-[1.125rem] font-semibold text-light-text-primary dark:text-dark-text-primary">
-                      {user?.firstName && user?.lastName
-                        ? `${user.firstName} ${user.lastName}`
-                        : user?.email || 'Super Admin'}
-                    </h2>
-                    <p className="text-[0.875rem] text-light-text-secondary dark:text-dark-text-secondary mt-1">
-                      {user?.email}
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -672,49 +645,201 @@ function ProfilePageContent() {
           </Card>
         )}
 
-        {/* Tabs for School Admin */}
-        {
-          user?.role === 'SCHOOL_ADMIN' && (
-            <div className="mb-6 border-b border-light-border dark:border-[#1a1f2e]">
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setActiveTab('personal')}
-                  className={cn(
-                    'px-4 py-2 text-sm font-medium transition-colors border-b-2',
-                    activeTab === 'personal'
-                      ? 'border-[#2490FD] text-light-text-primary dark:text-white'
-                      : 'border-transparent text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white'
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Personal Information
+        {/* Security / Password Tab */}
+        {activeTab === 'security' && (
+          <FadeInUp duration={0.4}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-4 space-y-4">
+                <div className="p-6 bg-white dark:bg-[#151a23] rounded-2xl shadow-sm border border-light-border dark:border-dark-border">
+                  <div className="h-12 w-12 bg-orange-100 dark:bg-orange-900/20 rounded-xl flex items-center justify-center mb-4">
+                    <Lock className="h-6 w-6 text-orange-600" />
                   </div>
-                </button>
-                <button
-                  onClick={() => setActiveTab('school')}
-                  className={cn(
-                    'px-4 py-2 text-sm font-medium transition-colors border-b-2',
-                    activeTab === 'school'
-                      ? 'border-[#2490FD] text-light-text-primary dark:text-white'
-                      : 'border-transparent text-light-text-secondary dark:text-[#9ca3af] hover:text-light-text-primary dark:hover:text-white'
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    School Details
+                  <h3 className="text-xl font-bold text-light-text-primary dark:text-white">Security Settings</h3>
+                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-2 leading-relaxed">
+                    Update your password regularly to keep your account secure. Use a strong password with symbols and numbers.
+                  </p>
+                  <ul className="mt-6 space-y-3 text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                    <li className="flex items-center gap-2">
+                       <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                       At least 8 characters
+                    </li>
+                    <li className="flex items-center gap-2">
+                       <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                       Case-sensitive letters
+                    </li>
+                    <li className="flex items-center gap-2">
+                       <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                       Numbers and symbols
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-6 bg-blue-600 rounded-2xl text-white">
+                  <h4 className="text-base font-bold">Two-Factor Auth</h4>
+                  <p className="text-sm text-blue-100 mt-2 opacity-80">
+                    Your account is protected by mandatory OTP verification for logins.
+                  </p>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full mt-4 bg-white/10 hover:bg-white/20 border-white/20 text-white text-xs"
+                      onClick={() => setShowSessionLogs(true)}
+                    >
+                      View Session Log
+                    </Button>
                   </div>
-                </button>
+                </div>
+
+                <div className="lg:col-span-8">
+                <Card className="border-none shadow-premium bg-light-card dark:bg-dark-surface p-6 lg:p-10">
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-light-text-primary dark:text-white">Change Your Password</h3>
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1">
+                      Enter your current password to authorize this change.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handlePasswordSubmit} className="max-w-xl space-y-8">
+                    <div className="grid grid-cols-1 gap-6">
+                      {/* Current Password */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-light-text-primary dark:text-white flex items-center gap-2">
+                          Current Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            value={passwordForm.currentPassword}
+                            onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                            required
+                            placeholder="••••••••"
+                            className={cn(
+                              "w-full px-4 py-4 bg-gray-50 dark:bg-gray-800/30 border-2 rounded-xl transition-all outline-none",
+                              passwordErrors.currentPassword 
+                                ? "border-red-500 focus:border-red-500" 
+                                : "border-transparent focus:border-[#2490FD] focus:bg-white dark:focus:bg-[#151a23]"
+                            )}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-light-text-muted hover:text-[#2490FD] transition-colors"
+                          >
+                            {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </button>
+                        </div>
+                        {passwordErrors.currentPassword && (
+                           <p className="text-xs font-medium text-red-500">{passwordErrors.currentPassword}</p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* New Password */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-light-text-primary dark:text-white">
+                            New Password
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showNewPassword ? 'text' : 'password'}
+                              value={passwordForm.newPassword}
+                              onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                              required
+                              placeholder="New password"
+                              className={cn(
+                                "w-full px-4 py-4 bg-gray-50 dark:bg-gray-800/30 border-2 rounded-xl transition-all outline-none",
+                                passwordErrors.newPassword 
+                                  ? "border-red-500 focus:border-red-500" 
+                                  : "border-transparent focus:border-[#2490FD] focus:bg-white dark:focus:bg-dark-surface"
+                              )}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-light-text-muted hover:text-[#2490FD] transition-colors"
+                            >
+                              {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
+                          {passwordErrors.newPassword && (
+                            <p className="text-xs font-medium text-red-500">{passwordErrors.newPassword}</p>
+                          )}
+                        </div>
+
+                        {/* Confirm New Password */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-light-text-primary dark:text-white">
+                            Confirm Password
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              value={passwordForm.confirmPassword}
+                              onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                              required
+                              placeholder="Confirm password"
+                              className={cn(
+                                "w-full px-4 py-4 bg-gray-50 dark:bg-gray-800/30 border-2 rounded-xl transition-all outline-none",
+                                passwordErrors.confirmPassword 
+                                  ? "border-red-500 focus:border-red-500" 
+                                  : "border-transparent focus:border-[#2490FD] focus:bg-white dark:focus:bg-dark-surface"
+                              )}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-light-text-muted hover:text-[#2490FD] transition-colors"
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
+                          {passwordErrors.confirmPassword && (
+                             <p className="text-xs font-medium text-red-500">{passwordErrors.confirmPassword}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-light-border dark:border-dark-border">
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          size="sm"
+                          className="shadow-lg shadow-blue-500/20"
+                          isLoading={isChangingPassword}
+                          disabled={isChangingPassword || hasPasswordErrors}
+                        >
+                        {isChangingPassword ? 'Securely Updating...' : 'Update Password Now'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="border-2 border-transparent hover:bg-gray-50 dark:hover:bg-gray-800/10 transition-all font-bold"
+                        onClick={() => {
+                          setPasswordForm({
+                            currentPassword: '',
+                            newPassword: '',
+                            confirmPassword: '',
+                          });
+                          setPasswordErrors({});
+                        }}
+                        disabled={isChangingPassword}
+                      >
+                        Reset Form
+                      </Button>
+                    </div>
+                  </form>
+                </Card>
               </div>
             </div>
-          )
-        }
+          </FadeInUp>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-6", isSuperAdmin && "hidden")}>
           {/* Profile Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Personal Information Tab - Hide for Super Admin */}
-            {!isSuperAdmin && (user?.role !== 'SCHOOL_ADMIN' || activeTab === 'personal') && (
+            {!isSuperAdmin && activeTab === 'personal' && (
               <>
                 {/* Personal Information */}
                 <Card>
@@ -1483,6 +1608,10 @@ function ProfilePageContent() {
           </div>
         </div>
       </div >
+      <SessionLogsModal 
+        isOpen={showSessionLogs} 
+        onClose={() => setShowSessionLogs(false)} 
+      />
     </ProtectedRoute >
   );
 }
