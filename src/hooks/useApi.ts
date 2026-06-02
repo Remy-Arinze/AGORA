@@ -52,9 +52,21 @@ export function useApi() {
           message: data.message,
         };
       } catch (error) {
+        // Sanitize network errors — never expose raw browser fetch errors
+        // (e.g. "Failed to fetch https://api.agora-schools.com/...") to the user
+        const isNetworkError =
+          error instanceof TypeError ||
+          (error instanceof Error && (
+            error.message.toLowerCase().includes('failed to fetch') ||
+            error.message.toLowerCase().includes('network') ||
+            error.message.toLowerCase().includes('load failed')
+          ));
+
         return {
           success: false,
-          message: error instanceof Error ? error.message : 'Network error',
+          message: isNetworkError
+            ? "We're having trouble connecting to Agora services. Please check your internet connection."
+            : 'Something went wrong. Please try again.',
         };
       }
     },

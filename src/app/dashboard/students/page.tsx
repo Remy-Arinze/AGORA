@@ -43,7 +43,11 @@ export default function StudentsPage() {
       if (result.success && result.data) {
         setStudents(result.data.items || []);
       } else {
-        setError(result.message || 'Failed to fetch students');
+        // Use backend message if available, otherwise a generic message.
+        // Never display raw network error messages to users.
+        setError(result.message?.includes('fetch') || result.message?.includes('network')
+          ? "We're having trouble loading students. Please check your connection and try again."
+          : result.message || 'Failed to fetch students');
       }
 
       setIsLoading(false);

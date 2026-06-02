@@ -396,10 +396,10 @@ export default function AddStaffPage() {
       }
     } catch (error: any) {
       // Error handling is done in the hooks (toast notifications)
-      // But we can also set a local error state for additional feedback
+      // Use data.message first (backend error), fall back to a generic message.
+      // Never use error.message directly as it may expose internal URLs.
       const errorMessage =
         error?.data?.message ||
-        error?.message ||
         'Failed to add staff member. Please try again.';
       setSubmitError(errorMessage);
       setIsLoading(false);
