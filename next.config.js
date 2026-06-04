@@ -1,9 +1,6 @@
-const { withSentryConfig } = require("@sentry/nextjs");
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Standalone frontend: no workspace packages to transpile
   images: {
     remotePatterns: [
       {
@@ -20,16 +17,14 @@ const nextConfig = {
       },
     ],
   },
-  // Content Security Policy: allow backend API (localhost + live) and required sources
   async headers() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
     const connectSources = [
       "'self'",
       'http://localhost:4000',
       'https://api.agora-schools.com',
-      'https://*.sentry.io',
-      'https://*.ingest.sentry.io',
-      'https://*.ingest.de.sentry.io',
+      // OpenObserve RUM & logs
+      'https://console-observe.agora-schools.com',
     ];
     if (apiUrl && !connectSources.includes(apiUrl)) {
       connectSources.push(apiUrl);
@@ -58,14 +53,9 @@ const nextConfig = {
       },
     ];
   },
-  // --- ADD THIS BLOCK TO IGNORE ERRORS ---
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
     ignoreBuildErrors: true,
   },
-  // Redirect legacy /teachers routes to /staff (staff is now the canonical section)
   async redirects() {
     return [
       { source: '/dashboard/school/teachers', destination: '/dashboard/school/staff', permanent: true },
@@ -73,22 +63,6 @@ const nextConfig = {
       { source: '/dashboard/school/teachers/:id', destination: '/dashboard/school/staff/:id', permanent: true },
     ];
   },
-  // ---------------------------------------
 };
 
-module.exports = withSentryConfig(
-  nextConfig,
-  {
-    silent: true,
-    org: "agora-education",
-    project: "agora-frontend",
-  },
-  {
-    widenClientFileUpload: true,
-    transpileClientSDK: true,
-    // tunnelRoute: "/monitoring", // Disabled tunneling for troubleshooting
-    hideSourceMaps: true,
-    disableLogger: false, // Enable logger to see more info
-    automaticVercelMonitors: true,
-  }
-);
+module.exports = nextConfig;

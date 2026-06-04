@@ -4,7 +4,8 @@ import './globals.css';
 import StoreProvider from '@/lib/store/StoreProvider';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
-import * as Sentry from "@sentry/nextjs";
+import { RumProvider } from '@/lib/observability/RumProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -139,21 +140,12 @@ export default function RootLayout({
       <body className={montserrat.className} suppressHydrationWarning={true}>
         <ThemeProvider>
           <StoreProvider>
-            <Sentry.ErrorBoundary fallback={<div className="min-h-screen flex items-center justify-center p-4 bg-[var(--dark-bg)] text-white text-center">
-              <div>
-                <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-                <p className="opacity-70 mb-6">Our team has been notified. Please try refreshing the page.</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-2 bg-agora-blue rounded-lg hover:bg-agora-blue-dark transition-colors"
-                >
-                  Refresh Page
-                </button>
-              </div>
-            </div>}>
-              {children}
-            </Sentry.ErrorBoundary>
-            <Toaster position="top-right" />
+            <RumProvider>
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
+              <Toaster position="top-right" />
+            </RumProvider>
           </StoreProvider>
         </ThemeProvider>
       </body>

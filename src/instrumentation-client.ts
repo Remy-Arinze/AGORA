@@ -1,17 +1,5 @@
-import * as Sentry from "@sentry/nextjs";
-
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
-
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 1.0,
-  debug: false,
-  replaysOnErrorSampleRate: 1.0,
-  replaysSessionSampleRate: 0.1,
-  integrations: [
-    Sentry.replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-  ],
-});
+// Client-side instrumentation entry point (Next.js)
+// OpenObserve RUM is initialised inside RumProvider (src/lib/observability/RumProvider.tsx)
+// so it can access the Redux store for user context.
+// Nothing to do here.
+export {};
