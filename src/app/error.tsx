@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
-import * as Sentry from '@sentry/nextjs';
+import { openobserveLogs } from '@openobserve/browser-logs';
 
 /**
  * Root error boundary — catches any uncaught error inside the root layout's {children}.
@@ -19,11 +19,11 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Report to Sentry in production; log in dev
     if (process.env.NODE_ENV === 'production') {
-      Sentry.captureException(error, {
-        tags: { boundary: 'root-error' },
-        extra: { digest: error.digest },
+      openobserveLogs.logger.error('[RootError Boundary]', {
+        message: error.message,
+        digest: error.digest,
+        boundary: 'root-error',
       });
     } else {
       console.error('[RootError Boundary]', error);

@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { setCredentials, logout } from '../slices/authSlice';
-import * as Sentry from '@sentry/nextjs';
+import { openobserveLogs } from '@openobserve/browser-logs';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
@@ -28,12 +28,9 @@ const baseQueryWithReauth: BaseQueryFn<
   const state = api.getState() as { auth: { token?: string | null; refreshToken?: string | null; user?: any; tenantId?: string | null } };
   const user = state.auth.user;
 
-  // Update Sentry context
+  // Update OpenObserve user context
   if (user) {
-    Sentry.setUser({ id: user.id, email: user.email });
-  }
-  if (state.auth.tenantId) {
-    Sentry.setTag('schoolId', state.auth.tenantId);
+    openobserveLogs.logger.info('User context', { id: user.id, email: user.email });
   }
 
   let result = await baseQuery(args, api, extraOptions);
@@ -52,14 +49,16 @@ const baseQueryWithReauth: BaseQueryFn<
     }
   }
 
-  // If we get an error (except 401 which is handled below), report to Sentry
+  // Log API errors to OpenObserve (skip 401/404 — handled below / expected)
   if (result.error && result.error.status !== 401 && result.error.status !== 404) {
     const error = result.error;
-    Sentry.withScope((scope) => {
-      scope.setExtra('apiArgs', args);
-      scope.setExtra('apiError', error);
-      Sentry.captureException(new Error(`API Error ${error.status}: ${JSON.stringify(error.data)}`));
-    });
+    if (typeof window !== 'undefined') {
+      openobserveLogs.logger.error('API Error', {
+        status: error.status,
+        data: error.data,
+        url: typeof args === 'string' ? args : (args as FetchArgs).url,
+      });
+    }
   }
 
   // If we get a 401, try to refresh the token

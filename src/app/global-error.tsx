@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import * as Sentry from '@sentry/nextjs';
+// global-error renders before any providers, so we log directly to console here.
+// OpenObserve's forwardErrorsToLogs picks up unhandled errors automatically.
 
 /**
  * global-error.tsx — the nuclear option.
@@ -22,14 +23,10 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
-      Sentry.captureException(error, {
-        tags: { boundary: 'global-error' },
-        extra: { digest: error.digest },
-      });
-    } else {
-      console.error('[GlobalError Boundary]', error);
-    }
+    // global-error renders before any providers (no OpenObserve context available)
+    // so we fall back to console.error in all environments; the error will still
+    // be forwarded to OpenObserve by forwardErrorsToLogs once the SDK loads.
+    console.error('[GlobalError Boundary]', error);
   }, [error]);
 
   const isChunkError =
