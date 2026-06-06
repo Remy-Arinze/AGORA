@@ -4,6 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { Theme } from '@/contexts/ThemeContext';
 import { Button } from './Button';
 import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 const CYCLE: Theme[] = ['light', 'dark', 'system'];
 
@@ -39,11 +40,19 @@ const LABELS: Record<Theme, string> = {
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleClick = () => {
     const next = CYCLE[(CYCLE.indexOf(theme) + 1) % CYCLE.length];
     setTheme(next);
   };
+
+  // Don't render until mounted so the icon always matches the real stored theme
+  if (!mounted) {
+    return <div className={cn('h-9 w-9', className)} />;
+  }
 
   return (
     <Button

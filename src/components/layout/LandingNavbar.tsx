@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { ThemeDropdown } from '../ui/ThemeDropdown';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 
@@ -107,9 +108,10 @@ export function LandingNavbar() {
         return pathname.startsWith(href);
     };
 
-    // Determine navbar style based on section
-    // If the global theme is light, we MUST use light navbar styles
-    const forceLightNavbar = resolvedTheme === 'light';
+    // Determine navbar style based on section.
+    // Before mount we don't know the resolved theme, so treat as dark (safe default
+    // since the hero is dark and the inline script already set the right class).
+    const forceLightNavbar = isMounted && resolvedTheme === 'light';
     const useLightNavbar = forceLightNavbar || (isHomePage ? isLightSection : true);
 
     const logoColor = useLightNavbar ? 'bg-blue-600 dark:bg-blue-500' : 'bg-white';
@@ -151,7 +153,7 @@ export function LandingNavbar() {
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`relative text-sm font-semibold transition-colors pb-1 ${isActive(link.href) ? activeLinkColor : linkColor
+                                    className={`relative text-sm font-medium transition-colors pb-1 ${isActive(link.href) ? activeLinkColor : linkColor
                                         }`}
                                 >
                                     {link.label}
@@ -168,6 +170,7 @@ export function LandingNavbar() {
                         <div className="hidden md:flex items-center space-x-4">
                             {isMounted && !user && (
                                 <div className="flex items-center space-x-3">
+                                    <ThemeDropdown />
                                     <Link href="/auth/login">
                                         <Button variant="ghost" size="sm" isFlat className={cn("px-5 font-bold", textColor)}>
                                             Login
@@ -181,22 +184,24 @@ export function LandingNavbar() {
                                 </div>
                             )}
                             {isMounted && user && (
-                                <Button
-                                    variant="danger"
-                                    size="sm"
-                                    isFlat
-                                    onClick={logout}
-                                    className="rounded px-6 font-bold text-white"
-                                >
-                                    Logout
-                                </Button>
+                                <div className="flex items-center space-x-3">
+                                    <ThemeDropdown />
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
+                                        isFlat
+                                        onClick={logout}
+                                        className="rounded px-6 font-bold text-white"
+                                    >
+                                        Logout
+                                    </Button>
+                                </div>
                             )}
-                            <ThemeToggle />
                         </div>
 
                         {/* Mobile Menu Button */}
                         <div className="md:hidden flex items-center gap-3">
-                            <ThemeToggle />
+                            <ThemeDropdown />
                             <button
                                 onClick={toggleMobileMenu}
                                 className={`p-2 rounded-md transition-colors ${textColor}`}

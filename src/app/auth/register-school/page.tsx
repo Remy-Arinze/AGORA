@@ -14,6 +14,10 @@ export default function RegisterSchoolPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
+    // react-international-phone always carries at least the dial code (e.g. "+234")
+    // A valid phone needs at least 7 digits total (dial code + subscriber number)
+    const isPhoneFilled = (val: string) => val.replace(/\D/g, '').length >= 7;
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -306,22 +310,22 @@ export default function RegisterSchoolPage() {
                             isFlat={!(
                                 formData.name.trim() &&
                                 formData.email.trim() &&
-                                formData.phone.trim() &&
+                                isPhoneFilled(formData.phone) &&
                                 (formData.hasPrimary || formData.hasSecondary || formData.hasTertiary) &&
                                 formData.ownerFirstName.trim() &&
                                 formData.ownerLastName.trim() &&
                                 formData.ownerEmail.trim() &&
-                                formData.ownerPhone.trim()
+                                isPhoneFilled(formData.ownerPhone)
                             )}
                             disabled={
                                 !formData.name.trim() ||
                                 !formData.email.trim() ||
-                                !formData.phone.trim() ||
+                                !isPhoneFilled(formData.phone) ||
                                 !(formData.hasPrimary || formData.hasSecondary || formData.hasTertiary) ||
                                 !formData.ownerFirstName.trim() ||
                                 !formData.ownerLastName.trim() ||
                                 !formData.ownerEmail.trim() ||
-                                !formData.ownerPhone.trim()
+                                !isPhoneFilled(formData.ownerPhone)
                             }
                         >
                             Submit Registration

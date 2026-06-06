@@ -466,31 +466,35 @@ function ProfilePageContent() {
 
         {/* Super Admin Profile - Personal Info Tab */}
         {isSuperAdmin && activeTab === 'personal' && (
-          <Card className="mb-6 overflow-hidden border-none shadow-premium bg-white dark:bg-[#151a23]">
-            <CardContent className="p-0">
-              <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-light-border dark:divide-dark-border">
-                {/* Left: Avatar and Basic Info */}
-                <div className="flex flex-col items-center justify-center p-10 bg-gray-50/50 dark:bg-gray-800/10 md:w-80">
-                  <ProfileAvatarUpload
-                    currentImage={user?.profileImage || null}
-                    firstName={user?.firstName || null}
-                    lastName={user?.lastName || null}
-                    size="lg"
-                    onImageUpdate={(url) => {
-                      // Update Redux state if needed
-                    }}
-                  />
-                  <div className="mt-6 text-center">
-                    <h2 className="text-2xl font-bold text-light-text-primary dark:text-white">
-                      {user?.firstName && user?.lastName
-                        ? `${user.firstName} ${user.lastName}`
-                        : user?.email || 'Super Admin'}
-                    </h2>
-                    <div className="mt-2 flex items-center justify-center gap-2">
-                      <span className="px-3 py-1 bg-[#2490FD]/10 text-[#2490FD] text-xs font-bold uppercase tracking-wider rounded-full">
+          <FadeInUp duration={0.4}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left column — identity card */}
+              <div className="lg:col-span-4 space-y-4">
+                {/* Avatar card */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2490FD] to-[#1a6fcc] p-6 text-white shadow-xl shadow-blue-500/20">
+                  <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+                  <div className="absolute -bottom-10 -left-6 w-40 h-40 rounded-full bg-white/5 blur-3xl" />
+                  <div className="relative flex flex-col items-center text-center gap-4">
+                    <ProfileAvatarUpload
+                      currentImage={user?.profileImage || null}
+                      firstName={user?.firstName || null}
+                      lastName={user?.lastName || null}
+                      size="lg"
+                      onImageUpdate={(url) => {}}
+                    />
+                    <div>
+                      <h2 className="text-xl font-bold leading-tight">
+                        {user?.firstName && user?.lastName
+                          ? `${user.firstName} ${user.lastName}`
+                          : user?.email?.split('@')[0] || 'Super Admin'}
+                      </h2>
+                      <p className="text-sm text-blue-100 mt-0.5 opacity-80">{user?.email}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider rounded-full">
                         Super Admin
                       </span>
-                      <span className="px-3 py-1 bg-green-500/10 text-green-500 text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
+                      <span className="px-3 py-1 bg-green-400/20 backdrop-blur-sm text-green-200 text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" />
                         Verified
                       </span>
@@ -498,151 +502,122 @@ function ProfilePageContent() {
                   </div>
                 </div>
 
-                {/* Right: Personal Information Fields */}
-                <div className="flex-1 p-10 space-y-8">
-                  <div>
-                    <h3 className="text-lg font-bold text-light-text-primary dark:text-white mb-6 flex items-center gap-2">
-                      <User className="h-5 w-5 text-[#2490FD]" />
-                      Personal Details
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                      {/* First Name */}
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
-                          First Name
-                        </label>
-                        {editingFirstName ? (
-                          <div className="flex items-center gap-2 pt-1">
-                            <Input
-                              value={firstNameValue}
-                              onChange={(e) => setFirstNameValue(e.target.value)}
-                              className="flex-1"
-                              autoFocus
-                            />
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              onClick={() => {
-                                setEditingFirstName(false);
-                                toast.success('First name updated');
-                              }}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setFirstNameValue(user?.firstName || '');
-                                setEditingFirstName(false);
-                              }}
-                            >
-                              ✕
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center group">
-                            <p className="text-base font-medium text-light-text-primary dark:text-white">
-                              {user?.firstName || 'Not set'}
-                            </p>
-                            <button
-                              onClick={() => setEditingFirstName(true)}
-                              className="ml-2 p-1 text-light-text-muted hover:text-[#2490FD] opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        )}
+                {/* Info card */}
+                <div className="rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-[#151a23] p-5 space-y-4">
+                  <h4 className="text-xs font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">Account</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                        <Mail className="h-4 w-4 text-[#2490FD]" />
                       </div>
-
-                      {/* Last Name */}
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
-                          Last Name
-                        </label>
-                        {editingLastName ? (
-                          <div className="flex items-center gap-2 pt-1">
-                            <Input
-                              value={lastNameValue}
-                              onChange={(e) => setLastNameValue(e.target.value)}
-                              className="flex-1"
-                              autoFocus
-                            />
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              onClick={() => {
-                                setEditingLastName(false);
-                                toast.success('Last name updated');
-                              }}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setLastNameValue(user?.lastName || '');
-                                setEditingLastName(false);
-                              }}
-                            >
-                              ✕
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center group">
-                            <p className="text-base font-medium text-light-text-primary dark:text-white">
-                              {user?.lastName || 'Not set'}
-                            </p>
-                            <button
-                              onClick={() => setEditingLastName(true)}
-                              className="ml-2 p-1 text-light-text-muted hover:text-[#2490FD] opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Email */}
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
-                          Email Address
-                        </label>
-                        <p className="text-base font-medium text-light-text-primary dark:text-white pt-1">
-                          {user?.email || 'Not set'}
-                        </p>
-                      </div>
-
-                      {/* Phone (Placeholder as Super Admin doesn't have it in mock) */}
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
-                          Phone Number
-                        </label>
-                        <p className="text-base font-medium text-light-text-muted dark:text-dark-text-muted pt-1 italic">
-                          Not verified
-                        </p>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">Email</p>
+                        <p className="text-sm font-medium text-light-text-primary dark:text-white truncate">{user?.email || '—'}</p>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/20">
-                    <div className="flex gap-3">
-                      <div className="shrink-0 p-2 bg-blue-600 rounded-lg">
-                        <Globe className="h-4 w-4 text-white" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+                        <Globe className="h-4 w-4 text-purple-500" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">Global Account</h4>
-                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                          You have elevated administrative privileges. Any changes to your account security will propagate across all Agora services.
-                        </p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">Access Level</p>
+                        <p className="text-sm font-medium text-light-text-primary dark:text-white">Global — All Schools</p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Right column — editable details */}
+              <div className="lg:col-span-8 space-y-4">
+                <div className="rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-[#151a23] p-6 lg:p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-light-text-primary dark:text-white">Personal Details</h3>
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-0.5">Hover any field to edit</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                      <User className="h-5 w-5 text-[#2490FD]" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* First Name */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">
+                        First Name
+                      </label>
+                      {editingFirstName ? (
+                        <div className="flex items-center gap-2">
+                          <Input value={firstNameValue} onChange={(e) => setFirstNameValue(e.target.value)} className="flex-1" autoFocus />
+                          <Button size="sm" variant="primary" onClick={() => { setEditingFirstName(false); toast.success('First name updated'); }}>Save</Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setFirstNameValue(user?.firstName || ''); setEditingFirstName(false); }}>✕</Button>
+                        </div>
+                      ) : (
+                        <div className="group flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/30 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer" onClick={() => setEditingFirstName(true)}>
+                          <p className="flex-1 text-base font-semibold text-light-text-primary dark:text-white">{user?.firstName || <span className="text-light-text-muted italic font-normal">Not set</span>}</p>
+                          <Edit className="h-3.5 w-3.5 text-light-text-muted opacity-0 group-hover:opacity-100 group-hover:text-[#2490FD] transition-all" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Last Name */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">
+                        Last Name
+                      </label>
+                      {editingLastName ? (
+                        <div className="flex items-center gap-2">
+                          <Input value={lastNameValue} onChange={(e) => setLastNameValue(e.target.value)} className="flex-1" autoFocus />
+                          <Button size="sm" variant="primary" onClick={() => { setEditingLastName(false); toast.success('Last name updated'); }}>Save</Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setLastNameValue(user?.lastName || ''); setEditingLastName(false); }}>✕</Button>
+                        </div>
+                      ) : (
+                        <div className="group flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/30 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer" onClick={() => setEditingLastName(true)}>
+                          <p className="flex-1 text-base font-semibold text-light-text-primary dark:text-white">{user?.lastName || <span className="text-light-text-muted italic font-normal">Not set</span>}</p>
+                          <Edit className="h-3.5 w-3.5 text-light-text-muted opacity-0 group-hover:opacity-100 group-hover:text-[#2490FD] transition-all" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Email — read only */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">
+                        Email Address
+                      </label>
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/30">
+                        <p className="flex-1 text-base font-semibold text-light-text-primary dark:text-white">{user?.email || '—'}</p>
+                        <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">Verified</span>
+                      </div>
+                    </div>
+
+                    {/* Phone — read only placeholder */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-light-text-muted dark:text-dark-text-muted uppercase tracking-wider">
+                        Phone Number
+                      </label>
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/30">
+                        <p className="flex-1 text-base text-light-text-muted dark:text-dark-text-muted italic">Not set</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notice banner */}
+                <div className="flex gap-4 items-start p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 border border-blue-100 dark:border-blue-900/30">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+                    <Globe className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">Global Account</h4>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5 leading-relaxed">
+                      Your account has elevated privileges across all Agora services. Security changes take effect immediately.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </FadeInUp>
         )}
 
         {/* Security / Password Tab */}

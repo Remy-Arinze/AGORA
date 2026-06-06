@@ -18,8 +18,9 @@ const RUM_OPTIONS = {
 let initialized = false;
 
 export function initOpenObserve() {
-  // Only initialise once, and only in the browser
+  // Only initialise once, only in the browser, and only in production
   if (initialized || typeof window === 'undefined') return;
+  if (process.env.NODE_ENV !== 'production') return;
   initialized = true;
 
   openobserveRum.init({

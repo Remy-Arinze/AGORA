@@ -30,13 +30,14 @@ function applyTheme(resolved: 'light' | 'dark') {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('agora-theme') as Theme | null;
-    const initial: Theme = stored ?? 'system';
+    // Default to light if nothing stored
+    const initial: Theme = stored ?? 'light';
     const resolved = initial === 'system' ? getSystemPreference() : initial;
 
     setThemeState(initial);

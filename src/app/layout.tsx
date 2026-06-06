@@ -89,7 +89,9 @@ export default function RootLayout({
               try {
                 var stored = localStorage.getItem('agora-theme');
                 var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                var theme = stored ? stored : (prefersDark ? 'dark' : 'light');
+                var theme = stored === 'dark' ? 'dark'
+                          : stored === 'system' ? (prefersDark ? 'dark' : 'light')
+                          : 'light';
                 if (theme === 'dark') {
                   document.documentElement.classList.add('dark');
                   document.documentElement.classList.remove('light');
