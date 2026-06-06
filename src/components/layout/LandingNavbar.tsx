@@ -11,7 +11,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 
 export function LandingNavbar() {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const { user, logout } = useAuth();
     const pathname = usePathname();
     const isHomePage = pathname === '/';
@@ -109,7 +109,7 @@ export function LandingNavbar() {
 
     // Determine navbar style based on section
     // If the global theme is light, we MUST use light navbar styles
-    const forceLightNavbar = theme === 'light';
+    const forceLightNavbar = resolvedTheme === 'light';
     const useLightNavbar = forceLightNavbar || (isHomePage ? isLightSection : true);
 
     const logoColor = useLightNavbar ? 'bg-blue-600 dark:bg-blue-500' : 'bg-white';

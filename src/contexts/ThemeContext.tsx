@@ -2,55 +2,78 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme: () => void;
+  resolvedTheme: 'light' | 'dark'; // what's actually applied
+  setTheme: (t: Theme) => void;
   isDashboardRoute: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getSystemPreference(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'dark';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(resolved: 'light' | 'dark') {
+  const root = document.documentElement;
+  if (resolved === 'dark') {
+    root.classList.add('dark');
+    root.classList.remove('light');
+  } else {
+    root.classList.add('light');
+    root.classList.remove('dark');
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('system');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Check local storage or system preference
-    const storedTheme = localStorage.getItem('agora-theme') as Theme | null;
-    const initialTheme = storedTheme || 'dark';
+    const stored = localStorage.getItem('agora-theme') as Theme | null;
+    const initial: Theme = stored ?? 'system';
+    const resolved = initial === 'system' ? getSystemPreference() : initial;
 
-    setTheme(initialTheme);
+    setThemeState(initial);
+    setResolvedTheme(resolved);
+    applyTheme(resolved);
     setMounted(true);
-
-    applyTheme(initialTheme);
   }, []);
 
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement;
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
+  // Listen for OS-level changes when theme is 'system'
+  useEffect(() => {
+    if (!mounted) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => {
+      if (theme === 'system') {
+        const resolved = e.matches ? 'dark' : 'light';
+        setResolvedTheme(resolved);
+        applyTheme(resolved);
+      }
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [theme, mounted]);
+
+  const setTheme = (newTheme: Theme) => {
+    const resolved = newTheme === 'system' ? getSystemPreference() : newTheme;
+    setThemeState(newTheme);
+    setResolvedTheme(resolved);
+    applyTheme(resolved);
+    if (newTheme === 'system') {
+      localStorage.removeItem('agora-theme');
     } else {
-      root.classList.add('light');
-      root.classList.remove('dark');
+      localStorage.setItem('agora-theme', newTheme);
     }
   };
 
-  const toggleTheme = () => {
-    setTheme((prevTheme) => {
-      const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-      localStorage.setItem('agora-theme', newTheme);
-      applyTheme(newTheme);
-      return newTheme;
-    });
-  };
-
-  // We still render children safely to avoid flash of hidden content, but the class won't be applied until useEffect runs.
-  // suppressHydrationWarning in layout.tsx helps here.
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDashboardRoute: true }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, isDashboardRoute: true }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -58,8 +81,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
+  if (!context) throw new Error('useTheme must be used within a ThemeProvider');
   return context;
 }
