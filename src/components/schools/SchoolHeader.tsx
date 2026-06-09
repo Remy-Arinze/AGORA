@@ -15,9 +15,13 @@ interface SchoolHeaderProps {
   onReject?: () => void;
   onActivate?: () => void;
   onDeactivate?: () => void;
+  isVerifying?: boolean;
+  isRejecting?: boolean;
+  isActivating?: boolean;
+  isDeactivating?: boolean;
 }
 
-export function SchoolHeader({ school, onEdit, onDelete, onVerify, onReject, onActivate, onDeactivate }: SchoolHeaderProps) {
+export function SchoolHeader({ school, onEdit, onDelete, onVerify, onReject, onActivate, onDeactivate, isVerifying, isRejecting, isActivating, isDeactivating }: SchoolHeaderProps) {
   return (
     <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} className="mb-8">
       <BackButton className="mb-4" />
@@ -78,15 +82,19 @@ export function SchoolHeader({ school, onEdit, onDelete, onVerify, onReject, onA
                 variant="primary"
                 size="sm"
                 onClick={onVerify}
+                isLoading={isVerifying}
+                disabled={isVerifying}
                 className="bg-green-600 hover:bg-green-700 text-white font-medium"
                 style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
               >
-                Approve
+                {isVerifying ? 'Approving…' : 'Approve'}
               </Button>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={onReject}
+                isLoading={isRejecting}
+                disabled={isRejecting}
                 className="text-red-600 border-red-200 hover:bg-red-50 font-medium"
                 style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
               >
@@ -101,20 +109,24 @@ export function SchoolHeader({ school, onEdit, onDelete, onVerify, onReject, onA
                 variant="secondary"
                 size="sm"
                 onClick={onDeactivate}
+                isLoading={isDeactivating}
+                disabled={isDeactivating}
                 className="text-orange-600 border-orange-200 hover:bg-orange-50 font-medium"
                 style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
               >
-                Deactivate
+                {isDeactivating ? 'Deactivating…' : 'Deactivate'}
               </Button>
             ) : (
               <Button
                 variant="primary"
                 size="sm"
                 onClick={onActivate}
+                isLoading={isActivating}
+                disabled={isActivating}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
               >
-                Activate
+                {isActivating ? 'Activating…' : 'Activate'}
               </Button>
             )
           )}

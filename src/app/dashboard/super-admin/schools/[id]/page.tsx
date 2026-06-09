@@ -514,6 +514,10 @@ export default function SchoolDetailPage() {
           onReject={() => setShowRejectSchoolModal(true)}
           onActivate={() => setShowActivateSchoolModal(true)}
           onDeactivate={() => setShowDeactivateSchoolModal(true)}
+          isVerifying={isVerifying}
+          isRejecting={isRejecting}
+          isActivating={isActivating}
+          isDeactivating={isDeactivating}
         />
 
         {/* School Details */}

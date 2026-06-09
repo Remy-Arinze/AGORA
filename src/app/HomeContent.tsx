@@ -737,8 +737,8 @@ export default function HomeContent() {
       <section data-navbar-light="true" className="py-32 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16 md:mb-24 px-4">
-            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
-              System_Protocol_v2.0
+            <span className="inline-block text-agora-blue text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+              How we do it
             </span>
             <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tighter leading-[1.1]">
               Unified Data <br /> Infrastructure
@@ -808,7 +808,7 @@ export default function HomeContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-16">
-            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+            <span className="inline-block text-agora-blue text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
               Pricing
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-[var(--dark-text-primary)] mb-4 font-heading">
@@ -833,174 +833,27 @@ export default function HomeContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimateInView className="text-center mb-20 px-4">
-            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
+            <span className="inline-block text-agora-blue text-[10px] font-mono mb-6 uppercase tracking-[0.3em]">
               The_Agora_Network
             </span>
             <h2 className="text-4xl md:text-6xl font-bold text-[var(--dark-text-primary)] mb-8 font-heading tracking-tight leading-[1.1]">
-              Schools Already <br className="md:hidden" /> Using Agora
+              Schools Are Already <br className="md:hidden" /> Using Agora
             </h2>
             <p className="text-base md:text-xl text-[var(--dark-text-secondary)] max-w-2xl mx-auto leading-relaxed font-light">
               Join the growing ecosystem of world-class institutions digitizing the future of African education.
             </p>
           </AnimateInView>
 
-          <AnimateInView delay={0.2} className="relative">
-            <div className="relative py-6 md:py-10">
-              {schoolsLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto auto-rows-[minmax(100px,auto)]">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div
-                      key={i}
-                      className={`rounded-2xl bg-[var(--dark-surface)]/30 border border-[var(--dark-border)] animate-pulse ${i === 1 ? 'col-span-2 row-span-2 min-h-[220px]' : 'min-h-[100px]'}`}
-                    />
-                  ))}
-                </div>
-              ) : schools && schools.length > 0 ? (
-                <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto auto-rows-[minmax(96px,auto)]">
-                  {(() => {
-                    const featured = schools[currentFeaturedIndex];
-                    const others = schools.filter((_, index) => index !== currentFeaturedIndex);
-                    return (
-                      <>
-                        <div
-                          ref={featuredCardRef}
-                          key={featured.id}
-                          className="col-span-2 row-span-2 group rounded-2xl bg-[var(--dark-surface)]/25 border border-[var(--dark-border)] backdrop-blur-xl p-6 md:p-8 flex flex-col justify-between min-h-[220px] hover:border-agora-blue/35 hover:bg-[var(--dark-surface)]/40"
-                        >
-                          <div>
-                            <span className="text-[10px] font-mono text-agora-blue/80 uppercase tracking-[0.25em] mb-3 block">
-                              Featured network node
-                            </span>
-                            <div className="flex items-start gap-5">
-                              <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-2 shrink-0 group-hover:scale-[1.02] transition-transform duration-500">
-                                {featured.logo ? (
-                                  <Image
-                                    src={featured.logo}
-                                    alt={featured.name}
-                                    width={80}
-                                    height={80}
-                                    className="w-full h-full object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                                  />
-                                ) : (
-                                  <span className="text-agora-blue font-bold text-2xl font-heading">
-                                    {featured.name.substring(0, 2).toUpperCase()}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h3 className="text-lg md:text-2xl font-bold text-[var(--dark-text-primary)] font-heading leading-tight truncate">
-                                    {featured.name}
-                                  </h3>
-                                  <span className="w-2 h-2 rounded-full bg-agora-success shrink-0 animate-pulse" />
-                                </div>
-                                <div className="flex items-center gap-2 mb-3">
-                                  <span className="text-xs font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
-                                    {featured.state || 'Nigeria'}
-                                  </span>
-                                  <span className="text-xs text-[var(--dark-text-muted)]">•</span>
-                                  <span className="text-xs font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
-                                    {featured.type}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-[var(--dark-text-secondary)] font-light leading-relaxed">
-                                  Leading digital transformation in education with comprehensive school management solutions.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        {others.map((school, idx) => (
-                          <div
-                            ref={(el) => { cardRefs.current[idx] = el; }}
-                            key={school.id}
-                            className="group rounded-2xl bg-[var(--dark-surface)]/20 border border-[var(--dark-border)] backdrop-blur-xl p-4 md:p-5 flex flex-col justify-between min-h-[112px] hover:border-agora-blue/30 hover:bg-[var(--dark-surface)]/35"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[var(--dark-bg)]/50 border border-[var(--dark-border)] flex items-center justify-center p-1.5 shrink-0 group-hover:scale-105 transition-transform duration-500">
-                                {school.logo ? (
-                                  <Image
-                                    src={school.logo}
-                                    alt={school.name}
-                                    width={44}
-                                    height={44}
-                                    className="w-full h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                                  />
-                                ) : (
-                                  <span className="text-agora-blue font-bold text-sm font-heading">
-                                    {school.name.substring(0, 2).toUpperCase()}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs md:text-sm font-bold text-[var(--dark-text-primary)] truncate font-heading mb-1">
-                                  {school.name}
-                                </p>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase tracking-wider">
-                                    {school.state || 'NG'}
-                                  </span>
-                                  <span className="text-[8px] text-[var(--dark-text-muted)]">•</span>
-                                  <span className="text-[8px] font-mono text-[var(--dark-text-muted)] uppercase">
-                                    {school.type}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="max-w-xl mx-auto text-center rounded-2xl border border-[var(--dark-border)] bg-[var(--dark-surface)]/15 px-6 py-10">
-                  <p className="text-sm text-[var(--dark-text-secondary)] font-light">
-                    Partner schools will appear here as they join the network.
-                  </p>
-                </div>
-              )}
-            </div>
-          </AnimateInView>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 md:py-40 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-agora-blue/5 rounded-full blur-[160px] pointer-events-none" />
-        </div>
-
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-full opacity-[0.07]">
-            <div className="absolute top-20 left-20 w-96 h-96 bg-agora-blue rounded-full blur-[100px] animate-pulse" />
-            <div className="absolute bottom-20 right-20 w-[600px] h-[600px] bg-agora-accent rounded-full blur-[120px] animate-pulse delay-1000" />
-          </div>
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <AnimateInView duration={0.8}>
-            <span className="inline-block px-4 py-1.5 bg-agora-blue/10 border border-agora-blue/20 text-agora-blue rounded-full text-[10px] font-mono mb-10 uppercase tracking-[0.4em]">
-              Final_Protocol_Handshake
-            </span>
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-[var(--dark-text-primary)] mb-8 leading-[1.05] tracking-tight font-heading">
-              Experience the Future of <br className="hidden md:block" /> School Management
-            </h2>
-            <p className="text-lg md:text-2xl text-[var(--dark-text-secondary)] mb-14 max-w-3xl mx-auto leading-relaxed font-light">
-              Join schools, parents, and students building the future of digital education identity.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <Button
-                size="md"
-                variant="primary"
-                isFlat
-                onClick={handleGetStarted}
-                className="rounded-lg hover:scale-105 font-bold transition-all shadow-[0_0_30px_rgba(36,144,253,0.3)] bg-agora-blue hover:bg-agora-blue/90"
-              >
-                {isLoggedIn ? 'Go to Dashboard' : 'Get Started Free'}
-              </Button>
-            </div>
+          <AnimateInView delay={0.2} className="flex justify-center pt-4">
+            <Button
+              size="md"
+              variant="primary"
+              isFlat
+              onClick={handleGetStarted}
+              className="rounded hover:scale-105 font-bold bg-agora-blue text-white hover:bg-agora-blue/90 px-10"
+            >
+              {isLoggedIn ? 'Go to Dashboard' : 'Get Started Free'}
+            </Button>
           </AnimateInView>
         </div>
       </section>

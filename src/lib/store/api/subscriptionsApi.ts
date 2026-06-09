@@ -212,6 +212,15 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       providesTags: ['Subscription'],
     }),
 
+    // Get a specific school's subscription tier (Super Admin only)
+    getSchoolSubscriptionTier: builder.query<
+      { success: boolean; data: { tier: string; isActive: boolean } },
+      string
+    >({
+      query: (schoolId) => `/schools/${schoolId}/subscription-tier`,
+      providesTags: (_r, _e, schoolId) => [{ type: 'Subscription', id: `school-${schoolId}` }],
+    }),
+
     getBillingUiFlags: builder.query<ResponseDto<BillingUiFlagsDto | null>, void>({
       query: () => '/subscriptions/billing/ui-flags',
       providesTags: ['Subscription'],
@@ -327,6 +336,7 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
 export const {
   useGetMySubscriptionQuery,
   useGetSubscriptionSummaryQuery,
+  useGetSchoolSubscriptionTierQuery,
   useGetBillingUiFlagsQuery,
   useGetAdminBillingStateQuery,
   useGetDowngradePreviewQuery,

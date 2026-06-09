@@ -1,61 +1,128 @@
 'use client';
 
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { School } from '@/hooks/useSchools';
-import { Users, UserCog, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Users, UserCog, Clock, CheckCircle2, XCircle, CreditCard } from 'lucide-react';
 
 interface SchoolStatsCardProps {
   school: School;
+  subscriptionTier?: string | null;
 }
 
-export function SchoolStatsCard({ school }: SchoolStatsCardProps) {
+const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  FREE:     { bg: 'bg-gray-100 dark:bg-gray-800',         text: 'text-gray-600 dark:text-gray-400',   label: 'Free'      },
+  PRO:      { bg: 'bg-blue-100 dark:bg-blue-900/30',      text: 'text-blue-700 dark:text-blue-400',   label: 'Pro'       },
+  PRO_PLUS: { bg: 'bg-purple-100 dark:bg-purple-900/30',  text: 'text-purple-700 dark:text-purple-400', label: 'Pro Plus' },
+  CUSTOM:   { bg: 'bg-amber-100 dark:bg-amber-900/30',    text: 'text-amber-700 dark:text-amber-400', label: 'Custom'    },
+};
+
+function StatRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between p-4 bg-light-bg dark:bg-dark-surface rounded-lg">
-        <div className="flex items-center gap-3">
-          <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
-          <span className="text-light-text-secondary dark:text-dark-text-secondary">Teachers</span>
-        </div>
-        <span className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-          {school.teachersCount}
-        </span>
-      </div>
-      <div className="flex items-center justify-between p-4 bg-light-bg dark:bg-dark-surface rounded-lg">
-        <div className="flex items-center gap-3">
-          <UserCog className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          <span className="text-light-text-secondary dark:text-dark-text-secondary">Admins</span>
-        </div>
-        <span className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-          {school.admins.length}
-        </span>
-      </div>
-      <div className="flex items-center justify-between p-4 bg-light-bg dark:bg-dark-surface rounded-lg">
-        <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-          <span className="text-light-text-secondary dark:text-dark-text-secondary">Created</span>
-        </div>
-        <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-          {new Date(school.createdAt).toLocaleDateString()}
-        </span>
-      </div>
-      <div className="flex items-center justify-between p-4 bg-light-bg dark:bg-dark-surface rounded-lg">
-        <span className="text-light-text-secondary dark:text-dark-text-secondary">Status</span>
+    <div className="flex items-center justify-between py-2 px-3 bg-[var(--light-bg)] dark:bg-[var(--dark-surface)] rounded-lg">
+      <div className="flex items-center gap-2">
+        {icon}
         <span
-          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-            school.isActive
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-          }`}
+          className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]"
+          style={{ fontSize: 'var(--text-body)' }}
         >
-          {school.isActive ? (
-            <CheckCircle2 className="h-3 w-3" />
-          ) : (
-            <XCircle className="h-3 w-3" />
-          )}
-          {school.isActive ? 'Active' : 'Inactive'}
+          {label}
         </span>
       </div>
+      {value}
     </div>
   );
 }
 
+export function SchoolStatsCard({ school, subscriptionTier }: SchoolStatsCardProps) {
+  const tier = subscriptionTier?.toUpperCase() ?? 'FREE';
+  const tierStyle = TIER_STYLES[tier] ?? TIER_STYLES.FREE;
+
+  return (
+    <div className="space-y-2">
+      {/* Teachers */}
+      <StatRow
+        icon={<Users className="h-4 w-4 text-green-600 dark:text-green-400" />}
+        label="Teachers"
+        value={
+          <span
+            className="font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]"
+            style={{ fontSize: 'var(--text-section-title)' }}
+          >
+            {school.teachersCount}
+          </span>
+        }
+      />
+
+      {/* Admins */}
+      <StatRow
+        icon={<UserCog className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
+        label="Admins"
+        value={
+          <span
+            className="font-bold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]"
+            style={{ fontSize: 'var(--text-section-title)' }}
+          >
+            {school.admins.length}
+          </span>
+        }
+      />
+
+      {/* Created */}
+      <StatRow
+        icon={<Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
+        label="Created"
+        value={
+          <span
+            className="text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]"
+            style={{ fontSize: 'var(--text-body)' }}
+          >
+            {new Date(school.createdAt).toLocaleDateString()}
+          </span>
+        }
+      />
+
+      {/* Status */}
+      <StatRow
+        icon={
+          school.isActive
+            ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+            : <XCircle className="h-4 w-4 text-gray-400" />
+        }
+        label="Status"
+        value={
+          <span
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium ${
+              school.isActive
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+            }`}
+            style={{ fontSize: 'var(--text-small)' }}
+          >
+            {school.isActive ? 'Active' : 'Inactive'}
+          </span>
+        }
+      />
+
+      {/* Subscription tier */}
+      <StatRow
+        icon={<CreditCard className="h-4 w-4 text-[var(--agora-blue)]" />}
+        label="Plan"
+        value={
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full font-medium ${tierStyle.bg} ${tierStyle.text}`}
+            style={{ fontSize: 'var(--text-small)' }}
+          >
+            {tierStyle.label}
+          </span>
+        }
+      />
+    </div>
+  );
+}

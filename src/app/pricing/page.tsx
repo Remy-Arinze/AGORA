@@ -20,9 +20,8 @@ export default function PricingPage() {
               Plans &amp; pricing
             </h1>
             <p className="text-light-text-secondary dark:text-dark-text-secondary max-w-2xl mx-auto" style={{ fontSize: 'var(--text-body)' }}>
-              Transparent tiers for most schools, plus a <strong>Custom</strong> path when you&apos;re above{' '}
-              <strong>2,000 students</strong> or need tailored limits. School leaders can upgrade in-app; larger
-              institutions can request a quote — Super Admins curate custom plans in the dashboard.
+              Three tiers built around how schools actually grow — from small institutions getting started, to
+              large multi-campus networks. Free access is always available; upgrade when you need more.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
               <Link
@@ -42,7 +41,7 @@ export default function PricingPage() {
         </div>
 
         <Suspense fallback={<div className="animate-pulse bg-light-card dark:bg-dark-surface h-[600px] rounded-3xl border border-light-border dark:border-dark-border" />}>
-          <PricingTable showInstitutionPlanCard className="px-0" />
+          <PricingTable className="px-0" />
         </Suspense>
       </main>
     </div>

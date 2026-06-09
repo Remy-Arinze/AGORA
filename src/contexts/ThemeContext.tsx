@@ -36,8 +36,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem('agora-theme') as Theme | null;
-    // Default to light if nothing stored
-    const initial: Theme = stored ?? 'light';
+    // Default to light if nothing stored (first visit)
+    const initial: Theme = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'light';
     const resolved = initial === 'system' ? getSystemPreference() : initial;
 
     setThemeState(initial);
@@ -66,11 +66,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(newTheme);
     setResolvedTheme(resolved);
     applyTheme(resolved);
-    if (newTheme === 'system') {
-      localStorage.removeItem('agora-theme');
-    } else {
-      localStorage.setItem('agora-theme', newTheme);
-    }
+    // Always persist the chosen mode — including 'system' — so it survives reload
+    localStorage.setItem('agora-theme', newTheme);
   };
 
   return (
