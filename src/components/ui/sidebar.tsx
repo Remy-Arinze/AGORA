@@ -226,7 +226,7 @@ export const SidebarLink = ({
     className: cn(
       (link.icon as React.ReactElement)?.props?.className,
       isActive
-        ? "text-black dark:text-white"
+        ? "text-[var(--agora-blue)]"
         : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] group-hover/sidebar:text-black dark:group-hover/sidebar:text-white"
     ),
   });
@@ -251,7 +251,7 @@ export const SidebarLink = ({
         <span
           className={cn(
             "group-hover/sidebar:translate-x-1 transition duration-150 inline-block",
-            isActive ? " text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]" : " text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
+            isActive ? "text-[var(--agora-blue)]" : " text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)]",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
           style={{ fontSize: 'var(--text-body)' }}
@@ -262,7 +262,7 @@ export const SidebarLink = ({
       {isActive && (
         <span
           className={cn(
-            "text-gray-900 dark:text-white inline-block transition-all duration-200",
+            "text-[var(--agora-blue)] inline-block transition-all duration-200",
             !showLabel && "opacity-0 w-0 overflow-hidden"
           )}
         >

@@ -114,7 +114,7 @@ export function SchoolDetailsCard({ school, schoolId }: SchoolDetailsCardProps) 
                 <span>{school.country}</span>
               </div>
 
-              {/* School Owner Account */}
+              {/* School Super Admin Account */}
               {schoolOwner && (
                 <div className="mt-4 pt-4 border-t border-[var(--light-border)] dark:border-[var(--dark-border)]">
                   <div className="flex items-center gap-2 mb-3">
@@ -123,7 +123,7 @@ export function SchoolDetailsCard({ school, schoolId }: SchoolDetailsCardProps) 
                       className="font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)]"
                       style={{ fontSize: 'var(--text-body)' }}
                     >
-                      School Owner Account
+                      School Super Admin Account
                     </span>
                   </div>
                   <div className="space-y-2">
@@ -160,7 +160,7 @@ export function SchoolDetailsCard({ school, schoolId }: SchoolDetailsCardProps) 
                       className="text-[var(--light-text-muted)] dark:text-[var(--dark-text-muted)] mt-2"
                       style={{ fontSize: 'var(--text-tiny)' }}
                     >
-                      The school contact email ({school.email}) has been set up as a School Owner account with full administrative access.
+                      The school contact email ({school.email}) has been set up as a School Super Admin account with full administrative access.
                     </p>
                   </div>
                 </div>

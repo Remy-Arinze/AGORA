@@ -153,8 +153,8 @@ export function AnalyticsChart({
               formatter={(value, entry: any) => {
                 const percent = pieTotal > 0 ? ((entry.payload.value / pieTotal) * 100).toFixed(1) : '0';
                 return (
-                  <span style={{ fontSize: '11px', color: '#e5e7eb' }}>
-                    {value} <span style={{ color: '#9ca3af', marginLeft: '4px' }}>({percent}%)</span>
+                  <span style={{ fontSize: '11px', color: 'var(--light-text-primary)' }}>
+                    {value} <span style={{ color: 'var(--light-text-secondary)', marginLeft: '4px' }}>({percent}%)</span>
                   </span>
                 );
               }}

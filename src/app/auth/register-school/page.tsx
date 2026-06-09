@@ -250,9 +250,9 @@ export default function RegisterSchoolPage() {
                         </div>
                     </div>
 
-                    {/* Owner Details */}
+                    {/* Super Admin Details */}
                     <div className="mt-10">
-                        <h2 className="font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2" style={{ fontSize: 'var(--text-section-title)' }}>School Owner Details</h2>
+                        <h2 className="font-semibold text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1 border-b border-[var(--light-border)] dark:border-[var(--dark-border)] pb-2" style={{ fontSize: 'var(--text-section-title)' }}>School Super Admin Details</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block font-medium text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] mb-1" style={{ fontSize: 'var(--text-body)' }}>First Name *</label>
@@ -291,7 +291,7 @@ export default function RegisterSchoolPage() {
                                 />
                             </div>
                             <PhoneInput
-                                label="Owner Phone"
+                                label="Super Admin Phone"
                                 required
                                 value={formData.ownerPhone}
                                 onChange={(val) => handlePhoneChange('ownerPhone', val)}
