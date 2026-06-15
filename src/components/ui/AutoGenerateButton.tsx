@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { Button } from './Button';
 
@@ -12,6 +13,7 @@ interface AutoGenerateButtonProps {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  logoSrc?: string;
 }
 
 export function AutoGenerateButton({
@@ -23,6 +25,7 @@ export function AutoGenerateButton({
   variant = 'secondary',
   size = 'sm',
   className = '',
+  logoSrc,
 }: AutoGenerateButtonProps) {
   return (
     <Button
@@ -39,7 +42,17 @@ export function AutoGenerateButton({
         </>
       ) : (
         <>
-          <Sparkles className="h-4 w-4 mr-2" />
+          {logoSrc ? (
+            <Image
+              src={logoSrc}
+              alt="Agora"
+              width={16}
+              height={16}
+              className="mr-2 object-contain"
+            />
+          ) : (
+            <Sparkles className="h-4 w-4 mr-2" />
+          )}
           {label}
         </>
       )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -52,12 +52,17 @@ import {
   Sparkles,
   Plus,
   Trash2,
+  BrainCircuit,
 } from 'lucide-react';
+import { LoisConfigPanel } from '@/components/ai/LoisConfigPanel';
 
 export default function SchoolDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const schoolId = params.id as string;
+  const defaultTab = searchParams.get('tab') === 'lois' ? 'lois' : 'people';
+  const [activeSchoolTab, setActiveSchoolTab] = useState<'people' | 'lois'>(defaultTab as 'people' | 'lois');
 
   // State for modals
   const [showDeleteSchoolModal, setShowDeleteSchoolModal] = useState(false);
@@ -523,6 +528,39 @@ export default function SchoolDetailPage() {
         {/* School Details */}
         <SchoolDetailsCard school={school} schoolId={schoolId} />
 
+        {/* Tabbed sections — border-b style */}
+        <div className="border-b border-light-border dark:border-dark-border mb-6">
+          <div className="flex space-x-1">
+            {([
+              { id: 'people', label: 'People', icon: <Users className="h-4 w-4" /> },
+              { id: 'lois', label: 'Lois AI Config', icon: <BrainCircuit className="h-4 w-4" /> },
+            ] as { id: string; label: string; icon: JSX.Element }[]).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('tab', tab.id);
+                  window.history.replaceState({}, '', url);
+                  setActiveSchoolTab(tab.id as 'people' | 'lois');
+                }}
+                className={`flex items-center gap-2 px-5 py-3.5 font-bold transition-all whitespace-nowrap border-b-2 ${
+                  activeSchoolTab === tab.id
+                    ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                    : 'border-transparent text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary'
+                }`}
+                style={{ fontSize: 'var(--text-small)' }}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── People tab ─────────────────────────────────────────────── */}
+        {activeSchoolTab === 'people' && (
+          <div>
+
         {/* Principal Section */}
         <Card className="mb-6">
           <CardHeader>
@@ -712,6 +750,14 @@ export default function SchoolDetailPage() {
         <div className="mt-8">
           <ErrorsSection schoolId={schoolId} />
         </div>
+
+          </div>
+        )}
+
+        {/* ── Lois AI Config tab ─────────────────────────────────────── */}
+        {activeSchoolTab === 'lois' && (
+          <LoisConfigPanel schoolId={schoolId} schoolName={school.name} />
+        )}
 
         {/* Modals */}
         <PersonDetailModal

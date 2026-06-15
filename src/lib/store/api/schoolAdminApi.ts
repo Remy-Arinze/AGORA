@@ -1980,6 +1980,37 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         { type: 'Timetable', id: 'LIST' },
       ],
     }),
+    replaceTimetable: builder.mutation<
+      ResponseDto<{ replaced: number }>,
+      {
+        schoolId: string;
+        classId: string;
+        data: {
+          termId: string;
+          classId?: string;
+          classArmId?: string;
+          periods: Array<{
+            dayOfWeek: DayOfWeek;
+            startTime: string;
+            endTime: string;
+            type?: PeriodType;
+            subjectId?: string;
+            courseId?: string;
+            teacherId?: string;
+            roomId?: string;
+            classId?: string;
+            classArmId?: string;
+          }>;
+        };
+      }
+    >({
+      query: ({ schoolId, classId, data }) => ({
+        url: `/schools/${schoolId}/timetable/class/${classId}/replace`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Timetable'],
+    }),
     // Resource endpoints
     getClassLevels: builder.query<ResponseDto<ClassLevel[]>, { schoolId: string }>({
       query: ({ schoolId }) => `/schools/${schoolId}/timetable/class-levels`,
@@ -3770,6 +3801,7 @@ export const {
   useDeleteTimetablePeriodMutation,
   useDeleteTimetableForClassMutation,
   useCreateMasterScheduleMutation,
+  useReplaceTimetableMutation,
   // Resource hooks
   useGetClassLevelsQuery,
   useGetClassArmsQuery,

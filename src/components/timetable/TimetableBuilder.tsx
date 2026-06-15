@@ -349,12 +349,15 @@ export function TimetableBuilder({
 
   // Create timetable grid - index by day and startTime
   const timetableGrid = useMemo(() => {
+    // Key by `${startTime}:${type}` so LESSON and BREAK periods at the same
+    // start time do not overwrite each other in the grid.
     const grid: Record<string, Record<string, TimetablePeriod>> = {};
     timetable.forEach((period) => {
       if (!grid[period.dayOfWeek]) {
         grid[period.dayOfWeek] = {};
       }
-      grid[period.dayOfWeek][period.startTime] = period;
+      const key = `${period.startTime}:${period.type}`;
+      grid[period.dayOfWeek][key] = period;
     });
     return grid;
   }, [timetable]);
@@ -382,7 +385,7 @@ export function TimetableBuilder({
     const allSlots: TimetableSlot[] = [];
     allTimePeriods.forEach((timePeriod) => {
       DAYS.forEach((day) => {
-        const periodData = timetableGrid[day]?.[timePeriod.startTime];
+        const periodData = timetableGrid[day]?.[`${timePeriod.startTime}:LESSON`];
         if (periodData) {
           allSlots.push({
             dayOfWeek: day,
@@ -494,7 +497,7 @@ export function TimetableBuilder({
                     {allTimePeriods.map((timePeriod) => {
                       // Check if this is a break/lunch/assembly period (no lesson periods for this time)
                       const hasLessons = DAYS.some((day) => {
-                        const period = timetableGrid[day]?.[timePeriod.startTime];
+                        const period = timetableGrid[day]?.[`${timePeriod.startTime}:LESSON`];
                         return period && period.type === 'LESSON';
                       });
                       
@@ -538,7 +541,7 @@ export function TimetableBuilder({
                             <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                           </td>
                           {DAYS.map((day) => {
-                            const periodData = timetableGrid[day]?.[timePeriod.startTime];
+                            const periodData = timetableGrid[day]?.[`${timePeriod.startTime}:LESSON`];
                             const slot: TimetableSlot = {
                               dayOfWeek: day,
                               period: {
@@ -665,7 +668,7 @@ export function TimetableBuilder({
                       {allTimePeriods.map((timePeriod) => {
                         // Check if this is a break/lunch/assembly period (no lesson periods for this time)
                         const hasLessons = DAYS.some((day) => {
-                          const period = timetableGrid[day]?.[timePeriod.startTime];
+                          const period = timetableGrid[day]?.[`${timePeriod.startTime}:LESSON`];
                           return period && period.type === 'LESSON';
                         });
                         
@@ -709,7 +712,7 @@ export function TimetableBuilder({
                               <span>{timePeriod.startTime} - {timePeriod.endTime}</span>
                             </td>
                             {DAYS.map((day) => {
-                              const periodData = timetableGrid[day]?.[timePeriod.startTime];
+                              const periodData = timetableGrid[day]?.[`${timePeriod.startTime}:LESSON`];
                               const slot: TimetableSlot = {
                                 dayOfWeek: day,
                                 period: {

@@ -15,8 +15,9 @@ import {
   useGetActiveSessionQuery,
   useGetSessionsQuery,
   useGetEventsQuery,
-  useGetUpcomingEventsQuery,
   useCreateEventMutation,
+  useUpdateEventMutation,
+  useDeleteEventMutation,
   useGetTimetablesForSchoolTypeQuery,
   useGetClassArmsQuery,
   useGetRoomsQuery,
@@ -28,7 +29,7 @@ import {
 import { useSchoolType } from '@/hooks/useSchoolType';
 import toast from 'react-hot-toast';
 import { EmptyStateIcon } from '@/components/ui/EmptyStateIcon';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, X, MapPin } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 // Create date-fns localizer
@@ -69,6 +70,13 @@ export default function CalendarPage() {
   const [view, setView] = useState<View>('month');
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | undefined>();
+  // F4: term selector
+  const [selectedTermId, setSelectedTermId] = useState<string>('');
+  // F5: event type legend filters
+  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
+  // F6: event detail modal
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithType | null>(null);
+  const [showEventDetailModal, setShowEventDetailModal] = useState(false);
 
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
@@ -82,10 +90,23 @@ export default function CalendarPage() {
 
   // Get all sessions to display session/term milestones
   const { data: sessionsResponse } = useGetSessionsQuery(
-    { schoolId: schoolId! },
+    { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId }
   );
   const allSessions = sessionsResponse?.data || [];
+
+  // F4: derive all terms for the term selector
+  const allTerms = useMemo(() => {
+    if (!sessionsResponse?.data) return [];
+    return sessionsResponse.data
+      .flatMap((session) =>
+        session.terms.map((term: Term) => ({
+          ...term,
+          sessionName: session.name,
+        }))
+      )
+      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  }, [sessionsResponse]);
 
   // Calculate date range for events query
   const dateRange = useMemo(() => {
@@ -103,9 +124,16 @@ export default function CalendarPage() {
       end.setHours(23, 59, 59, 999);
       return { start, end };
     }
-    // Month view
-    const start = new Date(date.getFullYear(), date.getMonth(), 1);
-    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    // Month view: extend to cover full 6-week grid react-big-calendar renders
+    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+    const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    // Go back to Sunday of the first week
+    const start = new Date(monthStart);
+    start.setDate(start.getDate() - start.getDay()); // back to Sunday
+    start.setHours(0, 0, 0, 0);
+    // Go forward to Saturday of the last week
+    const end = new Date(monthEnd);
+    end.setDate(end.getDate() + (6 - end.getDay())); // forward to Saturday
     end.setHours(23, 59, 59, 999);
     return { start, end };
   }, [currentDate, view]);
@@ -120,11 +148,6 @@ export default function CalendarPage() {
     { skip: !schoolId }
   );
 
-  const { data: upcomingEventsResponse } = useGetUpcomingEventsQuery(
-    { schoolId: schoolId!, days: 7, schoolType: currentType || undefined },
-    { skip: !schoolId }
-  );
-
   const { data: classArmsResponse } = useGetClassArmsQuery(
     { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId }
@@ -136,20 +159,25 @@ export default function CalendarPage() {
   );
 
   const [createEvent, { isLoading: isCreatingEvent }] = useCreateEventMutation();
+  const [updateEvent, { isLoading: isUpdatingEvent }] = useUpdateEventMutation();
+  const [deleteEvent, { isLoading: isDeletingEvent }] = useDeleteEventMutation();
 
   const events = eventsResponse?.data || [];
-  const upcomingEvents = upcomingEventsResponse?.data || [];
   const classArms = classArmsResponse?.data || [];
   const rooms = roomsResponse?.data || [];
 
   // Get all timetable periods for the school type (for recurring slots)
+  const effectiveTermId = selectedTermId
+    ? (allTerms.find((t) => t.id === selectedTermId)?.id)
+    : activeSession?.term?.id;
+
   const { data: timetablesResponse } = useGetTimetablesForSchoolTypeQuery(
     {
       schoolId: schoolId!,
       schoolType: currentType || undefined,
-      termId: activeSession?.term?.id || undefined,
+      termId: effectiveTermId || undefined,
     },
-    { skip: !schoolId || !activeSession?.term?.id }
+    { skip: !schoolId || !effectiveTermId }
   );
   const timetablesByClass = timetablesResponse?.data || {};
 
@@ -308,6 +336,59 @@ export default function CalendarPage() {
     return combined;
   }, [events, timetablesByClass, dateRange, activeSession, schoolId, allSessions]);
 
+  // F3: Derive sidebar events from already-fetched events — no extra request needed
+  const sidebarEvents = useMemo(() => {
+    const now = new Date();
+    const isCurrentMonth =
+      currentDate.getFullYear() === now.getFullYear() &&
+      currentDate.getMonth() === now.getMonth();
+
+    let filtered = [...events];
+    if (isCurrentMonth) {
+      // Only show future events when viewing the current month
+      filtered = filtered.filter((e) => new Date(e.startDate) >= now);
+    }
+    return filtered
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+      .slice(0, 8);
+  }, [events, currentDate]);
+
+  const sidebarTitle = useMemo(() => {
+    const now = new Date();
+    const isCurrentMonth =
+      currentDate.getFullYear() === now.getFullYear() &&
+      currentDate.getMonth() === now.getMonth();
+    if (isCurrentMonth) return 'Upcoming Events';
+    return `Events — ${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
+  }, [currentDate]);
+
+  // F5: filter calendarEvents to exclude hidden types
+  const toggleType = (type: string) => {
+    setHiddenTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  };
+
+  const visibleCalendarEvents = useMemo(
+    () => calendarEvents.filter((e) => !hiddenTypes.has(e.type)),
+    [calendarEvents, hiddenTypes]
+  );
+
+  // F6: event click handler — only real DB events (not synthesized milestones)
+  const handleSelectEvent = useCallback((event: CalendarEventWithType) => {
+    if (
+      event.type === 'TIMETABLE' ||
+      event.type === 'SESSION_START' ||
+      event.type === 'SESSION_END'
+    )
+      return;
+    setSelectedEvent(event);
+    setShowEventDetailModal(true);
+  }, []);
+
   const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
     setSelectedSlot({ start: slotInfo.start, end: slotInfo.end });
     setShowCreateEventModal(true);
@@ -427,7 +508,35 @@ export default function CalendarPage() {
           <p className="text-light-text-secondary dark:text-dark-text-secondary" style={{ fontSize: 'var(--text-page-subtitle)' }}>
             Unified schedule: Timetable slots and one-off events
           </p>
-              </div>
+        </div>
+
+        {/* F4: Term selector */}
+        {allTerms.length > 0 && (
+          <div className="mb-4 flex items-center gap-3">
+            <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary font-medium">
+              Jump to term:
+            </span>
+            <select
+              value={selectedTermId}
+              onChange={(e) => {
+                const termId = e.target.value;
+                setSelectedTermId(termId);
+                if (termId) {
+                  const term = allTerms.find((t) => t.id === termId);
+                  if (term) setCurrentDate(new Date(term.startDate));
+                }
+              }}
+              className="px-3 py-1.5 text-sm border border-light-border dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Current view</option>
+              {allTerms.map((term) => (
+                <option key={term.id} value={term.id}>
+                  {term.sessionName} — {term.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Calendar Area (3/4 width) */}
@@ -436,7 +545,7 @@ export default function CalendarPage() {
               <div style={{ height: '600px' }}>
                 <RBCalendar
                   localizer={localizer as any}
-                  events={calendarEvents}
+                  events={visibleCalendarEvents}
                   startAccessor="start"
                   endAccessor="end"
                   style={{ height: '100%' }}
@@ -449,6 +558,7 @@ export default function CalendarPage() {
                     event: CustomEvent,
                   }}
                   onSelectSlot={handleSelectSlot}
+                  onSelectEvent={handleSelectEvent}
                   selectable
                   eventPropGetter={eventStyleGetter}
                   className="rbc-custom-calendar"
@@ -457,15 +567,15 @@ export default function CalendarPage() {
             </CardContent>
           </Card>
 
-          {/* Upcoming Events Sidebar (1/4 width) */}
+          {/* Sidebar: derived from already-fetched events (F3) */}
           <Card>
             <CardHeader>
               <CardTitle className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                Upcoming Events
+                {sidebarTitle}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {upcomingEvents.length === 0 ? (
+              {sidebarEvents.length === 0 ? (
                 <div className="text-center py-12">
                   <EmptyStateIcon type="statistics" />
                   <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
@@ -474,22 +584,49 @@ export default function CalendarPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {upcomingEvents.map((event) => (
+                  {sidebarEvents.map((event) => (
                     <CompactEventCard
-                    key={event.id}
+                      key={event.id}
                       id={event.id}
                       title={event.title}
                       startDate={new Date(event.startDate)}
                       endDate={new Date(event.endDate)}
-                      type={event.type}
+                      type={event.type as 'ACADEMIC' | 'EVENT' | 'EXAM' | 'MEETING' | 'HOLIDAY' | 'TIMETABLE'}
                       location={event.location}
                       roomName={event.roomName}
                     />
-                ))}
-              </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* F5: Event Type Legend */}
+        <div className="mt-3 px-2 flex flex-wrap gap-2">
+          {[
+            { type: 'ACADEMIC', label: 'Academic', color: 'bg-blue-200 border-blue-400' },
+            { type: 'EVENT', label: 'Event', color: 'bg-green-200 border-green-400' },
+            { type: 'EXAM', label: 'Exam', color: 'bg-red-200 border-red-400' },
+            { type: 'MEETING', label: 'Meeting', color: 'bg-purple-200 border-purple-400' },
+            { type: 'HOLIDAY', label: 'Holiday', color: 'bg-gray-200 border-gray-400' },
+            { type: 'TIMETABLE', label: 'Timetable', color: 'bg-indigo-200 border-indigo-400' },
+            { type: 'TERM_START', label: 'Term Start', color: 'bg-emerald-200 border-emerald-400' },
+            { type: 'TERM_END', label: 'Term End', color: 'bg-pink-200 border-pink-400' },
+            { type: 'HALF_TERM', label: 'Half-Term', color: 'bg-amber-200 border-amber-400' },
+          ].map(({ type, label, color }) => (
+            <button
+              key={type}
+              onClick={() => toggleType(type)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
+                hiddenTypes.has(type) ? 'opacity-40 line-through' : color
+              }`}
+              title={hiddenTypes.has(type) ? `Show ${label}` : `Hide ${label}`}
+            >
+              <span className={`w-2 h-2 rounded-full border ${color}`} />
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Create Event Modal */}
@@ -505,6 +642,70 @@ export default function CalendarPage() {
           isLoading={isCreatingEvent}
           currentSchoolType={currentType}
         />
+
+        {/* F6: Event Detail Modal */}
+        {showEventDetailModal && selectedEvent && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-dark-surface rounded-lg shadow-xl w-full max-w-md">
+              <div className="flex items-center justify-between p-5 border-b border-light-border dark:border-dark-border">
+                <h3 className="text-base font-semibold text-light-text-primary dark:text-dark-text-primary">
+                  {selectedEvent.title}
+                </h3>
+                <button
+                  onClick={() => setShowEventDetailModal(false)}
+                  className="text-light-text-muted hover:text-light-text-primary transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-5 space-y-3 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>
+                    {format(selectedEvent.start, 'PPP')}
+                    {!selectedEvent.allDay &&
+                      ` · ${format(selectedEvent.start, 'p')} – ${format(selectedEvent.end, 'p')}`}
+                  </span>
+                </div>
+                {selectedEvent.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{selectedEvent.location}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    {selectedEvent.type}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 p-5 border-t border-light-border dark:border-dark-border">
+                <button
+                  onClick={async () => {
+                    if (!schoolId) return;
+                    try {
+                      await deleteEvent({ schoolId, eventId: selectedEvent.id }).unwrap();
+                      toast.success('Event deleted');
+                      setShowEventDetailModal(false);
+                    } catch {
+                      toast.error('Failed to delete event');
+                    }
+                  }}
+                  disabled={isDeletingEvent}
+                  className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isDeletingEvent ? 'Deleting...' : 'Delete'}
+                </button>
+                <button
+                  onClick={() => setShowEventDetailModal(false)}
+                  className="px-3 py-1.5 text-sm text-light-text-secondary hover:text-light-text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <style jsx global>{`

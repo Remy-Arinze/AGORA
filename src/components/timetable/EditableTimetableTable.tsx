@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
+import { TimeInput } from '@/components/ui/TimeInput';
 import { X, Save, Loader2, Plus, ChevronDown, Trash2, Sparkles } from 'lucide-react';
 import { FadeInUp } from '@/components/ui/FadeInUp';
 import {
@@ -28,6 +29,7 @@ interface EditablePeriod {
   endTime: string;
   subjectId?: string;
   courseId?: string;
+  teacherId?: string;
   type: 'LESSON' | 'BREAK' | 'LUNCH' | 'ASSEMBLY';
 }
 
@@ -59,11 +61,30 @@ export function EditableTimetableTable({
       endTime: period.endTime,
       subjectId: period.subjectId || undefined,
       courseId: period.courseId || undefined,
+      teacherId: period.teacherId || undefined,
       type: period.type || 'LESSON',
     }));
   });
 
+  // Fix 4: Snapshot for dirty-check
+  const initialPeriodsRef = useRef<EditablePeriod[]>(
+    timetable.map((period) => ({
+      id: period.id,
+      dayOfWeek: period.dayOfWeek,
+      startTime: period.startTime,
+      endTime: period.endTime,
+      subjectId: period.subjectId || undefined,
+      courseId: period.courseId || undefined,
+      teacherId: period.teacherId || undefined,
+      type: period.type || 'LESSON',
+    }))
+  );
+
   const [showAutoGenerateModal, setShowAutoGenerateModal] = useState(false);
+  // Fix 2: validation errors state
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  // Fix 4: discard confirmation state
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Auto-generate hook
   const { generateTimetable, canGenerate } = useAutoGenerateTimetable({
@@ -72,6 +93,22 @@ export function EditableTimetableTable({
     courses,
     existingPeriods: timetable,
   });
+
+  // Fix 4: isDirty — compare current periods to initial snapshot
+  const isDirty = useMemo(() => {
+    const initial = initialPeriodsRef.current;
+    if (editablePeriods.length !== initial.length) return true;
+    const key = (p: EditablePeriod) =>
+      `${p.dayOfWeek}|${p.startTime}|${p.endTime}|${p.subjectId ?? ''}|${p.courseId ?? ''}|${p.type}`;
+    const sortedCurrent = [...editablePeriods].map(key).sort();
+    const sortedInitial = [...initial].map(key).sort();
+    return sortedCurrent.some((k, i) => k !== sortedInitial[i]);
+  }, [editablePeriods]);
+
+  // Fix 2: Clear validation errors whenever editablePeriods change (user is fixing issues)
+  useEffect(() => {
+    setValidationErrors([]);
+  }, [editablePeriods]);
 
   const handleAutoGenerate = () => {
     const generatedPeriods = generateTimetable();
@@ -94,11 +131,11 @@ export function EditableTimetableTable({
   const timePeriods = useMemo(() => {
     const timeSet = new Set<string>();
     editablePeriods.forEach((period) => {
-      timeSet.add(`${period.startTime}-${period.endTime}`);
+      timeSet.add(`${period.startTime}|${period.endTime}`);
     });
     return Array.from(timeSet)
       .map((timeStr) => {
-        const [startTime, endTime] = timeStr.split('-');
+        const [startTime, endTime] = timeStr.split('|');
         return { startTime, endTime };
       })
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -155,6 +192,15 @@ export function EditableTimetableTable({
     );
   };
 
+  // Remove all periods at a specific time slot (entire row — all days)
+  const removeEntireRow = (startTime: string, endTime: string) => {
+    setEditablePeriods((prev) =>
+      prev.filter(
+        (period) => !(period.startTime === startTime && period.endTime === endTime)
+      )
+    );
+  };
+
   // Remove all periods of a specific type and time (for break/lunch/assembly)
   const removeBreakPeriod = (startTime: string, endTime: string) => {
     setEditablePeriods((prev) =>
@@ -204,8 +250,90 @@ export function EditableTimetableTable({
     });
   };
 
+  const addLessonRow = () => {
+    // Find the latest end time in the existing periods to suggest next slot
+    const lastEndTime = timePeriods.length > 0
+      ? timePeriods[timePeriods.length - 1].endTime
+      : '08:00';
+
+    // Add 5 minutes buffer then round to nearest 5
+    const [h, m] = lastEndTime.split(':').map(Number);
+    const totalMins = h * 60 + m + 5;
+    const snappedMins = Math.ceil(totalMins / 5) * 5;
+    const newStartH = Math.floor(snappedMins / 60) % 24;
+    const newStartM = snappedMins % 60;
+    const newStart = `${String(newStartH).padStart(2, '0')}:${String(newStartM).padStart(2, '0')}`;
+    const newEnd = `${String((newStartH + 1) % 24).padStart(2, '0')}:${String(newStartM).padStart(2, '0')}`;
+
+    // Add one blank lesson period per day at this new time
+    const newPeriods: EditablePeriod[] = DAYS.map((day) => ({
+      dayOfWeek: day,
+      startTime: newStart,
+      endTime: newEnd,
+      type: 'LESSON' as const,
+    }));
+    setEditablePeriods((prev) => [...prev, ...newPeriods]);
+  };
+
   const handleSave = async () => {
+    // Fix 2: validate before saving
+    const toMinutes = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const errors: string[] = [];
+
+    for (const period of editablePeriods) {
+      const label = period.startTime;
+      if (period.startTime >= period.endTime) {
+        errors.push(`Row ${label}: start time must be before end time`);
+        continue;
+      }
+      const duration = toMinutes(period.endTime) - toMinutes(period.startTime);
+      if (period.type === 'LESSON') {
+        if (duration < 20) {
+          errors.push(`Row ${label}: lesson periods must be at least 20 minutes`);
+        }
+      } else {
+        if (duration < 5) {
+          errors.push(`Row ${label}: break/assembly periods must be at least 5 minutes`);
+        }
+      }
+    }
+
+    // Same-day overlap check per class (all periods share the same class context here)
+    const byDay: Record<string, EditablePeriod[]> = {};
+    for (const day of DAYS) {
+      byDay[day] = editablePeriods.filter((p) => p.dayOfWeek === day);
+    }
+    for (const day of DAYS) {
+      const sorted = [...byDay[day]].sort((a, b) => a.startTime.localeCompare(b.startTime));
+      for (let i = 0; i < sorted.length - 1; i++) {
+        if (toMinutes(sorted[i].endTime) > toMinutes(sorted[i + 1].startTime)) {
+          const dayLabel = day.charAt(0) + day.slice(1).toLowerCase();
+          errors.push(
+            `${dayLabel}: period at ${sorted[i].startTime} overlaps with ${sorted[i + 1].startTime}`
+          );
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
     await onSave(editablePeriods);
+  };
+
+  // Fix 4: guard Cancel/X against unsaved changes
+  const handleClose = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      onClose();
+    }
   };
 
   const isTertiary = schoolType === 'TERTIARY';
@@ -233,7 +361,7 @@ export function EditableTimetableTable({
             )}
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-light-text-muted dark:text-dark-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary"
           >
             <X className="h-5 w-5" />
@@ -276,24 +404,24 @@ export function EditableTimetableTable({
                       <tr key={`${timePeriod.startTime}-${breakType}`}>
                         <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           <div className="flex flex-col gap-1.5">
-                            <input
-                              type="time"
+                            <TimeInput
+                              label="Start time"
                               value={timePeriod.startTime}
-                              onChange={(e) => {
-                                const newStartTime = e.target.value;
-                                updateTimeForAllDays(timePeriod.startTime, timePeriod.endTime, newStartTime, timePeriod.endTime);
+                              onChange={(newStartTime) => {
+                                if (newStartTime) {
+                                  updateTimeForAllDays(timePeriod.startTime, timePeriod.endTime, newStartTime, timePeriod.endTime);
+                                }
                               }}
-                              className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                             />
                             <div className="text-center text-xs text-light-text-muted">to</div>
-                            <input
-                              type="time"
+                            <TimeInput
+                              label="End time"
                               value={timePeriod.endTime}
-                              onChange={(e) => {
-                                const newEndTime = e.target.value;
-                                updateTimeForAllDays(timePeriod.startTime, timePeriod.endTime, timePeriod.startTime, newEndTime);
+                              onChange={(newEndTime) => {
+                                if (newEndTime) {
+                                  updateTimeForAllDays(timePeriod.startTime, timePeriod.endTime, timePeriod.startTime, newEndTime);
+                                }
                               }}
-                              className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                             />
                           </div>
                         </td>
@@ -335,38 +463,36 @@ export function EditableTimetableTable({
                     <tr key={timePeriod.startTime}>
                       <td className="sticky left-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-3 py-3 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                         <div className="flex flex-col gap-1.5">
-                          <input
-                            type="time"
+                          <TimeInput
+                            label="Start time"
                             value={timePeriod.startTime}
-                            onChange={(e) => {
-                              const newStartTime = e.target.value;
-                              // Update all periods at this time slot
-                              editablePeriods
-                                .filter((p) => p.startTime === timePeriod.startTime && p.endTime === timePeriod.endTime)
-                                .forEach((period) => {
-                                  updatePeriod(period.dayOfWeek, timePeriod.startTime, timePeriod.endTime, {
-                                    startTime: newStartTime,
+                            onChange={(newStartTime) => {
+                              if (newStartTime) {
+                                editablePeriods
+                                  .filter((p) => p.startTime === timePeriod.startTime && p.endTime === timePeriod.endTime)
+                                  .forEach((period) => {
+                                    updatePeriod(period.dayOfWeek, timePeriod.startTime, timePeriod.endTime, {
+                                      startTime: newStartTime,
+                                    });
                                   });
-                                });
+                              }
                             }}
-                            className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                           />
                           <div className="text-center text-xs text-light-text-muted">to</div>
-                          <input
-                            type="time"
+                          <TimeInput
+                            label="End time"
                             value={timePeriod.endTime}
-                            onChange={(e) => {
-                              const newEndTime = e.target.value;
-                              // Update all periods at this time slot
-                              editablePeriods
-                                .filter((p) => p.startTime === timePeriod.startTime && p.endTime === timePeriod.endTime)
-                                .forEach((period) => {
-                                  updatePeriod(period.dayOfWeek, timePeriod.startTime, timePeriod.endTime, {
-                                    endTime: newEndTime,
+                            onChange={(newEndTime) => {
+                              if (newEndTime) {
+                                editablePeriods
+                                  .filter((p) => p.startTime === timePeriod.startTime && p.endTime === timePeriod.endTime)
+                                  .forEach((period) => {
+                                    updatePeriod(period.dayOfWeek, timePeriod.startTime, timePeriod.endTime, {
+                                      endTime: newEndTime,
+                                    });
                                   });
-                                });
+                              }
                             }}
-                            className="w-full px-2 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                           />
                         </div>
                       </td>
@@ -379,20 +505,15 @@ export function EditableTimetableTable({
                           >
                             {period ? (
                               <select
-                                value={isTertiary ? period.courseId || '' : period.subjectId || ''}
+                                value={isTertiary ? period.courseId || 'FREE_PERIOD' : period.subjectId || 'FREE_PERIOD'}
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                  if (value === '') {
-                                    // Remove period
-                                    removePeriod(day, timePeriod.startTime, timePeriod.endTime);
-                                  } else if (value === 'FREE_PERIOD') {
-                                    // Set as free period
+                                  if (value === 'FREE_PERIOD') {
                                     updatePeriod(day, timePeriod.startTime, timePeriod.endTime, {
                                       subjectId: undefined,
                                       courseId: undefined,
                                     });
-                                  } else {
-                                    // Update subject/course
+                                  } else if (value) {
                                     updatePeriod(day, timePeriod.startTime, timePeriod.endTime, {
                                       subjectId: isTertiary ? undefined : value,
                                       courseId: isTertiary ? value : undefined,
@@ -401,7 +522,6 @@ export function EditableTimetableTable({
                                 }}
                                 className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                               >
-                                <option value="">-- Empty --</option>
                                 <option value="FREE_PERIOD">Free Period</option>
                                 {options.map((option) => (
                                   <option key={option.id} value={option.id}>
@@ -414,8 +534,7 @@ export function EditableTimetableTable({
                                 value=""
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                  if (value && value !== '') {
-                                    // Add new period
+                                  if (value) {
                                     addPeriod(day, timePeriod.startTime, timePeriod.endTime);
                                     if (value !== 'FREE_PERIOD') {
                                       updatePeriod(day, timePeriod.startTime, timePeriod.endTime, {
@@ -427,7 +546,6 @@ export function EditableTimetableTable({
                                 }}
                                 className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
                               >
-                                <option value="">-- Empty --</option>
                                 <option value="FREE_PERIOD">Free Period</option>
                                 {options.map((option) => (
                                   <option key={option.id} value={option.id}>
@@ -440,24 +558,64 @@ export function EditableTimetableTable({
                         );
                       })}
                       <td className="sticky right-0 z-10 bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border px-4 py-3 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                        <InsertButton
-                          onInsert={(type, startTime, endTime) => {
-                            insertBreakPeriod(timePeriod.startTime, type, startTime, endTime);
-                          }}
-                          previousTime={timeIndex > 0 ? timePeriods[timeIndex - 1].startTime : null}
-                        />
+                        <div className="flex flex-col gap-2 items-center">
+                          <button
+                            type="button"
+                            onClick={() => removeEntireRow(timePeriod.startTime, timePeriod.endTime)}
+                            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded transition-colors flex items-center justify-center"
+                            title="Delete this time slot row"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          <InsertButton
+                            onInsert={(type, startTime, endTime) => {
+                              insertBreakPeriod(timePeriod.startTime, type, startTime, endTime);
+                            }}
+                            previousTime={timeIndex > 0 ? timePeriods[timeIndex - 1].startTime : null}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+            {/* Add Lesson Row */}
+            <div className="mt-3 flex justify-start">
+              <button
+                type="button"
+                onClick={addLessonRow}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Period Row
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Validation errors — Fix 2 */}
+        {validationErrors.length > 0 && (
+          <div className="px-6 pb-2">
+            <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 p-4">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">
+                Please fix the following issues before saving:
+              </p>
+              <ul className="space-y-1">
+                {validationErrors.map((err, i) => (
+                  <li key={i} className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">•</span>
+                    <span>{err}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-light-border dark:border-dark-border">
-          <Button variant="ghost" onClick={onClose} disabled={isLoading}>
+          <Button variant="ghost" onClick={handleClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={isLoading}>
@@ -530,6 +688,36 @@ export function EditableTimetableTable({
                 </Button>
               </div>
             </FadeInUp>
+          </div>
+        )}
+
+        {/* Discard Changes Confirmation — Fix 4 */}
+        {showDiscardConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+            <div className="bg-white dark:bg-dark-surface rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+              <h3 className="text-base font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
+                Discard changes?
+              </h3>
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-6">
+                You have unsaved changes. Closing now will discard them permanently.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDiscardConfirm(false)}
+                >
+                  Keep editing
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => { setShowDiscardConfirm(false); onClose(); }}
+                >
+                  Discard changes
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -614,18 +802,18 @@ function InsertButton({ onInsert, previousTime }: InsertButtonProps) {
           Insert {insertType === 'BREAK' ? 'Break' : insertType === 'LUNCH' ? 'Lunch' : 'Assembly'}
         </div>
         <div className="flex items-center gap-1.5">
-          <input
-            type="time"
+          <TimeInput
+            label="Start time"
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="w-[85px] px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
+            onChange={setStartTime}
+            className="w-[85px]"
           />
           <span className="text-xs text-light-text-muted">-</span>
-          <input
-            type="time"
+          <TimeInput
+            label="End time"
             value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className="w-[85px] px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary"
+            onChange={setEndTime}
+            className="w-[85px]"
           />
         </div>
         <div className="flex gap-1">
