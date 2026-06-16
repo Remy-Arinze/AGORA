@@ -648,6 +648,7 @@ export interface AddStudentDto {
   middleName?: string;
   lastName: string;
   dateOfBirth: string;
+  gender: string;
   email: string;
   phone?: string;
   address?: string;
