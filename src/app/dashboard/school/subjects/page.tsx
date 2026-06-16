@@ -101,7 +101,7 @@ export default function SubjectsPage() {
     showConfirmModal,
     openConfirmModal,
     closeConfirmModal,
-    handleAutoGenerate,
+    handleAutoGenerate: _handleAutoGenerate,
     canAutoGenerate,
     schoolTypeLabel,
   } = useAutoGenerateSubjects();
@@ -113,6 +113,12 @@ export default function SubjectsPage() {
     },
     { skip: !schoolId }
   );
+
+  // Wrap handleAutoGenerate so that the subject list refreshes after generation
+  const handleAutoGenerate = useCallback(async () => {
+    await _handleAutoGenerate();
+    refetchSubjects();
+  }, [_handleAutoGenerate, refetchSubjects]);
 
   const { data: classLevelsResponse } = useGetClassLevelsQuery(
     { schoolId: schoolId! },
@@ -408,21 +414,42 @@ export default function SubjectsPage() {
       <div className="w-full">
         {/* Header */}
         <FadeInUp from={{ opacity: 0, y: -20 }} to={{ opacity: 1, y: 0 }} duration={0.5} className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex flex-col w-full md:w-auto">
-              <div className="flex items-center justify-between w-full">
-                <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
-                  {currentType === 'TERTIARY' ? 'Courses' : 'Subjects'}
-                </h1>
-              </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="font-bold text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-page-title)' }}>
+                {currentType === 'TERTIARY' ? 'Courses' : 'Subjects'}
+              </h1>
               <p className="text-light-text-secondary dark:text-dark-text-secondary mt-1" style={{ fontSize: 'var(--text-page-subtitle)' }}>
                 Manage {currentType === 'TERTIARY' ? 'courses' : 'subjects'} for {currentType || 'your school'}
               </p>
             </div>
+            <div className="flex items-center gap-3">
+              {canAutoGenerate && (
+                <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                  <AutoGenerateButton
+                    onClick={openConfirmModal}
+                    isLoading={isGenerating}
+                    label="Auto-Generate"
+                    loadingLabel="Generating..."
+                    logoSrc="/assets/logos/agora_main.png"
+                  />
+                </PermissionGate>
+              )}
+              <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                <Button
+                  variant="primary"
+                  onClick={() => setShowCreateModal(true)}
+                  className="shadow-lg shadow-blue-500/10"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add {currentType === 'TERTIARY' ? 'Course' : 'Subject'}
+                </Button>
+              </PermissionGate>
+            </div>
           </div>
         </FadeInUp>
 
-        {/* Filters & Actions */}
+        {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="flex-1">
             <SearchInput
@@ -462,17 +489,6 @@ export default function SubjectsPage() {
               <option value="ELECTIVE">Elective</option>
               <option value="VOCATIONAL">Vocational</option>
             </select>
-
-            <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
-              <Button
-                variant="primary"
-                onClick={() => setShowCreateModal(true)}
-                className="shadow-lg shadow-blue-500/10"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Subject
-              </Button>
-            </PermissionGate>
           </div>
         </div>
 
@@ -909,17 +925,19 @@ function SubjectCard({
             {!isSelectionMode && (
               <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
                 <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit();
-                    }}
-                    className="h-8 w-8 p-0 rounded-lg hover:bg-primary/10 hover:text-primary"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {!subject.isAgoraStandard && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit();
+                      }}
+                      className="h-8 w-8 p-0 rounded-lg hover:bg-primary/10 hover:text-primary"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -945,18 +963,13 @@ function SubjectCard({
           </p>
         )}
         <div className="space-y-3">
-          {/* Competent Teachers Section - All school types */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
-                {currentType === 'SECONDARY' ? 'Competent Teachers:' : 'Teachers:'}
-                {currentType === 'PRIMARY' && (
-                  <span className="text-light-text-muted dark:text-dark-text-secondary block mt-0.5" style={{ fontSize: '0.65rem' }}>
-                    (One teacher only)
-                  </span>
-                )}
-              </span>
-              {currentType !== 'PRIMARY' && (
+          {/* Competent Teachers Section - SECONDARY and TERTIARY only */}
+          {currentType !== 'PRIMARY' && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-light-text-primary dark:text-dark-text-primary" style={{ fontSize: 'var(--text-small)' }}>
+                  {currentType === 'SECONDARY' ? 'Competent Teachers:' : 'Teachers:'}
+                </span>
                 <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
                   <Button
                     variant="ghost"
@@ -967,38 +980,38 @@ function SubjectCard({
                     {currentType === 'SECONDARY' ? 'Add' : 'Assign'}
                   </Button>
                 </PermissionGate>
+              </div>
+              {subject.teachers && subject.teachers.length > 0 ? (
+                <div className="space-y-1">
+                  {subject.teachers.map((teacher) => (
+                    <div
+                      key={teacher.id}
+                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded"
+                      style={{ fontSize: 'var(--text-small)' }}
+                    >
+                      <span className="text-light-text-primary dark:text-dark-text-primary">
+                        {teacher.firstName} {teacher.lastName}
+                      </span>
+                      <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onRemoveTeacher(subject.id, teacher.id)}
+                          className="text-red-600 hover:text-red-700 h-6 px-2"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </PermissionGate>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                  No teachers assigned
+                </p>
               )}
             </div>
-            {subject.teachers && subject.teachers.length > 0 ? (
-              <div className="space-y-1">
-                {subject.teachers.map((teacher) => (
-                  <div
-                    key={teacher.id}
-                    className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded"
-                    style={{ fontSize: 'var(--text-small)' }}
-                  >
-                    <span className="text-light-text-primary dark:text-dark-text-primary">
-                      {teacher.firstName} {teacher.lastName}
-                    </span>
-                    <PermissionGate resource={PermissionResource.SUBJECTS} type={PermissionType.WRITE}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveTeacher(subject.id, teacher.id)}
-                        className="text-red-600 hover:text-red-700 h-6 px-2"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </PermissionGate>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-light-text-muted dark:text-dark-text-muted" style={{ fontSize: 'var(--text-small)' }}>
-                No teachers assigned
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Class Assignments Section - SECONDARY only - Only show if teachers are added */}
           {currentType === 'SECONDARY' && onClassAssignment && subject.teachers && subject.teachers.length > 0 && (

@@ -7,6 +7,85 @@ import {
 
 export type { AiChatStreamErrorPayload };
 
+export interface LoisConfigDto {
+    id: string;
+    schoolId: string;
+    customGreeting: string | null;
+    toneNote: string | null;
+    restrictedTopics: string | null;
+    schoolContext: string | null;
+    updatedAt: string;
+    createdAt: string;
+}
+
+export interface LoisConfigInput {
+    customGreeting?: string | null;
+    toneNote?: string | null;
+    restrictedTopics?: string | null;
+    schoolContext?: string | null;
+}
+
+export interface SystemPromptConfigDto {
+    id: string;
+    identityOverride: string | null;
+    additionalRules: string | null;
+    teacherRulesOverride: string | null;
+    adminRulesOverride: string | null;
+    studentRulesOverride: string | null;
+    internalNotes: string | null;
+    updatedAt: string;
+    createdAt: string;
+}
+
+export interface SystemPromptConfigInput {
+    identityOverride?: string | null;
+    additionalRules?: string | null;
+    teacherRulesOverride?: string | null;
+    adminRulesOverride?: string | null;
+    studentRulesOverride?: string | null;
+    internalNotes?: string | null;
+}
+
+export interface LoisToolDefinition {
+    name: string;
+    description: string;
+    parameters: {
+        type: string;
+        properties: Record<string, { type: string; description?: string; enum?: string[]; items?: object }>;
+        required?: string[];
+    };
+}
+
+export type SkillCategory = 'behavior' | 'knowledge' | 'tone' | 'workflow';
+export type SkillTargetRole = 'TEACHER' | 'SCHOOL_ADMIN' | 'STUDENT' | 'ALL';
+
+export interface LoisSkillDto {
+    id: string;
+    name: string;
+    description: string;
+    content: string;
+    targetRoles: string; // comma-separated e.g. "TEACHER,STUDENT"
+    category: SkillCategory;
+    isActive: boolean;
+    priority: number;
+    internalNotes: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateSkillInput {
+    name: string;
+    description: string;
+    content: string;
+    targetRoles?: string;
+    category?: SkillCategory;
+    isActive?: boolean;
+    priority?: number;
+    internalNotes?: string | null;
+}
+
+export interface UpdateSkillInput extends Partial<CreateSkillInput> {}
+
 export const aiApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         generateLessonPlan: builder.mutation<
@@ -122,6 +201,99 @@ export const aiApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['AiHistory'],
         }),
+
+        // ── Lois Config (per-school) ────────────────────────────────────────
+        getLoisConfig: builder.query<{ success: boolean; data: LoisConfigDto | null }, string>({
+            query: (schoolId) => `/schools/${schoolId}/ai/lois-config`,
+            providesTags: (_r, _e, schoolId) => [{ type: 'AiHistory', id: `lois-${schoolId}` }],
+        }),
+        upsertLoisConfig: builder.mutation<{ success: boolean; data: LoisConfigDto }, { schoolId: string; body: LoisConfigInput }>({
+            query: ({ schoolId, body }) => ({
+                url: `/schools/${schoolId}/ai/lois-config`,
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: (_r, _e, { schoolId }) => [{ type: 'AiHistory', id: `lois-${schoolId}` }],
+        }),
+        deleteLoisConfig: builder.mutation<{ success: boolean }, string>({
+            query: (schoolId) => ({
+                url: `/schools/${schoolId}/ai/lois-config`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: (_r, _e, schoolId) => [{ type: 'AiHistory', id: `lois-${schoolId}` }],
+        }),
+
+        // ── Lois Config (super admin) ───────────────────────────────────────
+        adminGetAllLoisConfigs: builder.query<{ success: boolean; data: (LoisConfigDto & { school: { id: string; name: string } })[] }, void>({
+            query: () => '/admin/lois/configs',
+        }),
+        adminGetSystemPromptPreview: builder.query<{ success: boolean; data: { prompt: string; note: string } }, void>({
+            query: () => '/admin/lois/system-prompt-preview',
+        }),
+        adminGetLoisConfig: builder.query<{ success: boolean; data: LoisConfigDto | null }, string>({
+            query: (schoolId) => `/admin/lois/configs/${schoolId}`,
+        }),
+        adminUpsertLoisConfig: builder.mutation<{ success: boolean; data: LoisConfigDto }, { schoolId: string; body: LoisConfigInput }>({
+            query: ({ schoolId, body }) => ({
+                url: `/admin/lois/configs/${schoolId}`,
+                method: 'PUT',
+                body,
+            }),
+        }),
+        adminDeleteLoisConfig: builder.mutation<{ success: boolean }, string>({
+            query: (schoolId) => ({
+                url: `/admin/lois/configs/${schoolId}`,
+                method: 'DELETE',
+            }),
+        }),
+
+        // ── System prompt config (super admin — global) ─────────────────────
+        adminGetSystemConfig: builder.query<{ success: boolean; data: SystemPromptConfigDto | null }, void>({
+            query: () => '/admin/lois/system-config',
+            providesTags: ['LoisSystemConfig'],
+        }),
+        adminUpsertSystemConfig: builder.mutation<{ success: boolean; data: SystemPromptConfigDto }, SystemPromptConfigInput>({
+            query: (body) => ({
+                url: '/admin/lois/system-config',
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: ['LoisSystemConfig'],
+        }),
+        adminResetSystemConfig: builder.mutation<{ success: boolean }, void>({
+            query: () => ({
+                url: '/admin/lois/system-config',
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['LoisSystemConfig'],
+        }),
+
+        // ── Tools registry ───────────────────────────────────────────────────
+        adminGetLoisTools: builder.query<{ success: boolean; data: LoisToolDefinition[] }, void>({
+            query: () => '/admin/lois/tools',
+        }),
+
+        // ── Skills ───────────────────────────────────────────────────────────
+        adminListSkills: builder.query<{ success: boolean; data: LoisSkillDto[] }, void>({
+            query: () => '/admin/lois/skills',
+            providesTags: ['LoisSkills'],
+        }),
+        adminCreateSkill: builder.mutation<{ success: boolean; data: LoisSkillDto }, CreateSkillInput>({
+            query: (body) => ({ url: '/admin/lois/skills', method: 'POST', body }),
+            invalidatesTags: ['LoisSkills'],
+        }),
+        adminUpdateSkill: builder.mutation<{ success: boolean; data: LoisSkillDto }, { id: string; body: UpdateSkillInput }>({
+            query: ({ id, body }) => ({ url: `/admin/lois/skills/${id}`, method: 'PUT', body }),
+            invalidatesTags: ['LoisSkills'],
+        }),
+        adminToggleSkill: builder.mutation<{ success: boolean; data: LoisSkillDto }, string>({
+            query: (id) => ({ url: `/admin/lois/skills/${id}/toggle`, method: 'PATCH' }),
+            invalidatesTags: ['LoisSkills'],
+        }),
+        adminDeleteSkill: builder.mutation<{ success: boolean }, string>({
+            query: (id) => ({ url: `/admin/lois/skills/${id}`, method: 'DELETE' }),
+            invalidatesTags: ['LoisSkills'],
+        }),
     }),
 });
 
@@ -135,6 +307,28 @@ export const {
     useGetChatMessagesQuery,
     useLazyGetChatMessagesQuery,
     useDeleteConversationMutation,
+    // Lois Config — school admin
+    useGetLoisConfigQuery,
+    useUpsertLoisConfigMutation,
+    useDeleteLoisConfigMutation,
+    // Lois Config — super admin
+    useAdminGetAllLoisConfigsQuery,
+    useAdminGetSystemPromptPreviewQuery,
+    useAdminGetLoisConfigQuery,
+    useAdminUpsertLoisConfigMutation,
+    useAdminDeleteLoisConfigMutation,
+    // System Prompt Config — super admin global
+    useAdminGetSystemConfigQuery,
+    useAdminUpsertSystemConfigMutation,
+    useAdminResetSystemConfigMutation,
+    // Tools registry
+    useAdminGetLoisToolsQuery,
+    // Skills
+    useAdminListSkillsQuery,
+    useAdminCreateSkillMutation,
+    useAdminUpdateSkillMutation,
+    useAdminToggleSkillMutation,
+    useAdminDeleteSkillMutation,
 } = aiApi;
 
 // ─── SSE Streaming Types ──────────────────────────────────────────────────────

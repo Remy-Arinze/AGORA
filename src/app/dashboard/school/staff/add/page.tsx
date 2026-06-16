@@ -697,22 +697,6 @@ export default function AddStaffPage() {
                   </h3>
 
                   {/* For PRIMARY schools - Subject selection */}
-                  {currentType === 'PRIMARY' && schoolId && (
-                    <div className="mb-4 relative">
-                      <SubjectMultiSelect
-                        schoolId={schoolId}
-                        selectedSubjectIds={formData.subjectIds}
-                        onChange={(ids) => setFormData({ ...formData, subjectIds: ids })}
-                        schoolType="PRIMARY"
-                        label="Subject Teacher Can Teach"
-                        helperText="Optional: Select subject this teacher is qualified to teach."
-                        error={errors.subject}
-                        disabled={isLoadingState}
-                        maxSelections={1} // Primary schools typically have one subject per teacher
-                      />
-                    </div>
-                  )}
-
                   {/* For SECONDARY schools - Multi-subject selection */}
                   {currentType === 'SECONDARY' && schoolId && (
                     <div className="mb-4 relative">
@@ -747,7 +731,7 @@ export default function AddStaffPage() {
                   )}
 
                   {/* Show message if no subjects are available */}
-                  {schoolId && subjects.length === 0 && (
+                  {currentType !== 'PRIMARY' && schoolId && subjects.length === 0 && (
                     <div className="mb-4">
                       <div className="p-4 border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg space-y-2">
                         <p className="text-yellow-700 dark:text-yellow-400 text-sm font-medium">

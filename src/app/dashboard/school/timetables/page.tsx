@@ -41,6 +41,7 @@ import {
   useGetRoomsQuery,
   useGetStaffListQuery,
   useCreateMasterScheduleMutation,
+  useReplaceTimetableMutation,
   type TimetablePeriod,
   type Class,
   type DayOfWeek,
@@ -161,6 +162,7 @@ export default function TimetablesPage() {
   const [deletePeriod, { isLoading: isDeleting }] = useDeleteTimetablePeriodMutation();
   const [deleteTimetable, { isLoading: isDeletingTimetable }] = useDeleteTimetableForClassMutation();
   const [createMasterSchedule, { isLoading: isCreatingMaster }] = useCreateMasterScheduleMutation();
+  const [replaceTimetable, { isLoading: isReplacing }] = useReplaceTimetableMutation();
 
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ classId: string; className: string; termId: string } | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -696,69 +698,43 @@ export default function TimetablesPage() {
     endTime: string;
     subjectId?: string;
     courseId?: string;
+    teacherId?: string;
     type: 'LESSON' | 'BREAK' | 'LUNCH' | 'ASSEMBLY';
   }>) => {
     if (!schoolId || !selectedClassId || !selectedTermId) return;
 
+    const selectedClass = classes.find((c) => c.id === selectedClassId);
+    const hasClassArmId = selectedClass?.classArmId;
+
     try {
-      // Get all existing period IDs
-      const existingPeriodIds = new Set(timetable.map((p) => p.id));
-      const updatedPeriodIds = new Set(periods.filter((p) => p.id).map((p) => p.id!));
+      await replaceTimetable({
+        schoolId,
+        classId: selectedClassId,
+        data: {
+          termId: selectedTermId,
+          ...(hasClassArmId
+            ? { classArmId: selectedClassId }
+            : { classId: selectedClassId }
+          ),
+          periods: periods.map((p) => ({
+            dayOfWeek: p.dayOfWeek,
+            startTime: p.startTime,
+            endTime: p.endTime,
+            type: p.type as PeriodType,
+            subjectId: currentType !== 'TERTIARY' ? p.subjectId || undefined : undefined,
+            courseId: currentType === 'TERTIARY' ? p.courseId || undefined : undefined,
+            teacherId: p.teacherId || undefined,
+          })),
+        },
+      }).unwrap();
 
-      // Delete periods that are no longer in the edited list
-      const periodsToDelete = timetable.filter((p) => !updatedPeriodIds.has(p.id));
-      for (const period of periodsToDelete) {
-        await deletePeriod({ schoolId, periodId: period.id }).unwrap();
-      }
-
-      // Update or create periods
-      for (const period of periods) {
-        if (period.id && existingPeriodIds.has(period.id)) {
-          // Update existing period
-          await updatePeriod({
-            schoolId,
-            periodId: period.id,
-            data: {
-              subjectId: currentType !== 'TERTIARY' ? period.subjectId : undefined,
-              courseId: currentType === 'TERTIARY' ? period.courseId : undefined,
-              startTime: period.startTime,
-              endTime: period.endTime,
-              dayOfWeek: period.dayOfWeek,
-              type: period.type as PeriodType,
-            },
-          }).unwrap();
-        } else {
-          // Create new period
-          // Check if the selected class has a classArmId (ClassArm-based class)
-          const hasClassArmId = selectedClass?.classArmId;
-
-          await createPeriod({
-            schoolId,
-            data: {
-              dayOfWeek: period.dayOfWeek,
-              startTime: period.startTime,
-              endTime: period.endTime,
-              type: period.type as PeriodType,
-              subjectId: currentType !== 'TERTIARY' ? period.subjectId : undefined,
-              courseId: currentType === 'TERTIARY' ? period.courseId : undefined,
-              // Use classArmId if the class has one, otherwise use classId
-              ...(hasClassArmId
-                ? { classArmId: selectedClassId }
-                : { classId: selectedClassId }
-              ),
-              termId: selectedTermId,
-            },
-          }).unwrap();
-        }
-      }
-
-      toast.success('Timetable updated successfully');
+      toast.success('Timetable saved successfully');
       setIsEditMode(false);
       await refetchTimetable();
       refetchTimetables();
     } catch (error: any) {
       if (error?.status === 409) {
-        toast.error(error?.data?.message || 'Conflict detected: Teacher or room already booked');
+        toast.error(error?.data?.message || 'Conflict detected');
       } else {
         toast.error(error?.data?.message || 'Failed to save timetable');
       }
@@ -1099,7 +1075,7 @@ export default function TimetablesPage() {
                       schoolType={currentType}
                       onSave={handleBulkSave}
                       onClose={() => setIsEditMode(false)}
-                      isLoading={isUpdating}
+                      isLoading={isUpdating || isReplacing}
                     />
                   )}
                 </>

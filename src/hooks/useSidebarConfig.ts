@@ -24,6 +24,8 @@ import {
   CreditCard,
   Library,
   User,
+  Settings,
+  Bot,
   LucideIcon,
   Megaphone,
 } from 'lucide-react';
@@ -79,6 +81,7 @@ export function useSidebarConfig(): {
             { label: 'Analytics', href: '/dashboard/super-admin/analytics', icon: BarChart3 },
             { label: 'Plans', href: '/dashboard/super-admin/plans', icon: CreditCard },
             { label: 'Campaigns', href: '/dashboard/super-admin/campaigns', icon: Megaphone },
+            { label: 'Lois AI', href: '/dashboard/super-admin/lois', icon: Bot },
             { label: 'Plugins', href: '/dashboard/super-admin/plugins', icon: Puzzle },
             { label: 'Profile', href: '/dashboard/profile', icon: User },
           ],
@@ -120,7 +123,7 @@ export function useSidebarConfig(): {
         { label: 'Calendar', href: '/dashboard/school/calendar', icon: Calendar, permission: PermissionResource.CALENDAR },
         { label: 'Applications', href: '/dashboard/school/applications', icon: ArrowRightLeft, permission: PermissionResource.ADMISSIONS }, // Transfers/Applications use same permission as admissions
         { label: 'Subscription', href: '/dashboard/school/subscription', icon: CreditCard, permission: PermissionResource.SUBSCRIPTIONS, principalOnly: true },
-        { label: 'Profile', href: '/dashboard/profile', icon: User }
+        { label: 'Settings', href: '/dashboard/school/settings/profile', icon: Settings, principalOnly: true }
       );
 
       return [{ items: baseItems }];

@@ -49,7 +49,8 @@ export const GlobalAiAssistant: React.FC = () => {
     pathname?.includes('/assessments/new') || 
     pathname?.includes('/assessments/edit') ||
     (pathname?.includes('/assessments/') && pathname.split('/').length > 4) ||
-    pathname?.includes('/plugins/agora-ai');
+    pathname?.includes('/plugins/agora-ai') ||
+    pathname?.includes('/timetables');
 
   useEffect(() => {
     setIsHydrated(true);
