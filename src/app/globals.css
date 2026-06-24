@@ -42,7 +42,7 @@
     /* Main accent blue */
     --agora-success: #059669;
     /* emerald-600 for better contrast in light mode */
-     --agora-accent: #f0a500;
+    --agora-accent: #f0a500;
     /* Sky blue — info, links, secondary accents */
     --agora-info: #3b9eff;
     /* Success/green color */
@@ -89,8 +89,9 @@
     --light-text-primary: #111827;
     --light-text-secondary: #4b5563;
     --light-text-muted: #9ca3af;
-    --light-border: #e5e7eb;
+    --light-border: #dddddd;
     --light-hover: #f9fafb;
+    --light-sidebar-active: #f5f5f5;
 
     /* Map dark variables strictly to light colors by default for light mode scale */
     --dark-bg: var(--light-bg);
@@ -161,7 +162,7 @@
     background-color: transparent !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+    border-right: 1px solid var(--light-border) !important;
     box-shadow: none !important;
   }
 
@@ -184,7 +185,7 @@
   }
 
   body.teacher-dashboard-active:not(.dark) .sidebar-link-active {
-    background-color: var(--light-card) !important;
+    background-color: var(--light-sidebar-active) !important;
     color: #0f172a !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
     border-color: rgba(0, 0, 0, 0.02) !important;
@@ -201,7 +202,7 @@
 
   body.teacher-dashboard-active:not(.dark) .sidebar-link-inactive:hover {
     color: #0f172a !important;
-    background-color: rgba(0, 0, 0, 0.02) !important;
+    background-color: var(--light-hover) !important;
   }
 
   /* Logout & Theme Toggle matching for light mode */
@@ -352,7 +353,7 @@
     background-color: transparent !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+    border-right: 1px solid var(--light-border) !important;
     box-shadow: none !important;
   }
 
@@ -392,7 +393,7 @@
   }
 
   body.student-dashboard-active:not(.dark) .sidebar-link-active {
-    background-color: #ffffff !important;
+    background-color: var(--light-sidebar-active) !important;
     color: #0f172a !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
     border-color: rgba(0, 0, 0, 0.02) !important;

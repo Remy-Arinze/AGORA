@@ -239,8 +239,8 @@ export const SidebarLink = ({
       className={cn(
         "flex items-center justify-between gap-2 group/sidebar py-2 px-3 rounded-lg transition-all relative sidebar-link-item",
         isActive
-          ? "text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] bg-[var(--light-card)] dark:bg-[var(--dark-surface)] sidebar-link-active"
-          : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:bg-[var(--light-card)] dark:hover:bg-[var(--dark-surface)] hover:shadow-sm border border-transparent sidebar-link-inactive",
+          ? "text-[var(--light-text-primary)] dark:text-[var(--dark-text-primary)] bg-[var(--light-sidebar-active)] dark:bg-[var(--dark-surface)] sidebar-link-active"
+          : "text-[var(--light-text-secondary)] dark:text-[var(--dark-text-secondary)] hover:bg-[var(--light-hover)] dark:hover:bg-[var(--dark-surface)] hover:shadow-sm border border-transparent sidebar-link-inactive",
         className
       )}
       onClick={() => setOpen(false)}
