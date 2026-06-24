@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -220,6 +220,32 @@ export default function TimetablesPage() {
   useEffect(() => {
     setSelectedClassId('');
   }, [currentType]);
+
+  const paramsProcessed = useRef(false);
+
+  useEffect(() => {
+    if (paramsProcessed.current || isLoadingTimetables || classes.length === 0) return;
+    
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const classIdParam = searchParams.get('class') || searchParams.get('classId');
+      if (classIdParam) {
+        paramsProcessed.current = true;
+        
+        const cls = classes.find(c => c.id === classIdParam);
+        if (cls) {
+          const classTimetable = timetablesByClass[classIdParam] || [];
+          if (classTimetable.length > 0) {
+            setSelectedClassId(classIdParam);
+          } else {
+            // Auto-populate for creation modal
+            setNewTimetableClassId(classIdParam);
+            setShowCreateModal(true);
+          }
+        }
+      }
+    }
+  }, [classes, timetablesByClass, isLoadingTimetables]);
 
   const handleCreateTimetable = async () => {
     if (!schoolId || !newTimetableClassId || !newTimetableTermId) {

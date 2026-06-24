@@ -160,6 +160,7 @@ export function StudentAdmissionModal({
         classArmId: preSelectedClassArmId || '',
       }));
     } else {
+      setIsLoading(false);
       setSubmitError(null);
       setErrors({});
       setProfileImage(null);
@@ -353,6 +354,7 @@ export function StudentAdmissionModal({
       }
 
       toast.success(result.message || 'Student admitted successfully!');
+      setIsLoading(false);
       onClose();
     } catch (error: any) {
       setIsLoading(false);

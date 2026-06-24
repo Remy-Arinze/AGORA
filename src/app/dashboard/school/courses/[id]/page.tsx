@@ -948,7 +948,7 @@ export default function ClassDetailPage() {
                     <CardTitle>Class Timetable</CardTitle>
                   </div>
                   <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
-                    <Link href={`/dashboard/school/timetable?class=${classId}`}>
+                    <Link href={`/dashboard/school/timetables?class=${classId}`}>
                       <Button variant="primary" size="sm" className="h-8 text-xs">
                         Edit Timetable
                       </Button>
@@ -975,7 +975,7 @@ export default function ClassDetailPage() {
                       No timetable set up for this class yet.
                     </p>
                     <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
-                      <Link href={`/dashboard/school/timetable?class=${classId}`}>
+                      <Link href={`/dashboard/school/timetables?class=${classId}`}>
                         <Button variant="primary" size="sm" className="text-xs">
                           <Plus className="h-3 w-3 mr-2" />
                           Create Timetable

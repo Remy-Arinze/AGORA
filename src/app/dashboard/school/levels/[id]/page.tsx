@@ -392,7 +392,11 @@ export default function LevelDetailPage() {
                       No timetable set for this level yet.
                     </p>
                     <PermissionGate resource={PermissionResource.TIMETABLES} type={PermissionType.WRITE}>
-                      <Button variant="primary" className="mt-4">
+                      <Button
+                        variant="primary"
+                        className="mt-4"
+                        onClick={() => router.push(`/dashboard/school/timetables?class=${levelId}`)}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Create Timetable
                       </Button>
