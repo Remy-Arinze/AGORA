@@ -153,7 +153,7 @@ export default function RootLayout({
             </div>}>
               {children}
             </Sentry.ErrorBoundary>
-            <Toaster position="top-right" />
+            <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
           </StoreProvider>
         </ThemeProvider>
       </body>
