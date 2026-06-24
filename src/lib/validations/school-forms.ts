@@ -86,6 +86,10 @@ export const studentAdmissionFormSchema = z.object({
       },
       { message: 'Student age must be between 3 and 25 years' }
     ),
+  gender: z
+    .string()
+    .min(1, 'Gender is required')
+    .transform((val) => val.trim()),
   email: z
     .string()
     .min(1, 'Email is required')

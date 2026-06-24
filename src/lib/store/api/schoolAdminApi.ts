@@ -648,6 +648,7 @@ export interface AddStudentDto {
   middleName?: string;
   lastName: string;
   dateOfBirth: string;
+  gender: string;
   email: string;
   phone?: string;
   address?: string;
@@ -666,6 +667,7 @@ export interface AddStudentDto {
   emergencyContact?: string;
   emergencyContactPhone?: string;
   medicalNotes?: string;
+  profileImage?: string;
 }
 
 export interface UpdateStudentDto {
@@ -3640,11 +3642,11 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    getSchemeOfWorkById: builder.query<CurriculumDto, { schoolId: string; schemeId: string }>({
+    getSchemeOfWorkById: builder.query<Curriculum, { schoolId: string; schemeId: string }>({
       query: ({ schoolId, schemeId }) => ({
         url: `schools/${schoolId}/curriculum/schemes/${schemeId}`,
       }),
-      transformResponse: (response: ResponseDto<CurriculumDto>) => response.data,
+      transformResponse: (response: ResponseDto<Curriculum>) => response.data,
       providesTags: (result, error, { schemeId }) => [{ type: 'Curriculum', id: schemeId }],
     }),
 
@@ -3746,9 +3748,9 @@ export const schoolAdminApi = apiSlice.injectEndpoints({
         body: reassign,
       }),
       invalidatesTags: (result, error, { studentId }) => [
-        { type: 'Students', id: 'LIST' },
-        { type: 'Students', id: studentId },
-        { type: 'Classes', id: 'LIST' },
+        { type: 'Student', id: 'LIST' },
+        { type: 'Student', id: studentId },
+        { type: 'Class', id: 'LIST' },
       ],
     }),
   }),

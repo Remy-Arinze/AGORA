@@ -25,9 +25,9 @@ interface StudentAdmissionModalProps {
   preSelectedClassArmId?: string;
 }
 
-export function StudentAdmissionModal({ 
-  isOpen, 
-  onClose, 
+export function StudentAdmissionModal({
+  isOpen,
+  onClose,
   onRequestShareRegistrationLink,
   fromTransferId,
   preSelectedClassLevel,
@@ -36,18 +36,18 @@ export function StudentAdmissionModal({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+
   // Get school data
   const { data: schoolResponse } = useGetMySchoolQuery();
   const schoolId = schoolResponse?.data?.id;
   const { currentType } = useSchoolType();
 
   // Get classes for the current school type
-  const { 
-    data: classesResponse, 
+  const {
+    data: classesResponse,
     isLoading: isLoadingClasses,
-    isFetching: isFetchingClasses 
+    isFetching: isFetchingClasses
   } = useGetClassesQuery(
     { schoolId: schoolId!, type: currentType || undefined },
     { skip: !schoolId }
@@ -58,10 +58,10 @@ export function StudentAdmissionModal({
 
   // Get ClassArms for PRIMARY/SECONDARY schools
   const isPrimaryOrSecondary = currentType === 'PRIMARY' || currentType === 'SECONDARY';
-  const { 
+  const {
     data: classArmsResponse,
     isLoading: isLoadingClassArms,
-    isFetching: isFetchingClassArms 
+    isFetching: isFetchingClassArms
   } = useGetClassArmsQuery(
     { schoolId: schoolId!, schoolType: currentType || undefined },
     { skip: !schoolId || !isPrimaryOrSecondary }
@@ -72,10 +72,10 @@ export function StudentAdmissionModal({
   const schoolUsesClassArms = classArms.length > 0;
 
   // Get ClassLevels for grouping ClassArms
-  const { 
+  const {
     data: classLevelsResponse,
     isLoading: isLoadingClassLevels,
-    isFetching: isFetchingClassLevels 
+    isFetching: isFetchingClassLevels
   } = useGetClassLevelsQuery(
     { schoolId: schoolId! },
     { skip: !schoolId || !isPrimaryOrSecondary }
@@ -93,14 +93,14 @@ export function StudentAdmissionModal({
   // Student admission mutation
   const [admitStudent, { isLoading: isAdmitting }] = useAdmitStudentMutation();
   const [uploadStudentImage] = useUploadStudentImageMutation();
-  
+
   // Generate default classes mutation
   const [generateDefaultClasses, { isLoading: isGeneratingClasses }] = useGenerateDefaultClassesMutation();
 
   // Handler for generating classes
   const handleGenerateClasses = async () => {
     if (!schoolId || !currentType) return;
-    
+
     try {
       await generateDefaultClasses({
         schoolId,
@@ -111,7 +111,7 @@ export function StudentAdmissionModal({
       toast.error(error?.data?.message || 'Failed to generate classes');
     }
   };
-  
+
   // Image upload state
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -135,7 +135,7 @@ export function StudentAdmissionModal({
     nationality: 'Nigeria',
     state: '',
     classLevel: '',
-    classArmId: '', 
+    classArmId: '',
     // Parent/Guardian Information
     parentName: '',
     parentPhone: '',
@@ -242,7 +242,7 @@ export function StudentAdmissionModal({
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       const errorMessages: string[] = [];
-      
+
       result.error.issues.forEach((err) => {
         if (err.path && err.path.length > 0 && err.path[0]) {
           const fieldName = err.path[0] as string;
@@ -250,9 +250,9 @@ export function StudentAdmissionModal({
           errorMessages.push(err.message);
         }
       });
-      
+
       setErrors(fieldErrors);
-      
+
       if (errorMessages.length === 1) {
         toast.error(errorMessages[0]);
       } else if (errorMessages.length > 1) {
@@ -261,7 +261,7 @@ export function StudentAdmissionModal({
       } else {
         toast.error('Please check the form for errors');
       }
-      
+
       return { isValid: false };
     }
 
@@ -338,11 +338,11 @@ export function StudentAdmissionModal({
         },
       }).unwrap();
 
-      if (selectedImageFile && result.id) {
+      if (selectedImageFile && result.data?.id) {
         try {
           await uploadStudentImage({
             schoolId,
-            studentId: result.id,
+            studentId: result.data.id,
             file: selectedImageFile,
           }).unwrap();
           toast.success('Profile image uploaded successfully!');
@@ -356,11 +356,11 @@ export function StudentAdmissionModal({
       onClose();
     } catch (error: any) {
       setIsLoading(false);
-      
+
       if (error?.data && Array.isArray(error.data)) {
         const fieldErrors: Record<string, string> = {};
         const errorMessages: string[] = [];
-        
+
         const fieldLabels: Record<string, string> = {
           parentPhone: 'Parent/Guardian Phone',
           parentEmail: 'Parent/Guardian Email',
@@ -377,12 +377,12 @@ export function StudentAdmissionModal({
           nationality: 'Nationality',
           state: 'State',
         };
-        
+
         error.data.forEach((err: any) => {
           const fieldName = err.path?.[0] || 'unknown';
           const fieldLabel = fieldLabels[fieldName] || fieldName;
           let userMessage = err.message || 'Invalid value';
-          
+
           if (err.code === 'too_small') {
             if (err.minimum) {
               userMessage = `${fieldLabel} must be at least ${err.minimum} characters`;
@@ -402,13 +402,13 @@ export function StudentAdmissionModal({
           } else if (err.code === 'invalid_type') {
             userMessage = `${fieldLabel} has an invalid value`;
           }
-          
+
           fieldErrors[fieldName] = userMessage;
           errorMessages.push(userMessage);
         });
-        
+
         setErrors(fieldErrors);
-        
+
         if (errorMessages.length === 1) {
           toast.error(errorMessages[0]);
         } else if (errorMessages.length > 1) {
@@ -419,10 +419,10 @@ export function StudentAdmissionModal({
         }
         return;
       }
-      
+
       const errorMessage = error?.data?.message || error?.message || 'Failed to admit student. Please try again.';
       setSubmitError(errorMessage);
-      
+
       if (error?.status === 409 || errorMessage.includes('already exists') || errorMessage.includes('transfer')) {
         toast.error(errorMessage, { duration: 6000 });
       } else {
@@ -435,7 +435,7 @@ export function StudentAdmissionModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={fromTransferId ? 'Complete Transfer Application' : 'New Admission Application'}
+      title={fromTransferId ? 'Complete Transfer Application' : 'New Student Application'}
       size="xl"
     >
       <div className="mb-4 flex justify-end">
@@ -484,11 +484,11 @@ export function StudentAdmissionModal({
           </div>
         </div>
       )}
-      <form onSubmit={handleSubmitApplication} className="space-y-6">
+      <form onSubmit={handleSubmitApplication} className="space-y-8">
         {/* Personal Information */}
         <div>
           <div className="flex items-center justify-between gap-4 mb-4">
-            <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
+            <p className="font-bold text-light-text-secondary dark:text-dark-text-secondary flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
               <User className="h-5 w-5" />
               Personal Information
             </p>
@@ -546,9 +546,9 @@ export function StudentAdmissionModal({
               helperText="Calculated from date of birth"
             />
             <div>
-                <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
-                  Gender <span className="text-red-500 ml-1">*</span>
-                </label>
+              <label className="block font-medium text-light-text-secondary dark:text-dark-text-secondary mb-1" style={{ fontSize: 'var(--text-body)' }}>
+                Gender <span className="text-red-500 ml-1">*</span>
+              </label>
               <select
                 value={formData.gender}
                 onChange={(e) => {
@@ -557,11 +557,10 @@ export function StudentAdmissionModal({
                     setErrors({ ...errors, gender: undefined });
                   }
                 }}
-                className={`w-full px-3 py-2 border rounded-md bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.gender
+                className={`w-full px-3 py-2 border rounded-md bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.gender
                     ? 'border-red-500 dark:border-red-500'
                     : 'border-light-border dark:border-dark-border'
-                }`}
+                  }`}
                 required
               >
                 <option value="">Select gender</option>
@@ -631,7 +630,7 @@ export function StudentAdmissionModal({
 
         {/* Academic Information */}
         <div>
-          <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-4 flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
+          <p className="font-bold text-light-text-secondary dark:text-dark-text-secondary mb-4 flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
             <GraduationCap className="h-5 w-5" />
             Academic Information
           </p>
@@ -657,8 +656,8 @@ export function StudentAdmissionModal({
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {currentType && (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={handleGenerateClasses}
                             isLoading={isGeneratingClasses}
@@ -675,8 +674,8 @@ export function StudentAdmissionModal({
                     onChange={(e) => {
                       const selectedArmId = e.target.value;
                       const selectedArm = classArms.find(arm => arm.id === selectedArmId);
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         classArmId: selectedArmId,
                         classLevel: selectedArm ? selectedArm.classLevelName : '',
                       });
@@ -684,11 +683,10 @@ export function StudentAdmissionModal({
                         setErrors({ ...errors, classArmId: undefined, classLevel: undefined });
                       }
                     }}
-                    className={`w-full px-3 py-2 border rounded-md bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.classArmId || errors.classLevel
+                    className={`w-full px-3 py-2 border rounded-md bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.classArmId || errors.classLevel
                         ? 'border-red-500 dark:border-red-500'
                         : 'border-light-border dark:border-dark-border'
-                    }`}
+                      }`}
                     required
                   >
                     <option value="">Select ClassArm</option>
@@ -738,8 +736,8 @@ export function StudentAdmissionModal({
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {currentType && (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={handleGenerateClasses}
                             isLoading={isGeneratingClasses}
@@ -754,8 +752,8 @@ export function StudentAdmissionModal({
                   <select
                     value={formData.classLevel}
                     onChange={(e) => {
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         classArmId: '',
                         classLevel: e.target.value,
                       });
@@ -763,11 +761,10 @@ export function StudentAdmissionModal({
                         setErrors({ ...errors, classLevel: undefined });
                       }
                     }}
-                    className={`w-full px-3 py-2 border rounded-md bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.classLevel
+                    className={`w-full px-3 py-2 border rounded-md bg-light-card dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.classLevel
                         ? 'border-red-500 dark:border-red-500'
                         : 'border-light-border dark:border-dark-border'
-                    }`}
+                      }`}
                     required
                   >
                     <option value="">Select class level</option>
@@ -788,7 +785,7 @@ export function StudentAdmissionModal({
 
         {/* Parent/Guardian Information */}
         <div>
-          <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-4 flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
+          <p className="font-bold text-light-text-secondary dark:text-dark-text-secondary mb-4 flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
             <User className="h-5 w-5" />
             Parent/Guardian Information
           </p>
@@ -842,9 +839,9 @@ export function StudentAdmissionModal({
 
         {/* Health Information */}
         <div>
-          <p className="font-medium text-light-text-secondary dark:text-dark-text-secondary mb-4 flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
+          <p className="font-bold text-light-text-secondary dark:text-dark-text-secondary mb-4 flex items-center gap-2" style={{ fontSize: 'var(--text-section-title)' }}>
             <Heart className="h-5 w-5" />
-            Health Information
+            Student Health Information
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

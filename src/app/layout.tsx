@@ -147,7 +147,7 @@ export default function RootLayout({
               <ErrorBoundary>
                 {children}
               </ErrorBoundary>
-              <Toaster position="top-right" />
+              <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
             </RumProvider>
           </StoreProvider>
         </ThemeProvider>
